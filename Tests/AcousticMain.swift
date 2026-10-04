@@ -84,6 +84,21 @@ import AVFoundation
                 check(energy > 0.1, "Recorded sound is silent")
             }
         }
+        // The new six-way compound subdivision is the densest supported grid.
+        for sound in [0, 2, 5, 8, 9, 10, 11] {
+            var r = Rhythm(); r.setMeter(beats: 12, denominator: 8, compound: true)
+            r.bpm = 300; r.subdivision = 6
+            let clock = SampleClock(rate: 48000); clock.reset(r)
+            let renderer = AcousticRenderer(library: library)
+            for _ in 0..<96000 {
+                if let (e, strength) = clock.advance() {
+                    renderer.chokeHats()
+                    renderer.trigger(sound: sound, strength: strength, beat: e.beat, beats: r.pulseCount, denominator: 4)
+                }
+                let value = renderer.sample(rate: 48000)
+                check(value.isFinite && abs(value) < 1, "Compound sixteenth mix must not clip")
+            }
+        }
         let hats = AcousticRenderer(library: library); hats.trigger(sound: 7, strength: 2)
         for _ in 0..<2000 { _ = hats.sample(rate: 48000) }
         hats.chokeHats()

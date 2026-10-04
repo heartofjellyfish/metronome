@@ -157,3 +157,32 @@ for (old, new) in [(3,11),(4,10),(6,11),(7,11)] {
     var saved = Rhythm(); saved.sound = old; saved.sanitize()
     check(saved.sound == new, "Retired preset must migrate to its acoustic equivalent")
 }
+
+// Compound meters count dotted-quarter pulses, with subdivisions inside them.
+for numerator in [6, 9, 12] {
+    var r = Rhythm(); r.bpm = 120
+    r.setMeter(beats: numerator, denominator: 8, compound: true)
+    check(r.pulseCount == numerator / 3 && r.subdivision == 3, "Compound grouping")
+    let c = SampleClock(rate: 48000); c.reset(r)
+    var hits: [(Int, Int, Int)] = []
+    for frame in 0...Int(24000 * r.pulseCount) {
+        if let (e, strength) = c.advance() { hits.append((frame, e.beat, strength)) }
+    }
+    check(hits.count == numerator + 1 && hits.last!.0 == 24000 * r.pulseCount, "Compound bar duration")
+    check(hits[3].1 == 1 && hits[3].0 == 24000, "Dotted quarter at 120 BPM must last 0.5 seconds")
+    check(hits[1].2 == 3 && hits[2].2 == 3, "Eighth subdivisions")
+    check(r.beatStrength(1) == 1, "Second big beat stays weak")
+    if numerator == 12 { check(r.beatStrength(2) == 4, "12/8 third big beat secondary") }
+    r.followsMeter = false; check(r.beatStrength(0) == 5 && r.beatStrength(1) == 5, "Even visuals match audio")
+    r.accents[1] = 0; check(r.beatStrength(1) == 0, "Muted big beat")
+    r.subdivision = 6; r.sanitize(); check(r.subdivision == 6, "Sixteenth subdivisions survive persistence")
+    let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r))
+    check(restored == r, "Compound roundtrip")
+    r.setMeter(beats: numerator, denominator: 8, compound: false)
+    check(r.pulseCount == numerator && r.subdivision == 1, "Eighth-note mode")
+}
+var legacyJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(Rhythm())) as! [String: Any]
+legacyJSON.removeValue(forKey: "compoundPulse"); legacyJSON["beats"] = 6; legacyJSON["denominator"] = 8
+let legacyMeter = try JSONDecoder().decode(Rhythm.self, from: JSONSerialization.data(withJSONObject: legacyJSON))
+check(legacyMeter.pulseCount == 6, "Old saved tempos retain eighth-note meaning")
+print("PASS: compound meter bar lengths, subdivisions, accents, even/mute and legacy presets.")

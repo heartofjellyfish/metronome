@@ -8,12 +8,12 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 
 - Tactile tempo encoder, +/- adjustment, numeric entry, 20–300 BPM, tap tempo.
 - 1–12 beats, /4 and /8 meters, 1–4 subdivisions, per-beat accent/normal/mute.
-- Six synthesized sounds with tap-to-preview: wood, click, bell, hi-hat, shaker and rim. Classic and Percussion banks share the same instrument cards. All synthesized hi-hat strokes stay closed, choking the previous tail over 3 ms.
+- Eight curated sounds with tap-to-preview: seven recorded percussion instruments and electronic CLICK. HI-HAT stays closed.
 - Zero, one or two count-in bars; ascending/descending tempo ramp; repeating audible/silent bars.
 - Ivory and graphite skins, control haptics, locally persisted settings and named presets.
 - Background playback with other audio, lock-screen transport, headphone-disconnect and interruption handling.
 
-BPM refers to the notated beat: quarter note in /4, eighth note in /8. Compound meters currently expose their individual eighth-note pulses. The app is an initial functional build; purchasing, cross-app synchronization and professionally recorded sound packs are not implemented.
+6/8, 9/8 and 12/8 default to 2, 3 and 4 dotted-quarter pulses. BPM counts the displayed note unit; compound subdivisions offer one big beat, duplets, eighths and sixteenths (1/2/3/6 clicks). The meter panel also offers eighth-note counting. Older saved rhythms retain their original eighth-note BPM meaning. Subtle bars below the beat numbers show strong, secondary and weak levels; EVEN shows matching marks, and the amber LED tracks playback. The app is an initial functional build; purchasing and cross-app synchronization are not implemented.
 
 ## Audio architecture
 

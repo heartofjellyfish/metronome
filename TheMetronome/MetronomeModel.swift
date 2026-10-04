@@ -44,7 +44,7 @@ final class MetronomeAudio {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
                         if clock.rhythm.sound != 1 {
-                            acoustic.trigger(sound: clock.rhythm.sound, strength: strength, beat: event.beat, beats: clock.rhythm.beats, denominator: clock.rhythm.denominator, counting: event.countIn)
+                            acoustic.trigger(sound: clock.rhythm.sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn)
                         } else { switch voiceIndex % 4 {
                         case 0: voices.0.trigger(sound: clock.rhythm.sound, strength: strength)
                         case 1: voices.1.trigger(sound: clock.rhythm.sound, strength: strength)
@@ -197,7 +197,7 @@ final class MetronomeModel: ObservableObject {
         previewTimer?.invalidate()
         var preview = rhythm; preview.bpm = min(160, max(80, rhythm.bpm))
         preview.countIn = 0; preview.ramp = false; preview.gap = false
-        let duration = Double(preview.beats * preview.subdivision - 1) * 60 / Double(preview.bpm * preview.subdivision) + 0.18
+        let duration = Double(preview.pulseCount * preview.subdivision - 1) * 60 / Double(preview.bpm * preview.subdivision) + 0.18
         do {
             try audio.start(preview)
             previewTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in

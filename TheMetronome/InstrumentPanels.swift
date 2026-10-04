@@ -22,7 +22,7 @@ enum InstrumentPanelKind: String, Identifiable {
     var height: CGFloat {
         switch self {
         case .tempo, .start, .end: return 620
-        case .meter: return 660
+        case .meter: return 740
         case .division: return 510
         case .practice: return 740
         case .presets: return 560
@@ -42,6 +42,7 @@ struct InstrumentPanel: View {
     @State private var replaceDigits = true
     @State private var selected: Int
     @State private var denominator: Int
+    @State private var compoundPulse: Bool
     @State private var presetName = ""
     @State private var deleting: UUID?
     @FocusState private var naming: Bool
@@ -52,6 +53,7 @@ struct InstrumentPanel: View {
         _kind = State(initialValue: kind)
         _digits = State(initialValue: String(kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm))
         _denominator = State(initialValue: model.rhythm.denominator)
+        _compoundPulse = State(initialValue: model.rhythm.isCompound ? model.rhythm.usesCompoundPulse : true)
         let value: Int
         switch kind {
         case .meter: value = model.rhythm.beats
@@ -160,32 +162,44 @@ struct InstrumentPanel: View {
                 Spacer()
                 Text("TIME SIGNATURE").technical(9, spacing: 1.2).foregroundStyle(p.muted)
             }.padding(.horizontal, 20).frame(height: 82).insetPanel(p, radius: 13)
-            SectionLabel(text: "01  BEATS PER BAR", p: p)
+            SectionLabel(text: "01  TIME SIGNATURE", p: p)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
                 ForEach(1...12, id: \.self) { value in
                     choice(String(value), selected: selected == value, height: 48) { selected = value }
                 }
             }
-            SectionLabel(text: "02  BEAT UNIT", p: p)
+            SectionLabel(text: "02  NOTE VALUE", p: p)
             HStack(spacing: 10) {
                 choice("♩  /4", selected: denominator == 4) { denominator = 4 }
                 choice("♪  /8", selected: denominator == 8) { denominator = 8 }
             }
-            Text("BPM counts each \(denominator == 4 ? "quarter" : "eighth") note. Accents shape the grouping.")
+            if denominator == 8 && [6, 9, 12].contains(selected) {
+                HStack(spacing: 10) {
+                    choice("♩.  BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true }
+                    choice("♪  EIGHTHS", selected: !compoundPulse, height: 44) { compoundPulse = false }
+                }
+            }
+            Text(denominator == 8 && [6, 9, 12].contains(selected) && compoundPulse
+                 ? "\(selected / 3) big beats per bar · 3 eighth notes per beat. BPM = dotted quarter."
+                 : "BPM counts each \(denominator == 4 ? "quarter" : "eighth") note.")
                 .font(.system(size: 12)).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
-            commitButton("SET METER") { model.rhythm.beats = selected; model.rhythm.denominator = denominator; dismiss() }
+            commitButton("SET METER") {
+                var rhythm = model.rhythm
+                rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse)
+                model.rhythm = rhythm; dismiss()
+            }
         }
     }
     private var divisionPicker: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("CLICKS WITHIN EACH BEAT").technical(9, spacing: 1.5).foregroundStyle(p.muted)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                ForEach(1...4, id: \.self) { value in
+                ForEach(model.rhythm.usesCompoundPulse ? [1, 2, 3, 6] : [1, 2, 3, 4], id: \.self) { value in
                     Button { selected = value; model.tickFeedback() } label: {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack { LED(on: selected == value, size: 7); Spacer(); Text(String(format: "%02d", value)).technical(9, spacing: 1).foregroundStyle(p.muted) }
-                            RhythmGlyph(count: value).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
-                            Text(["ONE", "TWO", "TRIPLET", "FOUR"][value - 1]).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
+                            RhythmGlyph(count: value, compound: model.rhythm.usesCompoundPulse).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
+                            Text(model.rhythm.usesCompoundPulse ? [1: "BIG BEAT", 2: "DUPLET", 3: "EIGHTHS", 6: "SIXTEENTHS"][value]! : ["ONE", "TWO", "TRIPLET", "FOUR"][value - 1]).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
                             Text("\(value) / BEAT").technical(8, spacing: 1).foregroundStyle(p.muted).frame(maxWidth: .infinity)
                         }.padding(13).frame(maxWidth: .infinity)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
@@ -337,6 +351,7 @@ struct InstrumentPanel: View {
 
 struct RhythmGlyph: Shape {
     let count: Int
+    var compound = false
     func path(in rect: CGRect) -> Path {
         var p = Path()
         let width = min(rect.width - 10, CGFloat(max(1, count - 1)) * 20)
@@ -346,9 +361,10 @@ struct RhythmGlyph: Shape {
             p.addEllipse(in: CGRect(x: x - 7, y: rect.height - 12, width: 10, height: 6))
             p.addRect(CGRect(x: x + 1.5, y: 5, width: 1.8, height: rect.height - 14))
         }
+        if compound && count == 1 { p.addEllipse(in: CGRect(x: rect.midX + 7, y: rect.height - 10, width: 3, height: 3)) }
         if count > 1 {
             p.addRect(CGRect(x: left + 1.5, y: 5, width: width + 1.8, height: 2.4))
-            if count == 4 { p.addRect(CGRect(x: left + 1.5, y: 10, width: width + 1.8, height: 2.4)) }
+            if count == 4 || count == 6 { p.addRect(CGRect(x: left + 1.5, y: 10, width: width + 1.8, height: 2.4)) }
         }
         return p
     }

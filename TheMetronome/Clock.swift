@@ -34,6 +34,11 @@ struct Rhythm: Codable, Equatable {
     var bpm = 96
     var beats = 4
     var denominator = 4
+    var compoundPulse: Bool? = true
+    var isCompound: Bool { denominator == 8 && [6, 9, 12].contains(beats) }
+    var usesCompoundPulse: Bool { isCompound && (compoundPulse ?? false) }
+    var pulseCount: Int { usesCompoundPulse ? beats / 3 : beats }
+    var beatUnit: String { usesCompoundPulse ? "♩." : denominator == 8 ? "♪" : "♩" }
     var subdivision = 1
     var accents = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     var sound = 0
@@ -57,10 +62,29 @@ struct Rhythm: Codable, Equatable {
         let value = accents[beat]
         return value > 0 && followsMeter && beat == 0 ? 2 : value
     }
+    func beatStrength(_ beat: Int, counting: Bool = false) -> Int {
+        let accent = counting ? (beat == 0 ? 2 : 1) : accents[beat]
+        if accent == 0 { return 0 }
+        if !followsMeter { return 5 }
+        if accent == 2 || beat == 0 { return 2 }
+        let secondary = usesCompoundPulse ? (pulseCount == 4 && beat == 2)
+            : (denominator == 4 && beats == 4 && beat == 2)
+                || (isCompound && beat > 0 && beat % 3 == 0)
+        return secondary && !counting ? 4 : 1
+    }
+    mutating func setMeter(beats: Int, denominator: Int, compound: Bool) {
+        let oldCompound = usesCompoundPulse
+        let changed = self.beats != beats || self.denominator != denominator
+        self.beats = beats; self.denominator = denominator; compoundPulse = compound
+        if changed || oldCompound != usesCompoundPulse {
+            accents = [2] + Array(repeating: 1, count: 11)
+            subdivision = usesCompoundPulse ? 3 : 1
+        }
+    }
     mutating func sanitize() {
         bpm = min(300, max(20, bpm)); beats = min(12, max(1, beats))
         denominator = [4, 8].contains(denominator) ? denominator : 4
-        subdivision = min(4, max(1, subdivision))
+        subdivision = usesCompoundPulse ? ([1, 2, 3, 6].contains(subdivision) ? subdivision : 3) : min(4, max(1, subdivision))
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
         switch sound {
         case 3, 6, 7: sound = 11
@@ -99,7 +123,7 @@ final class SampleClock {
             first = value.ramp
         }
         // Changes to the pulse grid restart at a clean bar, never index stale accents.
-        if value.beats != rhythm.beats || value.subdivision != rhythm.subdivision {
+        if value.beats != rhythm.beats || value.denominator != rhythm.denominator || value.usesCompoundPulse != rhythm.usesCompoundPulse || value.subdivision != rhythm.subdivision {
             tick = -1; framesUntilTick = 0
         }
         rhythm = value
@@ -112,9 +136,9 @@ final class SampleClock {
         defer { framesUntilTick -= 1 }
         guard framesUntilTick <= 0 else { return nil }
         tick += 1
-        let ticksPerBar = rhythm.beats * rhythm.subdivision
+        let ticksPerBar = rhythm.pulseCount * rhythm.subdivision
         let bar = tick / ticksPerBar
-        let beat = (tick / rhythm.subdivision) % rhythm.beats
+        let beat = (tick / rhythm.subdivision) % rhythm.pulseCount
         let primary = tick % rhythm.subdivision == 0
         let counting = bar < rhythm.countIn
         let practiceBar = max(0, bar - rhythm.countIn)
@@ -128,12 +152,9 @@ final class SampleClock {
         }
         let silent = !counting && rhythm.gap && practiceBar % (rhythm.audibleBars + rhythm.silentBars) >= rhythm.audibleBars
         framesUntilTick += rate * 60 / Double(tempo * rhythm.subdivision)
-        let accent = counting ? (beat == 0 ? 2 : 1) : rhythm.accents[beat]
-        let secondary = (rhythm.denominator == 4 && rhythm.beats == 4 && beat == 2)
-            || (rhythm.denominator == 8 && rhythm.beats >= 6 && rhythm.beats % 3 == 0 && beat > 0 && beat % 3 == 0)
-        // 4 = secondary accent, 5 = even. Mutes and gap practice always take priority.
-        let strength = silent || accent == 0 ? 0 : !rhythm.followsMeter ? 5
-            : !primary ? 3 : (accent == 2 || beat == 0) ? 2 : secondary && !counting ? 4 : 1
+        let mainStrength = rhythm.beatStrength(beat, counting: counting)
+        let strength = silent || mainStrength == 0 ? 0 : !rhythm.followsMeter ? 5
+            : primary ? mainStrength : 3
         return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent), strength)
     }
 }
