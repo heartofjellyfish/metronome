@@ -35,7 +35,7 @@ import AVFoundation
                         voices[cursor % 4].trigger(sound: 1, strength: strength, gainScale: gain); cursor += 1
                     } else {
                         acoustic.trigger(sound: r.sound, strength: strength, beat: e.beat, beats: r.pulseCount,
-                            denominator: r.denominator, counting: e.countIn, gainScale: gain)
+                            denominator: r.denominator, counting: e.countIn, gainScale: gain, hitInterval: e.hitInterval)
                     }
                 }
             }

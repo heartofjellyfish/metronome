@@ -175,6 +175,7 @@ struct ClockEvent {
     let countIn: Bool
     let silent: Bool
     var gainScale: Float = 1
+    var hitInterval: Double = .infinity
 }
 
 /// Driven by audio sample frames, never a UI timer. Owned exclusively by the render thread.
@@ -241,7 +242,7 @@ final class SampleClock {
         let variation = humanizer.nextGain()
         let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
             : rhythm.subdivisionGainScale(beat: beat, division: tick % rhythm.subdivision, counting: counting) * variation
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale), strength)
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: 60 / Double(tempo * rhythm.subdivision)), strength)
     }
 }
 

@@ -44,7 +44,7 @@ final class MetronomeAudio {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
                         if clock.rhythm.sound != 1 {
-                            acoustic.trigger(sound: clock.rhythm.sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn, gainScale: event.gainScale)
+                            acoustic.trigger(sound: clock.rhythm.sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn, gainScale: event.gainScale, hitInterval: event.hitInterval)
                         } else { switch voiceIndex % 4 {
                         case 0: voices.0.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
                         case 1: voices.1.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)

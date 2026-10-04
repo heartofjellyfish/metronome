@@ -65,13 +65,20 @@ private struct AcousticVoice {
     var position = 0.0
     var gain: Float = 0
     var hat = false
+    var shaker = false
+    var chokeDuration = 0.003
     var chokeTime = -1.0
     var limit = Double.infinity
     mutating func sample(rate: Double) -> Float {
         guard let clip, position < Double(clip.count - 1) else { return 0 }
         let i = Int(position), fraction = Float(position - Double(i))
-        let tail = Float(min(1, max(0, (limit - position / clip.rate) / 0.020)))
-        let envelope: Float = (chokeTime < 0 ? 1 : Float(max(0, 1 - chokeTime / 0.003))) * tail
+        let time = position / clip.rate
+        if time >= limit { self.clip = nil; return 0 }
+        let release = shaker ? min(0.060, limit * 0.65) : 0.020
+        let remaining = limit.isFinite ? min(1, max(0, (limit - time) / release)) : 1
+        // Smooth endpoints preserve the attack and avoid a chopped-off grain tail.
+        let tail = Float(shaker ? remaining * remaining * (3 - 2 * remaining) : remaining)
+        let envelope: Float = (chokeTime < 0 ? 1 : Float(max(0, 1 - chokeTime / chokeDuration))) * tail
         if chokeTime >= 0 { chokeTime += 1 / rate }
         position += clip.rate / rate
         return (clip.samples[i] * (1 - fraction) + clip.samples[i + 1] * fraction) * gain * envelope
@@ -98,7 +105,7 @@ final class AcousticRenderer {
     func chokeHats() {
         for i in voices.indices where voices[i].hat && voices[i].chokeTime < 0 { voices[i].chokeTime = 0 }
     }
-    func trigger(sound: Int, strength: Int, beat: Int = 0, beats: Int = 4, denominator: Int = 4, counting: Bool = false, gainScale: Float = 1) {
+    func trigger(sound: Int, strength: Int, beat: Int = 0, beats: Int = 4, denominator: Int = 4, counting: Bool = false, gainScale: Float = 1, hitInterval: Double = .infinity) {
         guard sound == 0 || sound == 2 || sound == 5 || (6...11).contains(sound), strength > 0 else { return }
         let group = sound == 0 ? 7 : sound == 2 ? 8 : sound == 5 ? 6 : sound - 6
         let repetition = repetitions[group] % 4; repetitions[group] = (repetition + 1) % 4
@@ -120,10 +127,21 @@ final class AcousticRenderer {
         default: offset = 20
         }
         let clipIndex = offset + (sound == 2 ? 0 : repetition)
-        add(offset: clipIndex, gain: BeatIntensity.gain(strength) * gainScale * library.balancedGains[clipIndex], hat: (6...8).contains(sound))
+        let shaker = sound == InstrumentSound.acousticShaker.rawValue
+        var limit = Double.infinity
+        if shaker && hitInterval.isFinite && hitInterval > 0 {
+            let duration = Double(library.clips[clipIndex].count) / library.clips[clipIndex].rate
+            if hitInterval * 0.9 < duration { limit = hitInterval * 0.9 }
+            // Catch residual long strokes after a live tempo/division change.
+            for i in voices.indices where voices[i].shaker && voices[i].chokeTime < 0 {
+                voices[i].chokeDuration = 0.008
+                voices[i].chokeTime = 0
+            }
+        }
+        add(offset: clipIndex, gain: BeatIntensity.gain(strength) * gainScale * library.balancedGains[clipIndex], hat: (6...8).contains(sound), limit: limit, shaker: shaker)
     }
-    private func add(offset: Int, gain: Float, hat: Bool, limit: Double = .infinity) {
-        voices[cursor] = AcousticVoice(clip: library.clips[offset], position: 0, gain: gain, hat: hat, chokeTime: -1, limit: limit)
+    private func add(offset: Int, gain: Float, hat: Bool, limit: Double = .infinity, shaker: Bool = false) {
+        voices[cursor] = AcousticVoice(clip: library.clips[offset], position: 0, gain: gain, hat: hat, shaker: shaker, chokeTime: -1, limit: limit)
         cursor = (cursor + 1) % voices.count
     }
     func sample(rate: Double) -> Float {
