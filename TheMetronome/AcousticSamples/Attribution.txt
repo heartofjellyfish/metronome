@@ -13,7 +13,7 @@ Woodblock and handbell: Versilian Community Sample Library (VCSL), CC0. https://
 WOOD uses wood_click_f_rr1/rr2 from VCSL revision c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e, alternating two real takes in four slots. Shortened to 90 ms with a smooth decay; see Scripts/prepare_dry_wood.py.
 
 SNAP: Joseph SARDIN, BigSoundBank Finger clashes #0483, CC0. https://bigsoundbank.com/finger-clashes-s0483.html — four selected real snaps with similar spectral character.
-CLAP: VCSL Clap_rr1–6, six recorded round robins, CC0.
+CLAP: VCSL SoloClap_vl1–4, four solo-clap velocity-layer recordings, CC0.
 RIDE: Virtuosity Drums overhead ride normal-hit layer 2, four round robins, CC0.
 CROSS-STICK: Virtuosity Drums snare close-mic cross-stick velocity layers 8–11, CC0.
 Exact pinned URLs and source hashes: sources.json. Reproducible processing: Scripts/prepare_extra_percussion.py.

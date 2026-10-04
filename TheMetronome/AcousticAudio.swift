@@ -31,11 +31,10 @@ final class AcousticLibrary {
         var names = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
         names.append("ac-bell")
         names += ["snap", "clap", "ride", "cross"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
-        names += (5...6).map { "ac-clap-\($0)" }
         return names
     }()
     static let snapIndices = Array(33..<37)
-    static let clapIndices = Array(37..<41) + Array(49..<51)
+    static let clapIndices = Array(37..<41)
     let clips: [AcousticClip]
     let naturalHatGains: [Float]
     let balancedGains: [Float]
@@ -139,7 +138,7 @@ final class AcousticRenderer {
     private var clapTakes: RecordedTakeSequence
     init(library: AcousticLibrary, takeSeed: UInt64 = 0x534E4150) {
         self.library = library; snapTakes = RecordedTakeSequence(seed: takeSeed)
-        clapTakes = RecordedTakeSequence(count: 6, seed: takeSeed ^ 0x434C4150)
+        clapTakes = RecordedTakeSequence(count: 4, seed: takeSeed ^ 0x434C4150)
     }
     func chokeHats() {
         for i in voices.indices where voices[i].hat && voices[i].chokeTime < 0 { voices[i].chokeTime = 0 }

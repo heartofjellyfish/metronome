@@ -12,7 +12,7 @@ items=[]
 for i in range(1,5):
  items.extend([(f'ride-{i}.flac',VD+f'Samples/oh/ride/oh_ride_ride_vl2_rr{i}.flac'),
  (f'cross-{i}.flac',VD+f'Samples/snaremic/snare/snaremic_snare_crossstick_vl{i+7}.flac')])
-items.extend((f'Clap_rr{i}.wav',VCSL+f'Idiophones/Struck%20Idiophones/Claps/Clap_rr{i}.wav') for i in range(1,7))
+items.extend((f'clap-{i}.wav',VCSL+f'Idiophones/Struck%20Idiophones/Claps/SoloClap_vl{i}.wav') for i in range(1,5))
 items.append(('snap.mp3','https://bigsoundbank.com/UPLOAD/mp3/0483.mp3'))
 def source(item):
  name,url=item;p=CACHE/name
@@ -25,8 +25,8 @@ import sys
 for group,duration in [('snap',.11),('clap',.14),('ride',.35),('cross',.13)]:
  if '--snap-only' in sys.argv and group!='snap': continue
  if '--clap-only' in sys.argv and group!='clap': continue
- for i in range(1,7 if group=='clap' else 5):
-  name='snap.mp3' if group=='snap' else f'Clap_rr{i}.wav' if group=='clap' else f'{group}-{i}.flac'
+ for i in range(1,5):
+  name='snap.mp3' if group=='snap' else f'clap-{i}.wav' if group=='clap' else f'{group}-{i}.flac'
   full,url,digest=originals[name]
   offset=round([1.10,2.26,3.34,4.08][i-1]*44100) if group=='snap' else 0
   x=full[offset:offset+round(.3*44100)].copy() if group=='snap' else full.copy()
