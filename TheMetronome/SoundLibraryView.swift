@@ -65,7 +65,7 @@ struct SoundDynamicsControl: View {
             Text("DYNAMICS").technical(10, spacing: 1)
             Spacer(minLength: 0)
             HStack(spacing: 5) {
-                ForEach([false, true], id: \.self) { enabled in
+                ForEach([true, false], id: \.self) { enabled in
                     Button { model.setDynamics(enabled) } label: {
                         HStack(spacing: 7) {
                             LED(on: model.rhythm.followsMeter == enabled, color: InstrumentPalette.amber, size: 6)
