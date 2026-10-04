@@ -32,9 +32,9 @@ import AVFoundation
                     for i in voices.indices { voices[i].chokeHat() }
                     acoustic.chokeHats()
                     if sound != .click {
-                        acoustic.trigger(sound: sound.rawValue, strength: strength, beat: event.beat, beats: 4, denominator: 4)
+                        acoustic.trigger(sound: sound.rawValue, strength: strength, beat: event.beat, beats: 4, denominator: 4, gainScale: event.gainScale)
                     } else {
-                        voices[cursor].trigger(sound: sound.rawValue, strength: strength)
+                        voices[cursor].trigger(sound: sound.rawValue, strength: strength, gainScale: event.gainScale)
                         cursor = (cursor + 1) % voices.count
                     }
                 }

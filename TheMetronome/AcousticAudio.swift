@@ -98,14 +98,14 @@ final class AcousticRenderer {
     func chokeHats() {
         for i in voices.indices where voices[i].hat && voices[i].chokeTime < 0 { voices[i].chokeTime = 0 }
     }
-    func trigger(sound: Int, strength: Int, beat: Int = 0, beats: Int = 4, denominator: Int = 4, counting: Bool = false) {
+    func trigger(sound: Int, strength: Int, beat: Int = 0, beats: Int = 4, denominator: Int = 4, counting: Bool = false, gainScale: Float = 1) {
         guard sound == 0 || sound == 2 || sound == 5 || (6...11).contains(sound), strength > 0 else { return }
         let group = sound == 0 ? 7 : sound == 2 ? 8 : sound == 5 ? 6 : sound - 6
         let repetition = repetitions[group] % 4; repetitions[group] = (repetition + 1) % 4
         if sound == InstrumentSound.naturalHiHat.rawValue {
             let hit = HatArticulation.resolve(strength: strength, beat: beat, beats: beats, denominator: denominator, counting: counting)
             let closed = (strength == 2 || strength == 4) ? 4 + repetition : repetition
-            add(offset: closed, gain: hit.gain * library.naturalHatGains[closed], hat: true)
+            add(offset: closed, gain: hit.gain * gainScale * library.naturalHatGains[closed], hat: true)
             return
         }
         let offset: Int
@@ -120,7 +120,7 @@ final class AcousticRenderer {
         default: offset = 20
         }
         let clipIndex = offset + (sound == 2 ? 0 : repetition)
-        add(offset: clipIndex, gain: BeatIntensity.gain(strength) * library.balancedGains[clipIndex], hat: (6...8).contains(sound))
+        add(offset: clipIndex, gain: BeatIntensity.gain(strength) * gainScale * library.balancedGains[clipIndex], hat: (6...8).contains(sound))
     }
     private func add(offset: Int, gain: Float, hat: Bool, limit: Double = .infinity) {
         voices[cursor] = AcousticVoice(clip: library.clips[offset], position: 0, gain: gain, hat: hat, chokeTime: -1, limit: limit)

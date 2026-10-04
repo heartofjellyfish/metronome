@@ -1,0 +1,38 @@
+PASS: 30-second sample clock drift < 1 frame; subdivision, count-in, ramp, gap, mute, meter changes, audio bounds and persistence.
+PASS: live ramp disable restores manual tempo.
+PASS: rotary endpoints, full sweep, relative grab, monotonic mapping, seam continuity, immediate reversal.
+PASS: six sound presets, percussion at 44.1/48/96 kHz, hi-hat choke and sound persistence.
+PASS: 300 BPM sixteenth-note percussion mix remains below full scale.
+PASS: dynamics default/migration/persistence; all sounds; even subdivisions and mute preservation.
+PASS: rendered metrical intensity across all six synthesized sounds.
+PASS: compound meter bar lengths, subdivisions, accents, even/mute and legacy presets.
+PASS: every simple /2 /4 /8 /16 meter, compound grouped/expanded hierarchy, all 5/7 groupings, EVEN visuals and legacy speed.
+PASS: Tap 20–300 BPM, six-tap window, late-tap filtering, idle reset and invalid timestamps.
+PASS: live subdivision/meter preserve count-in completion, ramp tempo and gap phase; count-in edits take effect on restart.
+PASS: exact one-bar audition across simple/compound grids and tempo limits; descending ramp and target clamp.
+PASS: 480 selectable meter/mode/subdivision configurations have valid beat indices and exact bar lengths.
+PASS: explicit subdivision gain tables; 18 grouped/expanded equivalents; 10,000 bounded humanize values; 480 configurations with identical ACCENT/EVEN timing, mute, manual accents, count-in and gap.
+PASS: all five additive 5/7 groupings carry subdivision accents; expanded per-note mutes preserve adjacent notes.
+
+4/4 attack dB, take phase 0: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 1: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 2: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 3: ["-30.57", "-42.61", "-39.94", "-42.61"]
+PASS: all 33 recordings load; seven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak 0.61320627; tail termination; choke; four distinct takes.
+
+PASS: gain applied sample-by-sample to all 8 instruments, 5 roles × 5 scales × 3 sample rates.
+PASS: 576 dense rendered bars across 8 instruments, 12 grids, ACCENT/EVEN and 44.1/48/96 kHz; peak 0.6122412; exact hit counts; no clipping; complete tails.
+AUDITION: 0-classic.wav, 21.4 seconds
+AUDITION: 1-click.wav, 21.4 seconds
+AUDITION: 2-bell.wav, 21.4 seconds
+AUDITION: 5-rimshot.wav, 21.4 seconds
+AUDITION: 8-pedal.wav, 21.4 seconds
+AUDITION: 9-stick.wav, 21.4 seconds
+AUDITION: 10-shaker.wav, 21.4 seconds
+AUDITION: 11-hi-hat.wav, 21.4 seconds
+
+Test Case '-[TheMetronomeUITests.InstrumentUITests testCompoundMeterAndStrengthMarks]' passed (19.904 seconds).
+Test Case '-[TheMetronomeUITests.InstrumentUITests testDynamicsControlAndPersistence]' passed (17.153 seconds).
+Test Case '-[TheMetronomeUITests.InstrumentUITests testPercussionLibrarySelectionAndPlayback]' passed (16.527 seconds).
+Test Case '-[TheMetronomeTests.ModelTests testRuntimeStatePresetsMetadataAndInterruptions]' passed (1.426 seconds).
+** TEST SUCCEEDED **

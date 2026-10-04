@@ -316,3 +316,114 @@ for numerator in 1...12 {
     }
 }
 print("PASS: 480 selectable meter/mode/subdivision configurations have valid beat indices and exact bar lengths.")
+
+// Subdivision dynamics: explicit musical expectations, independent of renderer/articulation.
+func nominalGains(_ r: Rhythm) -> [Float] {
+    (0..<(r.pulseCount * r.subdivision)).map { tick in
+        let beat = tick / r.subdivision, division = tick % r.subdivision
+        let main = r.beatStrength(beat)
+        let strength = main == 0 ? 0 : !r.followsMeter ? 5 : division == 0 ? main : 3
+        return BeatIntensity.gain(strength) * r.subdivisionGainScale(beat: beat, division: division)
+    }
+}
+func closeGains(_ actual: [Float], _ expected: [Float], _ message: String) {
+    check(actual.count == expected.count, message + " length")
+    check(zip(actual, expected).allSatisfy { abs($0 - $1) < 0.00001 }, message)
+}
+var sixteenths = Rhythm(); sixteenths.subdivision = 4
+closeGains(nominalGains(sixteenths), [1,0.105,0.18,0.105, 0.25,0.0924,0.1584,0.0924, 0.34,0.0987,0.1692,0.0987, 0.25,0.0924,0.1584,0.0924], "4/4 sixteenths must retain both beat and internal hierarchy")
+var thirds = Rhythm(); thirds.subdivision = 3
+closeGains(Array(nominalGains(thirds).prefix(3)), [1,0.18,0.18], "Triplets must not invent a secondary accent on the last note")
+var halves = Rhythm(); halves.subdivision = 2
+closeGains(nominalGains(halves), [1,0.18,0.25,0.1584,0.34,0.1692,0.25,0.1584], "Eighth-note offbeats follow parent context")
+var compoundSix = Rhythm(); compoundSix.setMeter(beats: 6, denominator: 8, compound: true); compoundSix.subdivision = 6
+closeGains(nominalGains(compoundSix), [1,0.105,0.18,0.105,0.18,0.105, 0.34,0.0987,0.1692,0.0987,0.1692,0.0987], "Compound sixteenths must use 2+2+2, not 3+3")
+compoundSix.subdivision = 2
+closeGains(nominalGains(compoundSix), [1,0.18,0.34,0.1692], "Compound duplets have one local anchor and one light note")
+// Same physical rhythm in grouped or expanded notation must keep the same expression.
+for denominator in [4,8,16] {
+    for numerator in [6,9,12] {
+        for (groupDivision, expandedDivision) in [(3,1),(6,2)] {
+            var grouped = Rhythm(); grouped.setMeter(beats: numerator, denominator: denominator, compound: true)
+            grouped.subdivision = groupDivision; grouped.bpm = 96
+            var expanded = grouped; expanded.setMeter(beats: numerator, denominator: denominator, compound: false)
+            expanded.subdivision = expandedDivision; expanded.bpm = 288
+            closeGains(nominalGains(grouped), nominalGains(expanded), "Grouped/expanded compound dynamics mismatch")
+            let a = SampleClock(rate: 1000), b = SampleClock(rate: 1000); a.reset(grouped); b.reset(expanded)
+            for _ in 0..<5000 {
+                let x = a.advance(), y = b.advance()
+                check((x == nil) == (y == nil), "Equivalent compound grids must share timestamps")
+                if let x, let y { check(abs(BeatIntensity.gain(x.1)*x.0.gainScale - BeatIntensity.gain(y.1)*y.0.gainScale) < 0.00001, "Equivalent grids must share performed gain") }
+            }
+        }
+    }
+}
+var humanizer = DynamicHumanizer(), variations = Set<Float>()
+for _ in 0..<10000 {
+    let g = humanizer.nextGain(); variations.insert(g)
+    check(g >= pow(10, -0.25/20) && g <= pow(10, 0.25/20), "Humanize exceeded its dB bound")
+}
+check(variations.count > 1000, "Humanize must vary beyond a short beat-locked pattern")
+for numerator in 1...12 {
+    for denominator in [2,4,8,16] {
+        for compound in [false,true] {
+            for subdivision in [1,2,3,4,6] {
+                var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: compound)
+                r.subdivision = subdivision; r.sanitize(); r.bpm = 137
+                let nominal = nominalGains(r)
+                let accented = SampleClock(rate: 1000); accented.reset(r)
+                var even = r; even.followsMeter = false
+                let flat = SampleClock(rate: 1000); flat.reset(even)
+                var hits = 0
+                for _ in 0..<1000 {
+                    let a = accented.advance(), b = flat.advance()
+                    check((a == nil) == (b == nil), "Humanize must not move a single timestamp")
+                    if let (e, strength) = a, let (f, flatStrength) = b {
+                        let g = BeatIntensity.gain(strength)*e.gainScale
+                        let base = nominal[hits % nominal.count]
+                        check(g.isFinite && g >= base * 0.9716 && g <= base * 1.0293, "Subdivision level out of bounds")
+                        check(flatStrength == 5 && f.gainScale == 1, "EVEN must disable performance dynamics")
+                        hits += 1
+                    }
+                }
+                r.accents[0] = 0
+                let muted = SampleClock(rate: 1000); muted.reset(r)
+                for _ in 0..<r.subdivision {
+                    var hit: (ClockEvent, Int)?
+                    repeat { hit = muted.advance() } while hit == nil
+                    check(hit!.1 == 0 && hit!.0.gainScale == 0, "Humanize must not revive a muted beat or its children")
+                }
+            }
+        }
+    }
+}
+var manual = sixteenths; manual.accents[1] = 2
+closeGains(Array(nominalGains(manual)[4..<8]), [1,0.105,0.18,0.105], "Manual accent also changes its subdivision context")
+var training = compoundSix; training.subdivision = 6; training.countIn = 1; training.gap = true
+training.audibleBars = 1; training.silentBars = 1; training.accents[0] = 0
+let trained = SampleClock(rate: 1000); trained.reset(training)
+var silentHits = 0, countInHits = 0
+for _ in 0..<6000 {
+    if let (e,s) = trained.advance() {
+        if e.countIn { countInHits += 1; check(s > 0 && e.gainScale > 0, "Count-in must have performance dynamics despite stored mutes") }
+        if e.silent { silentHits += 1; check(s == 0 && e.gainScale == 0, "Gap silence must remain absolute") }
+    }
+}
+check(silentHits > 0 && countInHits == 12, "Training coverage")
+print("PASS: explicit subdivision gain tables; 18 grouped/expanded equivalents; 10,000 bounded humanize values; 480 configurations with identical ACCENT/EVEN timing, mute, manual accents, count-in and gap.")
+for numerator in [5,7] {
+    for grouping in Rhythm.groupingOptions(numerator) {
+        var r = Rhythm(); r.setMeter(beats: numerator, denominator: 8, compound: false, grouping: grouping); r.subdivision = 4
+        let gains = nominalGains(r)
+        var boundary = 0
+        for group in grouping {
+            let base = boundary * 4
+            closeGains(Array(gains[base..<base+4]), boundary == 0 ? [1,0.105,0.18,0.105] : [0.34,0.0987,0.1692,0.0987], "Every additive group must retain its secondary subdivision context")
+            boundary += group
+        }
+    }
+}
+var expandedMuted = Rhythm(); expandedMuted.setMeter(beats: 6, denominator: 8, compound: false)
+expandedMuted.subdivision = 2; expandedMuted.accents[0] = 0
+closeGains(Array(nominalGains(expandedMuted).prefix(4)), [0,0,0.18,0.105], "A muted expanded group anchor cannot silence its separately enabled neighbour")
+print("PASS: all five additive 5/7 groupings carry subdivision accents; expanded per-note mutes preserve adjacent notes.")

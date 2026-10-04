@@ -30,6 +30,17 @@ enum BeatIntensity {
     }
 }
 
+/// Performance dynamics are separate from metrical roles and sample scheduling.
+/// Tiny, reproducible level variation never moves a hit or reverses the hierarchy.
+struct DynamicHumanizer {
+    private var seed: UInt64 = 0x48554D414E
+    mutating func nextGain() -> Float {
+        seed = seed &* 6364136223846793005 &+ 1442695040888963407
+        let unit = Double(UInt32(truncatingIfNeeded: seed >> 32)) / Double(UInt32.max)
+        return Float(pow(10, (unit * 0.5 - 0.25) / 20)) // ±0.25 dB, approximately ±2.9%.
+    }
+}
+
 struct Rhythm: Codable, Equatable {
     var bpm = 96
     var beats = 4
@@ -111,6 +122,24 @@ struct Rhythm: Codable, Equatable {
         return metricalStrength(beat)
     }
 
+    /// Scale the existing role gain; main beats retain their established nominal levels.
+    /// Expanded compound note units descend one level further than big-beat counting.
+    func subdivisionGainScale(beat: Int, division: Int, counting: Bool = false) -> Float {
+        guard followsMeter else { return 1 }
+        let main = beatStrength(beat, counting: counting)
+        guard main != 0 else { return 0 }
+        let expanded = isCompound && !usesCompoundPulse
+        let parent = expanded && main != 2 ? beatStrength(beat - beat % 3, counting: counting) : main
+        // A muted neighbouring group start must not silence independently enabled note units.
+        let role = parent == 0 ? metricalStrength(beat - beat % 3) : parent
+        let context: Float = role == 2 ? 1 : role == 4 ? 0.94 : 0.88
+        if division == 0 { return expanded && main == 3 ? context : 1 }
+        let light: Bool = subdivision == 4 ? division % 2 == 1
+            : usesCompoundPulse && subdivision == 6 ? division % 2 == 1 : false
+        let level: Float = expanded ? (light ? 0.065 : 0.105) : (light ? 0.105 : 0.18)
+        return level * context / BeatIntensity.gain(3)
+    }
+
     mutating func setMeter(beats: Int, denominator: Int, compound: Bool, grouping: [Int]? = nil) {
         let oldCompound = usesCompoundPulse
         let changed = self.beats != beats || self.denominator != denominator
@@ -145,6 +174,7 @@ struct ClockEvent {
     let bpm: Int
     let countIn: Bool
     let silent: Bool
+    var gainScale: Float = 1
 }
 
 /// Driven by audio sample frames, never a UI timer. Owned exclusively by the render thread.
@@ -157,6 +187,7 @@ final class SampleClock {
     private var lastRampBar = -1
     private var countInBars = 0
     private var barLimit: Int?
+    private var humanizer = DynamicHumanizer()
     let rate: Double
     init(rate: Double) { self.rate = rate }
 
@@ -179,6 +210,7 @@ final class SampleClock {
         rhythm = value; tempo = value.ramp ? value.start : value.bpm
         tick = -1; framesUntilTick = 0; first = true
         lastRampBar = -1; countInBars = value.countIn; self.barLimit = barLimit
+        humanizer = DynamicHumanizer()
     }
     func advance() -> (ClockEvent, Int)? {
         defer { framesUntilTick -= 1 }
@@ -206,7 +238,10 @@ final class SampleClock {
         let mainStrength = rhythm.beatStrength(beat, counting: counting)
         let strength = silent || mainStrength == 0 ? 0 : !rhythm.followsMeter ? 5
             : primary ? mainStrength : 3
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent), strength)
+        let variation = humanizer.nextGain()
+        let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
+            : rhythm.subdivisionGainScale(beat: beat, division: tick % rhythm.subdivision, counting: counting) * variation
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale), strength)
     }
 }
 
@@ -228,11 +263,11 @@ struct ClickVoice {
     mutating func chokeHat() {
         if sound == InstrumentSound.hiHat.rawValue && age < duration && chokeTime < 0 { chokeTime = 0 }
     }
-    mutating func trigger(sound: Int, strength: Int) {
+    mutating func trigger(sound: Int, strength: Int, gainScale: Float = 1) {
         age = 0; self.sound = sound; accent = strength
         chokeTime = -1; lowNoise = 0; highNoise = 0
         duration = sound == 3 ? 0.06 : sound == 4 ? 0.10 : 0.12
-        self.strength = 0.65 * Double(BeatIntensity.gain(strength))
+        self.strength = 0.65 * Double(BeatIntensity.gain(strength) * gainScale)
         frequency = (sound == 0 ? 1050 : sound == 1 ? 1800 : 1450) * (strength == 2 ? 1.35 : 1)
     }
     mutating func sample(rate: Double) -> Float {

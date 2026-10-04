@@ -102,3 +102,16 @@ To reproduce the sample-attack measurement (a signal envelope metric, not a perc
 swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AttackAudit.swift -o /tmp/metronome-attack-audit
 /tmp/metronome-attack-audit
 ```
+
+## Subdivision dynamics (2026-10-03)
+
+ACCENT now expresses both the meter and the subdivision hierarchy. Main nominal gains remain 1.00 / 0.25 / 0.34 / 0.25 in 4/4. Simple four-way divisions use lighter second/fourth hits and a slightly stronger midpoint; compound six-way divisions preserve 2+2+2. Triplet trailing notes are equal in nominal weight. Expanded compound note-unit counting descends one additional dynamic level and matches the corresponding grouped timing/gains. Subdivisions receive a gentle parent context (1 / .94 / .88); bounded ±0.25 dB performance variation and the existing recorded round robins add motion without altering timestamps. EVEN bypasses these dynamics. Mutes, gap bars and count-in retain their existing semantics.
+
+See the [complete parameter table, research sources and eight-instrument auditions](Design/Audio/division-dynamics/index.html). Ratios are tuning choices, not universal music-theory rules. The new auditions supersede the older fixed-subdivision dynamics previews; no original recordings were changed.
+
+```sh
+swiftc -O -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/DivisionDynamicsMain.swift -o /tmp/division-dynamics-tests
+/tmp/division-dynamics-tests --auditions
+```
+
+The test renders 576 dense bars (8 instruments × 12 grids × 3 sample rates × ACCENT/EVEN), validates actual per-sample gain propagation and writes reproducible 96 BPM auditions when `--auditions` is supplied. Run existing AcousticMain with `--no-previews` to check audio without overwriting historical audition files.

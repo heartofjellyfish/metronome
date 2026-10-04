@@ -74,7 +74,7 @@ import AVFoundation
                 var energy: Double = 0
                 for frame in 0..<Int(rate * 2) {
                     if frame < Int(rate), let (event, strength) = clock.advance(), strength > 0 {
-                        renderer.chokeHats(); renderer.trigger(sound: sound, strength: strength, beat: event.beat, beats: rhythm.beats, denominator: rhythm.denominator, counting: event.countIn)
+                        renderer.chokeHats(); renderer.trigger(sound: sound, strength: strength, beat: event.beat, beats: rhythm.beats, denominator: rhythm.denominator, counting: event.countIn, gainScale: event.gainScale)
                     }
                     let sample = renderer.sample(rate: rate)
                     check(sample.isFinite && abs(sample) < 1, "Recorded mix clips or contains invalid samples")
@@ -93,7 +93,7 @@ import AVFoundation
             for _ in 0..<96000 {
                 if let (e, strength) = clock.advance() {
                     renderer.chokeHats()
-                    renderer.trigger(sound: sound, strength: strength, beat: e.beat, beats: r.pulseCount, denominator: 4)
+                    renderer.trigger(sound: sound, strength: strength, beat: e.beat, beats: r.pulseCount, denominator: 4, gainScale: e.gainScale)
                 }
                 let value = renderer.sample(rate: 48000)
                 check(value.isFinite && abs(value) < 1, "Compound sixteenth mix must not clip")
@@ -114,6 +114,7 @@ import AVFoundation
         }
         check(Set(signatures).count == 4, "Round robin must use four different recordings")
         print("PASS: all 33 recordings load; seven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak \(largest); tail termination; choke; four distinct takes.")
+        guard !CommandLine.arguments.contains("--no-previews") else { return }
         for (sound, name) in [(0,"acoustic-wood"),(2,"acoustic-bell"),(5,"acoustic-rimshot"),(8,"acoustic-pedal"),(9,"acoustic-stick"),(10,"acoustic-shaker"),(11,"recommended-hi-hat")] {
             let renderer = AcousticRenderer(library: library)
             let rate = 44100.0; var rhythm = Rhythm(); rhythm.bpm = 96; rhythm.subdivision = 2
@@ -123,7 +124,7 @@ import AVFoundation
             let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(count))!; buffer.frameLength = AVAudioFrameCount(count)
             for frame in 0..<count {
                 if frame < Int(rate * 5), let (event, strength) = clock.advance(), strength > 0 {
-                    renderer.chokeHats(); renderer.trigger(sound: sound, strength: strength, beat: event.beat, beats: rhythm.beats, denominator: rhythm.denominator, counting: event.countIn)
+                    renderer.chokeHats(); renderer.trigger(sound: sound, strength: strength, beat: event.beat, beats: rhythm.beats, denominator: rhythm.denominator, counting: event.countIn, gainScale: event.gainScale)
                 }
                 buffer.floatChannelData![0][frame] = renderer.sample(rate: rate)
             }
@@ -143,7 +144,7 @@ import AVFoundation
         for frame in 0..<abCount {
             if frame == barFrames * 2 { abRhythm.followsMeter = true; abClock.update(abRhythm) }
             if frame < barFrames * 4, let (event, strength) = abClock.advance() {
-                abRenderer.chokeHats(); abRenderer.trigger(sound: 11, strength: strength, beat: event.beat)
+                abRenderer.chokeHats(); abRenderer.trigger(sound: 11, strength: strength, beat: event.beat, gainScale: event.gainScale)
             }
             abBuffer.floatChannelData![0][frame] = abRenderer.sample(rate: abRate)
         }
