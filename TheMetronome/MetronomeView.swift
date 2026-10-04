@@ -106,11 +106,11 @@ struct MetronomeView: View {
             HStack {
                 Spacer()
                 if title == "DIVISION" {
-                    RhythmNotation(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision), color: p.ink).frame(width: 42, height: 26)
+                    RhythmNotation(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision), color: p.ink).frame(width: 76, height: 32)
                 } else { Text(value).font(InstrumentType.value(24)) }
                 Spacer()
                 Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium))
-            }.frame(height: 28)
+            }.frame(height: 32)
         }.padding(.horizontal, 14).frame(maxWidth: .infinity).frame(height: 61)
     }
     private var beatKeys: some View {

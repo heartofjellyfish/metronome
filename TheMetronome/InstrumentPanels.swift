@@ -421,15 +421,7 @@ struct RhythmNotation: View {
                     Rectangle().frame(height: 0.7)
                 }.frame(width: 24, height: 9)
             }
-            if tuplet != nil {
-                GeometryReader { geometry in
-                    RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
-                        .frame(height: 40)
-                        .scaleEffect(x: 1, y: geometry.size.height / 40, anchor: .top)
-                }
-            } else {
-                RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
-            }
+            RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
         }.foregroundStyle(color)
     }
 }
@@ -444,13 +436,13 @@ struct RhythmGlyph: Shape {
         let left = (rect.width - width) / 2
         for i in 0..<count {
             let x = count == 1 ? rect.midX : left + CGFloat(i) * width / CGFloat(count - 1)
-            p.addEllipse(in: CGRect(x: x - 7, y: rect.height - 12, width: 10, height: 6))
-            p.addRect(CGRect(x: x + 1.5, y: 5, width: 1.8, height: rect.height - 14))
+            p.addEllipse(in: CGRect(x: x - 7, y: rect.height - 7, width: 10, height: 6))
+            p.addRect(CGRect(x: x + 1.5, y: 1, width: 1.8, height: rect.height - 4.5))
         }
-        if compound && count == 1 { p.addEllipse(in: CGRect(x: rect.midX + 7, y: rect.height - 10, width: 3, height: 3)) }
+        if compound && count == 1 { p.addEllipse(in: CGRect(x: rect.midX + 7, y: rect.height - 5, width: 3, height: 3)) }
         let flags = noteValue >= 8 ? Int(log2(Double(noteValue))) - 2 : 0
         for flag in 0..<flags {
-            let y = CGFloat(5 + flag * 5)
+            let y = CGFloat(1 + flag * 5)
             if count > 1 { p.addRect(CGRect(x: left + 1.5, y: y, width: width + 1.8, height: 2.4)) }
             else {
                 p.move(to: CGPoint(x: rect.midX + 3, y: y))
@@ -462,7 +454,7 @@ struct RhythmGlyph: Shape {
         if noteValue == 2 {
             for i in 0..<count {
                 let x = count == 1 ? rect.midX : left + CGFloat(i) * width / CGFloat(count - 1)
-                p = p.subtracting(Path(ellipseIn: CGRect(x: x - 5, y: rect.height - 10.5, width: 6, height: 3)))
+                p = p.subtracting(Path(ellipseIn: CGRect(x: x - 5, y: rect.height - 5.5, width: 6, height: 3)))
             }
         }
         return p

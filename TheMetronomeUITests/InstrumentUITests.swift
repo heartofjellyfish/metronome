@@ -362,6 +362,27 @@ final class InstrumentUITests: XCTestCase {
         proof("Full sound library without duplicate recommendations")
     }
 
+    func testDivisionNotationProportions() {
+        for division in [1,2,3,4] {
+            button("Subdivision").tap(); proof("Simple division choices")
+            button("\(division) clicks per beat").tap()
+            XCTAssertFalse(button("Close division").exists)
+            proof("Simple home division \(division)")
+        }
+        button("Time signature").tap(); button("meter-6-8").tap()
+        button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
+        button("transport").tap()
+        for division in [1,2,3,6] {
+            button("Subdivision").tap(); button("\(division) clicks per beat").tap()
+            XCTAssertTrue(button("\(division) clicks per beat").isSelected)
+            proof("Compound division choices")
+            button("Close division").tap()
+            XCTAssertEqual(button("transport").label, "Stop metronome")
+            proof("Compound home division \(division)")
+        }
+        button("transport").tap()
+    }
+
     func testDarkTransportHierarchy() {
         button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
         proof("Graphite primary play key")
