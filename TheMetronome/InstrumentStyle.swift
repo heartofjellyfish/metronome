@@ -130,6 +130,7 @@ struct TempoDial: View {
     var body: some View {
         GeometryReader { geometry in
             let side = min(geometry.size.width, geometry.size.height)
+            let centerDeadZone = side * 0.04
             ZStack {
                 DialTicks(p: p, knurl: false)
                 VStack {
@@ -162,11 +163,11 @@ struct TempoDial: View {
             }.frame(width: side, height: side)
                 .contentShape(Circle())
                 .gesture(DragGesture(minimumDistance: 2).updating($rotating) { value, active, _ in
-                    active = hypot(value.location.x - side / 2, value.location.y - side / 2) > side * 0.18
+                    active = hypot(value.location.x - side / 2, value.location.y - side / 2) > centerDeadZone
                 }.onChanged { value in
                     let dx = value.location.x - side / 2
                     let dy = value.location.y - side / 2
-                    guard hypot(dx, dy) > side * 0.18 else { interaction.end(); return }
+                    guard hypot(dx, dy) > centerDeadZone else { interaction.end(); return }
                     let current = Double(atan2(dx, -dy)) * 180 / .pi
                     if !interaction.isTracking { interaction.begin(at: current, bpm: model.bpm) }
                     else if let bpm = interaction.move(to: current), bpm != model.bpm { model.setBPM(bpm) }

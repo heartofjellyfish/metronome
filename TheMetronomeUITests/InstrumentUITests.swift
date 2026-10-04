@@ -237,6 +237,22 @@ final class InstrumentUITests: XCTestCase {
     func testRotaryGestureAndPresetPanel() {
         XCTAssertTrue(button("tempoDisplay").waitForExistence(timeout: 3))
         proof("Ivory dial position at 96")
+        let innerDial = app.otherElements["tempoDial"]
+        let innerStart = innerDial.coordinate(withNormalizedOffset: CGVector(dx: 0.60, dy: 0.60))
+        let innerEnd = innerDial.coordinate(withNormalizedOffset: CGVector(dx: 0.64, dy: 0.50))
+        innerStart.press(forDuration: 0.1, thenDragTo: innerEnd)
+        XCTAssertFalse(button("tempoDisplay").label.contains("96 BPM"), "The inner knob face must accept rotation")
+        proof("Inner dial stopped adjustment")
+        button("transport").tap()
+        let beforeInnerForward = button("tempoDisplay").label
+        innerEnd.press(forDuration: 0.1, thenDragTo: innerStart)
+        XCTAssertNotEqual(button("tempoDisplay").label, beforeInnerForward)
+        let beforeInnerReverse = button("tempoDisplay").label
+        innerStart.press(forDuration: 0.1, thenDragTo: innerEnd)
+        XCTAssertNotEqual(button("tempoDisplay").label, beforeInnerReverse)
+        XCTAssertEqual(button("transport").label, "Stop metronome")
+        proof("Inner dial repeated live adjustment")
+        button("transport").tap()
         openTempo(); type("20"); button("panelApply").tap()
         proof("Dial position at minimum")
         openTempo(); type("300"); button("panelApply").tap()
