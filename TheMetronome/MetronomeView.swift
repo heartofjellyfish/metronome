@@ -86,14 +86,14 @@ struct MetronomeView: View {
 
             Button { model.toggle(); model.tickFeedback() } label: {
                 TransportGlyph(playing: model.playing).frame(width: 223, height: 100)
-            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 13)).position(x: 138.5, y: 677)
+            }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: !model.dark, radius: 13)).position(x: 138.5, y: 677)
                 .accessibilityLabel(model.playing ? "Stop metronome" : "Start metronome").accessibilityIdentifier("transport")
             Button { model.tap() } label: {
                 VStack(spacing: 19) {
                     LED(on: true, color: InstrumentPalette.amber, size: 13)
                     Text("TAP").technical(16, spacing: 1)
                 }.frame(width: 121, height: 100)
-            }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), radius: 13)).position(x: 327.5, y: 677)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 13)).position(x: 327.5, y: 677)
                 .accessibilityLabel("Tap tempo").accessibilityIdentifier("tap")
             Button { present(.presets) } label: {
                 Text(model.presetCaption).technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)

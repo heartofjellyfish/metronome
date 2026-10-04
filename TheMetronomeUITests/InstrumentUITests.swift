@@ -362,6 +362,22 @@ final class InstrumentUITests: XCTestCase {
         proof("Full sound library without duplicate recommendations")
     }
 
+    func testDarkTransportHierarchy() {
+        button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
+        proof("Graphite primary play key")
+        for _ in 0..<3 {
+            button("transport").tap()
+            XCTAssertEqual(button("transport").label, "Stop metronome")
+            proof("Graphite primary stop key")
+            button("transport").tap()
+            XCTAssertEqual(button("transport").label, "Start metronome")
+        }
+        for _ in 0..<3 { button("tap").tap() }
+        XCTAssertEqual(button("transport").label, "Start metronome")
+        button("settings").tap(); button("LIGHT").tap(); button("Close settings").tap()
+        proof("Ivory original transport hierarchy")
+    }
+
     func testCurrentSoundRemainsVisibleInSettings() {
         button("settings").tap()
         button("recommended-sound-11").tap()
