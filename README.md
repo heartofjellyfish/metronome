@@ -86,7 +86,7 @@ Tests enumerate simple and compound patterns, grouped vs expanded counting, all 
 
 The home surface keeps the approved instrument layout: tempo, beat indicators, direct Meter and Division controls, graphite Play/Stop and ivory Tap. The original section labels and control proportions are retained. Sound choices are one level inside Settings. Practice and saved presets have their own entries; ramp and gap details appear only when enabled. Fresh rhythms start at 96 BPM, 4/4, ACCENT on, with no count-in or training enabled.
 
-Common meters, division, count-in, ramp interval and increment apply in one tap. Custom meter edits apply immediately without a Set button; dismissing retains them. Numeric tempo entry keeps confirmation so partial digits never affect playback. Sound choices apply immediately and keep the library open for auditioning. Preset deletion keeps its confirmation.
+Common meters, division, count-in, ramp interval and increment apply in one tap. During playback, Meter, Division and preset selections remain open for repeated comparison; users close them explicitly. Stopped Meter/Division/preset choices retain the one-tap return to the instrument. Count-in and ramp quantities return to their parent Practice panel. Custom meter edits apply immediately without a Set button; dismissing retains them. Numeric tempo entry keeps confirmation so partial digits never affect playback. Sound choices apply immediately and keep the library open for auditioning. Preset deletion keeps its confirmation.
 
 ## Full feature audit (2026-10-03)
 
@@ -115,3 +115,9 @@ swiftc -O -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMet
 ```
 
 The test renders 576 dense bars (8 instruments × 12 grids × 3 sample rates × ACCENT/EVEN), validates actual per-sample gain propagation and writes reproducible 96 BPM auditions when `--auditions` is supplied. Run existing AcousticMain with `--no-previews` to check audio without overwriting historical audition files.
+
+## Context-aware pickers
+
+Division cards show the rhythm glyph and one musical label under the shared “clicks within each beat” heading. Decorative 01/02 numbers and repeated per-card “1 / BEAT” subtitles are removed. Selection lamps read the current model, so multiple live choices and reopening stay accurate. Preset comparison also shows the active saved rhythm. The Settings recommendation shelf remains; the full sound library lists the eight instruments once.
+
+UX acceptance rules are recorded in `AGENTS.md`: inspect stopped setup, active playback and repeated audition as distinct journeys; immediate application does not imply dismissal; each visible datum needs a purpose. Regression journeys exercise repeated simple/compound choices, both entry points and skins, live meter changes, live preset comparison, stopped dismissal, and sound-library uniqueness.

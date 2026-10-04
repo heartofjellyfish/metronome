@@ -35,18 +35,12 @@ struct SoundLibraryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 27) {
             SoundDynamicsControl(model: model, namespace: "library-")
-            VStack(alignment: .leading, spacing: 16) {
-                SectionLabel(text: "01 OUR PICKS", p: p)
-                SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "picks")
-                Text("NATURAL GROOVE · WARM WOOD · CLEAR PULSE")
-                    .technical(8, spacing: 0.5).foregroundStyle(p.muted)
-            }
-            family("02 ACOUSTIC", subtitle: "REAL DRUMS / HATS & PERCUSSION", rows: [
+            family("01 ACOUSTIC", subtitle: "REAL DRUMS / HATS & PERCUSSION", rows: [
                 [.naturalHiHat, .acousticPedal, .rim],
                 [.acousticStick, .acousticShaker]
             ], namespace: "acoustic")
-            family("03 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell]], namespace: "classic")
-            Text("TAP TO SELECT & LISTEN\nONE BAR PREVIEW WHEN STOPPED")
+            family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell]], namespace: "classic")
+            Text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW")
                 .technical(8, spacing: 0.9).lineSpacing(6).foregroundStyle(p.muted)
         }
     }

@@ -23,7 +23,7 @@ enum InstrumentPanelKind: String, Identifiable {
         switch self {
         case .tempo, .start, .end: return 620
         case .meter: return 740
-        case .division: return 445
+        case .division: return 405
         case .practice: return 740
         case .presets: return 560
         case .audio: return 300
@@ -166,14 +166,14 @@ struct InstrumentPanel: View {
                     let unit = beats < 6 ? 4 : 8
                     choice("\(beats)/\(unit)", selected: selected == beats && denominator == unit, height: 67) {
                         selected = beats; denominator = unit; compoundPulse = true
-                        applyMeter(); dismiss()
+                        applyMeter(); finishLiveSelection()
                     }.accessibilityIdentifier("meter-\(beats)-\(unit)")
                 }
             }
             if [4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) {
                 HStack(spacing: 10) {
-                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true; applyMeter(); dismiss() }
-                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false; applyMeter(); dismiss() }
+                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true; applyMeter(); finishLiveSelection() }
+                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false; applyMeter(); finishLiveSelection() }
                 }
                 Text("\(selected / 3) big beats or \(selected) note units per bar.")
                     .font(.system(size: 12)).foregroundStyle(p.muted)
@@ -228,15 +228,14 @@ struct InstrumentPanel: View {
             Text("CLICKS WITHIN EACH BEAT").technical(9, spacing: 1.5).foregroundStyle(p.muted)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
                 ForEach(model.rhythm.usesCompoundPulse ? [1, 2, 3, 6] : [1, 2, 3, 4], id: \.self) { value in
-                    Button { model.rhythm.subdivision = value; model.tickFeedback(); dismiss() } label: {
+                    Button { model.rhythm.subdivision = value; model.tickFeedback(); finishLiveSelection() } label: {
                         VStack(alignment: .leading, spacing: 12) {
-                            HStack { LED(on: selected == value, size: 7); Spacer(); Text(String(format: "%02d", value)).technical(9, spacing: 1).foregroundStyle(p.muted) }
+                            HStack { LED(on: model.rhythm.subdivision == value, size: 7); Spacer() }
                             RhythmNotation(count: value, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(value), color: p.ink).frame(height: 40).padding(.horizontal, 16)
                             Text(model.rhythm.divisionTitle(value)).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
-                            Text("\(value) / BEAT").technical(8, spacing: 1).foregroundStyle(p.muted).frame(maxWidth: .infinity)
                         }.padding(13).frame(maxWidth: .infinity)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
-                        .accessibilityLabel("\(value) clicks per beat").accessibilityAddTraits(selected == value ? .isSelected : [])
+                        .accessibilityLabel("\(value) clicks per beat").accessibilityAddTraits(model.rhythm.subdivision == value ? .isSelected : [])
                 }
             }
         }
@@ -313,7 +312,7 @@ struct InstrumentPanel: View {
             ForEach(model.presets) { preset in
                 VStack(spacing: 11) {
                     HStack(spacing: 12) {
-                        Button { model.load(preset); dismiss() } label: {
+                        Button { model.load(preset); finishLiveSelection() } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 7) {
                                     Text(preset.name).technical(11, spacing: 1).lineLimit(2)
@@ -322,6 +321,10 @@ struct InstrumentPanel: View {
                                 Spacer(); Text(String(preset.rhythm.bpm)).font(InstrumentType.value(30))
                             }.padding(15).frame(maxWidth: .infinity, minHeight: 76)
                         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("load-preset-\(preset.name)")
+                            .accessibilityAddTraits(model.isCurrentPreset(preset) ? .isSelected : [])
+                            .overlay(alignment: .topLeading) {
+                                if model.isCurrentPreset(preset) { LED(on: true, size: 5).offset(x: 6, y: 6).allowsHitTesting(false) }
+                            }
                         Button { deleting = preset.id } label: { Image(systemName: "trash").font(.system(size: 15, weight: .light)).frame(width: 40, height: 44) }
                             .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Delete \(preset.name)")
                     }
@@ -355,6 +358,8 @@ struct InstrumentPanel: View {
             }.padding(14).frame(maxWidth: .infinity)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("\(title), \(value)")
     }
+    // Live comparison keeps context; a stopped one-off choice returns to the instrument.
+    private func finishLiveSelection() { if !model.playing { dismiss() } }
     private func dismiss() { if returnsToPractice { returnsToPractice = false; kind = .practice; return }; if kind == .sounds { model.endSoundPreview() }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {

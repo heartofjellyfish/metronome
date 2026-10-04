@@ -98,6 +98,10 @@ final class MetronomeModel: ObservableObject {
         guard saved == rhythm else { return "CUSTOM RHYTHM / SAVE" }
         return String(format: "PRESET %02d / %@", index + 1, presets[index].name)
     }
+    func isCurrentPreset(_ preset: SavedPreset) -> Bool {
+        var saved = preset.rhythm; saved.sanitize()
+        return preset.id == selectedPresetID && saved == rhythm
+    }
     @Published var tapCount = 0
     private let audio = MetronomeAudio()
     private var displayTimer: Timer?

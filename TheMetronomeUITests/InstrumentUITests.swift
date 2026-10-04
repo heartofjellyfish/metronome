@@ -152,7 +152,7 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertTrue(button("recommended-sound-11").isSelected)
         proof("Recommended sounds")
         button("All sounds").tap()
-        XCTAssertTrue(button("picks-sound-11").isSelected)
+        XCTAssertTrue(button("acoustic-sound-11").isSelected)
         proof("Expanded sound library")
         for index in [11,8,5,9,10] {
             let sound = button("acoustic-sound-\(index)")
@@ -286,6 +286,80 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertTrue(button("SOUND / SILENCE-on").isSelected)
         reveal(button("TOUCH FEEDBACK-off")); XCTAssertTrue(button("TOUCH FEEDBACK-off").isSelected)
         button("TOUCH FEEDBACK-on").tap()
+    }
+
+    func testLiveDivisionAndMeterComparisonKeepsContext() {
+        button("transport").tap()
+        button("Subdivision").tap()
+        for division in [2,3,4,1] {
+            button("\(division) clicks per beat").tap()
+            XCTAssertTrue(button("Close division").isHittable)
+            XCTAssertTrue(button("\(division) clicks per beat").isSelected)
+            for other in [1,2,3,4] where other != division {
+                XCTAssertFalse(button("\(other) clicks per beat").isSelected)
+            }
+        }
+        for duplicate in ["01","02","03","04","1 / BEAT","2 / BEAT","3 / BEAT","4 / BEAT"] {
+            XCTAssertFalse(app.staticTexts[duplicate].exists)
+        }
+        proof("Live division clean labels and current selection")
+        button("Close division").tap()
+        XCTAssertEqual(button("transport").label, "Stop metronome")
+        button("Time signature").tap()
+        for meter in ["meter-3-4","meter-6-8"] {
+            button(meter).tap(); XCTAssertTrue(button("Close meter").isHittable)
+            XCTAssertTrue(button(meter).isSelected)
+        }
+        button("NOTE UNITS").tap(); XCTAssertTrue(button("NOTE UNITS").isSelected)
+        button("BIG BEATS").tap(); XCTAssertTrue(button("BIG BEATS").isSelected)
+        button("Close meter").tap()
+        button("settings").tap(); button("DARK").tap(); button("Subdivision").tap()
+        for division in [2,6,3,1] {
+            button("\(division) clicks per beat").tap()
+            XCTAssertTrue(button("Close division").isHittable)
+            XCTAssertTrue(button("\(division) clicks per beat").isSelected)
+        }
+        proof("Live compound division graphite")
+        button("Close division").tap(); button("Close settings").tap()
+        XCTAssertEqual(button("transport").label, "Stop metronome")
+        button("Subdivision").tap(); XCTAssertTrue(button("1 clicks per beat").isSelected)
+        button("Close division").tap(); button("transport").tap()
+        // Stopped setup keeps the existing one-tap return to the instrument.
+        button("Subdivision").tap(); button("3 clicks per beat").tap()
+        XCTAssertFalse(button("Close division").exists)
+    }
+    func testLivePresetComparisonAndUniqueSoundLibrary() {
+        for (name, bpm) in [("LIVE A",96),("LIVE B",120)] {
+            openTempo(); type(String(bpm)); button("panelApply").tap()
+            button("presets").tap()
+            let field = app.textFields["NAME THIS RHYTHM"]
+            field.tap(); field.typeText(name); button("Save current rhythm").tap()
+            button("Close presets").tap()
+        }
+        button("transport").tap(); button("presets").tap()
+        for name in ["LIVE A","LIVE B","LIVE A"] {
+            button("load-preset-\(name)").tap()
+            XCTAssertTrue(button("Close presets").isHittable)
+            XCTAssertTrue(button("load-preset-\(name)").isSelected)
+            let other = name == "LIVE A" ? "LIVE B" : "LIVE A"
+            XCTAssertFalse(button("load-preset-\(other)").isSelected)
+        }
+        proof("Live preset comparison with selection lamp")
+        button("Close presets").tap(); assertTempo(96)
+        XCTAssertEqual(button("transport").label,"Stop metronome")
+        button("transport").tap(); button("presets").tap()
+        for name in ["LIVE A","LIVE B"] {
+            button("Delete \(name)").tap(); button("DELETE").tap()
+        }
+        button("Close presets").tap()
+        button("settings").tap()
+        for sound in [11,0,1] { XCTAssertTrue(button("recommended-sound-\(sound)").exists) }
+        button("All sounds").tap()
+        XCTAssertFalse(button("picks-sound-11").exists)
+        for (family,sounds) in [("acoustic",[11,8,5,9,10]),("classic",[0,1,2])] {
+            for sound in sounds { XCTAssertEqual(app.buttons.matching(identifier:"\(family)-sound-\(sound)").count,1) }
+        }
+        proof("Full sound library without duplicate recommendations")
     }
 
 }
