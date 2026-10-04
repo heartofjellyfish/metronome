@@ -21,14 +21,21 @@ def source(item):
  return name,(np.frombuffer(raw,dtype='<f4').astype(float),url,hashlib.sha256(p.read_bytes()).hexdigest())
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool: originals=dict(pool.map(source,items))
 manifest=json.loads((OUT/'sources.json').read_text())
+import sys
 for group,duration in [('snap',.11),('clap',.14),('ride',.35),('cross',.13)]:
- for i in range(1,5):
+ if '--snap-only' in sys.argv and group!='snap': continue
+ for i in range(1,9 if group=='snap' else 5):
   name='snap.mp3' if group=='snap' else f'{group}-{i}'+('.wav' if group=='clap' else '.flac')
   full,url,digest=originals[name]
-  offset=round([1.10,2.26,3.34,4.08][i-1]*44100) if group=='snap' else 0
+  offset=round([1.10,2.26,3.34,4.08,.09,5.08,6.06,8.10][i-1]*44100) if group=='snap' else 0
   x=full[offset:offset+round(.3*44100)].copy() if group=='snap' else full.copy()
   x-=np.mean(x)
   onset=int(np.flatnonzero(abs(x)>=max(abs(x))*.06)[0]);start=max(0,onset-9)
+  if group=='snap':
+   # Align the actual snap, excluding quiet finger movement before the main impact.
+   peak=int(np.argmax(abs(x))); window=max(0,peak-88)
+   onset=window+int(np.flatnonzero(abs(x[window:peak+1])>=max(abs(x))*.08)[0])
+   start=max(0,onset-9)
   x=x[start:start+round(duration*44100)].copy()
   t=np.arange(len(x))/44100
   if group=='ride': x*=np.exp(-np.maximum(0,t-.045)/.10)
@@ -36,7 +43,7 @@ for group,duration in [('snap',.11),('clap',.14),('ride',.35),('cross',.13)]:
   x[-fade:]*=np.linspace(1,0,fade)
   x[:9]*=np.linspace(0,1,9)
   rms=np.sqrt(np.mean(x[:2205]**2))
-  gain=min((.055 if group=='ride' else .07)/rms,.55/max(abs(x)))
+  gain=min((.055 if group=='ride' else .07)/rms,(.65 if group=='snap' else .55)/max(abs(x)))
   x*=gain
   filename=f'ac-{group}-{i}.wav'
   with wave.open(str(OUT/filename),'wb') as w:

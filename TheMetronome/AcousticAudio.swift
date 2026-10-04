@@ -27,7 +27,8 @@ enum AcousticError: LocalizedError {
     }
 }
 final class AcousticLibrary {
-    static let names: [String] = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } } + ["ac-bell"] + ["snap", "clap", "ride", "cross"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
+    static let names: [String] = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } } + ["ac-bell"] + ["snap", "clap", "ride", "cross"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } } + (5...8).map { "ac-snap-\($0)" }
+    static let snapIndices = Array(33..<37) + Array(49..<53)
     let clips: [AcousticClip]
     let naturalHatGains: [Float]
     let balancedGains: [Float]
@@ -47,7 +48,8 @@ final class AcousticLibrary {
         let reference = rms.prefix(4).min() ?? 0
         naturalHatGains = rms.map { $0 > 0 ? min(1, reference / $0) : 0 }
         var gains = Array(repeating: Float(1), count: clips.count)
-        for group in [0..<8, 8..<12, 12..<16, 16..<20, 20..<24, 24..<28, 28..<32, 32..<33, 33..<37, 37..<41, 41..<45, 45..<49] {
+        let groups = [0..<8, 8..<12, 12..<16, 16..<20, 20..<24, 24..<28, 28..<32, 32..<33, 37..<41, 41..<45, 45..<49].map { Array($0) } + [Self.snapIndices]
+        for group in groups {
             let level = group.map { rms[$0] }.min() ?? 0
             for i in group { gains[i] = rms[i] > 0 ? min(1, level / rms[i]) : 0 }
         }
@@ -95,13 +97,38 @@ struct HatArticulation {
         Self(gain: BeatIntensity.gain(strength), air: false)
     }
 }
+/// Shuffle each eight-take bag; never repeat at the boundary. No per-hit allocation.
+struct SnapTakeSequence {
+    private var bag = Array(0..<8)
+    private var position = 8
+    private var previous = -1
+    private var seed: UInt64
+    init(seed: UInt64 = 0x534E4150) { self.seed = seed }
+    mutating func next() -> Int {
+        if position == bag.count {
+            for i in stride(from: bag.count - 1, through: 1, by: -1) {
+                seed = seed &* 6364136223846793005 &+ 1442695040888963407
+                let j = Int((seed >> 32) % UInt64(i + 1))
+                if i != j { bag.swapAt(i, j) }
+            }
+            if bag[0] == previous { bag.swapAt(0, 1) }
+            position = 0
+        }
+        let result = bag[position]; position += 1; previous = result
+        return result
+    }
+}
+
 /// Fixed voice pool and immutable sample buffers; no loading or resampling allocations in the callback.
 final class AcousticRenderer {
     let library: AcousticLibrary
     private var voices = Array(repeating: AcousticVoice(), count: 8)
     private var cursor = 0
     private var repetitions = Array(repeating: 0, count: 13)
-    init(library: AcousticLibrary) { self.library = library }
+    private var snapTakes: SnapTakeSequence
+    init(library: AcousticLibrary, takeSeed: UInt64 = 0x534E4150) {
+        self.library = library; snapTakes = SnapTakeSequence(seed: takeSeed)
+    }
     func chokeHats() {
         for i in voices.indices where voices[i].hat && voices[i].chokeTime < 0 { voices[i].chokeTime = 0 }
     }
@@ -130,7 +157,7 @@ final class AcousticRenderer {
         case 15: offset = 45
         default: offset = 20
         }
-        let clipIndex = offset + (sound == 2 ? 0 : repetition)
+        let clipIndex = sound == 12 ? AcousticLibrary.snapIndices[snapTakes.next()] : offset + (sound == 2 ? 0 : repetition)
         let shaker = sound == InstrumentSound.acousticShaker.rawValue
         var limit = Double.infinity
         if shaker && hitInterval.isFinite && hitInterval > 0 {

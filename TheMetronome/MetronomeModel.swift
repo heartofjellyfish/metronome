@@ -26,7 +26,7 @@ final class MetronomeAudio {
         let rate = session.sampleRate
         let format = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2)!
         if acousticLibrary == nil { acousticLibrary = try AcousticLibrary.bundled() }
-        let acoustic = AcousticRenderer(library: acousticLibrary!)
+        let acoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
         let clock = SampleClock(rate: rate); clock.reset(rhythm, barLimit: previewBars)
         mailbox.set(rhythm)
         var voices = (ClickVoice(), ClickVoice(), ClickVoice(), ClickVoice())
