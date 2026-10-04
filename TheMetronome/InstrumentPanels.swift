@@ -413,15 +413,19 @@ struct RhythmNotation: View {
     let color: Color
     private var tuplet: Int? { compound ? (count == 2 ? 2 : nil) : (count == 3 ? 3 : nil) }
     var body: some View {
-        VStack(spacing: 0) {
-            if let tuplet {
-                HStack(spacing: 3) {
-                    Rectangle().frame(height: 0.7)
-                    Text(String(tuplet)).font(.system(size: 9, weight: .medium, design: .serif))
-                    Rectangle().frame(height: 0.7)
-                }.frame(width: 24, height: 9)
-            }
-            RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
+        GeometryReader { geometry in
+            let glyphHeight = min(26, max(0, geometry.size.height - (tuplet == nil ? 0 : 9)))
+            VStack(spacing: 0) {
+                if let tuplet {
+                    HStack(spacing: 3) {
+                        Rectangle().frame(height: 0.7)
+                        Text(String(tuplet)).font(.system(size: 9, weight: .medium, design: .serif))
+                        Rectangle().frame(height: 0.7)
+                    }.frame(width: 24, height: 9)
+                }
+                RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
+                    .frame(height: glyphHeight)
+            }.frame(width: geometry.size.width, height: geometry.size.height)
         }.foregroundStyle(color)
     }
 }

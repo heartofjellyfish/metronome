@@ -380,6 +380,12 @@ final class InstrumentUITests: XCTestCase {
             XCTAssertEqual(button("transport").label, "Stop metronome")
             proof("Compound home division \(division)")
         }
+        button("Time signature").tap(); button("NOTE UNITS").tap(); button("Close meter").tap()
+        for division in [1,2,3,4] {
+            button("Subdivision").tap(); button("\(division) clicks per beat").tap()
+            proof("Note units choices \(division)")
+            button("Close division").tap(); proof("Note units home \(division)")
+        }
         button("transport").tap()
     }
 
