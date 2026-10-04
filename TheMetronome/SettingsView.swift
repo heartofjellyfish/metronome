@@ -36,11 +36,17 @@ struct SettingsView: View {
                 SectionLabel(text: "02 SOUND", p: p)
                 Button { present(.sounds) } label: {
                     HStack(spacing: 8) {
-                        Text("ALL SOUNDS").technical(8, spacing: 0.8)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("CURRENT").technical(6, spacing: 1).foregroundStyle(p.muted)
+                            Text(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
+                                .technical(10, spacing: 0.5).lineLimit(1).minimumScaleFactor(0.8)
+                        }
+                        Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
-                    }.frame(width: 115, height: 32)
+                    }.padding(.horizontal, 10).frame(width: 115, height: 32)
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 7))
                     .accessibilityLabel("All sounds")
+                    .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
             }.frame(width: 359).position(x: 206.5, y: 228)
             SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "recommended")
                 .frame(width: 359).position(x: 206.5, y: 322)

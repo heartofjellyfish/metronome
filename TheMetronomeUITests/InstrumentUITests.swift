@@ -362,6 +362,38 @@ final class InstrumentUITests: XCTestCase {
         proof("Full sound library without duplicate recommendations")
     }
 
+    func testCurrentSoundRemainsVisibleInSettings() {
+        button("settings").tap()
+        button("recommended-sound-11").tap()
+        XCTAssertEqual(button("All sounds").value as? String, "HI-HAT")
+        for playing in [false, true] {
+            if playing {
+                button("Close settings").tap(); button("transport").tap(); button("settings").tap()
+            }
+            button("All sounds").tap()
+            for id in [12,13,15] {
+                let sound = button("acoustic-sound-\(id)")
+                reveal(sound); sound.tap()
+                XCTAssertTrue(sound.isSelected)
+                XCTAssertTrue(button("Close sound library").isHittable)
+            }
+            button("Close sound library").tap()
+            XCTAssertEqual(button("All sounds").value as? String, "CROSS-STICK")
+            proof(playing ? "Current sound during playback" : "Current sound ivory")
+            button("All sounds").tap()
+            reveal(button("acoustic-sound-15")); XCTAssertTrue(button("acoustic-sound-15").isSelected)
+            button("Close sound library").tap()
+            button("Close settings").tap()
+            XCTAssertEqual(button("transport").label, playing ? "Stop metronome" : "Start metronome")
+            button("settings").tap()
+            XCTAssertEqual(button("All sounds").value as? String, "CROSS-STICK")
+            button("recommended-sound-0").tap()
+            XCTAssertEqual(button("All sounds").value as? String, "WOOD")
+        }
+        button("DARK").tap(); proof("Current sound graphite")
+        button("Close settings").tap(); button("transport").tap()
+    }
+
     func testNewPercussionLiveSelection() {
         button("transport").tap()
         button("settings").tap()
