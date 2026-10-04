@@ -21,7 +21,7 @@ enum BeatIntensity {
     static func gain(_ strength: Int) -> Float {
         switch strength {
         case 2: return 1
-        case 4: return 0.34
+        case 4: return 0.30
         case 5: return 0.60
         case 3: return 0.18
         case 1: return 0.25

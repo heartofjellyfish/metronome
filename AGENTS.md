@@ -3,6 +3,7 @@
 - Default to working on `main` and pushing to `origin/main` when publishing changes.
 - The user prefers direct commits to main; do not create pull requests or require code review unless explicitly requested.
 - Continue running checks appropriate to the change before publishing.
+- After every completed app change, automatically build and install the updated app on the connected iPhone. Report any connection/build/install failure explicitly; do not claim deployment succeeded without a successful install. Physical lock-screen, background and headphone tests remain deferred until requested.
 
 # Interaction acceptance checks
 

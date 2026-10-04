@@ -56,7 +56,7 @@ Virtuosity Drums supplies closed hats, pedal chick, shaker and true snare rimsho
 
 The pedal recordings had main attacks roughly 30–37 ms apart despite earlier noise-threshold trimming. They now align at the dominant attack, detected with 1 ms RMS windows and 1 ms preroll, with a short fade to avoid clicks. `Scripts/prepare_acoustic.swift` includes the corrected pedal preparation rule.
 
-ACCENT defaults on. 4/4 levels are 1.00 / 0.25 / 0.34 / 0.25, with quieter subdivisions; EVEN uses consistent articulation/level. Both modes respect mutes and gap practice. Acoustic attack levels are matched at load time, with timing driven only by the sample clock. All HI-HAT beats are closed. Count-in, mode changes and saved settings are supported. Stopped audition plays a bar; changing instruments does not silently change subdivision.
+ACCENT defaults on. 4/4 levels are 1.00 / 0.25 / 0.30 / 0.25, with quieter subdivisions; EVEN uses consistent articulation/level. Both modes respect mutes and gap practice. Acoustic attack levels are matched at load time, with timing driven only by the sample clock. All HI-HAT beats are closed. Count-in, mode changes and saved settings are supported. Stopped audition plays a bar; changing instruments does not silently change subdivision.
 
 Validation / audition commands:
 
@@ -76,7 +76,7 @@ Cross-checked against [Open Music Theory: metric hierarchy](https://openmusicthe
 - Simple 2, 3 and 4 beats: strong–weak; strong–weak–weak; strong–weak–secondary–weak. This applies to /2, /4, /8 and /16 note units. 2/2 covers cut time; 4/4 covers common time.
 - Compound 6, 9 and 12 over /4, /8 or /16: 2, 3 and 4 dotted beats. Compound duple uses a secondary accent on the second group (the fourth note unit in 6/8), below the downbeat but above its subdivisions. In expanded note-unit counting, in-group divisions are lighter than main beats. In 12/8, the seventh eighth note is the secondary main beat; the fourth and tenth are weaker main beats. The clock is the only authority for sound strength; individual instruments do not re-infer accents.
 - 5: selectable 3+2 or 2+3. 7: selectable 2+2+3, 2+3+2 or 3+2+2. Subsequent group starts receive secondary emphasis; these are selectable interpretations, not universal rules for every piece.
-- Audio gains remain strong 1.00, secondary 0.34, weak 0.25, subdivision 0.18. These exact ratios are product choices, not music-theory prescriptions. EVEN is 0.60 for every audible hit; defaults remain ACCENT on.
+- Audio gains remain strong 1.00, secondary 0.30, weak 0.25, subdivision 0.18. These exact ratios are product choices, not music-theory prescriptions. EVEN is 0.60 for every audible hit; defaults remain ACCENT on.
 - Numerators 1–12 and denominators 2/4/8/16 are selectable. This is not every possible meter: unusual additive groupings such as 8/8 = 3+3+2, 9/8 = 2+2+2+3, meters above 12, and alternating meters do not have dedicated grouping workflows yet. Other numerators retain a downbeat plus normal pulses/manual accents; no universal grouping is invented.
 - Existing 6/4 and other pre-expansion presets retain their note-unit tempo instead of changing speed silently. New meter selections opt into the expanded compound semantics.
 
@@ -105,7 +105,7 @@ swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetron
 
 ## Subdivision dynamics (2026-10-03)
 
-ACCENT now expresses both the meter and the subdivision hierarchy. Main nominal gains remain 1.00 / 0.25 / 0.34 / 0.25 in 4/4. Simple four-way divisions use lighter second/fourth hits and a slightly stronger midpoint; compound six-way divisions preserve 2+2+2. Triplet trailing notes are equal in nominal weight. Expanded compound note-unit counting descends one additional dynamic level and matches the corresponding grouped timing/gains. Subdivisions receive a gentle parent context (1 / .94 / .88); bounded ±0.25 dB performance variation and the existing recorded round robins add motion without altering timestamps. EVEN bypasses these dynamics. Mutes, gap bars and count-in retain their existing semantics.
+ACCENT now expresses both the meter and the subdivision hierarchy. Main nominal gains remain 1.00 / 0.25 / 0.30 / 0.25 in 4/4. Simple four-way divisions use lighter second/fourth hits and a slightly stronger midpoint; compound six-way divisions preserve 2+2+2. Triplet trailing notes are equal in nominal weight. Expanded compound note-unit counting descends one additional dynamic level and matches the corresponding grouped timing/gains. Subdivisions receive a gentle parent context (1 / .94 / .88); bounded ±0.25 dB performance variation and the existing recorded round robins add motion without altering timestamps. EVEN bypasses these dynamics. Mutes, gap bars and count-in retain their existing semantics.
 
 See the [complete parameter table, research sources and eight-instrument auditions](Design/Audio/division-dynamics/index.html). Ratios are tuning choices, not universal music-theory rules. The new auditions supersede the older fixed-subdivision dynamics previews; no original recordings were changed.
 

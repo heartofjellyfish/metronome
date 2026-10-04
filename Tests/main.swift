@@ -143,7 +143,7 @@ for sound in 0...5 {
         return 10 * log10(energy / 2400)
     }
     let strong = level(2), secondary = level(4), weak = level(1)
-    check(strong > secondary + 1 && secondary > weak + 2, "Synthesized sound must render three distinct metrical levels")
+    check(strong > secondary + 1 && secondary > weak + 1 && secondary < weak + 2, "Synthesized secondary must remain subtly above weak (1–2 dB)")
 }
 print("PASS: rendered metrical intensity across all six synthesized sounds.")
 
@@ -331,15 +331,15 @@ func closeGains(_ actual: [Float], _ expected: [Float], _ message: String) {
     check(zip(actual, expected).allSatisfy { abs($0 - $1) < 0.00001 }, message)
 }
 var sixteenths = Rhythm(); sixteenths.subdivision = 4
-closeGains(nominalGains(sixteenths), [1,0.105,0.18,0.105, 0.25,0.0924,0.1584,0.0924, 0.34,0.0987,0.1692,0.0987, 0.25,0.0924,0.1584,0.0924], "4/4 sixteenths must retain both beat and internal hierarchy")
+closeGains(nominalGains(sixteenths), [1,0.105,0.18,0.105, 0.25,0.0924,0.1584,0.0924, 0.30,0.0987,0.1692,0.0987, 0.25,0.0924,0.1584,0.0924], "4/4 sixteenths must retain both beat and internal hierarchy")
 var thirds = Rhythm(); thirds.subdivision = 3
 closeGains(Array(nominalGains(thirds).prefix(3)), [1,0.18,0.18], "Triplets must not invent a secondary accent on the last note")
 var halves = Rhythm(); halves.subdivision = 2
-closeGains(nominalGains(halves), [1,0.18,0.25,0.1584,0.34,0.1692,0.25,0.1584], "Eighth-note offbeats follow parent context")
+closeGains(nominalGains(halves), [1,0.18,0.25,0.1584,0.30,0.1692,0.25,0.1584], "Eighth-note offbeats follow parent context")
 var compoundSix = Rhythm(); compoundSix.setMeter(beats: 6, denominator: 8, compound: true); compoundSix.subdivision = 6
-closeGains(nominalGains(compoundSix), [1,0.105,0.18,0.105,0.18,0.105, 0.34,0.0987,0.1692,0.0987,0.1692,0.0987], "Compound sixteenths must use 2+2+2, not 3+3")
+closeGains(nominalGains(compoundSix), [1,0.105,0.18,0.105,0.18,0.105, 0.30,0.0987,0.1692,0.0987,0.1692,0.0987], "Compound sixteenths must use 2+2+2, not 3+3")
 compoundSix.subdivision = 2
-closeGains(nominalGains(compoundSix), [1,0.18,0.34,0.1692], "Compound duplets have one local anchor and one light note")
+closeGains(nominalGains(compoundSix), [1,0.18,0.30,0.1692], "Compound duplets have one local anchor and one light note")
 // Same physical rhythm in grouped or expanded notation must keep the same expression.
 for denominator in [4,8,16] {
     for numerator in [6,9,12] {
@@ -418,7 +418,7 @@ for numerator in [5,7] {
         var boundary = 0
         for group in grouping {
             let base = boundary * 4
-            closeGains(Array(gains[base..<base+4]), boundary == 0 ? [1,0.105,0.18,0.105] : [0.34,0.0987,0.1692,0.0987], "Every additive group must retain its secondary subdivision context")
+            closeGains(Array(gains[base..<base+4]), boundary == 0 ? [1,0.105,0.18,0.105] : [0.30,0.0987,0.1692,0.0987], "Every additive group must retain its secondary subdivision context")
             boundary += group
         }
     }
