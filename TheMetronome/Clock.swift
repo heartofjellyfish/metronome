@@ -132,8 +132,7 @@ struct Rhythm: Codable, Equatable {
         let parent = expanded && main != 2 ? beatStrength(beat - beat % 3, counting: counting) : main
         // A muted neighbouring group start must not silence independently enabled note units.
         let role = parent == 0 ? metricalStrength(beat - beat % 3) : parent
-        // Subdivision pulse stays nearly even across main beats (at most 0.35 dB difference).
-        let context: Float = role == 2 ? 1 : role == 4 ? 0.98 : 0.96
+        let context: Float = role == 2 ? 1 : role == 4 ? 0.94 : 0.88
         if division == 0 { return expanded && main == 3 ? context : 1 }
         let light: Bool = subdivision == 4 ? division % 2 == 1
             : usesCompoundPulse && subdivision == 6 ? division % 2 == 1 : false

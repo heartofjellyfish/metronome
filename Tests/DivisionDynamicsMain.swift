@@ -68,7 +68,7 @@ import AVFoundation
                 let a = AcousticRenderer(library: library), b = AcousticRenderer(library: library)
                 var clickA = ClickVoice(), clickB = ClickVoice()
                 for strength in [2,1,4,3,5] {
-                    for scale: Float in [0.35,0.5833333,0.96,0.98,1.0292] {
+                    for scale: Float in [0.35,0.5833333,0.88,0.94,1.0292] {
                         if sound == .click {
                             clickA.trigger(sound: 1, strength: strength)
                             clickB.trigger(sound: 1, strength: strength, gainScale: scale)
