@@ -17,7 +17,7 @@ final class MetronomeAudio {
     let mailbox = AudioMailbox()
     private var source: AVAudioSourceNode?
     private var acousticLibrary: AcousticLibrary?
-    func start(_ rhythm: Rhythm) throws {
+    func start(_ rhythm: Rhythm, previewBars: Int? = nil) throws {
         stop()
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -27,7 +27,7 @@ final class MetronomeAudio {
         let format = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2)!
         if acousticLibrary == nil { acousticLibrary = try AcousticLibrary.bundled() }
         let acoustic = AcousticRenderer(library: acousticLibrary!)
-        let clock = SampleClock(rate: rate); clock.reset(rhythm)
+        let clock = SampleClock(rate: rate); clock.reset(rhythm, barLimit: previewBars)
         mailbox.set(rhythm)
         var voices = (ClickVoice(), ClickVoice(), ClickVoice(), ClickVoice())
         var voiceIndex = 0
@@ -89,11 +89,19 @@ final class MetronomeModel: ObservableObject {
     @Published private(set) var event: ClockEvent?
     @Published var error: String?
     @Published var presets: [SavedPreset] { didSet { save() } }
-    @Published var presetName = "DAILY PRACTICE"
+    @Published private var selectedPresetID: UUID? {
+        didSet { UserDefaults.standard.set(selectedPresetID?.uuidString, forKey: "selectedPresetID") }
+    }
+    var presetCaption: String {
+        guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return "PRESETS / SAVE A RHYTHM" }
+        var saved = presets[index].rhythm; saved.sanitize()
+        guard saved == rhythm else { return "CUSTOM RHYTHM / SAVE" }
+        return String(format: "PRESET %02d / %@", index + 1, presets[index].name)
+    }
     @Published var tapCount = 0
     private let audio = MetronomeAudio()
     private var displayTimer: Timer?
-    private var taps: [TimeInterval] = []
+    private var tapTempo = TapTempo()
     private var observers: [NSObjectProtocol] = []
     private var lastSerial = 0
     private var previewTimer: Timer?
@@ -105,6 +113,7 @@ final class MetronomeModel: ObservableObject {
         stored.sanitize(); rhythm = stored
         dark = defaults.bool(forKey: "dark")
         presets = defaults.data(forKey: "presets").flatMap { try? JSONDecoder().decode([SavedPreset].self, from: $0) } ?? []
+        selectedPresetID = defaults.string(forKey: "selectedPresetID").flatMap(UUID.init(uuidString:))
         haptics = defaults.object(forKey: "haptics") as? Bool ?? true
         // Deterministic launch states for simulator visual verification only.
         #if DEBUG
@@ -168,18 +177,13 @@ final class MetronomeModel: ObservableObject {
         let box = audio.mailbox
         box.lock.lock(); let e = box.event; let serial = box.serial; box.lock.unlock()
         guard serial != lastSerial else { return }
+        let tempoChanged = event?.bpm != e?.bpm
         lastSerial = serial; event = e
+        if playing && tempoChanged { updateNowPlaying() }
     }
     func tap() {
-        let now = ProcessInfo.processInfo.systemUptime
-        if let last = taps.last, now - last > 2.5 { taps.removeAll() }
-        taps.append(now); taps = Array(taps.suffix(6)); tapCount = taps.count
-        if taps.count >= 2 {
-            let intervals = zip(taps.dropFirst(), taps).map(-)
-            let sorted = intervals.sorted(); let median = sorted[sorted.count / 2]
-            let valid = intervals.filter { abs($0 - median) < median * 0.3 }
-            if !valid.isEmpty { setBPM(Int((60 / (valid.reduce(0, +) / Double(valid.count))).rounded())) }
-        }
+        if let bpm = tapTempo.record(at: ProcessInfo.processInfo.systemUptime) { setBPM(bpm) }
+        tapCount = tapTempo.count
         tickFeedback()
     }
     func cycleAccent(_ index: Int) { rhythm.accents[index] = (rhythm.displayedAccent(index) + 1) % 3; tickFeedback() }
@@ -197,22 +201,23 @@ final class MetronomeModel: ObservableObject {
         previewTimer?.invalidate()
         var preview = rhythm; preview.bpm = min(160, max(80, rhythm.bpm))
         preview.countIn = 0; preview.ramp = false; preview.gap = false
-        let duration = Double(preview.pulseCount * preview.subdivision - 1) * 60 / Double(preview.bpm * preview.subdivision) + 0.18
+        let duration = Double(preview.pulseCount) * 60 / Double(preview.bpm) + 0.8
         do {
-            try audio.start(preview)
+            try audio.start(preview, previewBars: 1)
             previewTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
                 Task { @MainActor in if self?.playing == false { self?.audio.stop() } }
             }
-        } catch { self.error = error.localizedDescription }
+        } catch { audio.stop(); self.error = error.localizedDescription }
     }
     func addPreset(_ name: String) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
-        presets.append(SavedPreset(name: clean.uppercased(), rhythm: rhythm)); presetName = clean.uppercased()
+        let preset = SavedPreset(name: clean.uppercased(), rhythm: rhythm)
+        presets.append(preset); selectedPresetID = preset.id
     }
     func load(_ preset: SavedPreset) {
         let resume = playing; stop()
-        var value = preset.rhythm; value.sanitize(); rhythm = value; presetName = preset.name
+        var value = preset.rhythm; value.sanitize(); rhythm = value; selectedPresetID = preset.id
         if resume { start() }
     }
     private func save() {
@@ -220,6 +225,6 @@ final class MetronomeModel: ObservableObject {
         if let data = try? JSONEncoder().encode(presets) { UserDefaults.standard.set(data, forKey: "presets") }
     }
     private func updateNowPlaying() {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = [MPMediaItemPropertyTitle: "The Metronome", MPMediaItemPropertyArtist: "\(rhythm.bpm) BPM · \(rhythm.beats)/\(rhythm.denominator)", MPNowPlayingInfoPropertyIsLiveStream: true, MPNowPlayingInfoPropertyPlaybackRate: 1.0]
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = [MPMediaItemPropertyTitle: "The Metronome", MPMediaItemPropertyArtist: "\(bpm) BPM · \(rhythm.beats)/\(rhythm.denominator)", MPNowPlayingInfoPropertyIsLiveStream: true, MPNowPlayingInfoPropertyPlaybackRate: 1.0]
     }
 }

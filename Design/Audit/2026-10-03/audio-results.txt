@@ -1,0 +1,6 @@
+4/4 attack dB, take phase 0: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 1: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 2: ["-30.57", "-42.61", "-39.94", "-42.61"]
+4/4 attack dB, take phase 3: ["-30.57", "-42.61", "-39.94", "-42.61"]
+PASS: all 33 recordings load; seven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak 0.6010437; tail termination; choke; four distinct takes.
+Rendered seven previews using the exact runtime sample engine.

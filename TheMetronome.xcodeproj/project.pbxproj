@@ -14,12 +14,20 @@
 			remoteGlobalIDString = 7C1A00000000000000000006;
 			remoteInfo = TheMetronome;
 		};
+		AB0000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7C1A00000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C1A00000000000000000006;
+			remoteInfo = TheMetronome;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		7C1A00000000000000000001 /* TheMetronome.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TheMetronome.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C1A00000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA0000000000000000000002 /* TheMetronomeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TheMetronomeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0000000000000000000002 /* TheMetronomeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TheMetronomeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +39,11 @@
 		AA0000000000000000000001 /* TheMetronomeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TheMetronomeUITests;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000001 /* TheMetronomeTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TheMetronomeTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -50,6 +63,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AB0000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -58,6 +78,7 @@
 			children = (
 				7C1A00000000000000000002 /* TheMetronome */,
 				AA0000000000000000000001 /* TheMetronomeUITests */,
+				AB0000000000000000000001 /* TheMetronomeTests */,
 				7C1A00000000000000000011 /* Config */,
 				7C1A00000000000000000005 /* Products */,
 			);
@@ -68,6 +89,7 @@
 			children = (
 				7C1A00000000000000000001 /* TheMetronome.app */,
 				AA0000000000000000000002 /* TheMetronomeUITests.xctest */,
+				AB0000000000000000000002 /* TheMetronomeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -126,6 +148,27 @@
 			productReference = AA0000000000000000000002 /* TheMetronomeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		AB0000000000000000000008 /* TheMetronomeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB0000000000000000000009 /* Build configuration list for PBXNativeTarget "TheMetronomeTests" */;
+			buildPhases = (
+				AB0000000000000000000003 /* Sources */,
+				AB0000000000000000000004 /* Frameworks */,
+				AB0000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AB0000000000000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AB0000000000000000000001 /* TheMetronomeTests */,
+			);
+			name = TheMetronomeTests;
+			productName = TheMetronomeTests;
+			productReference = AB0000000000000000000002 /* TheMetronomeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -156,6 +199,7 @@
 			projectRoot = "";
 			targets = (
 				AA0000000000000000000008 /* TheMetronomeUITests */,
+				AB0000000000000000000008 /* TheMetronomeTests */,
 				7C1A00000000000000000006 /* TheMetronome */,
 			);
 		};
@@ -170,6 +214,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA0000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB0000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -193,6 +244,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AB0000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -200,6 +258,11 @@
 			isa = PBXTargetDependency;
 			target = 7C1A00000000000000000006 /* TheMetronome */;
 			targetProxy = AA0000000000000000000006 /* PBXContainerItemProxy */;
+		};
+		AB0000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C1A00000000000000000006 /* TheMetronome */;
+			targetProxy = AB0000000000000000000006 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -328,6 +391,21 @@
 			};
 			name = Debug;
 		};
+		AB000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 47C4WT5UPR;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heartofjellyfish.themetronome.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TheMetronome.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TheMetronome";
+			};
+			name = Debug;
+		};
 		AA000000000000000000000B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -339,6 +417,21 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = TheMetronome;
+			};
+			name = Release;
+		};
+		AB000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 47C4WT5UPR;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heartofjellyfish.themetronome.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TheMetronome.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TheMetronome";
 			};
 			name = Release;
 		};
@@ -368,6 +461,15 @@
 			buildConfigurations = (
 				AA000000000000000000000A /* Debug */,
 				AA000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AB0000000000000000000009 /* Build configuration list for PBXNativeTarget "TheMetronomeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB000000000000000000000A /* Debug */,
+				AB000000000000000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

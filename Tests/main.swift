@@ -225,3 +225,94 @@ for (numerator, grouping, expected) in [(5,[3,2],[2,1,1,4,1]),(5,[2,3],[2,1,4,1,
 var oldSixFour = Rhythm(); oldSixFour.beats = 6; oldSixFour.denominator = 4
 check(oldSixFour.pulseCount == 6, "Existing 6/4 presets must not triple speed on upgrade")
 print("PASS: every simple /2 /4 /8 /16 meter, compound grouped/expanded hierarchy, all 5/7 groupings, EVEN visuals and legacy speed.")
+
+// Audit regressions: tap the entire supported range, outliers, reset and invalid clocks.
+for bpm in [20, 21, 23, 60, 96, 137, 299, 300] {
+    var tap = TapTempo()
+    check(tap.record(at: 100) == nil, "First tap must not change tempo")
+    for i in 1...10 {
+        check(tap.record(at: 100 + Double(i) * 60 / Double(bpm)) == bpm, "Tap cannot recover \(bpm) BPM")
+    }
+    check(tap.count == 6, "Tap window must remain bounded")
+}
+var tapping = TapTempo()
+for t in [0.0, 0.5, 1.0, 1.5, 2.2] { _ = tapping.record(at: t) }
+check(tapping.record(at: 2.7) == 120, "One late tap must not pull the estimate off tempo")
+check(tapping.record(at: 10) == nil && tapping.count == 1, "Idle tap series must reset")
+check(tapping.record(at: 10) == nil && tapping.count == 1, "Duplicate timestamps must be rejected")
+check(tapping.record(at: .nan) == nil && tapping.count == 1, "Invalid timestamps must be rejected")
+check(tapping.record(at: 10.000000001) == 300, "Accidental double tap must remain bounded")
+print("PASS: Tap 20–300 BPM, six-tap window, late-tap filtering, idle reset and invalid timestamps.")
+
+func nextEvent(_ clock: SampleClock) -> ClockEvent {
+    for _ in 0..<100000 { if let (event, _) = clock.advance() { return event } }
+    fatalError("Expected an event")
+}
+var live = Rhythm(); live.bpm = 120; live.countIn = 1
+live.ramp = true; live.start = 120; live.end = 126; live.every = 1; live.increment = 2
+live.gap = true; live.audibleBars = 1; live.silentBars = 1
+let liveClock = SampleClock(rate: 1000); liveClock.reset(live)
+for _ in 0..<8 { _ = nextEvent(liveClock) }
+let prior = nextEvent(liveClock)
+check(prior.bar == 1 && prior.bpm == 122 && prior.silent && !prior.countIn, "Regression precondition")
+live.subdivision = 3; liveClock.update(live)
+let changed = nextEvent(liveClock)
+check(changed.beat == 0 && changed.bar == prior.bar && !changed.countIn, "Live division must preserve completed count-in and practice bar")
+check(changed.bpm == 122 && changed.silent, "Live division must not double-ramp or lose the gap phase")
+live.setMeter(beats: 6, denominator: 8, compound: true); liveClock.update(live)
+let meterChanged = nextEvent(liveClock)
+check(meterChanged.bar == 1 && meterChanged.bpm == 122 && !meterChanged.countIn, "Live meter must preserve training progress")
+live.countIn = 2; liveClock.update(live)
+check(!nextEvent(liveClock).countIn, "Count-in edits apply on the next start")
+liveClock.reset(live)
+check(nextEvent(liveClock).countIn, "Restart must honor new count-in")
+print("PASS: live subdivision/meter preserve count-in completion, ramp tempo and gap phase; count-in edits take effect on restart.")
+
+// A UI timer cannot enforce a one-bar preview: prove the scheduler cannot emit a second bar.
+for compound in [false, true] {
+    for bpm in [20, 96, 160, 300] {
+        for division in (compound ? [1,2,3,6] : [1,2,3,4]) {
+            var r = Rhythm(); r.setMeter(beats: compound ? 12 : 4, denominator: compound ? 8 : 4, compound: compound)
+            r.bpm = bpm; r.subdivision = division
+            let c = SampleClock(rate: 1000); c.reset(r, barLimit: 1)
+            var count = 0
+            for _ in 0..<Int(1000 * (Double(r.pulseCount) * 60 / Double(bpm) + 1)) {
+                if c.advance() != nil { count += 1 }
+            }
+            check(count == r.pulseCount * division, "Preview emitted extra or missing hits")
+        }
+    }
+}
+var descending = Rhythm(); descending.ramp = true; descending.start = 120; descending.end = 113
+ descending.every = 1; descending.increment = 3; descending.countIn = 2
+let downClock = SampleClock(rate: 1000); downClock.reset(descending)
+var downTempos: [Int] = []
+while downTempos.count < 7 {
+    let e = nextEvent(downClock)
+    if e.beat == 0 { downTempos.append(e.bpm) }
+}
+check(downTempos == [120,120,120,117,114,113,113], "Descending ramp must count in and clamp at its target")
+print("PASS: exact one-bar audition across simple/compound grids and tempo limits; descending ramp and target clamp.")
+
+// Exhaust all selectable grids, including less usual meters, without claiming a canonical grouping.
+for numerator in 1...12 {
+    for denominator in [2,4,8,16] {
+        for compound in [false,true] {
+            for division in [1,2,3,4,6] {
+                var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: compound)
+                r.subdivision = division; r.sanitize(); r.bpm = 300
+                let c = SampleClock(rate: 1000); c.reset(r)
+                var events = 0
+                for _ in 0..<Int(Double(r.pulseCount) * 200) {
+                    if let (e, strength) = c.advance() {
+                        check((0..<r.pulseCount).contains(e.beat), "Out-of-range beat")
+                        check((0...5).contains(strength), "Invalid intensity")
+                        events += 1
+                    }
+                }
+                check(events == r.pulseCount * r.subdivision, "Wrong grid length for \(numerator)/\(denominator)")
+            }
+        }
+    }
+}
+print("PASS: 480 selectable meter/mode/subdivision configurations have valid beat indices and exact bar lengths.")

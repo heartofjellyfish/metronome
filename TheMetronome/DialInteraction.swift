@@ -1,5 +1,26 @@
 import Foundation
 
+/// A six-tap window, with enough reset time to accommodate the full tempo range.
+struct TapTempo {
+    private var taps: [TimeInterval] = []
+    var count: Int { taps.count }
+    mutating func record(at time: TimeInterval) -> Int? {
+        guard time.isFinite else { return nil }
+        if let last = taps.last {
+            guard time > last else { return nil }
+            if time - last > 60 / Double(TempoScale.range.lowerBound) * 1.5 { taps.removeAll() }
+        }
+        taps.append(time); taps = Array(taps.suffix(6))
+        guard taps.count >= 2 else { return nil }
+        let intervals = zip(taps.dropFirst(), taps).map(-)
+        let sorted = intervals.sorted(), median = sorted[sorted.count / 2]
+        let valid = intervals.filter { abs($0 - median) < median * 0.3 }
+        let tempo = 60 / (valid.reduce(0, +) / Double(valid.count))
+        // Clamp before Int conversion, including extremely close accidental taps.
+        return Int(min(Double(TempoScale.range.upperBound), max(Double(TempoScale.range.lowerBound), tempo)).rounded())
+    }
+}
+
 /// One linear 270-degree sweep shared by the pointer, ticks and gesture.
 /// Relative grabbing avoids a tempo jump when touching a different part of the knob.
 enum TempoScale {

@@ -231,7 +231,7 @@ struct InstrumentPanel: View {
                     Button { model.rhythm.subdivision = value; model.tickFeedback(); dismiss() } label: {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack { LED(on: selected == value, size: 7); Spacer(); Text(String(format: "%02d", value)).technical(9, spacing: 1).foregroundStyle(p.muted) }
-                            RhythmGlyph(count: value, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(value)).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
+                            RhythmNotation(count: value, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(value), color: p.ink).frame(height: 40).padding(.horizontal, 16)
                             Text(model.rhythm.divisionTitle(value)).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
                             Text("\(value) / BEAT").technical(8, spacing: 1).foregroundStyle(p.muted).frame(maxWidth: .infinity)
                         }.padding(13).frame(maxWidth: .infinity)
@@ -276,7 +276,7 @@ struct InstrumentPanel: View {
             }
             HStack(spacing: 13) {
                 practiceChoice("EVERY", value: "\(model.rhythm.every) BARS", route: .every, selection: model.rhythm.every)
-                practiceChoice("INCREASE BY", value: "+\(model.rhythm.increment)", route: .increment, selection: model.rhythm.increment)
+                practiceChoice("STEP", value: "\(model.rhythm.increment) BPM", route: .increment, selection: model.rhythm.increment)
             }
             Text("Moves toward the end tempo, then holds. Press stop and play to restart the ramp.").font(.system(size: 12)).foregroundStyle(p.muted)
             }
@@ -321,7 +321,7 @@ struct InstrumentPanel: View {
                                 }
                                 Spacer(); Text(String(preset.rhythm.bpm)).font(InstrumentType.value(30))
                             }.padding(15).frame(maxWidth: .infinity, minHeight: 76)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("load-preset-\(preset.name)")
                         Button { deleting = preset.id } label: { Image(systemName: "trash").font(.system(size: 15, weight: .light)).frame(width: 40, height: 44) }
                             .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Delete \(preset.name)")
                     }
@@ -397,6 +397,35 @@ struct InstrumentPanel: View {
                 Button { value.wrappedValue = min(range.upperBound, value.wrappedValue + 1); model.tickFeedback() } label: { Text("+").font(.system(size: 20)).frame(width: 38, height: 43) }.buttonStyle(HardwareButtonStyle(p: p, radius: 7)).accessibilityLabel("Increase \(label)")
             }
         }.frame(maxWidth: .infinity)
+    }
+}
+
+/// Tuplet numerals distinguish borrowed divisions from ordinary beamed notes.
+struct RhythmNotation: View {
+    let count: Int
+    let compound: Bool
+    let noteValue: Int
+    let color: Color
+    private var tuplet: Int? { compound ? (count == 2 ? 2 : nil) : (count == 3 ? 3 : nil) }
+    var body: some View {
+        VStack(spacing: 0) {
+            if let tuplet {
+                HStack(spacing: 3) {
+                    Rectangle().frame(height: 0.7)
+                    Text(String(tuplet)).font(.system(size: 9, weight: .medium, design: .serif))
+                    Rectangle().frame(height: 0.7)
+                }.frame(width: 24, height: 9)
+            }
+            if tuplet != nil {
+                GeometryReader { geometry in
+                    RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
+                        .frame(height: 40)
+                        .scaleEffect(x: 1, y: geometry.size.height / 40, anchor: .top)
+                }
+            } else {
+                RhythmGlyph(count: count, compound: compound, noteValue: noteValue).fill(color)
+            }
+        }.foregroundStyle(color)
     }
 }
 

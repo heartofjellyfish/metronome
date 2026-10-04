@@ -154,6 +154,9 @@ final class SampleClock {
     private(set) var tick = -1
     private var framesUntilTick: Double = 0
     private var first = true
+    private var lastRampBar = -1
+    private var countInBars = 0
+    private var barLimit: Int?
     let rate: Double
     init(rate: Double) { self.rate = rate }
 
@@ -162,28 +165,35 @@ final class SampleClock {
         if value.ramp != rhythm.ramp {
             tempo = value.ramp ? value.start : value.bpm
             first = value.ramp
+            lastRampBar = -1
         }
         // Changes to the pulse grid restart at a clean bar, never index stale accents.
         if value.beats != rhythm.beats || value.denominator != rhythm.denominator || value.usesCompoundPulse != rhythm.usesCompoundPulse || value.subdivision != rhythm.subdivision {
-            tick = -1; framesUntilTick = 0
+            // Restart this bar's grid, preserving completed count-in and practice progress.
+            let bar = max(0, tick / (rhythm.pulseCount * rhythm.subdivision))
+            tick = bar * value.pulseCount * value.subdivision - 1; framesUntilTick = 0
         }
         rhythm = value
     }
-    func reset(_ value: Rhythm) {
+    func reset(_ value: Rhythm, barLimit: Int? = nil) {
         rhythm = value; tempo = value.ramp ? value.start : value.bpm
         tick = -1; framesUntilTick = 0; first = true
+        lastRampBar = -1; countInBars = value.countIn; self.barLimit = barLimit
     }
     func advance() -> (ClockEvent, Int)? {
         defer { framesUntilTick -= 1 }
         guard framesUntilTick <= 0 else { return nil }
-        tick += 1
         let ticksPerBar = rhythm.pulseCount * rhythm.subdivision
+        // Stop scheduling hits at the exact boundary; renderers may finish their tails.
+        if let barLimit, tick + 1 >= ticksPerBar * barLimit { return nil }
+        tick += 1
         let bar = tick / ticksPerBar
         let beat = (tick / rhythm.subdivision) % rhythm.pulseCount
         let primary = tick % rhythm.subdivision == 0
-        let counting = bar < rhythm.countIn
-        let practiceBar = max(0, bar - rhythm.countIn)
-        if primary && beat == 0 && !counting && rhythm.ramp {
+        let counting = bar < countInBars
+        let practiceBar = max(0, bar - countInBars)
+        if primary && beat == 0 && !counting && rhythm.ramp && practiceBar != lastRampBar {
+            lastRampBar = practiceBar
             if first { tempo = rhythm.start; first = false }
             else if practiceBar > 0 && practiceBar % rhythm.every == 0 {
                 let direction = rhythm.end >= rhythm.start ? 1 : -1

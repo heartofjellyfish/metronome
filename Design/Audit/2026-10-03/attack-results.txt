@@ -1,0 +1,8 @@
+ac-closed-v2-1: dominant attack approach (ms) ["0.0", "0.0", "0.0", "0.0"]
+ac-closed-v3-1: dominant attack approach (ms) ["0.0", "0.0", "0.0", "0.0"]
+ac-pedal-v2-1: dominant attack approach (ms) ["1.0", "1.0", "1.0", "1.0"]
+ac-stick-1: dominant attack approach (ms) ["1.0", "1.0", "1.0", "2.0"]
+ac-shaker-1: dominant attack approach (ms) ["15.0", "49.9", "38.9", "45.9"]
+ac-rimshot-1: dominant attack approach (ms) ["2.0", "2.0", "2.0", "2.0"]
+ac-wood-1: dominant attack approach (ms) ["9.0", "9.0", "9.0", "9.0"]
+ac-bell: dominant attack approach (ms) ["3.0"]

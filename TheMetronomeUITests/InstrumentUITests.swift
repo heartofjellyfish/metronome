@@ -224,8 +224,8 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertTrue(button("COUNT IN, 2 BAR").exists)
         button("RAMP-on").tap()
         reveal(button("EVERY, 8 BARS")); button("EVERY, 8 BARS").tap(); proof("Ramp interval"); button("4").tap()
-        reveal(button("INCREASE BY, +2")); button("INCREASE BY, +2").tap(); button("5").tap()
-        XCTAssertTrue(button("INCREASE BY, +5").exists)
+        reveal(button("STEP, 2 BPM")); button("STEP, 2 BPM").tap(); button("5").tap()
+        XCTAssertTrue(button("STEP, 5 BPM").exists)
         button("START, 60 BPM").tap(); type("72"); button("panelApply").tap()
         XCTAssertTrue(button("START, 72 BPM").exists)
         proof("Expanded ramp controls")
@@ -249,4 +249,43 @@ final class InstrumentUITests: XCTestCase {
         button("Delete UI RHYTHM").tap(); button("DELETE").tap()
         XCTAssertFalse(button("Delete UI RHYTHM").exists)
     }
+    func testPresetNamePersistenceLoadEditAndDelete() {
+        button("presets").tap()
+        let name = app.textFields["NAME THIS RHYTHM"]
+        name.tap(); name.typeText("AUDIT PRESET")
+        button("Save current rhythm").tap(); button("Close presets").tap()
+        XCTAssertTrue((button("presets").value as? String ?? "").contains("AUDIT PRESET"))
+        app.terminate(); app.launchArguments = []; app.launch()
+        XCTAssertTrue((button("presets").value as? String ?? "").contains("AUDIT PRESET"))
+        button("increase").tap()
+        XCTAssertEqual(button("presets").value as? String, "CUSTOM RHYTHM / SAVE")
+        button("presets").tap(); button("load-preset-AUDIT PRESET").tap()
+        assertTempo(96)
+        button("presets").tap(); button("Delete AUDIT PRESET").tap(); button("KEEP").tap()
+        XCTAssertTrue(button("Delete AUDIT PRESET").exists)
+        button("Delete AUDIT PRESET").tap(); button("DELETE").tap(); button("Close presets").tap()
+        XCTAssertEqual(button("presets").value as? String, "PRESETS / SAVE A RHYTHM")
+    }
+    func testGapControlsHapticsAndTupletNotation() {
+        button("Subdivision").tap(); proof("Simple triplet numeral")
+        button("3 clicks per beat").tap(); proof("Home triplet numeral")
+        button("Time signature").tap(); button("meter-6-8").tap()
+        button("Subdivision").tap(); proof("Compound duplet numeral")
+        button("2 clicks per beat").tap()
+        button("settings").tap(); button("practice").tap()
+        button("SOUND / SILENCE-on").tap()
+        reveal(button("Increase SOUND BARS")); button("Increase SOUND BARS").tap()
+        button("Decrease SILENT BARS").tap()
+        button("Decrease SILENT BARS").tap() // lower limit holds at one
+        reveal(button("TOUCH FEEDBACK-off")); button("TOUCH FEEDBACK-off").tap()
+        XCTAssertTrue(button("TOUCH FEEDBACK-off").isSelected)
+        proof("Gap training and touch feedback")
+        button("Close practice").tap(); button("Close settings").tap()
+        app.terminate(); app.launchArguments = []; app.launch()
+        button("settings").tap(); button("practice").tap()
+        XCTAssertTrue(button("SOUND / SILENCE-on").isSelected)
+        reveal(button("TOUCH FEEDBACK-off")); XCTAssertTrue(button("TOUCH FEEDBACK-off").isSelected)
+        button("TOUCH FEEDBACK-on").tap()
+    }
+
 }

@@ -1,0 +1,463 @@
+{
+  "date": "2026-10-03",
+  "baseline": "67c7d2c",
+  "features": [
+    {
+      "name": "播放 / 停止",
+      "status": "通过",
+      "principle": "立即给出稳定参照；停止必须释放播放状态。",
+      "evidence": "界面启动/停止与播放中开菜单；iOS 状态测试验证 playing、idle timer、停止清除 Now Playing。",
+      "verdict": "一键播放，无首次设置阻挡；Stop 再 Play 从头开始。手机实际启动耗时未测。",
+      "refs": [
+        "audio",
+        "manual"
+      ]
+    },
+    {
+      "name": "数字输入 / 加减",
+      "status": "通过",
+      "principle": "精确输入应在合法数值完整时提交，半输入不能打断练习。",
+      "evidence": "9、301 禁用 SET；删除、更正、取消、重开；20/300 边界；±1 操作。",
+      "verdict": "数字键盘保留 SET 合理，选项菜单则立即应用。20–300 是产品范围，不是音乐学定律。",
+      "refs": [
+        "tempo",
+        "manual"
+      ]
+    },
+    {
+      "name": "大转盘",
+      "status": "通过",
+      "principle": "抓取位置不能令速度跳变；转到端点后反向应立即响应。",
+      "evidence": "纯逻辑：270°全范围、±180°接缝、相对抓取、端点与反转；UI 反拖 300 BPM。",
+      "verdict": "当前映射一致；这验证操作规则，不代表用户研究已经证明最顺手。",
+      "refs": [
+        "gap"
+      ]
+    },
+    {
+      "name": "Tap Tempo",
+      "status": "已修复",
+      "principle": "同一速度范围内，拍手输入与数字输入必须等价。",
+      "evidence": "20、21、23、60、96、137、299、300 BPM；异常时间戳、迟拍、六次窗口、空闲重置。",
+      "verdict": "原 2.5 秒重置误伤 20–23 BPM；改为 4.5 秒。速度换得很突然仍需几次拍击收敛。",
+      "refs": [
+        "tempo",
+        "manual"
+      ]
+    },
+    {
+      "name": "速度术语",
+      "status": "通过",
+      "principle": "BPM 是精确信息；意大利术语只是辅助描述。",
+      "evidence": "逐段检查 GRAVE 到 PRESTO 的映射及显示绑定。",
+      "verdict": "术语范围并无唯一标准，当前阈值属于产品约定。不可声称所有 Andante 都对应同一 BPM。",
+      "refs": [
+        "terms"
+      ]
+    },
+    {
+      "name": "常用拍号",
+      "status": "通过",
+      "principle": "用户先决定一小节如何组织；拍号必须首页可达。",
+      "evidence": "UI 验证首页 Meter、一键选 3/4、4/4、6/8、12/8，选择后关闭；时钟枚举。",
+      "verdict": "首页入口已保留。2/4、3/4、4/4、6/8、9/8、12/8 覆盖核心选择。",
+      "refs": [
+        "meter",
+        "compound"
+      ]
+    },
+    {
+      "name": "自定义拍号 / 分组",
+      "status": "有边界",
+      "principle": "不规则拍子的分组由音乐决定，不能凭分子编造唯一重音。",
+      "evidence": "1–12 × /2 /4 /8 /16；480 组模式/细分输入；5 拍两种、7 拍三种分组与持久化。",
+      "verdict": "支持常见 5/7 分组；8/8=3+3+2、9/8 不对称、超过 12 和交替拍号未提供专门流程。6/2 也没有复拍大拍模式。",
+      "refs": [
+        "compound",
+        "manual"
+      ]
+    },
+    {
+      "name": "复拍子 / BPM 单位",
+      "status": "通过",
+      "principle": "先明确一拍是什么，才谈每分钟多少拍。",
+      "evidence": "6/8、9/8、12/8 大拍/音符单位，小节采样长度；/4、/16 复拍；旧预设保速迁移。",
+      "verdict": "6/8 默认两个附点四分音符大拍；切成六个八分音符单位时 BPM 意义随显示音符变化。",
+      "refs": [
+        "compound",
+        "tempo"
+      ]
+    },
+    {
+      "name": "强弱 / 次强层级",
+      "status": "通过",
+      "principle": "节拍结构应独立于乐器与播放表现。",
+      "evidence": "2、3、4 拍矩阵；6/8 的 1/4、12/8 的 1/7；所有乐器与 EVEN 下的视觉不变。",
+      "verdict": "次强保持你选定的轻度突出。1/.25/.34/.25 是音量设计，不能说成乐理规定。",
+      "refs": [
+        "meter",
+        "compound"
+      ]
+    },
+    {
+      "name": "ACCENT / EVEN",
+      "status": "通过",
+      "principle": "EVEN 改变发声力度，不改写拍子的天然组织。",
+      "evidence": "8 音色时钟强度；声学渲染强弱与均匀攻击；默认、迁移、重启、播放中切换 UI。",
+      "verdict": "默认 ACCENT；EVEN 尊重静音，也保留序号强弱和灯的亮度层级。",
+      "refs": [
+        "meter",
+        "gap"
+      ]
+    },
+    {
+      "name": "逐拍静音 / 手动重音",
+      "status": "待改善",
+      "principle": "可编辑的状态要能看见，并与自然拍强区分。",
+      "evidence": "静音连同细分归零；EVEN 保留静音；点击循环代码与可访问性值检查。",
+      "verdict": "静音用短横线可见；手动加重目前只有声音及 VoiceOver 值变化，普通视觉反馈不足。不要通过改变自然拍强字重来掩盖问题。",
+      "refs": [
+        "manual"
+      ]
+    },
+    {
+      "name": "细分与连音符号",
+      "status": "已修复",
+      "principle": "图标必须说明时间分配，不能让三连音看成三个普通八分音符。",
+      "evidence": "简单 1/2/3/4，复拍 1/2/3/6；一键菜单；新截图核对三连音 3 与二连音 2。",
+      "verdict": "补上连音数字；普通复拍三等分不加 3。",
+      "refs": [
+        "tuplets"
+      ]
+    },
+    {
+      "name": "播放中改拍号 / 细分",
+      "status": "已修复",
+      "principle": "网格可以重排，已完成的预备拍和训练进度不能意外重来。",
+      "evidence": "先完成 Count-in，在 Ramp+Gap 第二练习小节换细分和拍号；校验 BPM、bar、silent、countIn。",
+      "verdict": "在当前练习小节重新从第一拍开始；不重放预备拍、不重复涨速、不丢失 Gap 阶段。",
+      "refs": [
+        "practice"
+      ]
+    },
+    {
+      "name": "音色首页 / 全库",
+      "status": "通过",
+      "principle": "先让常用选择可见，全部乐器平铺方便试听。",
+      "evidence": "3 推荐可点击；8 种全库选择；取消重复音色；运行中切换；重启记忆。",
+      "verdict": "HI-HAT、CLASSIC、CLICK 的推荐是策展选择，不宣称由市场占比数据证明。",
+      "refs": [
+        "gap"
+      ]
+    },
+    {
+      "name": "HI-HAT",
+      "status": "通过",
+      "principle": "听感来自录音与力度层级，时钟不应为“真人感”随机晃动。",
+      "evidence": "4 轮替阶段 × 3 采样率的攻击能量；所有拍位 air=false；强/次强/弱顺序。",
+      "verdict": "闭合踩镲，无开镲；次强比弱约 2.67 dB。客观测量不等于手机主观听感验收。",
+      "refs": [
+        "virtuosity"
+      ]
+    },
+    {
+      "name": "CLASSIC 木块",
+      "status": "通过",
+      "principle": "清晰、短促、易辨认落点。",
+      "evidence": "实际木块采样；44.1/48/96 kHz、ACCENT/EVEN、300 BPM 密集渲染。",
+      "verdict": "四次轮替的攻击阈值时间均约 9 ms；属于一致的音色包络。",
+      "refs": [
+        "vcsl"
+      ]
+    },
+    {
+      "name": "CLICK",
+      "status": "通过",
+      "principle": "电子 click 提供另一种频谱的精确参照。",
+      "evidence": "有限/有界合成音、静音与细分、音色持久化、完整 UI 选择。",
+      "verdict": "保留唯一明确的电子音；不重复模拟已有原声乐器。",
+      "refs": [
+        "audio"
+      ]
+    },
+    {
+      "name": "BELL",
+      "status": "通过",
+      "principle": "长尾音不能令密集节拍叠加失控。",
+      "evidence": "真实 handbell；各采样率、密集细分、尾音终止、强弱/均匀攻击。",
+      "verdict": "自动测试无削波；一小节试听给尾音留出结束时间。",
+      "refs": [
+        "vcsl"
+      ]
+    },
+    {
+      "name": "RIMSHOT",
+      "status": "通过",
+      "principle": "声音名称应与实际奏法相符。",
+      "evidence": "来源为 snare rimshot；四次轮替攻击阈值均约 2 ms；全音频矩阵。",
+      "verdict": "真实军鼓鼓面+鼓边击打，来源区别于 cross-stick；最终力度偏好待真机听。",
+      "refs": [
+        "virtuosity"
+      ]
+    },
+    {
+      "name": "PEDAL",
+      "status": "通过",
+      "principle": "脚踩踩镲的轮替不能时早时晚。",
+      "evidence": "四个样本攻击阈值均约 1 ms；密集与强弱/EVEN 渲染。",
+      "verdict": "先前轮替起音错位在当前样本中未复现。",
+      "refs": [
+        "virtuosity"
+      ]
+    },
+    {
+      "name": "STICK",
+      "status": "通过",
+      "principle": "鼓棒相击应来自实际相击，而非军鼓边击替代。",
+      "evidence": "原始 Drumsticks #4；四次攻击阈值 1/1/1/2 ms；渲染与持久化。",
+      "verdict": "已使用真实鼓棒相击片段。",
+      "refs": [
+        "stick"
+      ]
+    },
+    {
+      "name": "SHAKER",
+      "status": "待试听",
+      "principle": "保留自然沙粒包络，同时让不同击次的节拍落点稳定。",
+      "evidence": "真实沙锤；渲染有界、强弱正确；四个攻击阈值约 15/50/39/46 ms。",
+      "verdict": "包络差异约 35 ms，需 A/B 听感判断是否预移/裁切；没有仅凭阈值把自然渐强削掉。",
+      "refs": [
+        "virtuosity"
+      ]
+    },
+    {
+      "name": "一小节试听",
+      "status": "已修复",
+      "principle": "试听应足够判断音色与节拍层级，且次数确定。",
+      "evidence": "简单/复拍各细分和 20/96/160/300 BPM：只排定一小节，后续再运行也不多出击次。",
+      "verdict": "原 Timer 尾音窗口可能跨进下一小节；现在由采样时钟限制击次数，Timer 只负责释放引擎。",
+      "refs": [
+        "audio"
+      ]
+    },
+    {
+      "name": "Count-in",
+      "status": "通过",
+      "principle": "演奏者需要准备时间，正式训练应从预备拍后计算。",
+      "evidence": "0/1/2 小节、Ramp+Gap、保存重启；播放中改细分不重放；修改 Count-in 下次启动生效。",
+      "verdict": "按小节准备，默认关闭；修改预备长度不重新定义已经进行的练习。",
+      "refs": [
+        "practice"
+      ]
+    },
+    {
+      "name": "升速 / 降速训练",
+      "status": "通过",
+      "principle": "按明确的练习时段改变难度，到目标应停住。",
+      "evidence": "升速与降速、步长非整除目标的钳制、预备拍、间隔；UI 起始/终点/间隔/步长。",
+      "verdict": "默认隐藏。将 INCREASE BY 改为中性的 STEP，避免降速时文案矛盾。起始参数编辑后 Stop/Play 重启。",
+      "refs": [
+        "practice"
+      ]
+    },
+    {
+      "name": "Gap Training",
+      "status": "通过",
+      "principle": "移除部分听觉参照，检查是否能保持内在节奏。",
+      "evidence": "有声/无声小节循环、Count-in 不被消音、训练设置保存；上下限及 UI 开关。",
+      "verdict": "静默小节仍显示进度，这是当前策略；Gap Click 也保留休止视觉。完全无视觉提示尚未提供。",
+      "refs": [
+        "gap"
+      ]
+    },
+    {
+      "name": "预设保存 / 载入 / 删除",
+      "status": "已修复",
+      "principle": "必须准确告诉用户当前是否仍是保存的节奏。",
+      "evidence": "第 2 项序号、修改变 CUSTOM、载入、删除后重排、空名字、KEEP、重启显示、播放中载入。",
+      "verdict": "移除硬编码 PRESET 01 / DAILY PRACTICE；持久化选择 ID，当前参数与保存内容比较。",
+      "refs": [
+        "manual"
+      ]
+    },
+    {
+      "name": "设置持久化 / 旧版本",
+      "status": "通过",
+      "principle": "关闭应用不应丢掉练习上下文，升级不应偷偷改变速度。",
+      "evidence": "Rhythm Codable、旧字段缺失、旧音色迁移、旧 6/4 与 6/8 计拍；UI 重启。",
+      "verdict": "设置本地保存，不提供云同步；这属于当前范围。",
+      "refs": [
+        "manual"
+      ]
+    },
+    {
+      "name": "明暗皮肤 / 过渡",
+      "status": "通过",
+      "principle": "同一控件在不同皮肤保持位置、行为和语义。",
+      "evidence": "两皮肤截图、播放中切换、菜单同组件；单一图形 Play/Stop 插值；Reduce Motion 分支代码检查。",
+      "verdict": "保持原版首页及石墨播放键。颜色偏好不是外部规范可以替用户决定的。",
+      "refs": [
+        "motion"
+      ]
+    },
+    {
+      "name": "按键触感",
+      "status": "部分验证",
+      "principle": "触感是操作确认，不应被误认为振动节拍。",
+      "evidence": "开关操作与重启保持；控制动作调用 UISelectionFeedbackGenerator 的代码检查。",
+      "verdict": "目前是控制触感，非每拍振动；硬件效果按用户要求稍后测。",
+      "refs": [
+        "buttons"
+      ]
+    },
+    {
+      "name": "节拍灯",
+      "status": "待改善",
+      "principle": "亮度表达层级；时变信号需要让人看出节拍经过。",
+      "evidence": "普通多拍随 beat 切换、EVEN 层级不变；单拍配置代码路径核对。",
+      "verdict": "1/x 只有一个 beat 索引，当前灯会常亮；应补单拍明灭。视觉以 30 Hz 轮询，未校准蓝牙音频延迟。",
+      "refs": [
+        "gap",
+        "audio"
+      ]
+    },
+    {
+      "name": "菜单 / 确认行为",
+      "status": "通过",
+      "principle": "单个确定选择应立即生效；不完整输入与破坏操作才需要确认。",
+      "evidence": "Meter/Division/Count-in/Every/Step 立即选择；数字 SET；删除 KEEP/DELETE；自定义拍号连续编辑。",
+      "verdict": "统一自绘面板；更多功能藏于 Practice，首页拍号与细分可达。",
+      "refs": [
+        "buttons"
+      ]
+    },
+    {
+      "name": "锁屏 / 后台 / 混音",
+      "status": "真机待测",
+      "principle": "节拍必须在练习时持续，也要能与伴奏共存。",
+      "evidence": "静态检查 playback、mixWithOthers、UIBackgroundModes audio；引擎模拟器运行。",
+      "verdict": "配置符合 Apple 文档；尚未实测锁屏、后台长时播放或与其他音乐 App 共存。",
+      "refs": [
+        "background",
+        "mix"
+      ]
+    },
+    {
+      "name": "锁屏 BPM / 远程播放",
+      "status": "已修复",
+      "principle": "系统显示应对应正在听到的速度。",
+      "evidence": "iOS 运行状态测试验证渐速 240→250 后 metadata 为 250，手动接管为 100，停止清除。",
+      "verdict": "修复原 metadata 一直取 rhythm.bpm。系统锁屏按钮与真实屏幕刷新留待手机测试。",
+      "refs": [
+        "background"
+      ]
+    },
+    {
+      "name": "拔耳机 / 来电 / 路由变化",
+      "status": "部分验证",
+      "principle": "输出途径消失或被中断时应停止，避免突然从扬声器外放。",
+      "evidence": "模拟通知验证 interruption 与 oldDeviceUnavailable 后停止；引擎配置变化路径检查。",
+      "verdict": "这是应用响应测试，不能替代真实拔耳机、蓝牙切换、来电、重连和音频错误面板验证。",
+      "refs": [
+        "route"
+      ]
+    },
+    {
+      "name": "触摸范围 / 可访问性",
+      "status": "待改善",
+      "principle": "好看之外，控件必须容易命中，关键文字必须可辨读。",
+      "evidence": "源码尺寸：部分 32 pt 控件、40×38 齿轮、39 pt 高密度拍键；主屏固定画布缩放；UI 标签可查询。",
+      "verdict": "Apple 建议 44×44 pt。未完整支持 Dynamic Type；未完成 VoiceOver 手势、大小屏/iPad 全矩阵、对比度仪器检测。",
+      "refs": [
+        "buttons",
+        "type"
+      ]
+    },
+    {
+      "name": "录音来源 / 打包",
+      "status": "通过",
+      "principle": "音色必须可追溯，实际出声资源须与声明一致。",
+      "evidence": "33 WAV 全部加载；sources.json、原始哈希、处理脚本与许可文件；官网/源仓库复核。",
+      "verdict": "来源库标注 CC0；当前录音资源不依赖用户的 Addictive Drums 安装。此行是来源核对，不是法律意见。",
+      "refs": [
+        "virtuosity",
+        "vcsl",
+        "stick"
+      ]
+    }
+  ],
+  "sources": {
+    "tempo": [
+      "Yamaha · BPM 的拍单位",
+      "https://yamahacreators.com/resources/what-is-bpm-in-music"
+    ],
+    "terms": [
+      "Yamaha · 速度术语",
+      "https://yamahacreators.com/resources/what-is-tempo-in-music"
+    ],
+    "meter": [
+      "Open Music Theory · 节拍层级",
+      "https://openmusictheory.github.io/protonotation.html"
+    ],
+    "compound": [
+      "Open Music Theory · 复拍子",
+      "https://viva.pressbooks.pub/openmusictheory/chapter/compound-meters-and-time-signatures/"
+    ],
+    "tuplets": [
+      "Puget Sound · 连音",
+      "https://musictheory.pugetsound.edu/mt21c/Tuplets.html"
+    ],
+    "manual": [
+      "Soundbrenner · 官方手册",
+      "https://www.soundbrenner.com/pages/manual-the-metronome-app"
+    ],
+    "practice": [
+      "EUMLab · Pro Metronome",
+      "https://eumlab.com/pro-metronome/"
+    ],
+    "gap": [
+      "Benny Greb · Gap Click",
+      "https://www.gapclick.app/"
+    ],
+    "audio": [
+      "Apple · AVAudioSourceNode",
+      "https://developer.apple.com/documentation/avfaudio/avaudiosourcenode"
+    ],
+    "background": [
+      "Apple · Playback session",
+      "https://developer.apple.com/documentation/avfaudio/avaudiosession/category-swift.struct/playback"
+    ],
+    "mix": [
+      "Apple · Mix with others",
+      "https://developer.apple.com/documentation/avfaudio/avaudiosession/categoryoptions-swift.struct/mixwithothers"
+    ],
+    "route": [
+      "Apple · Audio route changes",
+      "https://developer.apple.com/documentation/avfaudio/responding-to-audio-route-changes"
+    ],
+    "buttons": [
+      "Apple · 触摸尺寸",
+      "https://developer.apple.com/design/tips/"
+    ],
+    "type": [
+      "Apple · Dynamic Type",
+      "https://developer.apple.com/videos/play/wwdc2024/10074/"
+    ],
+    "motion": [
+      "Apple · Motion",
+      "https://developer.apple.com/design/human-interface-guidelines/motion"
+    ],
+    "virtuosity": [
+      "Virtuosity Drums · 原始库",
+      "https://github.com/sfzinstruments/virtuosity_drums"
+    ],
+    "vcsl": [
+      "VCSL · 原始库",
+      "https://github.com/sgossner/VCSL"
+    ],
+    "stick": [
+      "BigSoundBank · Drumsticks #4",
+      "https://bigsoundbank.com/drumsticks-4-s1970.html"
+    ]
+  }
+}

@@ -87,3 +87,18 @@ Tests enumerate simple and compound patterns, grouped vs expanded counting, all 
 The home surface keeps the approved instrument layout: tempo, beat indicators, direct Meter and Division controls, graphite Play/Stop and ivory Tap. The original section labels and control proportions are retained. Sound choices are one level inside Settings. Practice and saved presets have their own entries; ramp and gap details appear only when enabled. Fresh rhythms start at 96 BPM, 4/4, ACCENT on, with no count-in or training enabled.
 
 Common meters, division, count-in, ramp interval and increment apply in one tap. Custom meter edits apply immediately without a Set button; dismissing retains them. Numeric tempo entry keeps confirmation so partial digits never affect playback. Sound choices apply immediately and keep the library open for auditioning. Preset deletion keeps its confirmation.
+
+## Full feature audit (2026-10-03)
+
+Open [the 37-item audit](Design/Audit/2026-10-03/index.html) for first-principles judgments, primary sources, measured evidence and explicitly unverified hardware cases. Raw clock, rendered-audio, sample-attack and simulator results are alongside it.
+
+Audit fixes: Tap now accepts the entire 20–300 BPM range; live meter/subdivision edits restart the current grid without replaying count-in or resetting training progress; sample-clock-limited previews emit exactly one bar and leave a tail; preset labels track the actual selected, modified or deleted state across launches; Now Playing follows the running ramp tempo; triplet/duplet glyphs include their tuplet numeral. Count-in length edits take effect on the next start. Ramp step text is neutral for ascending and descending practice.
+
+The scheme now runs model integration tests as well as UI tests. The former use synthetic interruption and route-change notifications; lock-screen operation, background duration, real headphone/Bluetooth changes and physical haptics still require a phone pass. Remaining usability findings include single-pulse lamp behavior, visible manual-accent state, small touch targets and Dynamic Type. Shaker attack-envelope differences require listening before changing recordings.
+
+To reproduce the sample-attack measurement (a signal envelope metric, not a perceptual onset judgment):
+
+```sh
+swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AttackAudit.swift -o /tmp/metronome-attack-audit
+/tmp/metronome-attack-audit
+```

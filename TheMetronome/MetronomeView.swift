@@ -96,8 +96,8 @@ struct MetronomeView: View {
             }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), radius: 13)).position(x: 327.5, y: 677)
                 .accessibilityLabel("Tap tempo").accessibilityIdentifier("tap")
             Button { present(.presets) } label: {
-                Text("PRESET 01 / \(model.presetName)").technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
-            }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel("Saved presets").accessibilityIdentifier("presets")
+                Text(model.presetCaption).technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
+            }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel("Saved presets").accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
         }.foregroundStyle(p.ink)
     }
     func selector(_ title: String, value: String) -> some View {
@@ -106,7 +106,7 @@ struct MetronomeView: View {
             HStack {
                 Spacer()
                 if title == "DIVISION" {
-                    RhythmGlyph(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision)).fill(p.ink).frame(width: 42, height: 26)
+                    RhythmNotation(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision), color: p.ink).frame(width: 42, height: 26)
                 } else { Text(value).font(InstrumentType.value(24)) }
                 Spacer()
                 Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium))
