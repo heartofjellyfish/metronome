@@ -331,15 +331,15 @@ func closeGains(_ actual: [Float], _ expected: [Float], _ message: String) {
     check(zip(actual, expected).allSatisfy { abs($0 - $1) < 0.00001 }, message)
 }
 var sixteenths = Rhythm(); sixteenths.subdivision = 4
-closeGains(nominalGains(sixteenths), [1,0.105,0.18,0.105, 0.25,0.0924,0.1584,0.0924, 0.30,0.0987,0.1692,0.0987, 0.25,0.0924,0.1584,0.0924], "4/4 sixteenths must retain both beat and internal hierarchy")
+closeGains(nominalGains(sixteenths), [1,0.105,0.18,0.105, 0.25,0.0945,0.162,0.0945, 0.30,0.09975,0.171,0.09975, 0.25,0.0945,0.162,0.0945], "4/4 sixteenths must retain both beat and internal hierarchy")
 var thirds = Rhythm(); thirds.subdivision = 3
 closeGains(Array(nominalGains(thirds).prefix(3)), [1,0.18,0.18], "Triplets must not invent a secondary accent on the last note")
 var halves = Rhythm(); halves.subdivision = 2
-closeGains(nominalGains(halves), [1,0.18,0.25,0.1584,0.30,0.1692,0.25,0.1584], "Eighth-note offbeats follow parent context")
+closeGains(nominalGains(halves), [1,0.18,0.25,0.162,0.30,0.171,0.25,0.162], "Eighth-note offbeats follow parent context")
 var compoundSix = Rhythm(); compoundSix.setMeter(beats: 6, denominator: 8, compound: true); compoundSix.subdivision = 6
-closeGains(nominalGains(compoundSix), [1,0.105,0.18,0.105,0.18,0.105, 0.30,0.0987,0.1692,0.0987,0.1692,0.0987], "Compound sixteenths must use 2+2+2, not 3+3")
+closeGains(nominalGains(compoundSix), [1,0.105,0.18,0.105,0.18,0.105, 0.30,0.09975,0.171,0.09975,0.171,0.09975], "Compound sixteenths must use 2+2+2, not 3+3")
 compoundSix.subdivision = 2
-closeGains(nominalGains(compoundSix), [1,0.18,0.30,0.1692], "Compound duplets have one local anchor and one light note")
+closeGains(nominalGains(compoundSix), [1,0.18,0.30,0.171], "Compound duplets have one local anchor and one light note")
 // Same physical rhythm in grouped or expanded notation must keep the same expression.
 for denominator in [4,8,16] {
     for numerator in [6,9,12] {
@@ -361,7 +361,7 @@ for denominator in [4,8,16] {
 var humanizer = DynamicHumanizer(), variations = Set<Float>()
 for _ in 0..<10000 {
     let g = humanizer.nextGain(); variations.insert(g)
-    check(g >= pow(10, -0.25/20) && g <= pow(10, 0.25/20), "Humanize exceeded its dB bound")
+    check(g >= 0.98 && g <= 1.02, "Humanize exceeded its ±2% amplitude bound")
 }
 check(variations.count > 1000, "Humanize must vary beyond a short beat-locked pattern")
 for numerator in 1...12 {
@@ -371,6 +371,11 @@ for numerator in 1...12 {
                 var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: compound)
                 r.subdivision = subdivision; r.sanitize(); r.bpm = 137
                 let nominal = nominalGains(r)
+                // Check worst-case opposing random offsets, not just one seeded playback.
+                let orderedLevels = Set(nominal.filter { $0 > 0 }).sorted()
+                for (lower, upper) in zip(orderedLevels, orderedLevels.dropFirst()) {
+                    check(lower * 1.02 < upper * 0.98, "Random dynamics must never invert distinct nominal levels")
+                }
                 let accented = SampleClock(rate: 1000); accented.reset(r)
                 var even = r; even.followsMeter = false
                 let flat = SampleClock(rate: 1000); flat.reset(even)
@@ -381,7 +386,7 @@ for numerator in 1...12 {
                     if let (e, strength) = a, let (f, flatStrength) = b {
                         let g = BeatIntensity.gain(strength)*e.gainScale
                         let base = nominal[hits % nominal.count]
-                        check(g.isFinite && g >= base * 0.9716 && g <= base * 1.0293, "Subdivision level out of bounds")
+                        check(g.isFinite && g >= base * 0.979999 && g <= base * 1.020001, "Subdivision level out of bounds")
                         check(flatStrength == 5 && f.gainScale == 1, "EVEN must disable performance dynamics")
                         hits += 1
                     }
@@ -418,7 +423,7 @@ for numerator in [5,7] {
         var boundary = 0
         for group in grouping {
             let base = boundary * 4
-            closeGains(Array(gains[base..<base+4]), boundary == 0 ? [1,0.105,0.18,0.105] : [0.30,0.0987,0.1692,0.0987], "Every additive group must retain its secondary subdivision context")
+            closeGains(Array(gains[base..<base+4]), boundary == 0 ? [1,0.105,0.18,0.105] : [0.30,0.09975,0.171,0.09975], "Every additive group must retain its secondary subdivision context")
             boundary += group
         }
     }
