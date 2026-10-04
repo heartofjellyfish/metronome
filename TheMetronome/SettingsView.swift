@@ -61,7 +61,7 @@ struct SettingsView: View {
             SectionLabel(text: "04 VIEW", p: p).frame(width: 359).position(x: 206.5, y: 668)
             HStack {
                 Text("SKIN").technical(12, spacing: 1.7); Spacer()
-                flatSegment($model.dark, labels: ["LIGHT", "DARK"]).frame(width: 261, height: 46)
+                skinKeys.frame(width: 261, height: 46)
             }.frame(width: 359).position(x: 206.5, y: 714)
         }
     }
@@ -79,23 +79,21 @@ struct SettingsView: View {
             .accessibilityLabel(title == "PRESETS" ? "Saved presets" : "Practice settings")
             .accessibilityIdentifier(route == .presets ? "settings-presets" : route.rawValue)
     }
-    func flatSegment(_ value: Binding<Bool>, labels: [String]) -> some View {
-        HStack(spacing: 0) {
+    private var skinKeys: some View {
+        HStack(spacing: 9) {
             ForEach(0..<2) { index in
-                let selected = value.wrappedValue == (index == 1)
-                Button { value.wrappedValue = index == 1; model.tickFeedback() } label: {
-                    Text(labels[index]).technical(13, spacing: 0.5).frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background {
-                            if selected {
-                                RoundedRectangle(cornerRadius: 8).fill(LinearGradient(colors: [p.top, p.bottom], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(p.edge, lineWidth: 0.7))
-                                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(p.light, lineWidth: 0.8).padding(1))
-                                    .shadow(color: .black.opacity(0.22), radius: 2, x: 1, y: 2)
-                            }
-                        }
-                }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
+                let selected = model.dark == (index == 1)
+                Button { model.dark = index == 1; model.tickFeedback() } label: {
+                    HStack(spacing: 10) {
+                        LED(on: selected, color: InstrumentPalette.amber, size: 7)
+                        Text(index == 0 ? "LIGHT" : "DARK").technical(12, spacing: 0.8)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: index == 1, radius: 9))
+                .accessibilityLabel(index == 0 ? "LIGHT" : "DARK")
+                .accessibilityAddTraits(selected ? .isSelected : [])
             }
-        }.insetPanel(p, radius: 9)
+        }
     }
     func menuField(_ title: String, value: String, route: InstrumentPanelKind, fontSize: CGFloat = 21) -> some View {
         VStack(alignment: .leading, spacing: 8) {

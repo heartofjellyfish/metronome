@@ -219,6 +219,15 @@ final class InstrumentUITests: XCTestCase {
         button("Close division").tap()
     }
     func testSettingsPanelsAndDarkPlayback() {
+        button("settings").tap()
+        for _ in 0..<2 {
+            button("DARK").tap(); XCTAssertTrue(button("DARK").isSelected)
+            XCTAssertFalse(button("LIGHT").isSelected)
+            button("LIGHT").tap(); XCTAssertTrue(button("LIGHT").isSelected)
+            XCTAssertFalse(button("DARK").isSelected)
+        }
+        proof("Separate skin keys ivory")
+        button("Close settings").tap()
         button("transport").tap(); button("settings").tap(); button("practice").tap()
         button("COUNT IN, OFF").tap(); proof("Count in choices"); button("2").tap()
         XCTAssertTrue(button("COUNT IN, 2 BAR").exists)
@@ -229,7 +238,8 @@ final class InstrumentUITests: XCTestCase {
         button("START, 60 BPM").tap(); type("72"); button("panelApply").tap()
         XCTAssertTrue(button("START, 72 BPM").exists)
         proof("Expanded ramp controls")
-        button("Close practice").tap(); button("DARK").tap(); proof("Graphite settings")
+        button("Close practice").tap(); button("DARK").tap()
+        XCTAssertTrue(button("DARK").isSelected); proof("Graphite settings")
         button("Close settings").tap(); XCTAssertEqual(button("transport").label, "Stop metronome")
         openTempo(); proof("Graphite keypad"); button("Close set tempo").tap()
         button("transport").tap(); proof("Graphite main")
