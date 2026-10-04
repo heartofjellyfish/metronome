@@ -110,6 +110,7 @@ final class MetronomeModel: ObservableObject {
     private var lastSerial = 0
     private var previewTimer: Timer?
     private let feedback = UISelectionFeedbackGenerator()
+    private let tempoDetent = UIImpactFeedbackGenerator(style: .light)
 
     init() {
         let defaults = UserDefaults.standard
@@ -149,12 +150,24 @@ final class MetronomeModel: ObservableObject {
     var marking: String {
         switch bpm { case ..<40: return "GRAVE"; case ..<60: return "LARGO"; case ..<76: return "ADAGIO"; case ..<108: return "ANDANTE"; case ..<120: return "MODERATO"; case ..<168: return "ALLEGRO"; case ..<200: return "VIVACE"; default: return "PRESTO" }
     }
-    func setBPM(_ bpm: Int) {
+    func setBPM(_ bpm: Int, rotary: Bool = false) {
         let value = min(300, max(20, bpm))
         // A manual tempo change takes over from automation, so display and sound agree.
         if rhythm.ramp { rhythm.ramp = false }
         guard value != rhythm.bpm else { return }
-        rhythm.bpm = value; tickFeedback()
+        let previous = rhythm.bpm
+        rhythm.bpm = value
+        // Mark a ten-BPM boundary once, including one crossed between drag events.
+        // Leaving a marked value must not immediately create a second detent.
+        let crossedTen = value > previous ? value / 10 > previous / 10 : (value + 9) / 10 < (previous + 9) / 10
+        if rotary && haptics && crossedTen {
+            tempoDetent.impactOccurred(intensity: 0.55)
+            tempoDetent.prepare()
+        } else { tickFeedback() }
+    }
+    func prepareTempoFeedback() {
+        guard haptics else { return }
+        feedback.prepare(); tempoDetent.prepare()
     }
     func tickFeedback() { if haptics { feedback.selectionChanged() } }
     func toggle() { playing ? stop() : start() }

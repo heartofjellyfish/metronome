@@ -43,6 +43,9 @@ struct HardwareButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(green ? Color(hex: 0x243326) : charcoal ? Color(hex: 0xF5F0E2) : p.ink)
+            // Press/release animates the hardware, not replacement text or symbols.
+            // A glyph may still own its explicit animation (the transport contour).
+            .transaction { $0.animation = nil }
             .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed) }
             .offset(y: configuration.isPressed ? 1.6 : 0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
@@ -169,8 +172,11 @@ struct TempoDial: View {
                     let dy = value.location.y - side / 2
                     guard hypot(dx, dy) > centerDeadZone else { interaction.end(); return }
                     let current = Double(atan2(dx, -dy)) * 180 / .pi
-                    if !interaction.isTracking { interaction.begin(at: current, bpm: model.bpm) }
-                    else if let bpm = interaction.move(to: current), bpm != model.bpm { model.setBPM(bpm) }
+                    if !interaction.isTracking {
+                        interaction.begin(at: current, bpm: model.bpm)
+                        model.prepareTempoFeedback()
+                    }
+                    else if let bpm = interaction.move(to: current), bpm != model.bpm { model.setBPM(bpm, rotary: true) }
                 }.onEnded { _ in interaction.end() })
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Tempo")

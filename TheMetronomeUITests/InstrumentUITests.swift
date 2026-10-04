@@ -422,11 +422,22 @@ final class InstrumentUITests: XCTestCase {
     }
 
     func testDarkTransportHierarchy() {
+        func cyclePulse(_ index: Int) {
+            let key = button("beat-\(index)")
+            let original = key.value as? String
+            for _ in 0..<(index == 1 ? 2 : 3) {
+                key.tap()
+                if key.value as? String == "Muted" { proof("Pulse \(index) immediate mute glyph") }
+            }
+            XCTAssertEqual(key.value as? String, original)
+        }
+        cyclePulse(1); cyclePulse(2)
         button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
         proof("Graphite primary play key")
         for _ in 0..<3 {
             button("transport").tap()
             XCTAssertEqual(button("transport").label, "Stop metronome")
+            cyclePulse(1); cyclePulse(2)
             proof("Graphite primary stop key")
             button("transport").tap()
             XCTAssertEqual(button("transport").label, "Start metronome")
