@@ -71,7 +71,7 @@ struct SettingsView: View {
             }.padding(15).frame(maxWidth: .infinity).frame(height: 81)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
             .accessibilityLabel(title == "PRESETS" ? "Saved presets" : "Practice settings")
-            .accessibilityIdentifier(route.rawValue)
+            .accessibilityIdentifier(route == .presets ? "settings-presets" : route.rawValue)
     }
     func flatSegment(_ value: Binding<Bool>, labels: [String]) -> some View {
         HStack(spacing: 0) {
@@ -97,7 +97,7 @@ struct SettingsView: View {
             Button { present(route) } label: {
                 HStack { Spacer(minLength: 0); Text(value).font(InstrumentType.value(fontSize)).lineLimit(1).minimumScaleFactor(0.7); Spacer(minLength: 0); Image(systemName: "chevron.down").font(.system(size: 10)) }
                     .padding(.horizontal, 12).frame(height: 46).frame(maxWidth: .infinity)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(title == "METER" ? "Time signature" : title == "DIVISION" ? "Subdivision" : "\(title), \(value)")
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityIdentifier("settings-\(route.rawValue)").accessibilityLabel(title == "METER" ? "Time signature" : title == "DIVISION" ? "Subdivision" : "\(title), \(value)")
         }.frame(maxWidth: .infinity)
     }
 }

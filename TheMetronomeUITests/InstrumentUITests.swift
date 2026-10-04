@@ -8,7 +8,20 @@ final class InstrumentUITests: XCTestCase {
         app.launchArguments = ["--reference", "--light"]
         app.launch()
     }
-    func button(_ name: String) -> XCUIElement { app.buttons[name] }
+    func button(_ name: String) -> XCUIElement {
+        // UIKit retains the presenting screen in the query tree beneath a full-screen cover.
+        // Scope duplicated shortcuts to the visible surface instead of matching their label alone.
+        if ["Time signature", "Subdivision", "presets"].contains(name) {
+            let settings = app.buttons["Close settings"]
+            let inSettings = settings.exists && settings.isHittable
+            switch name {
+            case "Time signature": return app.buttons[inSettings ? "settings-meter" : "home-meter"]
+            case "Subdivision": return app.buttons[inSettings ? "settings-division" : "home-division"]
+            default: return app.buttons[inSettings ? "settings-presets" : "presets"]
+            }
+        }
+        return app.buttons[name]
+    }
     func openTempo() { button("tempoDisplay").tap(); XCTAssertTrue(button("key-1").waitForExistence(timeout: 3)) }
     func type(_ value: String) { for character in value { button("key-\(character)").tap() } }
     func assertTempo(_ value: Int) { XCTAssertTrue(button("tempoDisplay").label.contains("\(value) BPM"), button("tempoDisplay").label) }
@@ -80,9 +93,14 @@ final class InstrumentUITests: XCTestCase {
     }
     func testSimpleHomeAndImmediateSelections() {
         proof("Simple ivory home")
-        XCTAssertFalse(button("Time signature").exists)
-        XCTAssertFalse(button("Subdivision").exists)
-        XCTAssertFalse(button("presets").exists)
+        XCTAssertTrue(button("Time signature").isHittable)
+        button("Time signature").tap(); button("meter-3-4").tap()
+        XCTAssertFalse(button("Close meter").exists)
+        XCTAssertEqual(button("Time signature").value as? String, "3/4")
+        XCTAssertTrue(button("beat-3").exists); XCTAssertFalse(button("beat-4").exists)
+        button("Time signature").tap(); button("meter-4-4").tap()
+        XCTAssertTrue(button("Subdivision").isHittable)
+        XCTAssertTrue(button("presets").isHittable)
         button("transport").tap(); XCTAssertEqual(button("transport").label, "Stop metronome")
         proof("Bright active beat lamp")
         button("transport").tap()

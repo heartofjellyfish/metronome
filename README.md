@@ -84,6 +84,6 @@ Tests enumerate simple and compound patterns, grouped vs expanded counting, all 
 
 ### Simple first, expandable when needed
 
-The home surface focuses on tempo, beat indicators, Play/Stop and Tap. Play uses a muted green hardware key; amber is reserved for pulse indicators. Meter, division and sounds are one level inside Settings. Practice and saved presets have their own entries; ramp and gap details appear only when enabled. Fresh rhythms start at 96 BPM, 4/4, ACCENT on, with no count-in or training enabled.
+The home surface keeps the approved instrument layout: tempo, beat indicators, direct Meter and Division controls, graphite Play/Stop and ivory Tap. The original section labels and control proportions are retained. Sound choices are one level inside Settings. Practice and saved presets have their own entries; ramp and gap details appear only when enabled. Fresh rhythms start at 96 BPM, 4/4, ACCENT on, with no count-in or training enabled.
 
 Common meters, division, count-in, ramp interval and increment apply in one tap. Custom meter edits apply immediately without a Set button; dismissing retains them. Numeric tempo entry keeps confirmation so partial digits never affect playback. Sound choices apply immediately and keep the library open for auditioning. Preset deletion keeps its confirmation.

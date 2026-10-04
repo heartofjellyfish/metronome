@@ -17,10 +17,12 @@ struct MetronomeView: View {
         GeometryReader { geometry in
             let scale = min(geometry.size.width / 414, geometry.size.height / 774)
             instrumentFace
+                .accessibilityElement(children: .contain)
+                .accessibilityHidden(settings || panel != nil)
                 .frame(width: 414, height: 774)
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-        }.accessibilityHidden(panel != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+        }.accessibilityHidden(settings || panel != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel) { self.panel = nil }.id(panelSession) }
@@ -53,7 +55,7 @@ struct MetronomeView: View {
                             RhythmGlyph(count: 1, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(1)).fill(p.ink).frame(width: 20, height: 23)
                             Text("BPM").technical(14, spacing: 2)
                         }
-                        Text(model.marking).technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.65)
+                        Text("\(model.rhythm.beats)/\(model.rhythm.denominator)  \(model.marking)").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.65)
                         if model.event?.countIn == true || model.event?.silent == true {
                             Text(model.event?.countIn == true ? "COUNT IN" : "SILENT BAR").technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
                         }
@@ -63,8 +65,10 @@ struct MetronomeView: View {
             }.buttonStyle(.plain).position(x: 207, y: 114)
                 .accessibilityLabel("Tempo, \(model.bpm) BPM. Tap to enter a value").accessibilityIdentifier("tempoDisplay")
 
-            beatKeys.frame(width: 360, height: 86).position(x: 207, y: 262)
+            SectionLabel(text: "01  PULSE", p: p).frame(width: 360).position(x: 207, y: 206)
+            beatKeys.frame(width: 360, height: 86).position(x: 207, y: 269)
 
+            HStack { Text("02  TEMPO").technical(9, spacing: 2); Spacer(); Rectangle().fill(p.edge.opacity(0.65)).frame(width: 98, height: 0.5) }.frame(width: 360).position(x: 207, y: 345)
             TempoDial(model: model, p: p).frame(width: 204, height: 204).position(x: 206, y: 436)
             Button { model.setBPM(model.bpm - 1) } label: {
                 Text("−").font(.system(size: 30, weight: .regular, design: .monospaced)).frame(width: 60, height: 57)
@@ -73,26 +77,41 @@ struct MetronomeView: View {
                 Text("+").font(.system(size: 30, weight: .regular, design: .monospaced)).frame(width: 60, height: 57)
             }.buttonStyle(HardwareButtonStyle(p: p, radius: 11)).position(x: 357, y: 447).accessibilityLabel("Increase tempo").accessibilityIdentifier("increase")
 
-            VStack(spacing: 9) {
-                Text("\(model.rhythm.beats)/\(model.rhythm.denominator)  ·  \(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "CLASSIC")")
-                    .technical(10, spacing: 1.5)
-                if model.rhythm.countIn > 0 || model.rhythm.ramp || model.rhythm.gap {
-                    Text([model.rhythm.countIn > 0 ? "COUNT IN" : nil, model.rhythm.ramp ? "RAMP" : nil, model.rhythm.gap ? "GAP" : nil].compactMap { $0 }.joined(separator: " · "))
-                        .technical(8, spacing: 1).foregroundStyle(p.muted)
-                }
-            }.frame(width: 360).position(x: 207, y: 575)
+            Button { present(.meter) } label: { selector("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)") }
+                .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).frame(width: 170, height: 61).position(x: 112, y: 576)
+                .accessibilityLabel("Time signature").accessibilityIdentifier("home-meter").accessibilityValue("\(model.rhythm.beats)/\(model.rhythm.denominator)")
+            Button { present(.division) } label: { selector("DIVISION", value: "") }
+                .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).frame(width: 167, height: 61).position(x: 304, y: 576)
+                .accessibilityLabel("Subdivision").accessibilityIdentifier("home-division")
 
             Button { model.toggle(); model.tickFeedback() } label: {
                 TransportGlyph(playing: model.playing).frame(width: 223, height: 100)
-            }.buttonStyle(HardwareButtonStyle(p: p, green: true, radius: 13)).position(x: 138.5, y: 665)
+            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 13)).position(x: 138.5, y: 677)
                 .accessibilityLabel(model.playing ? "Stop metronome" : "Start metronome").accessibilityIdentifier("transport")
             Button { model.tap() } label: {
                 VStack(spacing: 19) {
+                    LED(on: true, color: InstrumentPalette.amber, size: 13)
                     Text("TAP").technical(16, spacing: 1)
                 }.frame(width: 121, height: 100)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 13)).position(x: 327.5, y: 665)
+            }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), radius: 13)).position(x: 327.5, y: 677)
                 .accessibilityLabel("Tap tempo").accessibilityIdentifier("tap")
+            Button { present(.presets) } label: {
+                Text("PRESET 01 / \(model.presetName)").technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
+            }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel("Saved presets").accessibilityIdentifier("presets")
         }.foregroundStyle(p.ink)
+    }
+    func selector(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title).technical(9, spacing: 1.4)
+            HStack {
+                Spacer()
+                if title == "DIVISION" {
+                    RhythmGlyph(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision)).fill(p.ink).frame(width: 42, height: 26)
+                } else { Text(value).font(InstrumentType.value(24)) }
+                Spacer()
+                Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium))
+            }.frame(height: 28)
+        }.padding(.horizontal, 14).frame(maxWidth: .infinity).frame(height: 61)
     }
     private var beatKeys: some View {
         let count = model.rhythm.pulseCount
