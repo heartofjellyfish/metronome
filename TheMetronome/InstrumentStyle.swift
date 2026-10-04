@@ -150,6 +150,13 @@ struct TempoDial: View {
                     Spacer()
                 }.padding(.top, 17).padding(.bottom, 17).rotationEffect(.degrees(angle))
 
+                // The exposed scale carries the same position as the pointer, even when
+                // the hand covers the knob face. Keep it outside the printed ticks.
+                DialPosition(angle: angle, p: p)
+                    .frame(width: side + 16, height: side + 16)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+
             }.frame(width: side, height: side)
                 .contentShape(Circle())
                 .gesture(DragGesture(minimumDistance: 2).onChanged { value in
@@ -166,6 +173,37 @@ struct TempoDial: View {
                 .accessibilityValue("\(model.bpm) beats per minute")
                 .accessibilityAdjustableAction { direction in model.setBPM(model.bpm + (direction == .increment ? 1 : -1)) }
         }.aspectRatio(1, contentMode: .fit)
+    }
+}
+
+struct DialPosition: View {
+    let angle: Double
+    let p: InstrumentPalette
+    var body: some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let radius = min(size.width, size.height) / 2 - 5
+            var track = Path()
+            track.addArc(center: center, radius: radius,
+                         startAngle: .degrees(TempoScale.startAngle - 90),
+                         endAngle: .degrees(TempoScale.endAngle - 90), clockwise: false)
+            context.stroke(track, with: .color(p.edge.opacity(0.35)),
+                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            var position = Path()
+            position.addArc(center: center, radius: radius,
+                            startAngle: .degrees(TempoScale.startAngle - 90),
+                            endAngle: .degrees(angle - 90), clockwise: false)
+            context.stroke(position, with: .color(InstrumentPalette.amber),
+                           style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            let theta = (angle - 90) * .pi / 180
+            var marker = Path()
+            marker.move(to: CGPoint(x: center.x + cos(theta) * (radius - 2),
+                                   y: center.y + sin(theta) * (radius - 2)))
+            marker.addLine(to: CGPoint(x: center.x + cos(theta) * (radius + 4),
+                                      y: center.y + sin(theta) * (radius + 4)))
+            context.stroke(marker, with: .color(InstrumentPalette.amber),
+                           style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        }
     }
 }
 

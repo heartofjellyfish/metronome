@@ -235,12 +235,28 @@ final class InstrumentUITests: XCTestCase {
         button("transport").tap(); proof("Graphite main")
     }
     func testRotaryGestureAndPresetPanel() {
+        XCTAssertTrue(button("tempoDisplay").waitForExistence(timeout: 3))
+        proof("Ivory dial position at 96")
+        openTempo(); type("20"); button("panelApply").tap()
+        proof("Dial position at minimum")
         openTempo(); type("300"); button("panelApply").tap()
+        proof("Dial position at maximum")
         let dial = app.otherElements["tempoDial"]
         let start = dial.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.8))
         let end = dial.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5))
         start.press(forDuration: 0.1, thenDragTo: end)
         XCTAssertFalse(button("tempoDisplay").label.contains("300 BPM"), "Reverse dragging from the upper stop must respond")
+        proof("Dial position after reverse drag")
+        let beforeForward = button("tempoDisplay").label
+        button("transport").tap()
+        end.press(forDuration: 0.1, thenDragTo: start)
+        XCTAssertNotEqual(button("tempoDisplay").label, beforeForward)
+        start.press(forDuration: 0.1, thenDragTo: end)
+        XCTAssertEqual(button("transport").label, "Stop metronome")
+        proof("Dial position during repeated live adjustment")
+        button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
+        proof("Graphite dial position during playback")
+        button("transport").tap()
         button("settings").tap(); button("presets").tap(); proof("Presets panel")
         let name = app.textFields["NAME THIS RHYTHM"]
         name.tap(); name.typeText("UI RHYTHM")
