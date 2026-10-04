@@ -1,0 +1,30 @@
+{
+  "reviewed": "2026-10-02",
+  "method": "Qualitative review of public musician discussions. Convenience sample, not a representative poll or usage telemetry. No market-share or most-popular claim is supported.",
+  "sources": [
+    {
+      "url": "https://www.reddit.com/r/drums/comments/1ry3ci7/fave_click_sound/",
+      "signal": "Direct replies mention wood/clave, cowbell, spoken count, electronic ping and shaker. Author finds hi-hat more musical but easier to lose; cowbell cuts through but may not fit the song."
+    },
+    {
+      "url": "https://www.talkbass.com/threads/metronome.1537689/",
+      "signal": "Repeated preferences for mechanical/woody/staccato click. Some prefer closed hat or short mid-frequency beep; several dislike shrill chirps. Preferences vary by listening context."
+    },
+    {
+      "url": "https://www.reddit.com/r/drums/comments/1clfbjv/metronome_recommendations/",
+      "signal": "Original poster explicitly asks for hi-hat-like clicks because beeps are irritating. Vendor self-promotion was excluded as preference evidence."
+    },
+    {
+      "url": "https://www.reddit.com/r/Guitar/comments/1nxb1tv/",
+      "signal": "Counterexample: author and a reply prefer distinct electronic chirps; another reply prefers natural tones. Search-indexed discussion; full page fetch unavailable."
+    }
+  ],
+  "decision": {
+    "HI-HAT": "User-requested acoustic option with gentle metrical shaping; addresses requests for musical, less irritating clicks.",
+    "CLASSIC": "Existing warm wood sound; repeated qualitative support for woody/mechanical/clave timbres.",
+    "CLICK": "Existing short electronic click; complementary clarity option for users who lose softer percussion in their playing.",
+    "not_a_ranking": true,
+    "cowbell": "Mixed feedback and no existing licensed cowbell asset; not chosen as a first-screen recommendation.",
+    "hi_hat_pattern": "Product interpretation of the user request, not a research finding: subtle 4/4 strong/weak/secondary/weak; trace of open hat on accented beat one; all other hits closed; manual accents/mutes respected."
+  }
+}

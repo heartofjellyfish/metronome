@@ -1,0 +1,11 @@
+Acoustic recordings: Virtuosity Drums, Versilian Studios LLC and Karoryfer Samples.
+Drum kit performed by Austin McMahon at Virtuosity Musical Instruments, Boston.
+Source: https://github.com/sfzinstruments/virtuosity_drums
+Revision: 9f04cf9a734527edfbb0a4eee1f674e45bbf71bc
+License: CC0 1.0 Universal. Full text: Virtuosity-LICENSE.txt.
+Our edits: mono downmix, DC removal, leading-silence trim, short release fade,
+44.1 kHz / 16-bit conversion, level matching and selected short tails.
+Exact source paths, source SHA-256 hashes and processing values: sources.json.
+
+Drumsticks: Joseph SARDIN, BigSoundBank, Drumsticks #4, CC0. https://bigsoundbank.com/drumsticks-4-s1970.html — four hits extracted from the official MP3.
+Woodblock and handbell: Versilian Community Sample Library (VCSL), CC0. https://github.com/sgossner/VCSL

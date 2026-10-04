@@ -1,0 +1,19 @@
+{
+  "source": "https://github.com/sfzinstruments/virtuosity_drums",
+  "commit": "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc",
+  "license": "CC0",
+  "layers": [
+    11,
+    12
+  ],
+  "meter": "4/4",
+  "bpm": 96,
+  "gains": [
+    1,
+    0.25,
+    0.34,
+    0.25
+  ],
+  "fullOverheadMix": 0.35,
+  "note": "Auditions only. App assets unchanged. Highest two velocity layers; not independent round robins."
+}
