@@ -5,7 +5,7 @@ enum InstrumentSound: Int, CaseIterable {
     // Retired raw values remain decodable for existing presets.
     static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat]
     static let recommended: [InstrumentSound] = [.naturalHiHat, .wood, .click]
-    var title: String { ["CLASSIC", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT"][rawValue] }
+    var title: String { ["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT"][rawValue] }
     var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3][rawValue] }
     var detail: String {
         ["REAL WOODBLOCK / DRY & FOCUSED", "SHORT / CLEAR / PRECISE", "REAL HAND BELL / ROUND & RINGING",

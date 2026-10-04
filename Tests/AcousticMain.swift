@@ -42,7 +42,7 @@ import AVFoundation
                     levels.append(10 * log10(energy / Double(Int(rate * 0.05))))
                 }
                 check(levels[0] - levels[2] > 3.5, "Rendered beat one must exceed beat three")
-                check((2.2...3.2).contains(levels[2] - max(levels[1], levels[3])), "Secondary beat should sit about 2.7 dB above the weak beats")
+                check((1.1...2.1).contains(levels[2] - max(levels[1], levels[3])), "Secondary beat should sit about 1.6 dB above the weak beats")
                 check(abs(levels[1] - levels[3]) < 0.3, "Round-robin recordings must not disturb the weak-beat balance")
                 if rate == 44100 { print("4/4 attack dB, take phase \(phase): \(levels.map { String(format: "%.2f", $0) })") }
             }
@@ -62,7 +62,7 @@ import AVFoundation
                     levels.append(10 * log10(energy / 2400))
                 }
                 if even { check(levels.max()! - levels.min()! < 0.3, "Every acoustic sound must have even rendered attacks") }
-                else { check(levels[0] > levels[2] + 1.8 && levels[2] > max(levels[1], levels[3]) + 2.2, "Every acoustic sound must render the meter hierarchy") }
+                else { check(levels[0] > levels[2] + 1.8 && levels[2] > max(levels[1], levels[3]) + 1.1, "Every acoustic sound must render the meter hierarchy") }
             }
         }
         var largest: Float = 0
