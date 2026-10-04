@@ -5,6 +5,8 @@ struct InstrumentPalette {
     var body: Color { Color(hex: dark ? 0x343635 : 0xE5E0D5) }
     var ink: Color { Color(hex: dark ? 0xEEE5D1 : 0x262622) }
     var muted: Color { Color(hex: dark ? 0xA8AAA2 : 0x77786F) }
+    var pulseSecondary: Color { Color(hex: dark ? 0xC0BBAD : 0x57594F) }
+    var pulseWeak: Color { Color(hex: dark ? 0x92958C : 0x7C7E74) }
     var edge: Color { Color(hex: dark ? 0x101210 : 0xA9A292) }
     var top: Color { Color(hex: dark ? 0x414240 : 0xEBE6DB) }
     var bottom: Color { Color(hex: dark ? 0x303230 : 0xDDD7CB) }

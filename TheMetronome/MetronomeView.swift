@@ -123,7 +123,7 @@ struct MetronomeView: View {
                 Button { model.cycleAccent(index) } label: {
                     Text(accent == 0 ? "–" : String(index + 1))
                         .font(.system(size: count > 6 ? 20 : 26, weight: strength == 2 ? .bold : strength == 4 ? .semibold : .regular, design: .monospaced))
-                        .foregroundStyle(strength == 2 ? p.ink : strength == 4 ? p.ink.opacity(0.82) : p.muted)
+                        .foregroundStyle(strength == 2 ? p.ink : strength == 4 ? p.pulseSecondary : p.pulseWeak)
                         .frame(maxWidth: .infinity)
                         .frame(height: count > 6 ? 39 : 86, alignment: .center)
                         .overlay(alignment: .topLeading) {
