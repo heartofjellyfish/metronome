@@ -25,10 +25,10 @@ import sys
 for group,duration in [('snap',.11),('clap',.14),('ride',.35),('cross',.13)]:
  if '--snap-only' in sys.argv and group!='snap': continue
  if '--clap-only' in sys.argv and group!='clap': continue
- for i in range(1,9 if group=='snap' else 7 if group=='clap' else 5):
+ for i in range(1,7 if group=='clap' else 5):
   name='snap.mp3' if group=='snap' else f'Clap_rr{i}.wav' if group=='clap' else f'{group}-{i}.flac'
   full,url,digest=originals[name]
-  offset=round([1.10,2.26,3.34,4.08,.09,5.08,6.06,8.10][i-1]*44100) if group=='snap' else 0
+  offset=round([1.10,2.26,3.34,4.08][i-1]*44100) if group=='snap' else 0
   x=full[offset:offset+round(.3*44100)].copy() if group=='snap' else full.copy()
   x-=np.mean(x)
   onset=int(np.flatnonzero(abs(x)>=max(abs(x))*.06)[0]);start=max(0,onset-9)

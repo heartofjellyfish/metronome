@@ -31,12 +31,11 @@ final class AcousticLibrary {
         var names = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
         names.append("ac-bell")
         names += ["snap", "clap", "ride", "cross"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
-        names += (5...8).map { "ac-snap-\($0)" }
         names += (5...6).map { "ac-clap-\($0)" }
         return names
     }()
-    static let snapIndices = Array(33..<37) + Array(49..<53)
-    static let clapIndices = Array(37..<41) + Array(53..<55)
+    static let snapIndices = Array(33..<37)
+    static let clapIndices = Array(37..<41) + Array(49..<51)
     let clips: [AcousticClip]
     let naturalHatGains: [Float]
     let balancedGains: [Float]
@@ -111,7 +110,7 @@ struct RecordedTakeSequence {
     private var position: Int
     private var previous = -1
     private var seed: UInt64
-    init(count: Int = 8, seed: UInt64 = 0x534E4150) {
+    init(count: Int = 4, seed: UInt64 = 0x534E4150) {
         precondition(count > 1)
         bag = Array(0..<count); position = count; self.seed = seed
     }

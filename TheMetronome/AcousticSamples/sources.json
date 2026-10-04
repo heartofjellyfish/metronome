@@ -535,58 +535,6 @@
     "processing": "Mono, DC removal, attack alignment, 0.2 ms entrance fade, 20 ms release fade, attack RMS matching; ride additionally has a gentle 100 ms decay after first 45 ms. Real recordings, no synthesized layers."
   },
   {
-    "file": "ac-snap-5.wav",
-    "url": "https://bigsoundbank.com/UPLOAD/mp3/0483.mp3",
-    "source": "snap.mp3",
-    "sourceSHA256": "c41be4a6036eebee2d1444296f257c59084c3d6082e810776874e821bc72ef0d",
-    "license": "CC0 1.0",
-    "sourceOffsetSeconds": 0.09,
-    "removedLeadingFrames": 2566,
-    "outputRate": 44100,
-    "outputFrames": 4851,
-    "gain": 2.6964429532712972,
-    "processing": "Mono, DC removal, attack alignment, 0.2 ms entrance fade, 20 ms release fade, attack RMS matching; ride additionally has a gentle 100 ms decay after first 45 ms. Real recordings, no synthesized layers."
-  },
-  {
-    "file": "ac-snap-6.wav",
-    "url": "https://bigsoundbank.com/UPLOAD/mp3/0483.mp3",
-    "source": "snap.mp3",
-    "sourceSHA256": "c41be4a6036eebee2d1444296f257c59084c3d6082e810776874e821bc72ef0d",
-    "license": "CC0 1.0",
-    "sourceOffsetSeconds": 5.08,
-    "removedLeadingFrames": 2623,
-    "outputRate": 44100,
-    "outputFrames": 4851,
-    "gain": 3.956492071901618,
-    "processing": "Mono, DC removal, attack alignment, 0.2 ms entrance fade, 20 ms release fade, attack RMS matching; ride additionally has a gentle 100 ms decay after first 45 ms. Real recordings, no synthesized layers."
-  },
-  {
-    "file": "ac-snap-7.wav",
-    "url": "https://bigsoundbank.com/UPLOAD/mp3/0483.mp3",
-    "source": "snap.mp3",
-    "sourceSHA256": "c41be4a6036eebee2d1444296f257c59084c3d6082e810776874e821bc72ef0d",
-    "license": "CC0 1.0",
-    "sourceOffsetSeconds": 6.06,
-    "removedLeadingFrames": 2635,
-    "outputRate": 44100,
-    "outputFrames": 4851,
-    "gain": 1.702321768947515,
-    "processing": "Mono, DC removal, attack alignment, 0.2 ms entrance fade, 20 ms release fade, attack RMS matching; ride additionally has a gentle 100 ms decay after first 45 ms. Real recordings, no synthesized layers."
-  },
-  {
-    "file": "ac-snap-8.wav",
-    "url": "https://bigsoundbank.com/UPLOAD/mp3/0483.mp3",
-    "source": "snap.mp3",
-    "sourceSHA256": "c41be4a6036eebee2d1444296f257c59084c3d6082e810776874e821bc72ef0d",
-    "license": "CC0 1.0",
-    "sourceOffsetSeconds": 8.1,
-    "removedLeadingFrames": 2666,
-    "outputRate": 44100,
-    "outputFrames": 4851,
-    "gain": 4.052980352086198,
-    "processing": "Mono, DC removal, attack alignment, 0.2 ms entrance fade, 20 ms release fade, attack RMS matching; ride additionally has a gentle 100 ms decay after first 45 ms. Real recordings, no synthesized layers."
-  },
-  {
     "file": "ac-clap-1.wav",
     "url": "https://raw.githubusercontent.com/sgossner/VCSL/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Idiophones/Struck%20Idiophones/Claps/Clap_rr1.wav",
     "source": "Clap_rr1.wav",

@@ -5,7 +5,7 @@ import AVFoundation
     static func main() throws {
         let directory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("TheMetronome/AcousticSamples")
         let library = try AcousticLibrary { directory.appendingPathComponent($0 + ".wav") }
-        check(library.clips.count == 55, "All recorded variants must be bundled")
+        check(library.clips.count == 51, "All recorded variants must be bundled")
         let pattern = [2, 1, 4, 1].enumerated().map {
             HatArticulation.resolve(strength: $0.element, beat: $0.offset, beats: 4, denominator: 4)
         }
@@ -113,7 +113,7 @@ import AVFoundation
             signatures.append(signature)
         }
         check(Set(signatures).count == 4, "Round robin must use four different recordings")
-        print("PASS: all 55 recordings load; eleven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak \(largest); tail termination; choke; four distinct takes.")
+        print("PASS: all 51 recordings load; eleven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak \(largest); tail termination; choke; four distinct takes.")
         guard !CommandLine.arguments.contains("--no-previews") else { return }
         for (sound, name) in [(0,"acoustic-wood"),(2,"acoustic-bell"),(5,"acoustic-rimshot"),(8,"acoustic-pedal"),(9,"acoustic-stick"),(10,"acoustic-shaker"),(11,"recommended-hi-hat")] {
             let renderer = AcousticRenderer(library: library)
