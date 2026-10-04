@@ -49,7 +49,10 @@ struct MetronomeView: View {
                         .frame(width: 150, alignment: .center)
                         .shadow(color: p.dark ? .clear : .white.opacity(0.35), radius: 0, y: 1)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("\(model.rhythm.beatUnit) BPM").technical(14, spacing: 2)
+                        HStack(spacing: 8) {
+                            RhythmGlyph(count: 1, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(1)).fill(p.ink).frame(width: 20, height: 23)
+                            Text("BPM").technical(14, spacing: 2)
+                        }
                         Text("\(model.rhythm.beats)/\(model.rhythm.denominator)  \(model.marking)").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.65)
                         if model.event?.countIn == true || model.event?.silent == true {
                             Text(model.event?.countIn == true ? "COUNT IN" : "SILENT BAR").technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
@@ -101,7 +104,7 @@ struct MetronomeView: View {
             HStack {
                 Spacer()
                 if title == "DIVISION" {
-                    RhythmGlyph(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse).fill(p.ink).frame(width: 42, height: 26)
+                    RhythmGlyph(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision)).fill(p.ink).frame(width: 42, height: 26)
                 } else { Text(value).font(InstrumentType.value(24)) }
                 Spacer()
                 Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium))
@@ -114,27 +117,20 @@ struct MetronomeView: View {
             ForEach(0..<count, id: \.self) { index in
                 let active = model.playing && model.event?.beat == index
                 let accent = model.rhythm.displayedAccent(index)
-                let strength = model.rhythm.beatStrength(index)
+                let strength = model.rhythm.displayStrength(index)
                 Button { model.cycleAccent(index) } label: {
                     Text(accent == 0 ? "–" : String(index + 1))
-                        .font(.system(size: count > 6 ? 20 : 26, weight: .medium, design: .monospaced))
+                        .font(.system(size: count > 6 ? 20 : 26, weight: strength == 2 ? .bold : strength == 4 ? .semibold : .regular, design: .monospaced))
+                        .foregroundStyle(strength == 2 ? p.ink : strength == 4 ? p.ink.opacity(0.82) : p.muted)
                         .frame(maxWidth: .infinity)
                         .frame(height: count > 6 ? 39 : 86, alignment: .center)
                         .overlay(alignment: .topLeading) {
-                            if active {
-                                LED(on: true, color: InstrumentPalette.amber, size: count > 6 ? 7 : 13)
-                                    .padding(count > 6 ? 10 : 14)
-                            }
-                        }
-                        .overlay(alignment: .bottom) {
-                            if strength != 0 {
-                                Capsule().fill(p.ink.opacity(strength == 2 ? 0.85 : strength == 4 ? 0.65 : 0.40))
-                                    .frame(width: strength == 2 ? 18 : strength == 4 ? 11 : 5, height: 2)
-                                    .padding(.bottom, count > 6 ? 4 : 12)
-                            }
+                            LED(on: active, color: InstrumentPalette.amber, size: count > 6 ? 5 : 8,
+                                intensity: strength == 2 ? 1 : strength == 4 ? 0.62 : strength == 3 ? 0.18 : 0.30)
+                                .padding(count > 6 ? 5 : 12)
                         }
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 12))
-                    .accessibilityLabel("Beat \(index + 1), \(strength == 0 ? "muted" : strength == 2 ? "strong" : strength == 4 ? "secondary" : strength == 5 ? "even" : "weak")").accessibilityIdentifier("beat-\(index + 1)").accessibilityHint("Tap to change accent")
+                    .accessibilityLabel("Beat \(index + 1), \(strength == 2 ? "strong" : strength == 4 ? "secondary" : "weak")").accessibilityValue(accent == 0 ? "Muted" : !model.rhythm.followsMeter ? "Even sound" : accent == 2 ? "Accented sound" : "Meter sound").accessibilityIdentifier("beat-\(index + 1)").accessibilityHint("Tap to change accent")
             }
         }
     }

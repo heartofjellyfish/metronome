@@ -43,6 +43,7 @@ struct InstrumentPanel: View {
     @State private var selected: Int
     @State private var denominator: Int
     @State private var compoundPulse: Bool
+    @State private var grouping: [Int]
     @State private var presetName = ""
     @State private var deleting: UUID?
     @FocusState private var naming: Bool
@@ -54,6 +55,7 @@ struct InstrumentPanel: View {
         _digits = State(initialValue: String(kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm))
         _denominator = State(initialValue: model.rhythm.denominator)
         _compoundPulse = State(initialValue: model.rhythm.isCompound ? model.rhythm.usesCompoundPulse : true)
+        _grouping = State(initialValue: model.rhythm.effectiveGrouping)
         let value: Int
         switch kind {
         case .meter: value = model.rhythm.beats
@@ -170,22 +172,39 @@ struct InstrumentPanel: View {
             }
             SectionLabel(text: "02  NOTE VALUE", p: p)
             HStack(spacing: 10) {
-                choice("♩  /4", selected: denominator == 4) { denominator = 4 }
-                choice("♪  /8", selected: denominator == 8) { denominator = 8 }
-            }
-            if denominator == 8 && [6, 9, 12].contains(selected) {
-                HStack(spacing: 10) {
-                    choice("♩.  BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true }
-                    choice("♪  EIGHTHS", selected: !compoundPulse, height: 44) { compoundPulse = false }
+                ForEach([2, 4, 8, 16], id: \.self) { unit in
+                    Button { denominator = unit; model.tickFeedback() } label: {
+                        HStack(spacing: 5) {
+                            if denominator == unit { LED(on: true, size: 5) }
+                            RhythmGlyph(count: 1, noteValue: unit).fill(p.ink).frame(width: 24, height: 24)
+                            Text("/\(unit)").font(InstrumentType.value(19))
+                        }.frame(maxWidth: .infinity).frame(height: 51)
+                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                        .accessibilityLabel("Note value /\(unit)")
+                        .accessibilityAddTraits(denominator == unit ? .isSelected : [])
                 }
             }
-            Text(denominator == 8 && [6, 9, 12].contains(selected) && compoundPulse
-                 ? "\(selected / 3) big beats per bar · 3 eighth notes per beat. BPM = dotted quarter."
-                 : "BPM counts each \(denominator == 4 ? "quarter" : "eighth") note.")
+            if [4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) {
+                HStack(spacing: 10) {
+                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true }
+                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false }
+                }
+            }
+            if !Rhythm.groupingOptions(selected).isEmpty {
+                SectionLabel(text: "03  GROUPING", p: p)
+                HStack(spacing: 9) {
+                    ForEach(Rhythm.groupingOptions(selected), id: \.self) { option in
+                        choice(option.map(String.init).joined(separator: "+"), selected: option == (Rhythm.groupingOptions(selected).contains(grouping) ? grouping : Rhythm.groupingOptions(selected)[0]), height: 44) { grouping = option }
+                    }
+                }
+            }
+            Text([4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) && compoundPulse
+                 ? "\(selected / 3) big beats per bar · 3 note units per beat."
+                 : "BPM counts each \([2: "half", 4: "quarter", 8: "eighth", 16: "sixteenth"][denominator]!) note.")
                 .font(.system(size: 12)).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
             commitButton("SET METER") {
                 var rhythm = model.rhythm
-                rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse)
+                rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse, grouping: grouping)
                 model.rhythm = rhythm; dismiss()
             }
         }
@@ -198,8 +217,8 @@ struct InstrumentPanel: View {
                     Button { selected = value; model.tickFeedback() } label: {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack { LED(on: selected == value, size: 7); Spacer(); Text(String(format: "%02d", value)).technical(9, spacing: 1).foregroundStyle(p.muted) }
-                            RhythmGlyph(count: value, compound: model.rhythm.usesCompoundPulse).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
-                            Text(model.rhythm.usesCompoundPulse ? [1: "BIG BEAT", 2: "DUPLET", 3: "EIGHTHS", 6: "SIXTEENTHS"][value]! : ["ONE", "TWO", "TRIPLET", "FOUR"][value - 1]).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
+                            RhythmGlyph(count: value, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(value)).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
+                            Text(model.rhythm.divisionTitle(value)).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
                             Text("\(value) / BEAT").technical(8, spacing: 1).foregroundStyle(p.muted).frame(maxWidth: .infinity)
                         }.padding(13).frame(maxWidth: .infinity)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
@@ -352,6 +371,7 @@ struct InstrumentPanel: View {
 struct RhythmGlyph: Shape {
     let count: Int
     var compound = false
+    var noteValue = 4
     func path(in rect: CGRect) -> Path {
         var p = Path()
         let width = min(rect.width - 10, CGFloat(max(1, count - 1)) * 20)
@@ -362,9 +382,22 @@ struct RhythmGlyph: Shape {
             p.addRect(CGRect(x: x + 1.5, y: 5, width: 1.8, height: rect.height - 14))
         }
         if compound && count == 1 { p.addEllipse(in: CGRect(x: rect.midX + 7, y: rect.height - 10, width: 3, height: 3)) }
-        if count > 1 {
-            p.addRect(CGRect(x: left + 1.5, y: 5, width: width + 1.8, height: 2.4))
-            if count == 4 || count == 6 { p.addRect(CGRect(x: left + 1.5, y: 10, width: width + 1.8, height: 2.4)) }
+        let flags = noteValue >= 8 ? Int(log2(Double(noteValue))) - 2 : 0
+        for flag in 0..<flags {
+            let y = CGFloat(5 + flag * 5)
+            if count > 1 { p.addRect(CGRect(x: left + 1.5, y: y, width: width + 1.8, height: 2.4)) }
+            else {
+                p.move(to: CGPoint(x: rect.midX + 3, y: y))
+                p.addQuadCurve(to: CGPoint(x: rect.midX + 11, y: y + 12), control: CGPoint(x: rect.midX + 15, y: y + 3))
+                p.addQuadCurve(to: CGPoint(x: rect.midX + 3, y: y + 4), control: CGPoint(x: rect.midX + 10, y: y + 7))
+                p.closeSubpath()
+            }
+        }
+        if noteValue == 2 {
+            for i in 0..<count {
+                let x = count == 1 ? rect.midX : left + CGFloat(i) * width / CGFloat(count - 1)
+                p = p.subtracting(Path(ellipseIn: CGRect(x: x - 5, y: rect.height - 10.5, width: 6, height: 3)))
+            }
         }
         return p
     }

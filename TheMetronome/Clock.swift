@@ -35,10 +35,51 @@ struct Rhythm: Codable, Equatable {
     var beats = 4
     var denominator = 4
     var compoundPulse: Bool? = true
-    var isCompound: Bool { denominator == 8 && [6, 9, 12].contains(beats) }
-    var usesCompoundPulse: Bool { isCompound && (compoundPulse ?? false) }
+    var compoundMeterVersion: Int?
+    var isCompound: Bool { [4, 8, 16].contains(denominator) && [6, 9, 12].contains(beats) }
+    var usesCompoundPulse: Bool { isCompound && (compoundPulse ?? false) && (denominator == 8 || compoundMeterVersion == 2) }
     var pulseCount: Int { usesCompoundPulse ? beats / 3 : beats }
-    var beatUnit: String { usesCompoundPulse ? "♩." : denominator == 8 ? "♪" : "♩" }
+    var beatUnit: String {
+        usesCompoundPulse ? [4: "𝅗𝅥.", 8: "♩.", 16: "♪."][denominator]!
+            : [2: "𝅗𝅥", 4: "♩", 8: "♪", 16: "𝅘𝅥𝅯"][denominator, default: "♩"]
+    }
+    func divisionNoteValue(_ count: Int) -> Int {
+        if usesCompoundPulse { return count == 1 ? denominator / 2 : count == 6 ? denominator * 2 : denominator }
+        return denominator * (count == 3 ? 2 : count)
+    }
+    func divisionTitle(_ count: Int) -> String {
+        guard usesCompoundPulse else { return [1: "ONE", 2: "TWO", 3: "TRIPLET", 4: "FOUR"][count, default: "ONE"] }
+        if count == 1 { return "BIG BEAT" }
+        if count == 2 { return "DUPLET" }
+        return [2: "HALVES", 4: "QUARTERS", 8: "EIGHTHS", 16: "SIXTEENTHS", 32: "32ND NOTES"][divisionNoteValue(count), default: "DIVISIONS"]
+    }
+    var grouping: [Int]?
+    static func groupingOptions(_ numerator: Int) -> [[Int]] {
+        numerator == 5 ? [[3, 2], [2, 3]] : numerator == 7 ? [[2, 2, 3], [2, 3, 2], [3, 2, 2]] : []
+    }
+    var effectiveGrouping: [Int] {
+        let options = Self.groupingOptions(beats)
+        if let grouping, options.contains(grouping) { return grouping }
+        return options.first ?? []
+    }
+    // Meter hierarchy is independent of the audible accent switch and manual mutes.
+    func metricalStrength(_ beat: Int) -> Int {
+        if beat == 0 { return 2 }
+        if usesCompoundPulse { return pulseCount == 4 && beat == 2 ? 4 : 1 }
+        if isCompound {
+            if beat % 3 != 0 { return 3 }
+            return beats == 12 && beat == 6 ? 4 : 1
+        }
+        if beats == 4 { return beat == 2 ? 4 : 1 }
+        var boundary = 0
+        for group in effectiveGrouping.dropLast() {
+            boundary += group
+            if beat == boundary { return 4 }
+        }
+        return 1
+    }
+    func displayStrength(_ beat: Int) -> Int { metricalStrength(beat) }
+
     var subdivision = 1
     var accents = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     var sound = 0
@@ -60,22 +101,21 @@ struct Rhythm: Codable, Equatable {
 
     func displayedAccent(_ beat: Int) -> Int {
         let value = accents[beat]
-        return value > 0 && followsMeter && beat == 0 ? 2 : value
+        return value > 0 && beat == 0 ? 2 : value
     }
     func beatStrength(_ beat: Int, counting: Bool = false) -> Int {
         let accent = counting ? (beat == 0 ? 2 : 1) : accents[beat]
         if accent == 0 { return 0 }
         if !followsMeter { return 5 }
         if accent == 2 || beat == 0 { return 2 }
-        let secondary = usesCompoundPulse ? (pulseCount == 4 && beat == 2)
-            : (denominator == 4 && beats == 4 && beat == 2)
-                || (isCompound && beat > 0 && beat % 3 == 0)
-        return secondary && !counting ? 4 : 1
+        return metricalStrength(beat)
     }
-    mutating func setMeter(beats: Int, denominator: Int, compound: Bool) {
+
+    mutating func setMeter(beats: Int, denominator: Int, compound: Bool, grouping: [Int]? = nil) {
         let oldCompound = usesCompoundPulse
         let changed = self.beats != beats || self.denominator != denominator
-        self.beats = beats; self.denominator = denominator; compoundPulse = compound
+        self.beats = beats; self.denominator = denominator; compoundPulse = compound; compoundMeterVersion = 2
+        self.grouping = grouping
         if changed || oldCompound != usesCompoundPulse {
             accents = [2] + Array(repeating: 1, count: 11)
             subdivision = usesCompoundPulse ? 3 : 1
@@ -83,9 +123,10 @@ struct Rhythm: Codable, Equatable {
     }
     mutating func sanitize() {
         bpm = min(300, max(20, bpm)); beats = min(12, max(1, beats))
-        denominator = [4, 8].contains(denominator) ? denominator : 4
+        denominator = [2, 4, 8, 16].contains(denominator) ? denominator : 4
         subdivision = usesCompoundPulse ? ([1, 2, 3, 6].contains(subdivision) ? subdivision : 3) : min(4, max(1, subdivision))
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
+        if let grouping, !Self.groupingOptions(beats).contains(grouping) { self.grouping = nil }
         switch sound {
         case 3, 6, 7: sound = 11
         case 4: sound = 10

@@ -83,14 +83,9 @@ struct HatArticulation {
     let gain: Float
     let air: Bool
     static func resolve(strength: Int, beat: Int, beats: Int, denominator: Int, counting: Bool = false) -> Self {
-        if strength == 0 { return Self(gain: 0, air: false) }
-        if strength == 4 || strength == 5 { return Self(gain: BeatIntensity.gain(strength), air: false) }
-        if strength == 3 { return Self(gain: BeatIntensity.gain(strength), air: false) }
-        if strength == 2 { return Self(gain: BeatIntensity.gain(strength), air: false) }
-        // Do not invent groupings for irregular meters. User-set accents take precedence.
-        let secondary = (denominator == 4 && beats == 4 && beat == 2)
-            || (denominator == 8 && (beats >= 6 && beats <= 12 && beats % 3 == 0) && beat > 0 && beat % 3 == 0)
-        return Self(gain: BeatIntensity.gain(secondary && !counting ? 4 : 1), air: false)
+        // Strength is resolved once by SampleClock, including grouping and EVEN.
+        // Never infer a second, potentially conflicting meter inside an instrument.
+        Self(gain: BeatIntensity.gain(strength), air: false)
     }
 }
 /// Fixed voice pool and immutable sample buffers; no loading or resampling allocations in the callback.

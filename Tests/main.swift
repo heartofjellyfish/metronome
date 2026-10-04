@@ -173,7 +173,7 @@ for numerator in [6, 9, 12] {
     check(hits[1].2 == 3 && hits[2].2 == 3, "Eighth subdivisions")
     check(r.beatStrength(1) == 1, "Second big beat stays weak")
     if numerator == 12 { check(r.beatStrength(2) == 4, "12/8 third big beat secondary") }
-    r.followsMeter = false; check(r.beatStrength(0) == 5 && r.beatStrength(1) == 5, "Even visuals match audio")
+    r.followsMeter = false; check(r.beatStrength(0) == 5 && r.beatStrength(1) == 5, "Even playback uses uniform gain")
     r.accents[1] = 0; check(r.beatStrength(1) == 0, "Muted big beat")
     r.subdivision = 6; r.sanitize(); check(r.subdivision == 6, "Sixteenth subdivisions survive persistence")
     let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r))
@@ -186,3 +186,42 @@ legacyJSON.removeValue(forKey: "compoundPulse"); legacyJSON["beats"] = 6; legacy
 let legacyMeter = try JSONDecoder().decode(Rhythm.self, from: JSONSerialization.data(withJSONObject: legacyJSON))
 check(legacyMeter.pulseCount == 6, "Old saved tempos retain eighth-note meaning")
 print("PASS: compound meter bar lengths, subdivisions, accents, even/mute and legacy presets.")
+
+// Cross-checked meter matrix: 2 strong/weak, 3 strong/weak/weak,
+// 4 strong/weak/secondary/weak. Subdivision-level accents are hierarchical.
+for denominator in [2, 4, 8, 16] {
+    for (numerator, expected) in [(2,[2,1]), (3,[2,1,1]), (4,[2,1,4,1])] {
+        var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: false)
+        check((0..<numerator).map { r.displayStrength($0) } == expected, "Simple meter visual matrix")
+        check(strengths(r, count: numerator) == expected, "Simple meter sound matrix")
+        r.followsMeter = false
+        check((0..<numerator).map { r.displayStrength($0) } == expected, "EVEN cannot alter meter hierarchy")
+        check(strengths(r, count: numerator) == Array(repeating: 5, count: numerator), "EVEN only flattens audio")
+    }
+}
+for denominator in [4, 8, 16] {
+    for (numerator, big) in [(6,[2,1]),(9,[2,1,1]),(12,[2,1,4,1])] {
+        var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: true)
+        let expanded = big.flatMap { [$0,3,3] }
+        check((0..<r.pulseCount).map { r.displayStrength($0) } == big, "Compound big-beat hierarchy")
+        check(strengths(r, count: numerator) == expanded, "Compound subdivisions preserve hierarchy")
+        r.setMeter(beats: numerator, denominator: denominator, compound: false)
+        check((0..<numerator).map { r.displayStrength($0) } == expanded, "Expanded counting preserves the same meter hierarchy")
+        check(strengths(r, count: numerator) == expanded, "Expanded meter sound matrix")
+        r.followsMeter = false
+        check((0..<numerator).map { r.displayStrength($0) } == expanded, "Expanded EVEN visual hierarchy")
+    }
+}
+for (numerator, grouping, expected) in [(5,[3,2],[2,1,1,4,1]),(5,[2,3],[2,1,4,1,1]),(7,[2,2,3],[2,1,4,1,4,1,1]),(7,[2,3,2],[2,1,4,1,1,4,1]),(7,[3,2,2],[2,1,1,4,1,4,1])] {
+    for denominator in [2,4,8,16] {
+        var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: false, grouping: grouping)
+        check(strengths(r, count: numerator) == expected, "Additive grouping boundaries")
+        r.accents[1] = 0; r.followsMeter = false
+        check(r.displayStrength(1) == 1 && r.beatStrength(1) == 0, "Mute does not rewrite the meter")
+        let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r))
+        check(restored.effectiveGrouping == grouping, "Grouping persistence")
+    }
+}
+var oldSixFour = Rhythm(); oldSixFour.beats = 6; oldSixFour.denominator = 4
+check(oldSixFour.pulseCount == 6, "Existing 6/4 presets must not triple speed on upgrade")
+print("PASS: every simple /2 /4 /8 /16 meter, compound grouped/expanded hierarchy, all 5/7 groupings, EVEN visuals and legacy speed.")

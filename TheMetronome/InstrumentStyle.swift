@@ -91,24 +91,21 @@ struct LED: View {
     var on: Bool
     var color = InstrumentPalette.orange
     var size: CGFloat = 7
+    var intensity: Double = 1
     var body: some View {
-        Circle().fill(on ? color : Color.gray.opacity(0.3))
-            .overlay {
-                if on {
-                    Circle().fill(RadialGradient(stops: [
-                        .init(color: Color(hex: 0xFFFFE9), location: 0),
-                        .init(color: Color(hex: 0xFFFFD5), location: 0.30),
-                        .init(color: color == InstrumentPalette.amber ? Color(hex: 0xFFE34B) : Color(hex: 0xFFB566), location: 0.62),
-                        .init(color: color == InstrumentPalette.amber ? Color(hex: 0xF5A31C) : Color(hex: 0xF5792B), location: 0.85),
-                        .init(color: Color(hex: 0xE87812), location: 1)
-                    ], center: .center, startRadius: 0, endRadius: size * 0.5))
-                    Circle().stroke(Color(hex: 0xD97817), lineWidth: 0.7)
-                    Circle().stroke(.white.opacity(0.8), lineWidth: 0.35).padding(-0.55)
-                }
-            }
-            .frame(width: size, height: size)
-            .shadow(color: color.opacity(on ? 0.38 : 0), radius: 3)
-
+        let light = on ? min(1, max(0, intensity)) : 0
+        ZStack {
+            // A recessed socket, tinted diffuser and tiny reflected highlight.
+            Circle().fill(LinearGradient(colors: [Color.black.opacity(0.65), Color.white.opacity(0.28)], startPoint: .top, endPoint: .bottom))
+            Circle().fill(Color(hex: 0x65513A)).padding(size * 0.12)
+            Circle().fill(color.opacity(0.16 + light * 0.84)).padding(size * 0.12)
+            Circle().fill(RadialGradient(colors: [Color(hex: 0xFFE4A0).opacity(light * 0.68), .clear], center: .center, startRadius: 0, endRadius: size * 0.43)).padding(size * 0.14)
+            Ellipse().fill(.white.opacity(0.25 + light * 0.25))
+                .frame(width: size * 0.30, height: size * 0.15).offset(x: -size * 0.13, y: -size * 0.20)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: color.opacity(light * 0.18), radius: size * 0.20)
+        .accessibilityHidden(true)
     }
 }
 struct SectionLabel: View {

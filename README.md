@@ -13,7 +13,7 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 - Ivory and graphite skins, control haptics, locally persisted settings and named presets.
 - Background playback with other audio, lock-screen transport, headphone-disconnect and interruption handling.
 
-6/8, 9/8 and 12/8 default to 2, 3 and 4 dotted-quarter pulses. BPM counts the displayed note unit; compound subdivisions offer one big beat, duplets, eighths and sixteenths (1/2/3/6 clicks). The meter panel also offers eighth-note counting. Older saved rhythms retain their original eighth-note BPM meaning. Subtle bars below the beat numbers show strong, secondary and weak levels; EVEN shows matching marks, and the amber LED tracks playback. The app is an initial functional build; purchasing and cross-app synchronization are not implemented.
+6/8, 9/8 and 12/8 default to 2, 3 and 4 dotted-quarter pulses. BPM counts the displayed note unit; compound subdivisions offer one big beat, duplets, eighths and sixteenths (1/2/3/6 clicks). The meter panel also offers eighth-note counting. Older saved rhythms retain their original eighth-note BPM meaning. Beat numeral weight and ink tone express strong, secondary and weak metrical roles without extra marks. Recessed amber indicators reflect the same hierarchy in brightness. EVEN changes audio only: the visual meter hierarchy stays intact. The app is an initial functional build; purchasing and cross-app synchronization are not implemented.
 
 ## Audio architecture
 
@@ -68,3 +68,16 @@ swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetron
 ```
 
 Current four-bar 4/4, 96 BPM auditions are in `Design/Audio/curated-acoustic`. Earlier audition folders are historical iterations.
+
+## Meter audit (2026-10-03)
+
+Cross-checked against [Open Music Theory: metric hierarchy](https://openmusictheory.github.io/protonotation.html), [compound meter](https://viva.pressbooks.pub/openmusictheory/chapter/compound-meters-and-time-signatures/), [asymmetric grouping](https://viva.pressbooks.pub/openmusictheorycopy/chapter/twentieth-century-rhythmic-techniques/) and [musictheory.net](https://classic.musictheory.net/15/accessibility).
+
+- Simple 2, 3 and 4 beats: strong–weak; strong–weak–weak; strong–weak–secondary–weak. This applies to /2, /4, /8 and /16 note units. 2/2 covers cut time; 4/4 covers common time.
+- Compound 6, 9 and 12 over /4, /8 or /16: 2, 3 and 4 dotted beats, with the same main-beat hierarchy. In expanded note-unit counting, in-group divisions are lighter than main beats. In 12/8, the seventh eighth note is the secondary main beat; the fourth and tenth are weaker main beats. The clock is the only authority for sound strength; individual instruments do not re-infer accents.
+- 5: selectable 3+2 or 2+3. 7: selectable 2+2+3, 2+3+2 or 3+2+2. Subsequent group starts receive secondary emphasis; these are selectable interpretations, not universal rules for every piece.
+- Audio gains remain strong 1.00, secondary 0.34, weak 0.25, subdivision 0.18. These exact ratios are product choices, not music-theory prescriptions. EVEN is 0.60 for every audible hit; defaults remain ACCENT on.
+- Numerators 1–12 and denominators 2/4/8/16 are selectable. This is not every possible meter: unusual additive groupings such as 8/8 = 3+3+2, 9/8 = 2+2+2+3, meters above 12, and alternating meters do not have dedicated grouping workflows yet. Other numerators retain a downbeat plus normal pulses/manual accents; no universal grouping is invented.
+- Existing 6/4 and other pre-expansion presets retain their note-unit tempo instead of changing speed silently. New meter selections opt into the expanded compound semantics.
+
+Tests enumerate simple and compound patterns, grouped vs expanded counting, all supported 5/7 groupings, audible strength, EVEN visual invariance, persistence and legacy tempo preservation. Rendered audio tests cover every acoustic instrument; UI tests check the hierarchy in EVEN, grouping, cut time and both skins.
