@@ -38,11 +38,12 @@ enum InstrumentType {
 struct HardwareButtonStyle: ButtonStyle {
     var p: InstrumentPalette
     var charcoal = false
+    var green = false
     var radius: CGFloat = 10
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(charcoal ? Color(hex: 0xF5F0E2) : p.ink)
-            .background { HardwareKeySurface(p: p, charcoal: charcoal, radius: radius, pressed: configuration.isPressed) }
+            .foregroundStyle(green ? Color(hex: 0x243326) : charcoal ? Color(hex: 0xF5F0E2) : p.ink)
+            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed) }
             .offset(y: configuration.isPressed ? 1.6 : 0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
@@ -51,10 +52,11 @@ struct HardwareButtonStyle: ButtonStyle {
 struct HardwareKeySurface: View {
     let p: InstrumentPalette
     var charcoal = false
+    var green = false
     var radius: CGFloat = 10
     var pressed = false
     private var r: CGFloat { max(4, radius) }
-    private var dark: Bool { charcoal || p.dark }
+    private var dark: Bool { !green && (charcoal || p.dark) }
     var body: some View {
         let outline = RoundedRectangle(cornerRadius: r, style: .continuous)
         ZStack {
@@ -64,7 +66,7 @@ struct HardwareKeySurface: View {
                 .shadow(color: .black.opacity(dark ? 0.65 : 0.24), radius: pressed ? 0.6 : 2.1, x: 0.6, y: pressed ? 0.4 : 2.1)
                 .shadow(color: .black.opacity(dark ? 0.25 : 0.13), radius: pressed ? 1 : 5, x: 1.3, y: pressed ? 1 : 4)
             outline
-                .fill(LinearGradient(colors: dark
+                .fill(LinearGradient(colors: green ? [Color(hex: 0xAFC7A1), Color(hex: 0x8DA97D)] : dark
                     ? [Color(hex: 0x3D3F3D), Color(hex: 0x303230)]
                     : [Color(hex: 0xEAE6DD), Color(hex: 0xDDD9CE)], startPoint: .topLeading, endPoint: .bottomTrailing)
                     .shadow(.inner(color: .white.opacity(dark ? 0.16 : 0.85), radius: 1.6, x: 1.4, y: 1.8))
@@ -98,13 +100,14 @@ struct LED: View {
             // A recessed socket, tinted diffuser and tiny reflected highlight.
             Circle().fill(LinearGradient(colors: [Color.black.opacity(0.65), Color.white.opacity(0.28)], startPoint: .top, endPoint: .bottom))
             Circle().fill(Color(hex: 0x65513A)).padding(size * 0.12)
-            Circle().fill(color.opacity(0.16 + light * 0.84)).padding(size * 0.12)
-            Circle().fill(RadialGradient(colors: [Color(hex: 0xFFE4A0).opacity(light * 0.68), .clear], center: .center, startRadius: 0, endRadius: size * 0.43)).padding(size * 0.14)
+            Circle().fill(color.opacity(on ? 0.80 + light * 0.20 : 0.12)).padding(size * 0.12)
+            Circle().fill(RadialGradient(colors: [Color(hex: 0xFFF5C6).opacity(light * 0.96), .clear], center: .center, startRadius: 0, endRadius: size * 0.54)).padding(size * 0.14)
             Ellipse().fill(.white.opacity(0.25 + light * 0.25))
                 .frame(width: size * 0.30, height: size * 0.15).offset(x: -size * 0.13, y: -size * 0.20)
         }
         .frame(width: size, height: size)
-        .shadow(color: color.opacity(light * 0.18), radius: size * 0.20)
+        .shadow(color: color.opacity(light * 0.62), radius: size * 0.38)
+        .shadow(color: color.opacity(light * 0.20), radius: size * 0.85)
         .accessibilityHidden(true)
     }
 }

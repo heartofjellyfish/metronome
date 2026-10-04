@@ -29,7 +29,7 @@ struct SettingsView: View {
             SectionLabel(text: "01 RHYTHM", p: p).frame(width: 359).position(x: 206.5, y: 93)
             HStack(spacing: 17) {
                 menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
-                menuField("COUNT IN", value: model.rhythm.countIn == 0 ? "OFF" : "\(model.rhythm.countIn) BAR", route: .countIn)
+                menuField("DIVISION", value: "\(model.rhythm.subdivision) / BEAT", route: .division, fontSize: 17)
             }.frame(width: 359).position(x: 206.5, y: 154)
 
             HStack(spacing: 12) {
@@ -46,21 +46,11 @@ struct SettingsView: View {
                 .frame(width: 359).position(x: 206.5, y: 322)
             SoundDynamicsControl(model: model).frame(width: 359).position(x: 206.5, y: 418)
 
-            SectionLabel(text: "03 PRACTICE", p: p).frame(width: 359).position(x: 206.5, y: 466)
-            HStack {
-                Text("RAMP").technical(12, spacing: 1.7); Spacer()
-                flatSegment($model.rhythm.ramp, labels: ["OFF", "ON"]).frame(width: 233, height: 46)
-            }.frame(width: 359).position(x: 206.5, y: 512)
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("START → END (BPM)").technical(10, spacing: 0.7).fixedSize()
-                    Button { present(.practice) } label: {
-                        Text("\(model.rhythm.start) → \(model.rhythm.end)").font(InstrumentType.value(21)).frame(width: 146, height: 46).insetPanel(p, radius: 9)
-                    }.buttonStyle(.plain).accessibilityLabel("Edit ramp start and end")
-                }
-                menuField("EVERY", value: "\(model.rhythm.every) BARS", route: .every, fontSize: 13).frame(width: 100)
-                menuField("INCREASE BY", value: "+\(model.rhythm.increment)", route: .increment, fontSize: 20).frame(width: 81)
-            }.frame(width: 359).position(x: 206.5, y: 589)
+            SectionLabel(text: "03 MORE", p: p).frame(width: 359).position(x: 206.5, y: 487)
+            HStack(spacing: 17) {
+                navigationKey("PRACTICE", subtitle: "COUNT IN · RAMP · GAP", route: .practice)
+                navigationKey("PRESETS", subtitle: "SAVE A RHYTHM", route: .presets)
+            }.frame(width: 359).position(x: 206.5, y: 555)
 
             SectionLabel(text: "04 VIEW", p: p).frame(width: 359).position(x: 206.5, y: 668)
             HStack {
@@ -68,6 +58,20 @@ struct SettingsView: View {
                 flatSegment($model.dark, labels: ["LIGHT", "DARK"]).frame(width: 261, height: 46)
             }.frame(width: 359).position(x: 206.5, y: 714)
         }
+    }
+    private func navigationKey(_ title: String, subtitle: String, route: InstrumentPanelKind) -> some View {
+        Button { model.endSoundPreview(); present(route) } label: {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack {
+                    Text(title).technical(12, spacing: 1.2)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .medium))
+                }
+                Text(subtitle).technical(7, spacing: 0.4).foregroundStyle(p.muted)
+            }.padding(15).frame(maxWidth: .infinity).frame(height: 81)
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+            .accessibilityLabel(title == "PRESETS" ? "Saved presets" : "Practice settings")
+            .accessibilityIdentifier(route.rawValue)
     }
     func flatSegment(_ value: Binding<Bool>, labels: [String]) -> some View {
         HStack(spacing: 0) {
@@ -93,7 +97,7 @@ struct SettingsView: View {
             Button { present(route) } label: {
                 HStack { Spacer(minLength: 0); Text(value).font(InstrumentType.value(fontSize)).lineLimit(1).minimumScaleFactor(0.7); Spacer(minLength: 0); Image(systemName: "chevron.down").font(.system(size: 10)) }
                     .padding(.horizontal, 12).frame(height: 46).frame(maxWidth: .infinity)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("\(title), \(value)")
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(title == "METER" ? "Time signature" : title == "DIVISION" ? "Subdivision" : "\(title), \(value)")
         }.frame(maxWidth: .infinity)
     }
 }

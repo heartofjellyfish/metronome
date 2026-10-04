@@ -23,12 +23,12 @@ enum InstrumentPanelKind: String, Identifiable {
         switch self {
         case .tempo, .start, .end: return 620
         case .meter: return 740
-        case .division: return 510
+        case .division: return 445
         case .practice: return 740
         case .presets: return 560
         case .audio: return 300
         case .sounds: return 740
-        default: return 370
+        default: return 300
         }
     }
 }
@@ -44,6 +44,8 @@ struct InstrumentPanel: View {
     @State private var denominator: Int
     @State private var compoundPulse: Bool
     @State private var grouping: [Int]
+    @State private var customMeter = false
+    @State private var returnsToPractice = false
     @State private var presetName = ""
     @State private var deleting: UUID?
     @FocusState private var naming: Bool
@@ -80,8 +82,8 @@ struct InstrumentPanel: View {
                         }
                         Spacer(minLength: 5)
                         Button { dismiss() } label: {
-                            Image(systemName: "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("Close \(kind.title.lowercased())")
+                            Image(systemName: returnsToPractice ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(returnsToPractice ? "Back to practice" : "Close \(kind.title.lowercased())")
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     ScrollView {
@@ -89,7 +91,7 @@ struct InstrumentPanel: View {
                     }.scrollBounceBehavior(.basedOnSize)
                 }
                 .frame(maxWidth: 460)
-                .frame(height: min(kind.height, geometry.size.height - 12))
+                .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 460 : 365) : kind.height, geometry.size.height - 12))
                 .background { InstrumentBody(p: p) }
                 .clipShape(RoundedRectangle(cornerRadius: 23, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
@@ -146,7 +148,7 @@ struct InstrumentPanel: View {
             commitButton(kind == .tempo ? "SET TEMPO" : "SET VALUE", enabled: validNumber) {
                 guard let value = Int(digits), validNumber else { return }
                 if kind == .tempo { model.setBPM(value); dismiss() }
-                else { if kind == .start { model.rhythm.start = value } else { model.rhythm.end = value }; kind = .practice }
+                else { if kind == .start { model.rhythm.start = value } else { model.rhythm.end = value }; dismiss() }
             }
         }
     }
@@ -158,63 +160,75 @@ struct InstrumentPanel: View {
         else if digits.count < 3 { digits = digits == "0" ? key : digits + key }
     }
     private var meterPicker: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(selected)/\(denominator)").font(InstrumentType.display(58))
-                Spacer()
-                Text("TIME SIGNATURE").technical(9, spacing: 1.2).foregroundStyle(p.muted)
-            }.padding(.horizontal, 20).frame(height: 82).insetPanel(p, radius: 13)
-            SectionLabel(text: "01  TIME SIGNATURE", p: p)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
-                ForEach(1...12, id: \.self) { value in
-                    choice(String(value), selected: selected == value, height: 48) { selected = value }
-                }
-            }
-            SectionLabel(text: "02  NOTE VALUE", p: p)
-            HStack(spacing: 10) {
-                ForEach([2, 4, 8, 16], id: \.self) { unit in
-                    Button { denominator = unit; model.tickFeedback() } label: {
-                        HStack(spacing: 5) {
-                            if denominator == unit { LED(on: true, size: 5) }
-                            RhythmGlyph(count: 1, noteValue: unit).fill(p.ink).frame(width: 24, height: 24)
-                            Text("/\(unit)").font(InstrumentType.value(19))
-                        }.frame(maxWidth: .infinity).frame(height: 51)
-                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                        .accessibilityLabel("Note value /\(unit)")
-                        .accessibilityAddTraits(denominator == unit ? .isSelected : [])
+        VStack(alignment: .leading, spacing: 22) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 11), count: 3), spacing: 11) {
+                ForEach([2, 3, 4, 6, 9, 12], id: \.self) { beats in
+                    let unit = beats < 6 ? 4 : 8
+                    choice("\(beats)/\(unit)", selected: selected == beats && denominator == unit, height: 67) {
+                        selected = beats; denominator = unit; compoundPulse = true
+                        applyMeter(); dismiss()
+                    }.accessibilityIdentifier("meter-\(beats)-\(unit)")
                 }
             }
             if [4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) {
                 HStack(spacing: 10) {
-                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true }
-                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false }
+                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true; applyMeter(); dismiss() }
+                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false; applyMeter(); dismiss() }
                 }
+                Text("\(selected / 3) big beats or \(selected) note units per bar.")
+                    .font(.system(size: 12)).foregroundStyle(p.muted)
             }
-            if !Rhythm.groupingOptions(selected).isEmpty {
-                SectionLabel(text: "03  GROUPING", p: p)
-                HStack(spacing: 9) {
-                    ForEach(Rhythm.groupingOptions(selected), id: \.self) { option in
-                        choice(option.map(String.init).joined(separator: "+"), selected: option == (Rhythm.groupingOptions(selected).contains(grouping) ? grouping : Rhythm.groupingOptions(selected)[0]), height: 44) { grouping = option }
+            Button { customMeter.toggle(); model.tickFeedback() } label: {
+                HStack {
+                    Text("MORE METERS").technical(10, spacing: 1.4)
+                    Spacer()
+                    Text("\(selected)/\(denominator)").font(InstrumentType.value(16))
+                    Image(systemName: customMeter ? "chevron.up" : "chevron.down").font(.system(size: 10))
+                }.padding(.horizontal, 15).frame(height: 48)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("More meters")
+            if customMeter {
+                SectionLabel(text: "BEATS", p: p)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
+                    ForEach(1...12, id: \.self) { value in
+                        choice(String(value), selected: selected == value, height: 48) { selected = value; applyMeter() }
+                    }
+                }
+                SectionLabel(text: "NOTE VALUE", p: p)
+                HStack(spacing: 10) {
+                    ForEach([2, 4, 8, 16], id: \.self) { unit in
+                        Button { denominator = unit; applyMeter(); model.tickFeedback() } label: {
+                            HStack(spacing: 5) {
+                                if denominator == unit { LED(on: true, size: 5) }
+                                RhythmGlyph(count: 1, noteValue: unit).fill(p.ink).frame(width: 24, height: 24)
+                                Text("/\(unit)").font(InstrumentType.value(19))
+                            }.frame(maxWidth: .infinity).frame(height: 51)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                            .accessibilityLabel("Note value /\(unit)")
+                            .accessibilityAddTraits(denominator == unit ? .isSelected : [])
+                    }
+                }
+                if !Rhythm.groupingOptions(selected).isEmpty {
+                    SectionLabel(text: "GROUPING", p: p)
+                    HStack(spacing: 9) {
+                        ForEach(Rhythm.groupingOptions(selected), id: \.self) { option in
+                            choice(option.map(String.init).joined(separator: "+"), selected: option == model.rhythm.effectiveGrouping, height: 44) { grouping = option; applyMeter() }
+                        }
                     }
                 }
             }
-            Text([4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) && compoundPulse
-                 ? "\(selected / 3) big beats per bar · 3 note units per beat."
-                 : "BPM counts each \([2: "half", 4: "quarter", 8: "eighth", 16: "sixteenth"][denominator]!) note.")
-                .font(.system(size: 12)).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
-            commitButton("SET METER") {
-                var rhythm = model.rhythm
-                rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse, grouping: grouping)
-                model.rhythm = rhythm; dismiss()
-            }
         }
+    }
+    private func applyMeter() {
+        var rhythm = model.rhythm
+        rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse, grouping: grouping)
+        model.rhythm = rhythm
     }
     private var divisionPicker: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("CLICKS WITHIN EACH BEAT").technical(9, spacing: 1.5).foregroundStyle(p.muted)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
                 ForEach(model.rhythm.usesCompoundPulse ? [1, 2, 3, 6] : [1, 2, 3, 4], id: \.self) { value in
-                    Button { selected = value; model.tickFeedback() } label: {
+                    Button { model.rhythm.subdivision = value; model.tickFeedback(); dismiss() } label: {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack { LED(on: selected == value, size: 7); Spacer(); Text(String(format: "%02d", value)).technical(9, spacing: 1).foregroundStyle(p.muted) }
                             RhythmGlyph(count: value, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(value)).fill(p.ink).frame(height: 40).padding(.horizontal, 16)
@@ -225,7 +239,6 @@ struct InstrumentPanel: View {
                         .accessibilityLabel("\(value) clicks per beat").accessibilityAddTraits(selected == value ? .isSelected : [])
                 }
             }
-            commitButton("SET DIVISION") { model.rhythm.subdivision = selected; dismiss() }
         }
     }
     private var quantities: [Int] {
@@ -237,39 +250,46 @@ struct InstrumentPanel: View {
                 .technical(9, spacing: 1).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 12) {
                 ForEach(quantities, id: \.self) { value in
-                    choice(kind == .countIn && value == 0 ? "OFF" : String(value), selected: selected == value, height: 63) { selected = value }
+                    choice(kind == .countIn && value == 0 ? "OFF" : String(value), selected: selected == value, height: 63) {
+                        switch kind {
+                        case .countIn: model.rhythm.countIn = value
+                        case .every: model.rhythm.every = value
+                        case .increment: model.rhythm.increment = value
+                        default: break
+                        }
+                        dismiss()
+                    }
                 }
-            }
-            commitButton("APPLY") {
-                switch kind {
-                case .countIn: model.rhythm.countIn = selected
-                case .every: model.rhythm.every = selected
-                case .increment: model.rhythm.increment = selected
-                default: break
-                }
-                dismiss()
             }
         }
     }
     private var practicePanel: some View {
         VStack(alignment: .leading, spacing: 23) {
-            SectionLabel(text: "01  TEMPO RAMP", p: p)
+            practiceChoice("COUNT IN", value: model.rhythm.countIn == 0 ? "OFF" : "\(model.rhythm.countIn) BAR", route: .countIn, selection: model.rhythm.countIn)
+            SectionLabel(text: "TEMPO RAMP", p: p)
             switchRow("RAMP", value: $model.rhythm.ramp)
+            if model.rhythm.ramp {
             HStack(spacing: 13) {
                 numberWell("START", value: model.rhythm.start) { openNumber(.start, value: model.rhythm.start) }
                 Image(systemName: "arrow.right").font(.system(size: 13))
                 numberWell("END", value: model.rhythm.end) { openNumber(.end, value: model.rhythm.end) }
             }
+            HStack(spacing: 13) {
+                practiceChoice("EVERY", value: "\(model.rhythm.every) BARS", route: .every, selection: model.rhythm.every)
+                practiceChoice("INCREASE BY", value: "+\(model.rhythm.increment)", route: .increment, selection: model.rhythm.increment)
+            }
             Text("Moves toward the end tempo, then holds. Press stop and play to restart the ramp.").font(.system(size: 12)).foregroundStyle(p.muted)
-            SectionLabel(text: "02  GAP TRAINING", p: p)
+            }
+            SectionLabel(text: "GAP TRAINING", p: p)
             switchRow("SOUND / SILENCE", value: $model.rhythm.gap)
+            if model.rhythm.gap {
             HStack(spacing: 14) {
                 stepper("SOUND BARS", value: $model.rhythm.audibleBars, range: 1...16)
                 stepper("SILENT BARS", value: $model.rhythm.silentBars, range: 1...16)
             }
-            SectionLabel(text: "03  FEEL", p: p)
+            }
+            SectionLabel(text: "FEEL", p: p)
             switchRow("TOUCH FEEDBACK", value: $model.haptics)
-            commitButton("DONE") { dismiss() }
         }
     }
     private var presetPanel: some View {
@@ -322,8 +342,20 @@ struct InstrumentPanel: View {
         guard !presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         model.addPreset(presetName); presetName = ""; naming = false
     }
-    private func openNumber(_ target: InstrumentPanelKind, value: Int) { digits = String(value); replaceDigits = true; kind = target }
-    private func dismiss() { if kind == .sounds { model.endSoundPreview() }; naming = false; if kind == .audio { model.error = nil }; close() }
+    private func openNumber(_ target: InstrumentPanelKind, value: Int) { digits = String(value); replaceDigits = true; returnsToPractice = true; kind = target }
+    private func practiceChoice(_ title: String, value: String, route: InstrumentPanelKind, selection: Int) -> some View {
+        Button { selected = selection; returnsToPractice = true; kind = route } label: {
+            HStack(spacing: 9) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title).technical(9, spacing: 1)
+                    Text(value).font(InstrumentType.value(19))
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 10))
+            }.padding(14).frame(maxWidth: .infinity)
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("\(title), \(value)")
+    }
+    private func dismiss() { if returnsToPractice { returnsToPractice = false; kind = .practice; return }; if kind == .sounds { model.endSoundPreview() }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack { Text(title).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }
@@ -344,8 +376,8 @@ struct InstrumentPanel: View {
             Text(label).technical(10, spacing: 1)
             Spacer(minLength: 10)
             HStack(spacing: 6) {
-                choice("OFF", selected: !value.wrappedValue, height: 43) { value.wrappedValue = false }
-                choice("ON", selected: value.wrappedValue, height: 43) { value.wrappedValue = true }
+                choice("OFF", selected: !value.wrappedValue, height: 43) { value.wrappedValue = false }.accessibilityIdentifier("\(label)-off")
+                choice("ON", selected: value.wrappedValue, height: 43) { value.wrappedValue = true }.accessibilityIdentifier("\(label)-on")
             }.frame(width: 150)
         }
     }

@@ -7,7 +7,7 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 ## Implemented
 
 - Tactile tempo encoder, +/- adjustment, numeric entry, 20–300 BPM, tap tempo.
-- 1–12 beats, /4 and /8 meters, 1–4 subdivisions, per-beat accent/normal/mute.
+- 1–12 beats, /2, /4, /8 and /16 meters, simple 1–4 or compound 1/2/3/6 subdivisions, per-beat accent/normal/mute.
 - Eight curated sounds with tap-to-preview: seven recorded percussion instruments and electronic CLICK. HI-HAT stays closed.
 - Zero, one or two count-in bars; ascending/descending tempo ramp; repeating audible/silent bars.
 - Ivory and graphite skins, control haptics, locally persisted settings and named presets.
@@ -74,10 +74,16 @@ Current four-bar 4/4, 96 BPM auditions are in `Design/Audio/curated-acoustic`. E
 Cross-checked against [Open Music Theory: metric hierarchy](https://openmusictheory.github.io/protonotation.html), [compound meter](https://viva.pressbooks.pub/openmusictheory/chapter/compound-meters-and-time-signatures/), [asymmetric grouping](https://viva.pressbooks.pub/openmusictheorycopy/chapter/twentieth-century-rhythmic-techniques/) and [musictheory.net](https://classic.musictheory.net/15/accessibility).
 
 - Simple 2, 3 and 4 beats: strong–weak; strong–weak–weak; strong–weak–secondary–weak. This applies to /2, /4, /8 and /16 note units. 2/2 covers cut time; 4/4 covers common time.
-- Compound 6, 9 and 12 over /4, /8 or /16: 2, 3 and 4 dotted beats, with the same main-beat hierarchy. In expanded note-unit counting, in-group divisions are lighter than main beats. In 12/8, the seventh eighth note is the secondary main beat; the fourth and tenth are weaker main beats. The clock is the only authority for sound strength; individual instruments do not re-infer accents.
+- Compound 6, 9 and 12 over /4, /8 or /16: 2, 3 and 4 dotted beats. Compound duple uses a secondary accent on the second group (the fourth note unit in 6/8), below the downbeat but above its subdivisions. In expanded note-unit counting, in-group divisions are lighter than main beats. In 12/8, the seventh eighth note is the secondary main beat; the fourth and tenth are weaker main beats. The clock is the only authority for sound strength; individual instruments do not re-infer accents.
 - 5: selectable 3+2 or 2+3. 7: selectable 2+2+3, 2+3+2 or 3+2+2. Subsequent group starts receive secondary emphasis; these are selectable interpretations, not universal rules for every piece.
 - Audio gains remain strong 1.00, secondary 0.34, weak 0.25, subdivision 0.18. These exact ratios are product choices, not music-theory prescriptions. EVEN is 0.60 for every audible hit; defaults remain ACCENT on.
 - Numerators 1–12 and denominators 2/4/8/16 are selectable. This is not every possible meter: unusual additive groupings such as 8/8 = 3+3+2, 9/8 = 2+2+2+3, meters above 12, and alternating meters do not have dedicated grouping workflows yet. Other numerators retain a downbeat plus normal pulses/manual accents; no universal grouping is invented.
 - Existing 6/4 and other pre-expansion presets retain their note-unit tempo instead of changing speed silently. New meter selections opt into the expanded compound semantics.
 
 Tests enumerate simple and compound patterns, grouped vs expanded counting, all supported 5/7 groupings, audible strength, EVEN visual invariance, persistence and legacy tempo preservation. Rendered audio tests cover every acoustic instrument; UI tests check the hierarchy in EVEN, grouping, cut time and both skins.
+
+### Simple first, expandable when needed
+
+The home surface focuses on tempo, beat indicators, Play/Stop and Tap. Play uses a muted green hardware key; amber is reserved for pulse indicators. Meter, division and sounds are one level inside Settings. Practice and saved presets have their own entries; ramp and gap details appear only when enabled. Fresh rhythms start at 96 BPM, 4/4, ACCENT on, with no count-in or training enabled.
+
+Common meters, division, count-in, ramp interval and increment apply in one tap. Custom meter edits apply immediately without a Set button; dismissing retains them. Numeric tempo entry keeps confirmation so partial digits never affect playback. Sound choices apply immediately and keep the library open for auditioning. Preset deletion keeps its confirmation.

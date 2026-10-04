@@ -171,7 +171,7 @@ for numerator in [6, 9, 12] {
     check(hits.count == numerator + 1 && hits.last!.0 == 24000 * r.pulseCount, "Compound bar duration")
     check(hits[3].1 == 1 && hits[3].0 == 24000, "Dotted quarter at 120 BPM must last 0.5 seconds")
     check(hits[1].2 == 3 && hits[2].2 == 3, "Eighth subdivisions")
-    check(r.beatStrength(1) == 1, "Second big beat stays weak")
+    check(r.beatStrength(1) == (numerator == 6 ? 4 : 1), "Compound duple marks the second group as a secondary accent")
     if numerator == 12 { check(r.beatStrength(2) == 4, "12/8 third big beat secondary") }
     r.followsMeter = false; check(r.beatStrength(0) == 5 && r.beatStrength(1) == 5, "Even playback uses uniform gain")
     r.accents[1] = 0; check(r.beatStrength(1) == 0, "Muted big beat")
@@ -200,7 +200,7 @@ for denominator in [2, 4, 8, 16] {
     }
 }
 for denominator in [4, 8, 16] {
-    for (numerator, big) in [(6,[2,1]),(9,[2,1,1]),(12,[2,1,4,1])] {
+    for (numerator, big) in [(6,[2,4]),(9,[2,1,1]),(12,[2,1,4,1])] {
         var r = Rhythm(); r.setMeter(beats: numerator, denominator: denominator, compound: true)
         let expanded = big.flatMap { [$0,3,3] }
         check((0..<r.pulseCount).map { r.displayStrength($0) } == big, "Compound big-beat hierarchy")

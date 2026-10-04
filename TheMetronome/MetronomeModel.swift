@@ -108,7 +108,7 @@ final class MetronomeModel: ObservableObject {
         haptics = defaults.object(forKey: "haptics") as? Bool ?? true
         // Deterministic launch states for simulator visual verification only.
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm(); rhythm.countIn = 1 }
+        if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm() }
         if ProcessInfo.processInfo.arguments.contains("--dark") { dark = true }
         if ProcessInfo.processInfo.arguments.contains("--light") { dark = false }
         #endif

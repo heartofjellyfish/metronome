@@ -65,10 +65,10 @@ struct Rhythm: Codable, Equatable {
     // Meter hierarchy is independent of the audible accent switch and manual mutes.
     func metricalStrength(_ beat: Int) -> Int {
         if beat == 0 { return 2 }
-        if usesCompoundPulse { return pulseCount == 4 && beat == 2 ? 4 : 1 }
+        if usesCompoundPulse { return (pulseCount == 2 && beat == 1) || (pulseCount == 4 && beat == 2) ? 4 : 1 }
         if isCompound {
             if beat % 3 != 0 { return 3 }
-            return beats == 12 && beat == 6 ? 4 : 1
+            return (beats == 6 && beat == 3) || (beats == 12 && beat == 6) ? 4 : 1
         }
         if beats == 4 { return beat == 2 ? 4 : 1 }
         var boundary = 0

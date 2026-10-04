@@ -17,7 +17,7 @@ import AVFoundation
         check(!HatArticulation.resolve(strength: 2, beat: 0, beats: 4, denominator: 4, counting: true).air, "Count-in stays closed")
         check(HatArticulation.resolve(strength: 0, beat: 2, beats: 4, denominator: 4).gain == 0, "A muted secondary beat stays silent")
         check(!HatArticulation.resolve(strength: 3, beat: 0, beats: 4, denominator: 4).air, "Subdivisions stay closed")
-        let compound = (0..<6).map { HatArticulation.resolve(strength: [2,3,3,1,3,3][$0], beat: $0, beats: 6, denominator: 8).gain }
+        let compound = (0..<6).map { HatArticulation.resolve(strength: [2,3,3,4,3,3][$0], beat: $0, beats: 6, denominator: 8).gain }
         check(compound[3] > compound[2] && compound[3] > compound[4], "6/8 gently marks the second group")
         let odd = (0..<7).map { HatArticulation.resolve(strength: 1, beat: $0, beats: 7, denominator: 8).gain }
         check(Set(odd).count == 1, "Irregular meters must retain the user's own grouping")
