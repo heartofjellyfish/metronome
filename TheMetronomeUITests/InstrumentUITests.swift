@@ -356,10 +356,27 @@ final class InstrumentUITests: XCTestCase {
         for sound in [11,0,1] { XCTAssertTrue(button("recommended-sound-\(sound)").exists) }
         button("All sounds").tap()
         XCTAssertFalse(button("picks-sound-11").exists)
-        for (family,sounds) in [("acoustic",[11,8,5,9,10]),("classic",[0,1,2])] {
+        for (family,sounds) in [("acoustic",[11,8,5,9,10,12,13,14,15]),("classic",[0,1,2])] {
             for sound in sounds { XCTAssertEqual(app.buttons.matching(identifier:"\(family)-sound-\(sound)").count,1) }
         }
         proof("Full sound library without duplicate recommendations")
+    }
+
+    func testNewPercussionLiveSelection() {
+        button("transport").tap()
+        button("settings").tap()
+        reveal(button("All sounds")); button("All sounds").tap()
+        for id in [15,14,12,13,12] {
+            let sound = button("acoustic-sound-\(id)")
+            reveal(sound); sound.tap()
+            XCTAssertTrue(sound.isSelected)
+            XCTAssertTrue(button("Close sound library").exists)
+        }
+        proof("Expanded percussion library")
+        button("Close sound library").tap()
+        button("Close settings").tap()
+        XCTAssertEqual(button("transport").label, "Stop metronome")
+        button("transport").tap()
     }
 
 }

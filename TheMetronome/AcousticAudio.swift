@@ -27,7 +27,7 @@ enum AcousticError: LocalizedError {
     }
 }
 final class AcousticLibrary {
-    static let names: [String] = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } } + ["ac-bell"]
+    static let names: [String] = ["closed-v2", "closed-v3", "half-v2", "pedal-v2", "stick", "shaker", "rimshot", "wood"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } } + ["ac-bell"] + ["snap", "clap", "ride", "cross"].flatMap { name in (1...4).map { "ac-\(name)-\($0)" } }
     let clips: [AcousticClip]
     let naturalHatGains: [Float]
     let balancedGains: [Float]
@@ -47,7 +47,7 @@ final class AcousticLibrary {
         let reference = rms.prefix(4).min() ?? 0
         naturalHatGains = rms.map { $0 > 0 ? min(1, reference / $0) : 0 }
         var gains = Array(repeating: Float(1), count: clips.count)
-        for group in [0..<8, 8..<12, 12..<16, 16..<20, 20..<24, 24..<28, 28..<32, 32..<33] {
+        for group in [0..<8, 8..<12, 12..<16, 16..<20, 20..<24, 24..<28, 28..<32, 32..<33, 33..<37, 37..<41, 41..<45, 45..<49] {
             let level = group.map { rms[$0] }.min() ?? 0
             for i in group { gains[i] = rms[i] > 0 ? min(1, level / rms[i]) : 0 }
         }
@@ -100,14 +100,14 @@ final class AcousticRenderer {
     let library: AcousticLibrary
     private var voices = Array(repeating: AcousticVoice(), count: 8)
     private var cursor = 0
-    private var repetitions = Array(repeating: 0, count: 9)
+    private var repetitions = Array(repeating: 0, count: 13)
     init(library: AcousticLibrary) { self.library = library }
     func chokeHats() {
         for i in voices.indices where voices[i].hat && voices[i].chokeTime < 0 { voices[i].chokeTime = 0 }
     }
     func trigger(sound: Int, strength: Int, beat: Int = 0, beats: Int = 4, denominator: Int = 4, counting: Bool = false, gainScale: Float = 1, hitInterval: Double = .infinity) {
-        guard sound == 0 || sound == 2 || sound == 5 || (6...11).contains(sound), strength > 0 else { return }
-        let group = sound == 0 ? 7 : sound == 2 ? 8 : sound == 5 ? 6 : sound - 6
+        guard sound == 0 || sound == 2 || sound == 5 || (6...15).contains(sound), strength > 0 else { return }
+        let group = sound >= 12 ? sound - 3 : sound == 0 ? 7 : sound == 2 ? 8 : sound == 5 ? 6 : sound - 6
         let repetition = repetitions[group] % 4; repetitions[group] = (repetition + 1) % 4
         if sound == InstrumentSound.naturalHiHat.rawValue {
             let hit = HatArticulation.resolve(strength: strength, beat: beat, beats: beats, denominator: denominator, counting: counting)
@@ -124,6 +124,10 @@ final class AcousticRenderer {
         case 7: offset = strength == 3 ? 0 : 8
         case 8: offset = 12
         case 9: offset = 16
+        case 12: offset = 33
+        case 13: offset = 37
+        case 14: offset = 41
+        case 15: offset = 45
         default: offset = 20
         }
         let clipIndex = offset + (sound == 2 ? 0 : repetition)

@@ -13,3 +13,9 @@
 - Give each visible datum one job. Remove decorative option numbers and synonymous subtitles when the icon/title already communicates the same fact. Preserve useful units, grouping and musical distinctions.
 - Settings owns the three recommended sounds. The full sound library lists each instrument once, without another copy of the recommendation shelf.
 - For UX work, inspect the resulting screenshots and test user journeys, including the second and third action. Functional assertions alone do not establish interaction quality. Explain any remaining judgment call rather than claiming all UX is correct.
+
+# Startup performance
+
+- A responsive first screen in under one second on the connected iPhone is a product requirement. Keep audio-file decoding, downloads and catalog preparation off the launch path.
+- When expanding sounds, measure first-screen launch and first-play setup separately. Report measured environment and limitations; never infer a phone launch time from simulator or desktop timings.
+- Keep shipped audio compact, local and cached after initial playback. Do not add loading screens or mandatory setup before basic playback.

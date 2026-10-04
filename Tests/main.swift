@@ -152,7 +152,7 @@ check(strengths(unmarked, count: 4) == [2,1,4,1], "Accent mode must supply the m
 unmarked.accents[0] = 0
 check(strengths(unmarked, count: 4) == [0,1,4,1], "Automatic downbeat must respect mute")
 
-check(InstrumentSound.allCases.count == 8, "Catalog must not contain duplicate synthesized instruments")
+check(InstrumentSound.allCases.count == 12, "Catalog must not contain duplicate synthesized instruments")
 for (old, new) in [(3,11),(4,10),(6,11),(7,11)] {
     var saved = Rhythm(); saved.sound = old; saved.sanitize()
     check(saved.sound == new, "Retired preset must migrate to its acoustic equivalent")

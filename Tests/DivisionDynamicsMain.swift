@@ -97,8 +97,20 @@ import AVFoundation
                 }
             }
         }
-        print("PASS: gain applied sample-by-sample to all 8 instruments, 5 roles × 5 scales × 3 sample rates.")
-        print("PASS: \(count) dense rendered bars across 8 instruments, 12 grids, ACCENT/EVEN and 44.1/48/96 kHz; peak \(peak); exact hit counts; no clipping; complete tails.")
+        print("PASS: gain applied sample-by-sample to all 12 instruments, 5 roles × 5 scales × 3 sample rates.")
+        print("PASS: \(count) dense rendered bars across 12 instruments, 12 grids, ACCENT/EVEN and 44.1/48/96 kHz; peak \(peak); exact hit counts; no clipping; complete tails.")
+        if CommandLine.arguments.contains("--new-sounds") {
+            let output = root.appendingPathComponent("Design/Audio/percussion-additions")
+            try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+            for sound in [InstrumentSound.snap, .clap, .ride, .crossStick] {
+                var audio: [Float] = []
+                for division in [1,4] {
+                    var r = Rhythm(); r.sound = sound.rawValue; r.subdivision = division
+                    audio += render(r, rate: 48000, library: library)
+                }
+                try write(audio, to: output.appendingPathComponent("\(sound.title.lowercased()).wav"), rate: 48000)
+            }
+        }
         guard CommandLine.arguments.contains("--auditions") else { return }
         let output = root.appendingPathComponent("Design/Audio/division-dynamics")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)

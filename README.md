@@ -8,7 +8,7 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 
 - Tactile tempo encoder, +/- adjustment, numeric entry, 20–300 BPM, tap tempo.
 - 1–12 beats, /2, /4, /8 and /16 meters, simple 1–4 or compound 1/2/3/6 subdivisions, per-beat accent/normal/mute.
-- Eight curated sounds with tap-to-preview: seven recorded percussion instruments and electronic CLICK. HI-HAT stays closed.
+- Twelve curated sounds with tap-to-preview: eleven recorded percussion instruments and electronic CLICK. HI-HAT stays closed.
 - Zero, one or two count-in bars; ascending/descending tempo ramp; repeating audible/silent bars.
 - Ivory and graphite skins, control haptics, locally persisted settings and named presets.
 - Background playback with other audio, lock-screen transport, headphone-disconnect and interruption handling.
@@ -50,7 +50,7 @@ xcodebuild -project TheMetronome.xcodeproj -scheme TheMetronome -destination 'pl
 
 ## Curated sound library
 
-Eight choices, with no duplicate synthetic/acoustic editions: CLASSIC woodblock, electronic CLICK, hand BELL, RIMSHOT, PEDAL hi-hat, STICK clicks, SHAKER and HI-HAT. All physical instruments use recordings; only CLICK uses synthesis. The first shelf recommends HI-HAT, CLASSIC and CLICK. The full library expands Acoustic and Classic sections without paging.
+Twelve choices, with no duplicate synthetic/acoustic editions: WOOD, electronic CLICK, hand BELL, RIMSHOT, PEDAL hi-hat, STICK, SHAKER, HI-HAT, SNAP, CLAP, RIDE and CROSS-STICK. All physical instruments use recordings; only CLICK uses synthesis. The first shelf recommends HI-HAT, WOOD and CLICK. The full library expands Acoustic and Classic sections without paging.
 
 Virtuosity Drums supplies closed hats, pedal chick, shaker and true snare rimshot. VCSL supplies woodblock and handbell. Joseph SARDIN / BigSoundBank Drumsticks #4 supplies actual two-stick clicks (four hits extracted from the official MP3). All sources are CC0; bundled `AcousticSamples/Attribution.txt`, license files and `sources.json` record provenance and edits. STICK is no longer snare cross-stick. Raw sound IDs are stable; retired synth hat/closed/open selections migrate to HI-HAT, and synthetic shaker migrates to the existing acoustic SHAKER. Saved presets retain other settings.
 
@@ -114,14 +114,22 @@ swiftc -O -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMet
 /tmp/division-dynamics-tests --auditions
 ```
 
-The test renders 576 dense bars (8 instruments × 12 grids × 3 sample rates × ACCENT/EVEN), validates actual per-sample gain propagation and writes reproducible 96 BPM auditions when `--auditions` is supplied. Run existing AcousticMain with `--no-previews` to check audio without overwriting historical audition files.
+The test renders 864 dense bars (12 instruments × 12 grids × 3 sample rates × ACCENT/EVEN), validates actual per-sample gain propagation and writes reproducible 96 BPM auditions when `--auditions` is supplied. Run existing AcousticMain with `--no-previews` to check audio without overwriting historical audition files.
 
 ## Context-aware pickers
 
-Division cards show the rhythm glyph and one musical label under the shared “clicks within each beat” heading. Decorative 01/02 numbers and repeated per-card “1 / BEAT” subtitles are removed. Selection lamps read the current model, so multiple live choices and reopening stay accurate. Preset comparison also shows the active saved rhythm. The Settings recommendation shelf remains; the full sound library lists the eight instruments once.
+Division cards show the rhythm glyph and one musical label under the shared “clicks within each beat” heading. Decorative 01/02 numbers and repeated per-card “1 / BEAT” subtitles are removed. Selection lamps read the current model, so multiple live choices and reopening stay accurate. Preset comparison also shows the active saved rhythm. The Settings recommendation shelf remains; the full sound library lists the twelve instruments once.
 
 UX acceptance rules are recorded in `AGENTS.md`: inspect stopped setup, active playback and repeated audition as distinct journeys; immediate application does not imply dismissal; each visible datum needs a purpose. Regression journeys exercise repeated simple/compound choices, both entry points and skins, live meter changes, live preset comparison, stopped dismissal, and sound-library uniqueness.
 
 WOOD (formerly CLASSIC) now uses two alternate VCSL woodblock forte recordings, with 90 ms smoothly decaying tails for a dry click. Sources and reproducible processing are in `AcousticSamples/sources.json` and `Scripts/prepare_dry_wood.py`. HI-HAT and all subdivision dynamics are unchanged.
 
 SHAKER automatically adapts its release to the scheduled hit interval (including subdivision and ramp tempo). Strokes remain unchanged when their 280 ms recordings fit; dense grids use a smooth tail ending at 90% of the interval. An 8 ms release clears any previous shaker stroke after a live speed/grid change. No pitch/time stretching, added random timing, extra UI, or changes to other instruments. `Tests/ShakerArticulationMain.swift` verifies all takes, sample rates, slow identity, dense tail clearance, live transitions and ramp metadata; it exports an old/new audition at 180 and 240 BPM, four clicks.
+
+## Recorded percussion additions and startup budget
+
+SNAP uses four isolated Joseph Sardin / BigSoundBank #0483 recordings; CLAP uses four VCSL solo-clap velocity layers; RIDE uses four Virtuosity normal-hit overhead round robins; CROSS-STICK uses four Virtuosity close-mic snare side-stick layers. All are CC0, with pinned source hashes and processing in `AcousticSamples/sources.json`. Rebuild using `Scripts/prepare_extra_percussion.py`. Samples are mono 44.1 kHz / 16-bit, with aligned attacks and short release fades; durations are 110/140/350/130 ms respectively. No networking or catalog download occurs at runtime. Preview files in `Design/Audio/percussion-additions` play one 4/4 bar at 96 BPM, then a bar with four clicks per beat.
+
+Startup acceptance remains under one second to a responsive first screen on the connected iPhone. Audio files are not decoded during app initialization: they are decoded once on first playback and retained for live switching. The 16 new files add 258,248 bytes on disk and 515,088 bytes of decoded Float PCM. Desktop cached whole-library decode median was 2.97 ms before and 4.34 ms after; these are not phone or cold-launch timings. iPhone 17 Pro simulator debug launch-to-responsive (five iterations) averaged 1.503 s before and 1.447 s after; first playback setup measured 0.207 s in the simulator. No measured simulator regression; these numbers do not establish the iPhone sub-second target. Physical launch testing via XCTest was blocked by the test runner provisioning profile; Instruments attempts failed due to storage/device recording errors. Phone startup timing remains unverified. The optimized Release app was successfully installed.
+
+`LaunchPerformanceTests` preserves user preferences and measures responsive launch. `AudioStartupTests` separately verifies first-play setup below one second. New-sound UI tests exercise repeated live selection and retention; audio tests cover 49 recordings and 864 dense bars across all 12 sounds.

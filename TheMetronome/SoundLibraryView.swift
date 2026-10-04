@@ -37,7 +37,8 @@ struct SoundLibraryView: View {
             SoundDynamicsControl(model: model, namespace: "library-")
             family("01 ACOUSTIC", subtitle: "REAL DRUMS / HATS & PERCUSSION", rows: [
                 [.naturalHiHat, .acousticPedal, .rim],
-                [.acousticStick, .acousticShaker]
+                [.acousticStick, .crossStick, .ride],
+                [.acousticShaker, .snap, .clap]
             ], namespace: "acoustic")
             family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell]], namespace: "classic")
             Text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW")

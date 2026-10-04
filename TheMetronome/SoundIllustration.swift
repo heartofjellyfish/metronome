@@ -9,7 +9,16 @@ struct SoundIllustration: View {
                 if index == 0 { wood }
                 else if index == 1 { waveform }
                 else if index == 2 { bell }
-                else if index == 3 { hiHat }
+                else if index == 3 || index == 9 { hiHat }
+                else if index == 7 {
+                    ZStack {
+                        Image(systemName: "hand.point.up.left.fill").font(.system(size: 44, weight: .light)).foregroundStyle(Color(hex: 0xCBA46E))
+                        Image(systemName: "sparkle").font(.system(size: 16, weight: .light)).foregroundStyle(p.muted).offset(x: -23, y: -19)
+                    }.shadow(color: .black.opacity(0.15), radius: 2, x: 1, y: 2)
+                }
+                else if index == 8 {
+                    Image(systemName: "hands.clap.fill").font(.system(size: 46, weight: .light)).foregroundStyle(LinearGradient(colors: [Color(hex: 0xE4C18E), Color(hex: 0xAC8050)], startPoint: .topLeading, endPoint: .bottomTrailing)).shadow(color: .black.opacity(0.15), radius: 2, x: 1, y: 2)
+                }
                 else if index == 4 { shaker }
                 else if index == 6 {
                     ZStack {
@@ -28,7 +37,7 @@ struct SoundIllustration: View {
                 q.move(to: CGPoint(x: 40, y: 49)); q.addLine(to: CGPoint(x: 23, y: 62))
                 q.move(to: CGPoint(x: 40, y: 49)); q.addLine(to: CGPoint(x: 57, y: 62))
             }.stroke(Color(hex: 0x74756E), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-            ForEach(0..<2) { i in
+            ForEach(0..<(index == 9 ? 1 : 2)) { i in
                 Ellipse().fill(LinearGradient(colors: [Color(hex: 0xB49145), Color(hex: 0xE2C87B), Color(hex: 0x8A692E)], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .overlay(Ellipse().stroke(Color(hex: 0x806027), lineWidth: 0.7))
                     .overlay(Ellipse().stroke(Color(hex: 0xF2DFA6).opacity(0.65), lineWidth: 0.5).padding(4))
@@ -62,7 +71,7 @@ struct SoundIllustration: View {
                 .overlay(Ellipse().stroke(.white.opacity(0.55), lineWidth: 0.8).padding(3))
                 .frame(width: 64, height: 24).position(x: 40, y: 27)
             Capsule().fill(LinearGradient(colors: [Color(hex: 0xF0D2A4), Color(hex: 0xB08652)], startPoint: .top, endPoint: .bottom))
-                .frame(width: 63, height: 4).rotationEffect(.degrees(-28)).position(x: 40, y: 20)
+                .frame(width: 63, height: 4).rotationEffect(.degrees(index == 10 ? -8 : -28)).position(x: 40, y: index == 10 ? 28 : 20)
         }.shadow(color: .black.opacity(0.16), radius: 2, x: 1, y: 3)
     }
     private var wood: some View {

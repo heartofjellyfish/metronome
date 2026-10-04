@@ -1,18 +1,18 @@
 import Foundation
 
 enum InstrumentSound: Int, CaseIterable {
-    case wood, click, bell, hiHat, shaker, rim, acousticClosed, acousticOpen, acousticPedal, acousticStick, acousticShaker, naturalHiHat
+    case wood, click, bell, hiHat, shaker, rim, acousticClosed, acousticOpen, acousticPedal, acousticStick, acousticShaker, naturalHiHat, snap, clap, ride, crossStick
     // Retired raw values remain decodable for existing presets.
-    static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat]
+    static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat, .snap, .clap, .ride, .crossStick]
     static let recommended: [InstrumentSound] = [.naturalHiHat, .wood, .click]
-    var title: String { ["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT"][rawValue] }
-    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3][rawValue] }
+    var title: String { ["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK"][rawValue] }
+    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10][rawValue] }
     var detail: String {
         ["REAL WOODBLOCK / DRY & FOCUSED", "SHORT / CLEAR / PRECISE", "REAL HAND BELL / ROUND & RINGING",
          "CLOSED HAT / DYNAMIC STROKES", "SOFT GRAIN / LIGHT SUBDIVISIONS", "REAL SNARE / HEAD & RIM",
          "REAL CLOSED HI-HAT / FOUR TAKES", "HALF-OPEN ACCENT / CLOSED SUBDIVISIONS",
          "REAL PEDAL CHICK / FOUR TAKES", "REAL DRUMSTICKS / FOUR HITS",
-         "REAL SHAKER / FOUR TAKES", "CLOSED STROKES / NATURAL ACCENTS"][rawValue]
+         "REAL SHAKER / FOUR TAKES", "CLOSED STROKES / NATURAL ACCENTS", "REAL FINGER SNAPS / DRY & LIGHT", "SOLO HAND CLAPS / FOUR TAKES", "REAL RIDE / FOCUSED PING", "SNARE SIDE STICK / DRY KNOCK"][rawValue]
     }
 }
 

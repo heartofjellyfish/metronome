@@ -5,7 +5,7 @@ import AVFoundation
     static func main() throws {
         let directory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("TheMetronome/AcousticSamples")
         let library = try AcousticLibrary { directory.appendingPathComponent($0 + ".wav") }
-        check(library.clips.count == 33, "All recorded variants must be bundled")
+        check(library.clips.count == 49, "All recorded variants must be bundled")
         let pattern = [2, 1, 4, 1].enumerated().map {
             HatArticulation.resolve(strength: $0.element, beat: $0.offset, beats: 4, denominator: 4)
         }
@@ -47,7 +47,7 @@ import AVFoundation
                 if rate == 44100 { print("4/4 attack dB, take phase \(phase): \(levels.map { String(format: "%.2f", $0) })") }
             }
         }
-        for sound in [0,2,5,8,9,10,11] {
+        for sound in [0,2,5,8,9,10,11,12,13,14,15] {
             for even in [false, true] {
                 let renderer = AcousticRenderer(library: library)
                 var levels: [Double] = []
@@ -67,7 +67,7 @@ import AVFoundation
         }
         var largest: Float = 0
         for rate in [44100.0, 48000.0, 96000.0] {
-            for sound in [0,2,5,8,9,10,11] {
+            for sound in [0,2,5,8,9,10,11,12,13,14,15] {
                 let renderer = AcousticRenderer(library: library)
                 var rhythm = Rhythm(); rhythm.bpm = 300; rhythm.subdivision = 4; rhythm.sound = sound
                 let clock = SampleClock(rate: rate); clock.reset(rhythm)
@@ -85,7 +85,7 @@ import AVFoundation
             }
         }
         // The new six-way compound subdivision is the densest supported grid.
-        for sound in [0, 2, 5, 8, 9, 10, 11] {
+        for sound in [0, 2, 5, 8, 9, 10, 11, 12, 13, 14, 15] {
             var r = Rhythm(); r.setMeter(beats: 12, denominator: 8, compound: true)
             r.bpm = 300; r.subdivision = 6
             let clock = SampleClock(rate: 48000); clock.reset(r)
@@ -113,7 +113,7 @@ import AVFoundation
             signatures.append(signature)
         }
         check(Set(signatures).count == 4, "Round robin must use four different recordings")
-        print("PASS: all 33 recordings load; seven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak \(largest); tail termination; choke; four distinct takes.")
+        print("PASS: all 49 recordings load; eleven acoustic sounds at 44.1/48/96 kHz; 300 BPM subdivisions; peak \(largest); tail termination; choke; four distinct takes.")
         guard !CommandLine.arguments.contains("--no-previews") else { return }
         for (sound, name) in [(0,"acoustic-wood"),(2,"acoustic-bell"),(5,"acoustic-rimshot"),(8,"acoustic-pedal"),(9,"acoustic-stick"),(10,"acoustic-shaker"),(11,"recommended-hi-hat")] {
             let renderer = AcousticRenderer(library: library)
