@@ -37,7 +37,7 @@ struct MetronomeView: View {
     }
     private var instrumentFace: some View {
         ZStack(alignment: .topLeading) {
-            Text("THE METRONOME").technical(11, spacing: 4.3)
+            Text("METRONOME").technical(11, spacing: 4.3)
                 .frame(width: 300, alignment: .leading).position(x: 177, y: 15)
             Button { settings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
