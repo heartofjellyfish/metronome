@@ -1,0 +1,1 @@
+Static Vercel website draft. Intended domain: app.qi.land. Support: /metronome/; privacy: /metronome/privacy/. Not yet deployed. Contact uses the current developer-support email liuqi627@gmail.com. No analytics scripts.
