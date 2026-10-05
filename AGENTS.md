@@ -19,3 +19,7 @@
 - A responsive first screen in under one second on the connected iPhone is a product requirement. Keep audio-file decoding, downloads and catalog preparation off the launch path.
 - When expanding sounds, measure first-screen launch and first-play setup separately. Report measured environment and limitations; never infer a phone launch time from simulator or desktop timings.
 - Keep shipped audio compact, local and cached after initial playback. Do not add loading screens or mandatory setup before basic playback.
+
+# App aesthetics and marketing preferences
+
+- Before creating or revising App visuals, screenshots or marketing copy, read `AppStore/brand-preferences.md` and follow the user’s recorded preferences.
