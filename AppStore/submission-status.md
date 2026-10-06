@@ -6,8 +6,10 @@
 - Version 1.0, build 1; bundle com.heartofjellyfish.themetronome.
 - Status: Rejected / Unresolved Issues, verified in App Store Connect after Apple's October 5, 2026, 8:15 PM message.
 - Reason: Guideline 2.1, Information Needed — New App Submission. Apple requests physical-device video plus purpose/audience, setup instructions, external services, regional differences and third-party material documentation. The message does not identify a specific functional defect.
-- Answers 2–6 saved in App Review Notes and verified after reload; local copy: review-information-en-US.txt. No complete response sent or resubmission performed yet.
-- Pending: submitted-build physical-device QA and video on latest OS, including device/OS/build facts. See physical-device-review-checklist.md. Once supplied, complete item 1 in Notes and send all six answers plus evidence to App Review.
+- All six answers saved in Review Notes. Reply sent October 5, 2026 at 8:40 PM Pacific with metronome-review-demo-720p.mp4; verified Messages (2) and downloadable attachment. Proof: review-video-reply-sent.png.
+- Original video provided by user: /Users/qliu/Downloads/ScreenRecording_10-05-2026 20-31-52_1.MP4 (213 MB). Compressed with ffmpeg to /tmp/metronome-review-demo-720p.mp4 (4.9 MB), H.264/AAC, 720 px width, full duration 173.39 seconds and audio retained. User requested skipping content inspection.
+- Device/OS supplied by user: iPhone 14 Pro / iOS 26.6.2. OS version reported as supplied, not independently verified or claimed to be latest. TestFlight installation/build identity and complete physical-device QA outcomes have not been explicitly confirmed.
+- Status remains Rejected / Unresolved Issues after reply; resubmission button disabled. No resubmission claimed.
 - Submitted by Qi Liu on October 5, 2026 at 12:10 PM Pacific.
 - Submission ID: 9fc94a7c-b5e7-4ac0-9c1d-120368902064.
 - Release: automatically after approval.
