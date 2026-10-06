@@ -1,0 +1,29 @@
+App: metronome, just cleaner — version 1.0 (1)
+
+2. Purpose and audience
+A standalone metronome for musicians, music students, teachers and anyone practicing rhythm. It provides an immediately usable, distraction-free practice tool: adjustable tempo, recorded percussion, accents, subdivisions, gradual tempo changes and silent-bar exercises for internal timing. All features are free. There are no ads, subscriptions or in-app purchases.
+
+3. Setup and main features
+No setup, account, login credentials, internet connection or sample files are required. All sounds are bundled with the app.
+- Launch the app and press the triangular Play button. Press it again to stop.
+- Adjust tempo (20–300 BPM) with the dial or +/- buttons; tap the BPM display for numeric entry. Tap the TAP button repeatedly to set tempo by tapping.
+- Use METER and DIVISION to choose time signature and clicks per beat. Tap the numbered beat pads to change individual beat emphasis, including muted beats.
+- Open the gear button for Settings. Choose a recommended sound or open the current sound/library to audition other percussion sounds. ACCENT/EVEN controls sound dynamics.
+- Settings > PRACTICE: choose COUNT IN; enable RAMP and set START, END, EVERY and STEP to change tempo gradually during playback. Stop and restart to restart the ramp.
+- Settings > PRACTICE: enable SOUND / SILENCE under GAP TRAINING, then set SOUND BARS and SILENT BARS. The metronome alternates audible bars and silent bars so the user can practice keeping time without the click.
+- Open PRESETS, enter a name and press + to save the current rhythm locally; select a saved preset to recall it.
+- Settings > SKIN switches between light and dark appearances. TOUCH FEEDBACK toggles haptic feedback.
+There is no account creation, account deletion, publicly shared user-generated content or paid content. Named rhythm presets are stored locally on the user's device.
+
+4. External services and tools
+Core functionality runs entirely on the device, using Apple's SwiftUI/UIKit, AVFoundation and MediaPlayer frameworks. No backend, data provider, authentication service, payment processor, advertising SDK, analytics service or AI service is used. The support/privacy website at app.qi.land is hosted on Vercel; it is not required to use the app. Third-party audio was obtained during development and is bundled locally; playback does not contact its sources.
+
+5. Regional differences
+The app's features and content are the same across all regions. There are no regional feature restrictions or region-specific paid features.
+
+6. Industry and third-party material
+This is a music practice utility and does not provide services in a highly regulated industry. Bundled third-party percussion recordings are released under CC0 1.0 Universal:
+- Virtuosity Drums, Versilian Studios LLC and Karoryfer Samples: https://github.com/sfzinstruments/virtuosity_drums (revision 9f04cf9a734527edfbb0a4eee1f674e45bbf71bc).
+- Versilian Community Sample Library: https://github.com/sgossner/VCSL (wood source revision c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e).
+- Joseph SARDIN / BigSoundBank: https://bigsoundbank.com/drumsticks-4-s1970.html and https://bigsoundbank.com/finger-clashes-s0483.html.
+The app bundle contains Attribution.txt, Virtuosity-LICENSE.txt, VCSL-LICENSE.txt and sources.json with pinned source URLs and hashes. The electronic click is synthesized locally by the app.

@@ -4,7 +4,10 @@
 
 - App: metronome, just cleaner (6819347521).
 - Version 1.0, build 1; bundle com.heartofjellyfish.themetronome.
-- Status: Waiting for Review, verified in App Store Connect.
+- Status: Rejected / Unresolved Issues, verified in App Store Connect after Apple's October 5, 2026, 8:15 PM message.
+- Reason: Guideline 2.1, Information Needed — New App Submission. Apple requests physical-device video plus purpose/audience, setup instructions, external services, regional differences and third-party material documentation. The message does not identify a specific functional defect.
+- Answers 2–6 saved in App Review Notes and verified after reload; local copy: review-information-en-US.txt. No complete response sent or resubmission performed yet.
+- Pending: submitted-build physical-device QA and video on latest OS, including device/OS/build facts. See physical-device-review-checklist.md. Once supplied, complete item 1 in Notes and send all six answers plus evidence to App Review.
 - Submitted by Qi Liu on October 5, 2026 at 12:10 PM Pacific.
 - Submission ID: 9fc94a7c-b5e7-4ac0-9c1d-120368902064.
 - Release: automatically after approval.
