@@ -4,7 +4,7 @@ Six marketing cards, revised for direct benefit headlines, 1284 × 2778 pixels. 
 
 ## Order
 
-1. Open. Play. No pop-ups. — Free forever. Ad-free forever.
+1. Open. Play. No pop-ups. — No ads. No interruptions.
 2. Studio-grade percussion. — Real instruments. Played by real people.
 3. Beautifully simple. — Minimalism in every detail.
 4. Hear accents. Feel the groove. — Strong beats and lighter beats. Find your feel.
@@ -50,3 +50,7 @@ Material revision: warm uncoated-paper texture generated deterministically in th
 ## iPad submission asset
 
 `ipad/en-US/01-open-play.png` (2064 × 2752) was captured from iPad Pro 13-inch (M5), iOS 26.3, using the actual light interface with 6:27, full cellular/Wi-Fi and 100% battery. `ipad/render.swift` composes the approved first-card headline and supporting copy over the paper texture; the app capture is scaled proportionally. Visually checked and uploaded to the iPad 13-inch slot before submission on 2026-10-05.
+
+## Review correction · 2026-10-16
+
+Apple identified price references in screenshots under Guideline 2.3.7. Replaced first-card supporting copy with “No ads. No interruptions.” on iPhone and iPad. The permanent-free promise remains in the description. Updated promotional text and upload packages as well. App UI and build are unchanged.

@@ -6,7 +6,7 @@ let width = 2064, height = 2752
 let ink = NSColor(calibratedRed: 0.13, green: 0.14, blue: 0.12, alpha: 1)
 let paper = NSColor(calibratedRed: 0.94, green: 0.92, blue: 0.87, alpha: 1)
 struct Card { let file: String; let source: String; let title: String; let detail: String }
-let cards = [Card(file: "01-open-play", source: "01-home.png", title: "Open. Play.\nNo pop-ups.", detail: "Free forever. Ad-free forever.")]
+let cards = [Card(file: "01-open-play", source: "01-home.png", title: "Open. Play.\nNo pop-ups.", detail: "No ads. No interruptions.")]
 func canvas(_ w: Int, _ h: Int, draw: () -> Void) -> NSBitmapImageRep {
     let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
     NSGraphicsContext.saveGraphicsState()
