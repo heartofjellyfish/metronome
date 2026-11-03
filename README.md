@@ -24,7 +24,7 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 Run the platform-independent timing/voice tests:
 
 ```sh
-swiftc -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/DialInteraction.swift Tests/main.swift -o /tmp/metronome-tests
+swiftc -module-cache-path /tmp/metronome-swift-cache TheMetronome/L10n.swift TheMetronome/Clock.swift TheMetronome/DialInteraction.swift Tests/main.swift -o /tmp/metronome-tests
 /tmp/metronome-tests
 ```
 
@@ -61,9 +61,9 @@ ACCENT defaults on. 4/4 levels are 1.00 / 0.25 / 0.30 / 0.25, with quieter subdi
 Validation / audition commands:
 
 ```sh
-swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AcousticMain.swift -o /tmp/acoustic-tests
+swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/L10n.swift TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AcousticMain.swift -o /tmp/acoustic-tests
 /tmp/acoustic-tests
-swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Scripts/render_sound_auditions.swift -o /tmp/render-sound-auditions
+swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/L10n.swift TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Scripts/render_sound_auditions.swift -o /tmp/render-sound-auditions
 /tmp/render-sound-auditions
 ```
 
@@ -99,7 +99,7 @@ The scheme now runs model integration tests as well as UI tests. The former use 
 To reproduce the sample-attack measurement (a signal envelope metric, not a perceptual onset judgment):
 
 ```sh
-swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AttackAudit.swift -o /tmp/metronome-attack-audit
+swiftc -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/L10n.swift TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/AttackAudit.swift -o /tmp/metronome-attack-audit
 /tmp/metronome-attack-audit
 ```
 
@@ -110,7 +110,7 @@ ACCENT now expresses both the meter and the subdivision hierarchy. Main nominal 
 See the [complete parameter table, research sources and eight-instrument auditions](Design/Audio/division-dynamics/index.html). Ratios are tuning choices, not universal music-theory rules. The new auditions supersede the older fixed-subdivision dynamics previews; no original recordings were changed.
 
 ```sh
-swiftc -O -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/DivisionDynamicsMain.swift -o /tmp/division-dynamics-tests
+swiftc -O -parse-as-library -module-cache-path /tmp/metronome-swift-cache TheMetronome/L10n.swift TheMetronome/Clock.swift TheMetronome/AcousticAudio.swift Tests/DivisionDynamicsMain.swift -o /tmp/division-dynamics-tests
 /tmp/division-dynamics-tests --auditions
 ```
 

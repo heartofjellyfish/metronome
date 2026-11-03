@@ -57,13 +57,13 @@ struct MetronomeView: View {
                         }
                         Text("\(model.rhythm.beats)/\(model.rhythm.denominator)  \(model.marking)").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.65)
                         if model.event?.countIn == true || model.event?.silent == true {
-                            Text(model.event?.countIn == true ? "COUNT IN" : "SILENT BAR").technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
+                            Text(L10n.text(model.event?.countIn == true ? "COUNT IN" : "SILENT BAR")).technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
                         }
                     }.padding(.top, 39)
                     Spacer(minLength: 0)
                 }.padding(.horizontal, 35).frame(width: 365, height: 144).insetPanel(p)
             }.buttonStyle(.plain).position(x: 207, y: 114)
-                .accessibilityLabel("Tempo, \(model.bpm) BPM. Tap to enter a value").accessibilityIdentifier("tempoDisplay")
+                .accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("tempoDisplay")
 
             SectionLabel(text: "01  PULSE", p: p).frame(width: 360).position(x: 207, y: 206)
             beatKeys.frame(width: 360, height: 86).position(x: 207, y: 269)
@@ -87,7 +87,7 @@ struct MetronomeView: View {
             Button { model.toggle(); model.tickFeedback() } label: {
                 TransportGlyph(playing: model.playing).frame(width: 223, height: 100)
             }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: !model.dark, radius: 13)).position(x: 138.5, y: 677)
-                .accessibilityLabel(model.playing ? "Stop metronome" : "Start metronome").accessibilityIdentifier("transport")
+                .accessibilityLabel(L10n.text(model.playing ? "Stop metronome" : "Start metronome")).accessibilityIdentifier("transport")
             Button { model.tap() } label: {
                 VStack(spacing: 19) {
                     LED(on: true, color: InstrumentPalette.amber, size: 13)
@@ -102,7 +102,7 @@ struct MetronomeView: View {
     }
     func selector(_ title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(title).technical(9, spacing: 1.4)
+            Text(L10n.text(title)).technical(9, spacing: 1.4)
             HStack {
                 Spacer()
                 if title == "DIVISION" {
@@ -132,7 +132,7 @@ struct MetronomeView: View {
                                 .padding(count > 6 ? 5 : 12)
                         }
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 12))
-                    .accessibilityLabel("Beat \(index + 1), \(strength == 2 ? "strong" : strength == 4 ? "secondary" : "weak")").accessibilityValue(accent == 0 ? "Muted" : !model.rhythm.followsMeter ? "Even sound" : accent == 2 ? "Accented sound" : "Meter sound").accessibilityIdentifier("beat-\(index + 1)").accessibilityHint("Tap to change accent")
+                    .accessibilityLabel(L10n.format("Beat %d, %@", index + 1, L10n.text(strength == 2 ? "strong" : strength == 4 ? "secondary" : "weak"))).accessibilityValue(L10n.text(accent == 0 ? "Muted" : !model.rhythm.followsMeter ? "Even sound" : accent == 2 ? "Accented sound" : "Meter sound")).accessibilityIdentifier("beat-\(index + 1)").accessibilityHint("Tap to change accent")
             }
         }
     }

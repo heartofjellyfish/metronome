@@ -17,7 +17,7 @@ struct SoundCardRow: View {
                         }.frame(maxWidth: .infinity).padding(.top, 37)
                     }.frame(maxWidth: .infinity).frame(height: 134)
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
-                    .accessibilityLabel("\(sound.title) sound, tap to preview")
+                    .accessibilityLabel(L10n.format("%@ sound, tap to preview", sound.title))
                     .accessibilityIdentifier("\(namespace)-sound-\(sound.rawValue)")
                     .accessibilityAddTraits(model.rhythm.sound == sound.rawValue ? .isSelected : [])
             }
@@ -41,14 +41,14 @@ struct SoundLibraryView: View {
                 [.acousticShaker, .snap, .clap]
             ], namespace: "acoustic")
             family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell]], namespace: "classic")
-            Text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW")
+            Text(L10n.text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW"))
                 .technical(8, spacing: 0.9).lineSpacing(6).foregroundStyle(p.muted)
         }
     }
     private func family(_ title: String, subtitle: String, rows: [[InstrumentSound]], namespace: String) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionLabel(text: title, p: p)
-            Text(subtitle).technical(8, spacing: 1).foregroundStyle(p.muted)
+            Text(L10n.text(subtitle)).technical(8, spacing: 1).foregroundStyle(p.muted)
             ForEach(rows.indices, id: \.self) { index in
                 SoundCardRow(model: model, sounds: rows[index], namespace: namespace)
             }
@@ -69,11 +69,11 @@ struct SoundDynamicsControl: View {
                     Button { model.setDynamics(enabled) } label: {
                         HStack(spacing: 7) {
                             LED(on: model.rhythm.followsMeter == enabled, color: InstrumentPalette.amber, size: 6)
-                            Text(enabled ? "ACCENT" : "EVEN").technical(10, spacing: 0.7)
+                            Text(L10n.text(enabled ? "ACCENT" : "EVEN")).technical(10, spacing: 0.7).lineLimit(1).minimumScaleFactor(0.75)
                         }.frame(width: 96, height: 32)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 7))
                         .accessibilityIdentifier(namespace + (enabled ? "dynamics-meter" : "dynamics-even"))
-                        .accessibilityLabel(enabled ? "Follow meter accents" : "Even intensity")
+                        .accessibilityLabel(L10n.text(enabled ? "Follow meter accents" : "Even intensity"))
                         .accessibilityAddTraits(model.rhythm.followsMeter == enabled ? .isSelected : [])
                 }
             }

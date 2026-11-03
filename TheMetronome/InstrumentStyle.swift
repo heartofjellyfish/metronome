@@ -20,7 +20,7 @@ extension Color {
 }
 extension View {
     func technical(_ size: CGFloat = 10, spacing: CGFloat = 2) -> some View {
-        font(.system(size: size, weight: .medium, design: .monospaced)).tracking(spacing)
+        font(.system(size: size, weight: .medium, design: .monospaced)).tracking(spacing * L10n.letterSpacingScale)
     }
     func insetPanel(_ p: InstrumentPalette, radius: CGFloat = 21) -> some View {
         background {
@@ -121,7 +121,7 @@ struct SectionLabel: View {
     let p: InstrumentPalette
     var body: some View {
         HStack(spacing: 14) {
-            Text(text).technical(9, spacing: 2).fixedSize()
+            Text(L10n.text(text)).technical(9, spacing: 2).fixedSize()
             Rectangle().fill(p.edge.opacity(0.65)).frame(height: 0.5)
         }.foregroundStyle(p.ink)
     }
@@ -183,7 +183,7 @@ struct TempoDial: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Tempo")
                 .accessibilityIdentifier("tempoDial")
-                .accessibilityValue("\(model.bpm) beats per minute")
+                .accessibilityValue(L10n.format("%d beats per minute", model.bpm))
                 .accessibilityAdjustableAction { direction in model.setBPM(model.bpm + (direction == .increment ? 1 : -1)) }
         }.aspectRatio(1, contentMode: .fit)
     }

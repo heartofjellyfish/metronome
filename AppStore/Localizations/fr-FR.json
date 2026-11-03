@@ -1,0 +1,34 @@
+{
+  "subtitle": "Sans pub. Sons réels. Tap",
+  "keywords": "métronome,bpm,rythme,mesure,accent,triolet,silence,rampe,percussion,pratique",
+  "promo": "Ouvrez. Jouez. Sans pub ni interruption. De vraies percussions, des rampes de tempo et des mesures muettes. Un petit instrument qui donne envie de pratiquer.",
+  "description": "Ouvrez. Jouez. Sans pop-up. Sans pub.\nToutes les fonctions sont là.\n\nDROIT AU RYTHME.\nPas d’écran de chargement, de pop-up au démarrage ou de demande de note. Tournez la molette, saisissez un BPM ou tapotez en rythme. De 20 à 300 BPM.\n\nDES PERCUSSIONS DE QUALITÉ STUDIO.\nDe vrais instruments. Joués par de vraies personnes. Woodblock, charley, rimshot, shaker et d’autres sons enregistrés, plus un clic électronique. Écoutez. Choisissez votre préféré.\n\nLA SIMPLICITÉ, SOIGNÉE.\nDu minimalisme dans chaque détail. Un petit instrument qu’on a plaisir à retrouver. Thème clair ou sombre, selon l’humeur.\n\nDES ACCENTS. DU GROOVE.\nChoisissez la mesure et les subdivisions, triolets compris. Rendez chaque temps plus fort, plus doux ou muet.\n\nPLUS VITE. PETIT À PETIT.\nRéglez le tempo de départ, la cible et l’intervalle de changement. La rampe fait avancer le tempo. Le décompte laisse aux mains le temps de se préparer.\n\nLE CLIC SE REPOSE. VOUS CONTINUEZ.\nChoisissez combien de mesures sonnent et combien restent muettes. Quand le clic revient, écoutez si vous êtes toujours ensemble.\n\nLA MÊME CHANSON DEMAIN ?\nGardez tempo, mesure, son et réglages de pratique dans un préréglage. Prêts pour la prochaine fois.\n\nAllez jouer quelque chose.",
+  "captions": [
+    [
+      "Ouvrez. Jouez.\nSans pop-up.",
+      "Sans pub. Sans interruption."
+    ],
+    [
+      "Percussions\nqualité studio.",
+      "De vrais instruments. De vraies personnes."
+    ],
+    [
+      "La simplicité,\nsoignée.",
+      "Du minimalisme dans chaque détail."
+    ],
+    [
+      "Des accents.\nDu groove.",
+      "Temps forts ou légers. Trouvez votre feeling."
+    ],
+    [
+      "Plus vite.\nPetit à petit.",
+      "Commencez lentement. La rampe fait le reste."
+    ],
+    [
+      "Des mesures\nsans clic.",
+      "Le clic se repose. Vous continuez."
+    ]
+  ],
+  "name": "metronome, just cleaner",
+  "support_url": "https://app.qi.land/metronome/"
+}

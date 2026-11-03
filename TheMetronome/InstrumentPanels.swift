@@ -5,18 +5,18 @@ enum InstrumentPanelKind: String, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .tempo: return "SET TEMPO"
-        case .meter: return "METER"
-        case .division: return "DIVISION"
-        case .countIn: return "COUNT IN"
-        case .every: return "RAMP INTERVAL"
-        case .increment: return "TEMPO STEP"
-        case .practice: return "PRACTICE"
-        case .start: return "START TEMPO"
-        case .end: return "END TEMPO"
-        case .presets: return "PRESETS"
-        case .audio: return "AUDIO OUTPUT"
-        case .sounds: return "SOUND LIBRARY"
+        case .tempo: return L10n.text("SET TEMPO")
+        case .meter: return L10n.text("METER")
+        case .division: return L10n.text("DIVISION")
+        case .countIn: return L10n.text("COUNT IN")
+        case .every: return L10n.text("RAMP INTERVAL")
+        case .increment: return L10n.text("TEMPO STEP")
+        case .practice: return L10n.text("PRACTICE")
+        case .start: return L10n.text("START TEMPO")
+        case .end: return L10n.text("END TEMPO")
+        case .presets: return L10n.text("PRESETS")
+        case .audio: return L10n.text("AUDIO OUTPUT")
+        case .sounds: return L10n.text("SOUND LIBRARY")
         }
     }
     var height: CGFloat {
@@ -77,13 +77,13 @@ struct InstrumentPanel: View {
                 VStack(spacing: 0) {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 7) {
-                            Text(kind.title).technical(19, spacing: 3)
+                            Text(kind.title).technical(19, spacing: 3).lineLimit(2).minimumScaleFactor(0.8)
                             Text("THE METRONOME / SETUP").technical(8, spacing: 1.8).foregroundStyle(p.muted)
                         }
                         Spacer(minLength: 5)
                         Button { dismiss() } label: {
                             Image(systemName: returnsToPractice ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(returnsToPractice ? "Back to practice" : "Close \(kind.title.lowercased())")
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(returnsToPractice ? L10n.text("Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     ScrollView {
@@ -113,7 +113,7 @@ struct InstrumentPanel: View {
         case .sounds: SoundLibraryView(model: model)
         case .audio:
             VStack(alignment: .leading, spacing: 25) {
-                Text(model.error ?? "Audio output changed.").font(.system(size: 15)).lineSpacing(5)
+                Text(model.error ?? L10n.text("Audio output changed.")).font(.system(size: 15)).lineSpacing(5)
                 commitButton("OK") { model.error = nil; dismiss() }
             }
         }
@@ -124,24 +124,24 @@ struct InstrumentPanel: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(digits.isEmpty ? "—" : digits).font(InstrumentType.display(76)).lineLimit(1).minimumScaleFactor(0.5)
                     .foregroundStyle(replaceDigits ? InstrumentPalette.orange : p.ink)
-                    .accessibilityLabel("Entered tempo, \(digits.isEmpty ? "empty" : digits)")
+                    .accessibilityLabel(L10n.format("Entered tempo, %@", digits.isEmpty ? L10n.text("empty") : digits))
                 Spacer(); Text("BPM").technical(12, spacing: 3).foregroundStyle(p.muted)
             }.padding(.horizontal, 22).frame(height: 100).insetPanel(p, radius: 14)
             HStack {
                 Text("20 — 300 BPM").technical(9, spacing: 1.5)
                 Spacer()
-                Text(validNumber ? (replaceDigits ? "TYPE TO REPLACE" : "READY") : "ENTER 20–300").technical(9, spacing: 1).foregroundStyle(validNumber ? p.muted : InstrumentPalette.orange)
+                Text(L10n.text(validNumber ? (replaceDigits ? "TYPE TO REPLACE" : "READY") : "ENTER 20–300")).technical(9, spacing: 1).foregroundStyle(validNumber ? p.muted : InstrumentPalette.orange)
             }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 11), count: 3), spacing: 11) {
                 ForEach(["1", "2", "3", "4", "5", "6", "7", "8", "9", "CLR", "0", "⌫"], id: \.self) { key in
                     Button { typeDigit(key) } label: {
                         Group {
                             if key == "⌫" { Image(systemName: "delete.left").font(.system(size: 22, weight: .light)) }
-                            else if key == "CLR" { Text(key).technical(11, spacing: 1) }
+                            else if key == "CLR" { Text(L10n.text(key)).technical(11, spacing: 1) }
                             else { Text(key).font(InstrumentType.value(29)) }
                         }.frame(maxWidth: .infinity).frame(height: 54)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                        .accessibilityLabel(key == "⌫" ? "Delete digit" : key == "CLR" ? "Clear tempo" : key)
+                        .accessibilityLabel(L10n.text(key == "⌫" ? "Delete digit" : key == "CLR" ? "Clear tempo" : key))
                         .accessibilityIdentifier("key-\(key)")
                 }
             }
@@ -175,7 +175,7 @@ struct InstrumentPanel: View {
                     choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true; applyMeter(); finishLiveSelection() }
                     choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false; applyMeter(); finishLiveSelection() }
                 }
-                Text("\(selected / 3) big beats or \(selected) note units per bar.")
+                Text(L10n.format("%d big beats or %d note units per bar.", selected / 3, selected))
                     .font(.system(size: 12)).foregroundStyle(p.muted)
             }
             Button { customMeter.toggle(); model.tickFeedback() } label: {
@@ -203,7 +203,7 @@ struct InstrumentPanel: View {
                                 Text("/\(unit)").font(InstrumentType.value(19))
                             }.frame(maxWidth: .infinity).frame(height: 51)
                         }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                            .accessibilityLabel("Note value /\(unit)")
+                            .accessibilityLabel(L10n.format("Note value /%d", unit))
                             .accessibilityAddTraits(denominator == unit ? .isSelected : [])
                     }
                 }
@@ -235,7 +235,7 @@ struct InstrumentPanel: View {
                             Text(model.rhythm.divisionTitle(value)).technical(11, spacing: 1.3).frame(maxWidth: .infinity)
                         }.padding(13).frame(maxWidth: .infinity)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
-                        .accessibilityLabel("\(value) clicks per beat").accessibilityAddTraits(model.rhythm.subdivision == value ? .isSelected : [])
+                        .accessibilityLabel(L10n.format("%d clicks per beat", value)).accessibilityAddTraits(model.rhythm.subdivision == value ? .isSelected : [])
                 }
             }
         }
@@ -245,7 +245,7 @@ struct InstrumentPanel: View {
     }
     private var quantityPicker: some View {
         VStack(alignment: .leading, spacing: 23) {
-            Text(kind == .countIn ? "A MOMENT TO GET READY." : kind == .every ? "CHANGE TEMPO AFTER THIS MANY BARS." : "BPM ADDED OR REMOVED AT EACH STEP.")
+            Text(L10n.text(kind == .countIn ? "A MOMENT TO GET READY." : kind == .every ? "CHANGE TEMPO AFTER THIS MANY BARS." : "BPM ADDED OR REMOVED AT EACH STEP."))
                 .technical(9, spacing: 1).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 12) {
                 ForEach(quantities, id: \.self) { value in
@@ -264,7 +264,7 @@ struct InstrumentPanel: View {
     }
     private var practicePanel: some View {
         VStack(alignment: .leading, spacing: 23) {
-            practiceChoice("COUNT IN", value: model.rhythm.countIn == 0 ? "OFF" : "\(model.rhythm.countIn) BAR", route: .countIn, selection: model.rhythm.countIn)
+            practiceChoice("COUNT IN", value: model.rhythm.countIn == 0 ? "OFF" : L10n.bars(model.rhythm.countIn), route: .countIn, selection: model.rhythm.countIn)
             SectionLabel(text: "TEMPO RAMP", p: p)
             switchRow("RAMP", value: $model.rhythm.ramp)
             if model.rhythm.ramp {
@@ -274,7 +274,7 @@ struct InstrumentPanel: View {
                 numberWell("END", value: model.rhythm.end) { openNumber(.end, value: model.rhythm.end) }
             }
             HStack(spacing: 13) {
-                practiceChoice("EVERY", value: "\(model.rhythm.every) BARS", route: .every, selection: model.rhythm.every)
+                practiceChoice("EVERY", value: L10n.bars(model.rhythm.every), route: .every, selection: model.rhythm.every)
                 practiceChoice("STEP", value: "\(model.rhythm.increment) BPM", route: .increment, selection: model.rhythm.increment)
             }
             Text("Moves toward the end tempo, then holds. Press stop and play to restart the ramp.").font(.system(size: 12)).foregroundStyle(p.muted)
@@ -316,7 +316,7 @@ struct InstrumentPanel: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 7) {
                                     Text(preset.name).technical(11, spacing: 1).lineLimit(2)
-                                    Text("\(preset.rhythm.beats)/\(preset.rhythm.denominator) · \(preset.rhythm.subdivision) / BEAT").technical(8, spacing: 1).foregroundStyle(p.muted)
+                                    Text("\(preset.rhythm.beats)/\(preset.rhythm.denominator) · \(L10n.format("%d / BEAT", preset.rhythm.subdivision))").technical(8, spacing: 1).foregroundStyle(p.muted)
                                 }
                                 Spacer(); Text(String(preset.rhythm.bpm)).font(InstrumentType.value(30))
                             }.padding(15).frame(maxWidth: .infinity, minHeight: 76)
@@ -326,7 +326,7 @@ struct InstrumentPanel: View {
                                 if model.isCurrentPreset(preset) { LED(on: true, size: 5).offset(x: 6, y: 6).allowsHitTesting(false) }
                             }
                         Button { deleting = preset.id } label: { Image(systemName: "trash").font(.system(size: 15, weight: .light)).frame(width: 40, height: 44) }
-                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Delete \(preset.name)")
+                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel(L10n.format("Delete %@", preset.name))
                     }
                     if deleting == preset.id {
                         VStack(alignment: .leading, spacing: 12) {
@@ -350,20 +350,20 @@ struct InstrumentPanel: View {
         Button { selected = selection; returnsToPractice = true; kind = route } label: {
             HStack(spacing: 9) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(title).technical(9, spacing: 1)
-                    Text(value).font(InstrumentType.value(19))
+                    Text(L10n.text(title)).technical(9, spacing: 1)
+                    Text(L10n.text(value)).font(InstrumentType.value(19)).lineLimit(1).minimumScaleFactor(0.7)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.system(size: 10))
             }.padding(14).frame(maxWidth: .infinity)
-        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("\(title), \(value)")
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("\(L10n.text(title)), \(L10n.text(value))").accessibilityIdentifier("practice-\(route.rawValue)")
     }
     // Live comparison keeps context; a stopped one-off choice returns to the instrument.
     private func finishLiveSelection() { if !model.playing { dismiss() } }
     private func dismiss() { if returnsToPractice { returnsToPractice = false; kind = .practice; return }; if kind == .sounds { model.endSoundPreview() }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack { Text(title).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }
+            HStack { Text(L10n.text(title)).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }
                 .padding(.horizontal, 19).frame(height: 52).frame(maxWidth: .infinity)
         }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 10)).disabled(!enabled).opacity(enabled ? 1 : 0.45)
             .accessibilityIdentifier("panelApply")
@@ -372,13 +372,13 @@ struct InstrumentPanel: View {
         Button { action(); model.tickFeedback() } label: {
             HStack(spacing: 7) {
                 if selected { LED(on: true, size: 6) }
-                Text(label).font(InstrumentType.value(label.count > 4 ? 16 : 23)).lineLimit(1).minimumScaleFactor(0.7)
+                Text(L10n.text(label)).font(InstrumentType.value(label.count > 4 ? 16 : 23)).lineLimit(1).minimumScaleFactor(0.7)
             }.frame(maxWidth: .infinity).frame(height: height)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityAddTraits(selected ? .isSelected : [])
     }
     private func switchRow(_ label: String, value: Binding<Bool>) -> some View {
         HStack {
-            Text(label).technical(10, spacing: 1)
+            Text(L10n.text(label)).technical(10, spacing: 1)
             Spacer(minLength: 10)
             HStack(spacing: 6) {
                 choice("OFF", selected: !value.wrappedValue, height: 43) { value.wrappedValue = false }.accessibilityIdentifier("\(label)-off")
@@ -388,18 +388,18 @@ struct InstrumentPanel: View {
     }
     private func numberWell(_ label: String, value: Int, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 9) {
-            Text(label).technical(9, spacing: 2)
+            Text(L10n.text(label)).technical(9, spacing: 2)
             Button(action: action) { Text(String(value)).font(InstrumentType.value(34)).frame(maxWidth: .infinity).frame(height: 67).insetPanel(p, radius: 11) }.buttonStyle(.plain)
-                .accessibilityLabel("\(label), \(value) BPM")
+                .accessibilityLabel("\(L10n.text(label)), \(value) BPM")
         }
     }
     private func stepper(_ label: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
         VStack(alignment: .leading, spacing: 9) {
-            Text(label).technical(8, spacing: 1)
+            Text(L10n.text(label)).technical(8, spacing: 1)
             HStack(spacing: 5) {
-                Button { value.wrappedValue = max(range.lowerBound, value.wrappedValue - 1); model.tickFeedback() } label: { Text("−").font(.system(size: 20)).frame(width: 38, height: 43) }.buttonStyle(HardwareButtonStyle(p: p, radius: 7)).accessibilityLabel("Decrease \(label)")
+                Button { value.wrappedValue = max(range.lowerBound, value.wrappedValue - 1); model.tickFeedback() } label: { Text("−").font(.system(size: 20)).frame(width: 38, height: 43) }.buttonStyle(HardwareButtonStyle(p: p, radius: 7)).accessibilityLabel(L10n.format("Decrease %@", L10n.text(label)))
                 Text(String(value.wrappedValue)).font(InstrumentType.value(24)).frame(maxWidth: .infinity)
-                Button { value.wrappedValue = min(range.upperBound, value.wrappedValue + 1); model.tickFeedback() } label: { Text("+").font(.system(size: 20)).frame(width: 38, height: 43) }.buttonStyle(HardwareButtonStyle(p: p, radius: 7)).accessibilityLabel("Increase \(label)")
+                Button { value.wrappedValue = min(range.upperBound, value.wrappedValue + 1); model.tickFeedback() } label: { Text("+").font(.system(size: 20)).frame(width: 38, height: 43) }.buttonStyle(HardwareButtonStyle(p: p, radius: 7)).accessibilityLabel(L10n.format("Increase %@", L10n.text(label)))
             }
         }.frame(maxWidth: .infinity)
     }

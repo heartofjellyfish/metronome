@@ -1,0 +1,34 @@
+{
+  "subtitle": "Sin anuncios. Sonidos reales.",
+  "keywords": "metrónomo,bpm,ritmo,tempo,tap,compás,acento,tresillo,silencio,rampa,percusión",
+  "promo": "Abre. Toca. Sin anuncios ni interrupciones. Percusión real, rampas de tempo y compases en silencio. Un pequeño instrumento que da gusto usar.",
+  "description": "Abre. Toca. Sin ventanas emergentes. Sin anuncios.\nTodas las funciones incluidas.\n\nDIRECTO AL RITMO.\nSin pantalla de carga, ventanas al abrir ni solicitudes de valoración. Gira el dial, introduce los BPM o marca el tempo con toques. De 20 a 300 BPM.\n\nPERCUSIÓN DE CALIDAD DE ESTUDIO.\nInstrumentos reales. Tocados por personas reales. Woodblock, charles, rimshot, shaker y más sonidos grabados, además de un clic electrónico. Escucha. Elige tu favorito.\n\nASÍ DE SIMPLE. ASÍ DE BONITO.\nMinimalismo en cada detalle. Un pequeño instrumento al que apetece volver. Tema claro u oscuro, según te pida el día.\n\nESCUCHA LOS ACENTOS. SIENTE EL GROOVE.\nElige compás y subdivisiones, incluidos tresillos. Haz cada pulso más fuerte, más suave o silencioso.\n\nMÁS RÁPIDO. PASO A PASO.\nAjusta el tempo inicial, el final y cada cuántos compases cambia. La rampa hace el resto. Una cuenta de entrada te da tiempo para colocar las manos.\n\nEL CLIC DESCANSA. TÚ SIGUES.\nElige cuántos compases suenan y cuántos quedan en silencio. Cuando vuelva el clic, escucha si seguís juntos.\n\n¿MAÑANA LA MISMA CANCIÓN?\nGuarda tempo, compás, sonido y ajustes de práctica en un preajuste. Listo para la próxima.\n\nAhora, toca algo.",
+  "captions": [
+    [
+      "Abre. Toca.\nSin ventanas.",
+      "Sin anuncios. Sin interrupciones."
+    ],
+    [
+      "Percusión\ncalidad de estudio.",
+      "Instrumentos reales. Personas reales."
+    ],
+    [
+      "Simple.\nY bonito.",
+      "Minimalismo en cada detalle."
+    ],
+    [
+      "Oye los acentos.\nSiente el groove.",
+      "Pulsos fuertes y suaves. Encuentra tu ritmo."
+    ],
+    [
+      "Más rápido.\nPaso a paso.",
+      "Empieza despacio. La rampa hace el resto."
+    ],
+    [
+      "Practica con\ncompases mudos.",
+      "El clic descansa. Tú sigues."
+    ]
+  ],
+  "name": "metronome, just cleaner",
+  "support_url": "https://app.qi.land/metronome/"
+}

@@ -1,0 +1,152 @@
+# key|zh-Hans|zh-Hant|ja|ko|fr|de|es|pt-BR
+METRONOME|节拍器|節拍器|メトロノーム|메트로놈|MÉTRONOME|METRONOM|METRÓNOMO|METRÔNOMO
+SETTINGS|设置|設定|設定|설정|RÉGLAGES|EINSTELLUNGEN|AJUSTES|AJUSTES
+THE METRONOME / SETUP|节拍器 / 设置|節拍器 / 設定|メトロノーム / 設定|메트로놈 / 설정|MÉTRONOME / RÉGLAGES|METRONOM / SETUP|METRÓNOMO / AJUSTES|METRÔNOMO / AJUSTES
+01  PULSE|01  节拍|01  節拍|01  拍|01  박자|01  PULSATION|01  PULS|01  PULSO|01  PULSAÇÃO
+02  TEMPO|02  速度|02  速度|02  テンポ|02  템포|02  TEMPO|02  TEMPO|02  TEMPO|02  ANDAMENTO
+01 RHYTHM|01 节奏|01 節奏|01 リズム|01 리듬|01 RYTHME|01 RHYTHMUS|01 RITMO|01 RITMO
+02 SOUND|02 音色|02 音色|02 サウンド|02 사운드|02 SON|02 KLANG|02 SONIDO|02 SOM
+03 MORE|03 更多|03 更多|03 その他|03 더 보기|03 PLUS|03 MEHR|03 MÁS|03 MAIS
+04 VIEW|04 外观|04 外觀|04 外観|04 화면|04 APPARENCE|04 ANSICHT|04 APARIENCIA|04 APARÊNCIA
+METER|拍号|拍號|拍子|박자표|MESURE|TAKTART|COMPÁS|COMPASSO
+DIVISION|细分|細分|細分化|세분음|SUBDIVISION|UNTERTEILUNG|SUBDIVISIÓN|SUBDIVISÃO
+CURRENT|当前音色|目前音色|選択中|현재 음색|ACTUEL|AKTUELL|ACTUAL|ATUAL
+PRACTICE|练习|練習|練習|연습|PRATIQUE|ÜBEN|PRÁCTICA|PRÁTICA
+COUNT IN · RAMP · GAP|预备拍 · 渐变速 · 静音|預備拍 · 漸變速 · 靜音|カウントイン・変速・無音|예비 박자 · 변속 · 무음|DÉCOMPTE · RAMPE · SILENCE|EINZÄHLEN · TEMPO · PAUSEN|ENTRADA · RAMPA · SILENCIO|CONTAGEM · RAMPA · SILÊNCIO
+PRESETS|预设|預設|プリセット|프리셋|PRÉRÉGLAGES|PRESETS|PREAJUSTES|PREDEFINIÇÕES
+SAVE A RHYTHM|保存节奏|儲存節奏|リズムを保存|리듬 저장|GARDER UN RYTHME|RHYTHMUS SPEICHERN|GUARDA UN RITMO|SALVE UM RITMO
+SKIN|外观|外觀|テーマ|테마|THÈME|DESIGN|TEMA|TEMA
+LIGHT|浅色|淺色|ライト|밝게|CLAIR|HELL|CLARO|CLARO
+DARK|深色|深色|ダーク|어둡게|SOMBRE|DUNKEL|OSCURO|ESCURO
+TAP|轻点定速|輕點定速|タップ|탭|TAP|TAP|TAP|TAP
+COUNT IN|预备拍|預備拍|カウントイン|예비 박자|DÉCOMPTE|EINZÄHLEN|ENTRADA|CONTAGEM
+SILENT BAR|静音小节|靜音小節|無音小節|무음 마디|MESURE MUETTE|STUMMER TAKT|COMPÁS EN SILENCIO|COMPASSO EM SILÊNCIO
+DYNAMICS|强弱|強弱|強弱|강약|DYNAMIQUE|DYNAMIK|DINÁMICA|DINÂMICA
+ACCENT|重音|重音|アクセント|강세|ACCENTS|AKZENTE|ACENTOS|ACENTOS
+EVEN|均匀|均勻|均一|균일|UNIFORME|GLEICH|UNIFORME|UNIFORME
+01 ACOUSTIC|01 原声打击乐|01 原聲打擊樂|01 アコースティック|01 어쿠스틱|01 ACOUSTIQUE|01 AKUSTISCH|01 ACÚSTICOS|01 ACÚSTICOS
+REAL DRUMS / HATS & PERCUSSION|真实鼓声 / 镲片与打击乐|真實鼓聲 / 鈸片與打擊樂|生のドラム / シンバル・打楽器|실제 드럼 / 심벌과 타악기|BATTERIE / CYMBALES ET PERCUSSIONS|SCHLAGZEUG / BECKEN & PERCUSSION|BATERÍA / PLATILLOS Y PERCUSIÓN|BATERIA / PRATOS E PERCUSSÃO
+02 CLASSIC|02 经典音色|02 經典音色|02 クラシック|02 클래식|02 CLASSIQUES|02 KLASSISCH|02 CLÁSICOS|02 CLÁSSICOS
+WOOD / CLICK / BELL|木鱼 / 电子声 / 铃声|木魚 / 電子聲 / 鈴聲|ウッド / クリック / ベル|우드 / 클릭 / 벨|BOIS / CLIC / CLOCHE|HOLZ / KLICK / GLOCKE|MADERA / CLIC / CAMPANA|MADEIRA / CLIQUE / SINO
+CHANGES PLAY LIVE|播放中也能随时切换|播放中也能隨時切換|再生しながら切り替え|재생 중에도 바로 변경|CHANGEZ EN JOUANT|BEIM SPIELEN WECHSELN|CAMBIA MIENTRAS SUENA|MUDE DURANTE A REPRODUÇÃO
+ONE BAR PREVIEW|试听一个小节|試聽一個小節|1小節を試聴|한 마디 미리 듣기|APERÇU D’UNE MESURE|EINEN TAKT VORHÖREN|ESCUCHA UN COMPÁS|OUÇA UM COMPASSO
+WOOD|木鱼|木魚|ウッドブロック|우드블록|BOIS|HOLZ|MADERA|MADEIRA
+CLICK|电子声|電子聲|クリック|클릭|CLIC|KLICK|CLIC|CLIQUE
+BELL|铃声|鈴聲|ベル|벨|CLOCHE|GLOCKE|CAMPANA|SINO
+SYNTH HAT|合成踩镲|合成踩鈸|シンセハット|신스 하이햇|CHARLEY SYNTHÉ|SYNTH-HIHAT|CHARLES SINTÉTICO|CHIMBAL SINTÉTICO
+SHAKER|沙筒|沙筒|シェイカー|셰이커|SHAKER|SHAKER|SHAKER|GANZÁ
+RIMSHOT|边击|邊擊|リムショット|림샷|RIMSHOT|RIMSHOT|RIMSHOT|RIMSHOT
+CLOSED|闭镲|閉鈸|クローズ|닫힌 하이햇|FERMÉ|GESCHLOSSEN|CERRADO|FECHADO
+OPEN|开镲|開鈸|オープン|열린 하이햇|OUVERT|OFFEN|ABIERTO|ABERTO
+PEDAL|踏镲|踏鈸|ペダル|페달|PÉDALE|PEDAL|PEDAL|PEDAL
+STICK|鼓棒|鼓棒|スティック|드럼스틱|BAGUETTES|STICKS|BAQUETAS|BAQUETAS
+HI-HAT|踩镲|踩鈸|ハイハット|하이햇|CHARLEY|HIHAT|CHARLES|CHIMBAL
+SNAP|响指|彈指|指パッチン|핑거 스냅|CLAQUEMENT|FINGERSCHNIPPEN|CHASQUIDO|ESTALO
+CLAP|拍手|拍手|手拍子|박수|MAINS|KLATSCHEN|PALMAS|PALMAS
+RIDE|叮叮镲|叮叮鈸|ライド|라이드|RIDE|RIDE|RIDE|RIDE
+CROSS-STICK|鼓边轻敲|鼓邊輕敲|クロススティック|크로스 스틱|CROSS-STICK|CROSS-STICK|CROSS-STICK|CROSS-STICK
+SET TEMPO|设置速度|設定速度|テンポ設定|템포 설정|RÉGLER LE TEMPO|TEMPO EINSTELLEN|AJUSTAR TEMPO|AJUSTAR ANDAMENTO
+RAMP INTERVAL|变速间隔|變速間隔|変速の間隔|변속 간격|INTERVALLE|TAKTINTERVALL|INTERVALO|INTERVALO
+TEMPO STEP|变速步长|變速幅度|テンポの増減幅|변속 폭|PAS DE TEMPO|TEMPOSCHRITT|PASO DE TEMPO|PASSO DE ANDAMENTO
+START TEMPO|起始速度|起始速度|開始テンポ|시작 템포|TEMPO DE DÉPART|STARTTEMPO|TEMPO INICIAL|ANDAMENTO INICIAL
+END TEMPO|目标速度|目標速度|目標テンポ|목표 템포|TEMPO CIBLE|ZIELTEMPO|TEMPO FINAL|ANDAMENTO FINAL
+AUDIO OUTPUT|音频输出|音訊輸出|オーディオ出力|오디오 출력|SORTIE AUDIO|AUDIOAUSGABE|SALIDA DE AUDIO|SAÍDA DE ÁUDIO
+SOUND LIBRARY|音色库|音色庫|サウンドライブラリ|사운드 라이브러리|BIBLIOTHÈQUE DE SONS|KLANGBIBLIOTHEK|BIBLIOTECA DE SONIDOS|BIBLIOTECA DE SONS
+OK|好|好|OK|확인|OK|OK|OK|OK
+TYPE TO REPLACE|输入以替换|輸入以取代|入力して変更|입력하여 변경|SAISIR POUR REMPLACER|ZUM ERSETZEN EINGEBEN|ESCRIBE PARA CAMBIAR|DIGITE PARA SUBSTITUIR
+READY|就绪|就緒|準備完了|준비 완료|PRÊT|BEREIT|LISTO|PRONTO
+ENTER 20–300|请输入20–300|請輸入20–300|20〜300を入力|20~300 입력|ENTREZ 20–300|20–300 EINGEBEN|INTRODUCE 20–300|DIGITE 20–300
+CLR|清除|清除|クリア|지우기|EFF.|LÖSCH.|BORRAR|LIMPAR
+SET VALUE|确定|確定|設定|적용|VALIDER|ÜBERNEHMEN|APLICAR|APLICAR
+BIG BEATS|大拍|大拍|大きな拍|큰 박|GRANDS TEMPS|GROSSE SCHLÄGE|PULSOS GRANDES|PULSOS GRANDES
+NOTE UNITS|单位拍|單位拍|音符単位|음표 단위|UNITÉS DE NOTE|NOTENWERTE|UNIDADES DE NOTA|UNIDADES DE NOTA
+MORE METERS|更多拍号|更多拍號|その他の拍子|다른 박자표|AUTRES MESURES|WEITERE TAKTARTEN|MÁS COMPASES|MAIS COMPASSOS
+BEATS|每小节拍数|每小節拍數|拍数|박 수|TEMPS|SCHLÄGE|PULSOS|TEMPOS
+NOTE VALUE|音符时值|音符時值|音価|음가|VALEUR DE NOTE|NOTENWERT|VALOR DE NOTA|VALOR DA NOTA
+GROUPING|分组|分組|グループ|묶음|GROUPEMENT|GRUPPIERUNG|AGRUPACIÓN|AGRUPAMENTO
+CLICKS WITHIN EACH BEAT|每拍内的细分节奏|每拍內的細分節奏|1拍の中のクリック|한 박 안의 클릭|CLICS À CHAQUE TEMPS|KLICKS PRO SCHLAG|CLICS EN CADA PULSO|CLIQUES EM CADA TEMPO
+ONE|一等分|一等分|1分割|1분할|UN|EINS|UNO|UM
+TWO|二等分|二等分|2分割|2분할|DEUX|ZWEI|DOS|DOIS
+TRIPLET|三连音|三連音|3連符|셋잇단음|TRIOLET|TRIOLE|TRESILLO|TERCINA
+FOUR|四等分|四等分|4分割|4분할|QUATRE|VIER|CUATRO|QUATRO
+BIG BEAT|大拍|大拍|大きな拍|큰 박|GRAND TEMPS|GROSSER SCHLAG|PULSO GRANDE|PULSO GRANDE
+DUPLET|二连音|二連音|2連符|둘잇단음|DUOLET|DUOLE|DOSILLO|DUÍNA
+HALVES|二分音符|二分音符|2分音符|2분음표|BLANCHES|HALBE|BLANCAS|MÍNIMAS
+QUARTERS|四分音符|四分音符|4分音符|4분음표|NOIRES|VIERTEL|NEGRAS|SEMÍNIMAS
+EIGHTHS|八分音符|八分音符|8分音符|8분음표|CROCHES|ACHTEL|CORCHEAS|COLCHEIAS
+SIXTEENTHS|十六分音符|十六分音符|16分音符|16분음표|DOUBLES CROCHES|SECHZEHNTEL|SEMICORCHEAS|SEMICOLCHEIAS
+32ND NOTES|三十二分音符|三十二分音符|32分音符|32분음표|TRIPLES CROCHES|ZWEIUNDDREISSIGSTEL|FUSAS|FUSAS
+DIVISIONS|细分|細分|細分化|세분음|SUBDIVISIONS|UNTERTEILUNGEN|SUBDIVISIONES|SUBDIVISÕES
+A MOMENT TO GET READY.|留一点时间，准备开始。|留一點時間，準備開始。|ひと呼吸おいて、始めよう。|시작 전, 잠깐 준비할 시간.|UN INSTANT POUR SE PRÉPARER.|EIN MOMENT ZUM BEREITMACHEN.|UN MOMENTO PARA PREPARARTE.|UM INSTANTE PARA SE PREPARAR.
+CHANGE TEMPO AFTER THIS MANY BARS.|每隔多少小节变速一次。|每隔多少小節變速一次。|この小節数ごとにテンポを変更。|이 마디 수마다 템포 변경.|CHANGER LE TEMPO APRÈS CE NOMBRE DE MESURES.|NACH SO VIELEN TAKTEN DAS TEMPO ÄNDERN.|CAMBIA EL TEMPO CADA CIERTO NÚMERO DE COMPASES.|MUDE O ANDAMENTO A CADA GRUPO DE COMPASSOS.
+BPM ADDED OR REMOVED AT EACH STEP.|每次增加或减少的BPM。|每次增加或減少的BPM。|1回ごとに増減するBPM。|단계마다 더하거나 뺄 BPM.|BPM AJOUTÉS OU RETIRÉS À CHAQUE ÉTAPE.|BPM PRO SCHRITT ERHÖHEN ODER SENKEN.|BPM QUE SE SUMAN O RESTAN EN CADA PASO.|BPM ADICIONADOS OU REMOVIDOS POR PASSO.
+OFF|关|關|オフ|끔|NON|AUS|NO|NÃO
+ON|开|開|オン|켬|OUI|AN|SÍ|SIM
+TEMPO RAMP|渐进变速|漸進變速|テンポの自動変化|점진적 변속|RAMPE DE TEMPO|TEMPOVERLAUF|RAMPA DE TEMPO|RAMPA DE ANDAMENTO
+RAMP|变速|變速|自動変速|변속|RAMPE|VERLAUF|RAMPA|RAMPA
+START|起始|起始|開始|시작|DÉPART|START|INICIO|INÍCIO
+END|目标|目標|目標|목표|CIBLE|ZIEL|FINAL|FINAL
+EVERY|间隔|間隔|間隔|간격|TOUTES LES|ALLE|CADA|A CADA
+STEP|步长|幅度|増減幅|변화 폭|PAS|SCHRITT|PASO|PASSO
+Moves toward the end tempo, then holds. Press stop and play to restart the ramp.|到达目标速度后保持。停止再播放，即可重新开始变速。|到達目標速度後保持。停止再播放，即可重新開始變速。|目標テンポに達すると、そのままキープ。停止して再生すると、最初からやり直せます。|목표 템포에 도달하면 유지합니다. 멈췄다가 재생하면 처음부터 다시 시작해요.|Le tempo évolue jusqu’à la cible, puis reste stable. Arrêtez et relancez pour recommencer.|Das Tempo ändert sich bis zum Ziel und bleibt dort. Stoppen und starten, um neu zu beginnen.|Llega al tempo final y lo mantiene. Detén y vuelve a reproducir para empezar de nuevo.|Vai até o andamento final e mantém. Pare e toque de novo para reiniciar a rampa.
+GAP TRAINING|静音训练|靜音訓練|無音トレーニング|무음 훈련|TRAVAIL EN SILENCE|PAUSENTRAINING|PRÁCTICA CON SILENCIOS|TREINO COM SILÊNCIO
+SOUND / SILENCE|有声 / 静音|有聲 / 靜音|サウンド / 無音|소리 / 무음|SON / SILENCE|KLANG / STILLE|SONIDO / SILENCIO|SOM / SILÊNCIO
+SOUND BARS|有声小节|有聲小節|音あり小節|소리 마디|MESURES SONORES|HÖRBARE TAKTE|COMPASES CON SONIDO|COMPASSOS COM SOM
+SILENT BARS|静音小节|靜音小節|無音小節|무음 마디|MESURES MUETTES|STUMME TAKTE|COMPASES EN SILENCIO|COMPASSOS EM SILÊNCIO
+FEEL|手感|手感|触感|촉감|RESSENTI|GEFÜHL|SENSACIÓN|SENSAÇÃO
+TOUCH FEEDBACK|触感反馈|觸覺回饋|触覚フィードバック|진동 피드백|VIBRATIONS|VIBRATION|VIBRACIÓN|VIBRAÇÃO
+NAME THIS RHYTHM|给节奏起个名字|為節奏取個名字|リズムに名前をつける|리듬 이름 짓기|NOMMER CE RYTHME|RHYTHMUS BENENNEN|PON NOMBRE AL RITMO|DÊ UM NOME AO RITMO
+KEEP A GOOD RHYTHM.|好节奏，留着下次用。|好節奏，留著下次用。|いいリズムは、とっておこう。|좋은 리듬은 저장해 둬요.|UN BON RYTHME, ÇA SE GARDE.|GUTE RHYTHMEN BEHALTEN.|UN BUEN RITMO SE GUARDA.|RITMO BOM A GENTE GUARDA.
+Tempo, accents and practice settings — ready next time.|速度、重音和练习设置，下次直接用。|速度、重音和練習設定，下次直接用。|テンポもアクセントも練習設定も、次回すぐに。|템포, 강세, 연습 설정까지. 다음에도 바로.|Tempo, accents et réglages de pratique. Prêts pour la prochaine fois.|Tempo, Akzente und Übungseinstellungen. Fürs nächste Mal bereit.|Tempo, acentos y ajustes de práctica. Listos para la próxima.|Andamento, acentos e ajustes de prática. Prontos para a próxima.
+DELETE THIS PRESET?|删除这个预设？|刪除這個預設？|このプリセットを削除？|이 프리셋을 삭제할까요?|SUPPRIMER CE PRÉRÉGLAGE ?|DIESES PRESET LÖSCHEN?|¿BORRAR ESTE PREAJUSTE?|EXCLUIR ESTA PREDEFINIÇÃO?
+KEEP|保留|保留|残す|유지|GARDER|BEHALTEN|CONSERVAR|MANTER
+DELETE|删除|刪除|削除|삭제|SUPPRIMER|LÖSCHEN|BORRAR|EXCLUIR
+PRESETS / SAVE A RHYTHM|预设 / 保存节奏|預設 / 儲存節奏|プリセット / リズムを保存|프리셋 / 리듬 저장|PRÉRÉGLAGES / GARDER UN RYTHME|PRESETS / RHYTHMUS SPEICHERN|PREAJUSTES / GUARDA UN RITMO|PREDEFINIÇÕES / SALVE UM RITMO
+CUSTOM RHYTHM / SAVE|自定义节奏 / 保存|自訂節奏 / 儲存|カスタムリズム / 保存|내 리듬 / 저장|RYTHME PERSONNALISÉ / GARDER|EIGENER RHYTHMUS / SPEICHERN|RITMO PERSONALIZADO / GUARDAR|RITMO PERSONALIZADO / SALVAR
+PRESET %02d / %@|预设 %02d / %@|預設 %02d / %@|プリセット %02d / %@|프리셋 %02d / %@|PRÉRÉGLAGE %02d / %@|PRESET %02d / %@|PREAJUSTE %02d / %@|PREDEFINIÇÃO %02d / %@
+%d / BEAT|每拍 %d 次|每拍 %d 次|1拍に%d回|한 박에 %d회|%d / TEMPS|%d / SCHLAG|%d / PULSO|%d / TEMPO
+%d BAR|%d 小节|%d 小節|%d小節|%d마디|%d MESURE|%d TAKT|%d COMPÁS|%d COMPASSO
+%d BARS|%d 小节|%d 小節|%d小節|%d마디|%d MESURES|%d TAKTE|%d COMPASES|%d COMPASSOS
+%d big beats or %d note units per bar.|每小节 %d 个大拍或 %d 个单位拍。|每小節 %d 個大拍或 %d 個單位拍。|1小節に大きな拍%d個、または音符単位%d個。|한 마디에 큰 박 %d개 또는 음표 단위 %d개.|%d grands temps ou %d unités de note par mesure.|%d große Schläge oder %d Notenwerte pro Takt.|%d pulsos grandes o %d unidades de nota por compás.|%d pulsos grandes ou %d unidades de nota por compasso.
+Audio output changed.|音频输出已更改。|音訊輸出已變更。|オーディオ出力が変わりました。|오디오 출력이 변경되었어요.|La sortie audio a changé.|Audioausgabe geändert.|La salida de audio ha cambiado.|A saída de áudio mudou.
+Audio output changed. Press play to continue.|音频输出已更改。点播放继续。|音訊輸出已變更。點播放繼續。|オーディオ出力が変わりました。再生ボタンで続けられます。|오디오 출력이 변경되었어요. 재생을 눌러 계속하세요.|La sortie audio a changé. Appuyez sur lecture pour continuer.|Audioausgabe geändert. Zum Fortfahren auf Wiedergabe drücken.|La salida de audio ha cambiado. Pulsa reproducir para continuar.|A saída de áudio mudou. Toque em reproduzir para continuar.
+Settings|设置|設定|設定|설정|Réglages|Einstellungen|Ajustes|Ajustes
+Close settings|关闭设置|關閉設定|設定を閉じる|설정 닫기|Fermer les réglages|Einstellungen schließen|Cerrar ajustes|Fechar ajustes
+All sounds|全部音色|全部音色|すべてのサウンド|모든 사운드|Tous les sons|Alle Klänge|Todos los sonidos|Todos os sons
+Saved presets|已保存的预设|已儲存的預設|保存したプリセット|저장된 프리셋|Préréglages enregistrés|Gespeicherte Presets|Preajustes guardados|Predefinições salvas
+Practice settings|练习设置|練習設定|練習の設定|연습 설정|Réglages de pratique|Übungseinstellungen|Ajustes de práctica|Ajustes de prática
+Time signature|拍号|拍號|拍子|박자표|Chiffrage de mesure|Taktart|Compás|Fórmula de compasso
+Subdivision|细分|細分|細分化|세분음|Subdivision|Unterteilung|Subdivisión|Subdivisão
+Follow meter accents|遵循拍号重音|遵循拍號重音|拍子に合わせたアクセント|박자표에 따른 강세|Suivre les accents de la mesure|Taktakzenten folgen|Seguir los acentos del compás|Seguir os acentos do compasso
+Even intensity|均匀力度|均勻力度|均一な強さ|균일한 세기|Intensité uniforme|Gleichmäßige Stärke|Intensidad uniforme|Intensidade uniforme
+Start metronome|开始播放|開始播放|メトロノームを再生|메트로놈 시작|Démarrer le métronome|Metronom starten|Iniciar metrónomo|Iniciar metrônomo
+Stop metronome|停止播放|停止播放|メトロノームを停止|메트로놈 정지|Arrêter le métronome|Metronom stoppen|Detener metrónomo|Parar metrônomo
+Tap tempo|轻点定速|輕點定速|タップでテンポ設定|탭으로 템포 설정|Tempo par tapotement|Tempo tippen|Marcar tempo con toques|Marcar andamento com toques
+Decrease tempo|降低速度|降低速度|テンポを下げる|템포 낮추기|Ralentir le tempo|Tempo senken|Bajar tempo|Diminuir andamento
+Increase tempo|提高速度|提高速度|テンポを上げる|템포 높이기|Accélérer le tempo|Tempo erhöhen|Subir tempo|Aumentar andamento
+Tempo|速度|速度|テンポ|템포|Tempo|Tempo|Tempo|Andamento
+Tempo, %d BPM. Tap to enter a value|速度 %d BPM。轻点输入数值|速度 %d BPM。輕點輸入數值|テンポ、%d BPM。タップして値を入力|템포 %d BPM. 탭하여 값 입력|Tempo, %d BPM. Touchez pour saisir une valeur|Tempo, %d BPM. Tippen, um einen Wert einzugeben|Tempo, %d BPM. Toca para introducir un valor|Andamento, %d BPM. Toque para digitar um valor
+%d beats per minute|每分钟 %d 拍|每分鐘 %d 拍|毎分%d拍|분당 %d박|%d temps par minute|%d Schläge pro Minute|%d pulsos por minuto|%d batidas por minuto
+Beat %d, %@|第 %d 拍，%@|第 %d 拍，%@|%d拍目、%@|%d번째 박, %@|Temps %d, %@|Schlag %d, %@|Pulso %d, %@|Tempo %d, %@
+strong|强拍|強拍|強拍|강박|fort|stark|fuerte|forte
+secondary|次强拍|次強拍|中強拍|중강박|secondaire|sekundär|secundario|secundário
+weak|弱拍|弱拍|弱拍|약박|faible|schwach|débil|fraco
+Muted|静音|靜音|ミュート|무음|Muet|Stumm|Silenciado|Silenciado
+Even sound|均匀音量|均勻音量|均一な音量|균일한 음량|Son uniforme|Gleichmäßiger Klang|Sonido uniforme|Som uniforme
+Accented sound|重音|重音|アクセント音|강세음|Son accentué|Akzentuierter Klang|Sonido acentuado|Som acentuado
+Meter sound|按拍号发声|依拍號發聲|拍子に沿った音|박자표에 따른 소리|Son selon la mesure|Klang nach Taktart|Sonido según el compás|Som conforme o compasso
+Tap to change accent|轻点更改重音|輕點更改重音|タップでアクセントを変更|탭하여 강세 변경|Touchez pour changer l’accent|Tippen, um den Akzent zu ändern|Toca para cambiar el acento|Toque para mudar o acento
+%@ sound, tap to preview|%@音色，轻点试听|%@音色，輕點試聽|%@の音、タップして試聴|%@ 사운드, 탭하여 미리 듣기|Son %@, touchez pour écouter|Klang %@, zum Vorhören tippen|Sonido %@, toca para escuchar|Som %@, toque para ouvir
+Back to practice|返回练习设置|返回練習設定|練習設定に戻る|연습 설정으로 돌아가기|Retour à la pratique|Zurück zum Üben|Volver a práctica|Voltar à prática
+Close %@|关闭%@|關閉%@|%@を閉じる|%@ 닫기|Fermer %@|%@ schließen|Cerrar %@|Fechar %@
+Entered tempo, %@|已输入速度，%@|已輸入速度，%@|入力したテンポ、%@|입력한 템포, %@|Tempo saisi, %@|Eingegebenes Tempo, %@|Tempo introducido, %@|Andamento digitado, %@
+empty|空|空|未入力|비어 있음|vide|leer|vacío|vazio
+Delete digit|删除一位数字|刪除一位數字|1桁削除|한 자리 지우기|Effacer un chiffre|Ziffer löschen|Borrar dígito|Apagar dígito
+Clear tempo|清除速度|清除速度|テンポをクリア|템포 지우기|Effacer le tempo|Tempo löschen|Borrar tempo|Limpar andamento
+More meters|更多拍号|更多拍號|その他の拍子|다른 박자표|Autres mesures|Weitere Taktarten|Más compases|Mais compassos
+Note value /%d|音符时值 /%d|音符時值 /%d|音価 /%d|음가 /%d|Valeur de note /%d|Notenwert /%d|Valor de nota /%d|Valor da nota /%d
+%d clicks per beat|每拍 %d 次|每拍 %d 次|1拍に%d回のクリック|한 박에 클릭 %d회|%d clics par temps|%d Klicks pro Schlag|%d clics por pulso|%d cliques por tempo
+Save current rhythm|保存当前节奏|儲存目前節奏|現在のリズムを保存|현재 리듬 저장|Enregistrer le rythme actuel|Aktuellen Rhythmus speichern|Guardar ritmo actual|Salvar ritmo atual
+Delete %@|删除%@|刪除%@|%@を削除|%@ 삭제|Supprimer %@|%@ löschen|Borrar %@|Excluir %@
+Decrease %@|减少%@|減少%@|%@を減らす|%@ 줄이기|Diminuer %@|%@ verringern|Reducir %@|Diminuir %@
+Increase %@|增加%@|增加%@|%@を増やす|%@ 늘리기|Augmenter %@|%@ erhöhen|Aumentar %@|Aumentar %@

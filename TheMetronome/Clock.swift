@@ -5,7 +5,7 @@ enum InstrumentSound: Int, CaseIterable {
     // Retired raw values remain decodable for existing presets.
     static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat, .snap, .clap, .ride, .crossStick]
     static let recommended: [InstrumentSound] = [.naturalHiHat, .wood, .click]
-    var title: String { ["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK"][rawValue] }
+    var title: String { L10n.text(["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK"][rawValue]) }
     var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10][rawValue] }
     var detail: String {
         ["REAL WOODBLOCK / DRY & FOCUSED", "SHORT / CLEAR / PRECISE", "REAL HAND BELL / ROUND & RINGING",
@@ -59,10 +59,10 @@ struct Rhythm: Codable, Equatable {
         return denominator * (count == 3 ? 2 : count)
     }
     func divisionTitle(_ count: Int) -> String {
-        guard usesCompoundPulse else { return [1: "ONE", 2: "TWO", 3: "TRIPLET", 4: "FOUR"][count, default: "ONE"] }
-        if count == 1 { return "BIG BEAT" }
-        if count == 2 { return "DUPLET" }
-        return [2: "HALVES", 4: "QUARTERS", 8: "EIGHTHS", 16: "SIXTEENTHS", 32: "32ND NOTES"][divisionNoteValue(count), default: "DIVISIONS"]
+        guard usesCompoundPulse else { return L10n.text([1: "ONE", 2: "TWO", 3: "TRIPLET", 4: "FOUR"][count, default: "ONE"]) }
+        if count == 1 { return L10n.text("BIG BEAT") }
+        if count == 2 { return L10n.text("DUPLET") }
+        return L10n.text([2: "HALVES", 4: "QUARTERS", 8: "EIGHTHS", 16: "SIXTEENTHS", 32: "32ND NOTES"][divisionNoteValue(count), default: "DIVISIONS"])
     }
     var grouping: [Int]?
     static func groupingOptions(_ numerator: Int) -> [[Int]] {

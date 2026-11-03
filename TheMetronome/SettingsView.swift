@@ -21,15 +21,15 @@ struct SettingsView: View {
     private var face: some View {
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("SETTINGS").technical(22, spacing: 5)
+                Text("SETTINGS").technical(22, spacing: 5).lineLimit(1).minimumScaleFactor(0.7)
                 Text("THE METRONOME / SETUP").technical(9, spacing: 2.5)
             }.frame(width: 280, alignment: .leading).position(x: 167, y: 30)
             Button { model.endSoundPreview(); dismiss() } label: { Image(systemName: "xmark").font(.system(size: 23, weight: .light)).frame(width: 43, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).position(x: 370, y: 28).accessibilityLabel("Close settings")
+                .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).position(x: 370, y: 28).accessibilityLabel("Close settings").accessibilityIdentifier("close-settings")
             SectionLabel(text: "01 RHYTHM", p: p).frame(width: 359).position(x: 206.5, y: 93)
             HStack(spacing: 17) {
                 menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
-                menuField("DIVISION", value: "\(model.rhythm.subdivision) / BEAT", route: .division, fontSize: 17)
+                menuField("DIVISION", value: L10n.format("%d / BEAT", model.rhythm.subdivision), route: .division, fontSize: 17)
             }.frame(width: 359).position(x: 206.5, y: 154)
 
             HStack(spacing: 12) {
@@ -45,7 +45,7 @@ struct SettingsView: View {
                         Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
                     }.padding(.horizontal, 10).frame(width: 115, height: 32)
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 7))
-                    .accessibilityLabel("All sounds")
+                    .accessibilityLabel("All sounds").accessibilityIdentifier("all-sounds")
                     .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
             }.frame(width: 359).position(x: 206.5, y: 228)
             SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "recommended")
@@ -69,14 +69,14 @@ struct SettingsView: View {
         Button { model.endSoundPreview(); present(route) } label: {
             VStack(alignment: .leading, spacing: 13) {
                 HStack {
-                    Text(title).technical(12, spacing: 1.2)
+                    Text(L10n.text(title)).technical(12, spacing: 1.2).lineLimit(1).minimumScaleFactor(0.75)
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 10, weight: .medium))
                 }
-                Text(subtitle).technical(7, spacing: 0.4).foregroundStyle(p.muted)
+                Text(L10n.text(subtitle)).technical(8, spacing: 0.4).lineLimit(2).minimumScaleFactor(0.85).foregroundStyle(p.muted)
             }.padding(15).frame(maxWidth: .infinity).frame(height: 81)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-            .accessibilityLabel(title == "PRESETS" ? "Saved presets" : "Practice settings")
+            .accessibilityLabel(L10n.text(title == "PRESETS" ? "Saved presets" : "Practice settings"))
             .accessibilityIdentifier(route == .presets ? "settings-presets" : route.rawValue)
     }
     private var skinKeys: some View {
@@ -86,22 +86,22 @@ struct SettingsView: View {
                 Button { model.dark = index == 1; model.tickFeedback() } label: {
                     HStack(spacing: 10) {
                         LED(on: selected, color: InstrumentPalette.amber, size: 7)
-                        Text(index == 0 ? "LIGHT" : "DARK").technical(12, spacing: 0.8)
+                        Text(L10n.text(index == 0 ? "LIGHT" : "DARK")).technical(12, spacing: 0.8).lineLimit(1).minimumScaleFactor(0.75)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: index == 1, radius: 9))
-                .accessibilityLabel(index == 0 ? "LIGHT" : "DARK")
+                .accessibilityLabel(L10n.text(index == 0 ? "LIGHT" : "DARK")).accessibilityIdentifier(index == 0 ? "theme-light" : "theme-dark")
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
     }
     func menuField(_ title: String, value: String, route: InstrumentPanelKind, fontSize: CGFloat = 21) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).technical(10, spacing: 1.3).fixedSize()
+            Text(L10n.text(title)).technical(10, spacing: 1.3).fixedSize()
             Button { present(route) } label: {
                 HStack { Spacer(minLength: 0); Text(value).font(InstrumentType.value(fontSize)).lineLimit(1).minimumScaleFactor(0.7); Spacer(minLength: 0); Image(systemName: "chevron.down").font(.system(size: 10)) }
                     .padding(.horizontal, 12).frame(height: 46).frame(maxWidth: .infinity)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityIdentifier("settings-\(route.rawValue)").accessibilityLabel(title == "METER" ? "Time signature" : title == "DIVISION" ? "Subdivision" : "\(title), \(value)")
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityIdentifier("settings-\(route.rawValue)").accessibilityLabel(title == "METER" ? L10n.text("Time signature") : title == "DIVISION" ? L10n.text("Subdivision") : "\(L10n.text(title)), \(value)")
         }.frame(maxWidth: .infinity)
     }
 }

@@ -93,10 +93,10 @@ final class MetronomeModel: ObservableObject {
         didSet { UserDefaults.standard.set(selectedPresetID?.uuidString, forKey: "selectedPresetID") }
     }
     var presetCaption: String {
-        guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return "PRESETS / SAVE A RHYTHM" }
+        guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return L10n.text("PRESETS / SAVE A RHYTHM") }
         var saved = presets[index].rhythm; saved.sanitize()
-        guard saved == rhythm else { return "CUSTOM RHYTHM / SAVE" }
-        return String(format: "PRESET %02d / %@", index + 1, presets[index].name)
+        guard saved == rhythm else { return L10n.text("CUSTOM RHYTHM / SAVE") }
+        return L10n.format("PRESET %02d / %@", index + 1, presets[index].name)
     }
     func isCurrentPreset(_ preset: SavedPreset) -> Bool {
         var saved = preset.rhythm; saved.sanitize()
@@ -139,7 +139,7 @@ final class MetronomeModel: ObservableObject {
         observers.append(NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: audio.engine, queue: .main) { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.playing else { return }
-                self.stop(); self.error = "Audio output changed. Press play to continue."
+                self.stop(); self.error = L10n.text("Audio output changed. Press play to continue.")
             }
         })
         MPRemoteCommandCenter.shared().playCommand.addTarget { [weak self] _ in Task { @MainActor in self?.start() }; return .success }
