@@ -1,3 +1,13 @@
+# Latest submission · 2026-11-03
+
+- Version **1.0.1 (2)**: **Waiting for Review**, verified after submission at 10:51 AM Pacific.
+- Submission: https://appstoreconnect.apple.com/apps/6819347521/distribution/reviewsubmissions/details/4052f529-95b8-4743-95d7-03254784dd04
+- Nine-language interface/store update; automatic release after approval.
+- Installed on iPhone successfully; physical smoke check deferred at user request. Simulator checks passed; do not claim physical QA passed.
+- Bluetooth pedal/background restart is a subsequent feature request, not a feature claim in this release.
+
+---
+
 # Submission status · 2026-10-05
 
 ## Submitted

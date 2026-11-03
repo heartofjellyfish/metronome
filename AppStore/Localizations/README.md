@@ -36,7 +36,13 @@ Primary references:
 - iPhone captures inspected for long labels and layout. Status bars use 6:27, full cellular/Wi-Fi signal and full battery without charging.
 - Nine sets of subtitles, descriptions, promotional text and keywords saved in the 1.0.1 draft. This is not a published update.
 - All eight new-language iPhone screenshot groups uploaded and checked: six images each, in order. All eight new-language iPad home images uploaded and checked. English iPhone assets retain the approved set; the English iPad image is also refreshed from this build. Upload audit JSON files are stored alongside this document.
-- Xcode login restored. Apple Developer Program License Agreement was accepted on 2026-11-03; provisioning, the signed device build and Release archive now succeed. Build 1.0.1 (2) uploaded successfully and has been selected in the version draft. It was installed successfully on the connected iPhone 14 Pro (iOS 27.0.1). The basic physical-device journey is awaiting the phone to be unlocked.
+- Xcode login restored. Apple Developer Program License Agreement was accepted on 2026-11-03; provisioning, the signed device build and Release archive now succeed. Build 1.0.1 (2) uploaded successfully and has been selected in the version draft. It was installed successfully on the connected iPhone 14 Pro (iOS 27.0.1). The physical-device smoke test did not complete (device lock/connection interruptions); the user explicitly deferred it and authorized submission first on 2026-11-03.
 - The updated program agreement was authorized by the user at action time and the refreshed account confirms acceptance on 2026-11-03.
 
 Do not mark the update submitted or installed until those actions are verified.
+
+## Submission verified · 2026-11-03
+
+Version 1.0.1 (2) submitted at 10:51 AM Pacific. App Store Connect displays **Waiting for Review**. Submission: https://appstoreconnect.apple.com/apps/6819347521/distribution/reviewsubmissions/details/4052f529-95b8-4743-95d7-03254784dd04
+
+The missing Simplified Chinese privacy policy URL was filled with https://app.qi.land/metronome/privacy/; all other locale URLs were checked. Automatic release on approval remains selected. This update is submitted, not yet live.
