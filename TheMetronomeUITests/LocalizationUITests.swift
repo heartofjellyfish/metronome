@@ -7,6 +7,8 @@ final class LocalizationUITests: XCTestCase {
         app.launchArguments = ["--reference", "--light", "-AppleLanguages", "(\(language))", "-AppleLocale", language.replacingOccurrences(of: "-", with: "_")]
         app.launch()
         func capture(_ name: String) {
+            // Keep a full iPad proof for representative long/CJK labels, plus every localized home.
+            if app.windows.firstMatch.frame.width > 700 && name != "01-home" && !["en", "de", "zh-Hans"].contains(language) { return }
             let attachment = XCTAttachment(screenshot: app.screenshot())
             attachment.name = "\(language)__\(name)"; attachment.lifetime = .keepAlways; add(attachment)
         }

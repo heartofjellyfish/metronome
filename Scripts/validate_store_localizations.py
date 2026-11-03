@@ -3,7 +3,8 @@
 import json
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
-for path in sorted((root / 'AppStore/Localizations').glob('*.json')):
+for locale in ['de-DE', 'es-ES', 'fr-FR', 'ja', 'ko', 'pt-BR', 'zh-Hans', 'zh-Hant']:
+    path = root / 'AppStore/Localizations' / f'{locale}.json'
     item = json.loads(path.read_text())
     for field, limit in [('name', 30), ('subtitle', 30), ('promo', 170), ('description', 4000)]:
         assert 0 < len(item[field]) <= limit, (path.name, field, len(item[field]))

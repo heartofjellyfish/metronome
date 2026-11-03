@@ -1,0 +1,38 @@
+[
+  {
+    "locale": "Chinese (Simplified)",
+    "screenshots": 1
+  },
+  {
+    "locale": "Chinese (Traditional)",
+    "screenshots": 1
+  },
+  {
+    "locale": "Japanese",
+    "screenshots": 1
+  },
+  {
+    "locale": "Korean",
+    "screenshots": 1
+  },
+  {
+    "locale": "French",
+    "screenshots": 1
+  },
+  {
+    "locale": "German",
+    "screenshots": 1
+  },
+  {
+    "locale": "Spanish (Spain)",
+    "screenshots": 1
+  },
+  {
+    "locale": "Portuguese (Brazil)",
+    "screenshots": 1
+  },
+  {
+    "locale": "English (U.S.)",
+    "screenshots": 1
+  }
+]

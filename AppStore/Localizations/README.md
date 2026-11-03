@@ -32,11 +32,11 @@ Primary references:
 
 - All 153 translation rows validate across nine languages, including formatting placeholders.
 - Nine language journeys passed in the first run. A second capture run passed eight; Portuguese was interrupted by another app taking over the simulator and passed on rerun in a separate simulator.
-- Model and audio setup tests passed on the simulator. Platform-independent timing, meter, ramp, gap and preset tests passed.
+- All nine language journeys also passed on iPad Pro 13-inch (M5), iPadOS 26.3. Representative English, Chinese and German panel captures were inspected. Model and audio setup tests passed on the simulator. Platform-independent timing, meter, ramp, gap and preset tests passed.
 - iPhone captures inspected for long labels and layout. Status bars use 6:27, full cellular/Wi-Fi signal and full battery without charging.
 - Nine sets of subtitles, descriptions, promotional text and keywords saved in the 1.0.1 draft. This is not a published update.
-- Simplified and Traditional Chinese iPhone screenshots uploaded. Remaining screenshot uploads pending browser coordination.
-- Physical-device build/install blocked: Xcode has no signed-in account and no matching development provisioning profile. An existing App Store profile is present, but the available signing identities are development identities. User asked to sign into Xcode.
-- A new Developer Program agreement was shown on the Business page. If it blocks uploading or submission, accepting it requires the user's action-time authorization.
+- All eight new-language iPhone screenshot groups uploaded and checked: six images each, in order. All eight new-language iPad home images uploaded and checked. English iPhone assets retain the approved set; the English iPad image is also refreshed from this build. Upload audit JSON files are stored alongside this document.
+- Xcode login restored. Apple Developer Program License Agreement was accepted on 2026-11-03; provisioning, the signed device build and Release archive now succeed. Build 1.0.1 (2) uploaded successfully and has been selected in the version draft. It was installed successfully on the connected iPhone 14 Pro (iOS 27.0.1). The basic physical-device journey is awaiting the phone to be unlocked.
+- The updated program agreement was authorized by the user at action time and the refreshed account confirms acceptance on 2026-11-03.
 
 Do not mark the update submitted or installed until those actions are verified.

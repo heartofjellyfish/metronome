@@ -1,0 +1,90 @@
+[
+  {
+    "locale": "Chinese (Traditional)",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "Japanese",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "Korean",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "French",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "German",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "Spanish (Spain)",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "Portuguese (Brazil)",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  },
+  {
+    "locale": "Chinese (Simplified)",
+    "files": [
+      "01.png",
+      "02.png",
+      "03.png",
+      "04.png",
+      "05.png",
+      "06.png"
+    ]
+  }
+]
