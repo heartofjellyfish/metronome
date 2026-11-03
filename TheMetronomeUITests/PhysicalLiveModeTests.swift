@@ -9,6 +9,8 @@ final class PhysicalLiveModeTests: XCTestCase {
         XCTAssertTrue(transport.waitForExistence(timeout: 8))
         let stoppedLabel = transport.label
         transport.tap()
+        let started = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", stoppedLabel), object: transport)
+        XCTAssertEqual(XCTWaiter.wait(for: [started], timeout: 5), .completed, app.debugDescription)
         let runningLabel = transport.label
         XCTAssertNotEqual(stoppedLabel, runningLabel)
         XCUIDevice.shared.press(.home)

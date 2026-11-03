@@ -71,7 +71,14 @@ struct InstrumentPanel: View {
         }
         _selected = State(initialValue: value)
     }
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if kind == .pedal {
+            PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
+        } else {
+            standardPanel
+        }
+    }
+    private var standardPanel: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 Color.black.opacity(model.dark ? 0.55 : 0.30).ignoresSafeArea().onTapGesture { dismiss() }
@@ -113,7 +120,7 @@ struct InstrumentPanel: View {
         case .practice: practicePanel
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
-        case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p)
+        case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
         case .audio:
             VStack(alignment: .leading, spacing: 25) {
                 Text(model.error ?? L10n.text("Audio output changed.")).font(.system(size: 15)).lineSpacing(5)
