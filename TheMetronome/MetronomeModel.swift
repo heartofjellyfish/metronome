@@ -197,8 +197,8 @@ final class MetronomeModel: ObservableObject {
         })
         pedal.perform = { [weak self] action in self?.performPedal(action) }
         let center = MPRemoteCommandCenter.shared()
-        register(center.playCommand, code: 0, label: "PLAY / PAUSE") { $0.start() }
-        register(center.pauseCommand, code: 0, label: "PLAY / PAUSE") { $0.stop() }
+        register(center.playCommand, code: 0, label: "PLAY / PAUSE", explicitPlaying: true) { $0.start() }
+        register(center.pauseCommand, code: 0, label: "PLAY / PAUSE", explicitPlaying: false) { $0.stop() }
         register(center.togglePlayPauseCommand, code: 0, label: "PLAY / PAUSE") { $0.toggle() }
         register(center.stopCommand, code: 1, label: "STOP") { $0.stop() }
         register(center.nextTrackCommand, code: 2, label: "NEXT") { $0.performPedal(.next) }
@@ -208,16 +208,24 @@ final class MetronomeModel: ObservableObject {
         for observer in observers { NotificationCenter.default.removeObserver(observer) }
         for (command, token) in remoteTargets { command.removeTarget(token) }
     }
-    private func register(_ command: MPRemoteCommand, code: Int, label: String, fallback: @escaping @MainActor (MetronomeModel) -> Void) {
+    private func register(_ command: MPRemoteCommand, code: Int, label: String, explicitPlaying: Bool? = nil, fallback: @escaping @MainActor (MetronomeModel) -> Void) {
         command.isEnabled = true
         let token = command.addTarget { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                if !self.pedal.media(code, label: label) { fallback(self) }
+                self.handleMediaCommand(code: code, label: label, explicitPlaying: explicitPlaying) { fallback(self) }
             }
             return .success
         }
         remoteTargets.append((command, token))
+    }
+    func handleMediaCommand(code: Int, label: String, explicitPlaying: Bool?, fallback: () -> Void) {
+        // An explicit system Pause must never start an already stopped player,
+        // even when the physical pedal's media button was learned as a toggle.
+        if let explicitPlaying, pedal.learning == nil,
+           let binding = pedal.bindings[.toggle], binding.kind == .media, binding.code == code,
+           transportActive == explicitPlaying { return }
+        if !pedal.media(code, label: label) { fallback() }
     }
     func beginPedalLearning(_ action: PedalAction) {
         guard !interrupted else { return }

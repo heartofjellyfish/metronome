@@ -41,7 +41,13 @@ For MIDI CC use a momentary switch (pressed ≥64, released <64); Note On veloci
 
 - Initial 8 simulator unit/audio tests passed; follow-up 10 tests (8 unit/audio + 2 UI journeys) passed on iPhone 17 Pro Max / iOS 26.3.1 simulator. English, Simplified Chinese and German screenshots inspected; all six rows remain visible; longer labels fit.
 - New tests cover learning/cancel/rebind/held keys/debounce, MIDI parsing/source identity, six actions and preset boundaries, persisted bindings, interruption intent, headphone-loss cancellation, sample-rate conversion and 10-minute timeline equivalence including count-in/ramp/gap.
-- Physical installation of 1.0.2 (3) succeeded on iPhone 14 Pro. The launch/background test was blocked by “Unlock iPhone to Continue” and canceled after waiting; no launch timing, physical background, pedal, call or alarm pass is claimed.
+- Physical installation of 1.0.2 (3) succeeded on iPhone 14 Pro. The initial launch/background attempt was blocked by the locked phone; the user subsequently unlocked it and a retry is running. Launch-to-responsive first frame measured 0.340 s average over five launches (0.326–0.355 s), iPhone 14 Pro, development Debug build, XCUITest instrumentation. This is not a Release cold-boot or headphone-latency measurement.
 - Final MIDI Program Change parsing and off-render-thread catch-up refinements passed all 8 simulator unit/audio tests (2026-11-03, result Test-TheMetronome-2026.11.03_12-45-18--0800.xcresult). Standalone sample-clock/dial/meter tests also passed, including all 480 meter/mode/subdivision combinations. Native string validation covers 173 keys across nine languages; Bluetooth permission text is localized too.
 
+The additional explicit media Play/Pause test passed: repeated Play stays playing, Pause while stopped cannot toggle on, and learned toggle control still starts/stops normally. Signed final delivery build and iPhone installation succeeded; physical background test result is recorded separately below.
+
 This build is a test candidate, not submitted to App Review. Version 1.0.1 (2) remains the separately submitted localization update.
+
+### Physical check detail
+
+The first unlocked run passed launch measurement. In the background journey, playback state remained active after 30 seconds away, but the following Settings tap reached a tempo-entry panel and the expected Live Mode entry was absent. That full UI test failed; it is not counted as passed. The retry adds foreground animation stability and a screenshot before tapping, but was blocked by the phone locking again and canceled; that retry is still pending. Physical audible continuity, real interruption recovery and pedal hardware remain pending.

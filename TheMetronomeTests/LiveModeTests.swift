@@ -91,6 +91,24 @@ final class LiveModeTests: XCTestCase {
         let restored = PedalControl(defaults: defaults)
         XCTAssertEqual(restored.bindings, model.pedal.bindings)
     }
+    @MainActor func testExplicitMediaPauseNeverStartsAndPlayNeverStops() async throws {
+        let defaults = UserDefaults.standard
+        let original = defaults.object(forKey: "pedalBindings")
+        defer { defaults.set(original, forKey: "pedalBindings") }
+        let model = MetronomeModel(); defer { model.stop() }
+        model.pedal.clearAll(); model.pedal.learn(.toggle)
+        XCTAssertTrue(model.pedal.media(0, label: "PLAY / PAUSE"))
+        try await Task.sleep(for: .milliseconds(100))
+        model.handleMediaCommand(code: 0, label: "PLAY / PAUSE", explicitPlaying: false) { model.stop() }
+        XCTAssertFalse(model.playing)
+        model.handleMediaCommand(code: 0, label: "PLAY / PAUSE", explicitPlaying: true) { model.start() }
+        XCTAssertTrue(model.playing)
+        try await Task.sleep(for: .milliseconds(100))
+        model.handleMediaCommand(code: 0, label: "PLAY / PAUSE", explicitPlaying: true) { model.start() }
+        XCTAssertTrue(model.playing)
+        model.handleMediaCommand(code: 0, label: "PLAY / PAUSE", explicitPlaying: false) { model.stop() }
+        XCTAssertFalse(model.playing)
+    }
     @MainActor func testInterruptedPlaybackResumesOnlyWithPermissionAndUserIntent() async throws {
         let model = MetronomeModel(); defer { model.stop() }
         model.start(); XCTAssertTrue(model.playing)

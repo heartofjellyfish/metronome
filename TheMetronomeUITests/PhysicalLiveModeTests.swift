@@ -14,8 +14,15 @@ final class PhysicalLiveModeTests: XCTestCase {
         XCUIDevice.shared.press(.home)
         Thread.sleep(forTimeInterval: 30)
         app.activate()
+        // SpringBoard's return animation can outlive the app's idle report on a physical phone.
+        XCTAssertTrue(transport.waitForExistence(timeout: 5))
+        Thread.sleep(forTimeInterval: 1)
         XCTAssertEqual(transport.label, runningLabel)
-        app.buttons["settings"].tap(); app.buttons["settings-pedal"].tap()
+        let before = XCTAttachment(screenshot: app.screenshot())
+        before.name = "Returned from background"; before.lifetime = .keepAlways; add(before)
+        app.buttons["settings"].tap()
+        XCTAssertTrue(app.buttons["settings-pedal"].waitForExistence(timeout: 5))
+        app.buttons["settings-pedal"].tap()
         for action in ["next", "previous", "faster", "slower", "toggle", "tap"] {
             XCTAssertTrue(app.buttons["pedal-\(action)"].exists)
         }
