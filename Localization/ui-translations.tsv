@@ -150,3 +150,23 @@ Save current rhythm|保存当前节奏|儲存目前節奏|現在のリズムを�
 Delete %@|删除%@|刪除%@|%@を削除|%@ 삭제|Supprimer %@|%@ löschen|Borrar %@|Excluir %@
 Decrease %@|减少%@|減少%@|%@を減らす|%@ 줄이기|Diminuer %@|%@ verringern|Reducir %@|Diminuir %@
 Increase %@|增加%@|增加%@|%@を増やす|%@ 늘리기|Augmenter %@|%@ erhöhen|Aumentar %@|Aumentar %@
+LIVE MODE|现场模式|現場模式|ライブモード|라이브 모드|MODE LIVE|LIVE-MODUS|MODO DIRECTO|MODO AO VIVO
+Tap an action. Press your pedal.|点选动作，再踩一下踏板。|點選動作，再踩一下踏板。|操作を選んで、ペダルを踏む。|동작을 고르고 페달을 밟으세요.|Touchez une action. Appuyez sur la pédale.|Aktion antippen. Pedal drücken.|Toca una acción. Pisa el pedal.|Toque em uma ação. Pressione o pedal.
+Songs follow your saved preset order.|按保存预设的顺序切换歌曲。|按儲存預設的順序切換歌曲。|曲は保存したプリセット順に切り替わります。|저장된 프리셋 순서대로 곡을 바꿉니다.|Les morceaux suivent l’ordre de vos préréglages.|Songs folgen der Reihenfolge deiner Presets.|Las canciones siguen el orden de tus ajustes guardados.|As músicas seguem a ordem dos seus presets.
+Next song|下一首|下一首|次の曲|다음 곡|Morceau suivant|Nächster Song|Siguiente canción|Próxima música
+Previous song|上一首|上一首|前の曲|이전 곡|Morceau précédent|Vorheriger Song|Canción anterior|Música anterior
+BPM +1|BPM +1|BPM +1|BPM +1|BPM +1|BPM +1|BPM +1|BPM +1|BPM +1
+BPM −1|BPM −1|BPM −1|BPM −1|BPM −1|BPM −1|BPM −1|BPM −1|BPM −1
+Play / stop|开始／停止|開始／停止|再生／停止|시작 / 정지|Lecture / arrêt|Start / Stopp|Iniciar / detener|Iniciar / parar
+Press now…|现在踩一下…|現在踩一下…|ペダルを踏んでください…|지금 밟으세요…|Appuyez maintenant…|Jetzt drücken…|Pisa ahora…|Pressione agora…
+Remove assignment|解除绑定|解除綁定|割り当てを解除|할당 해제|Supprimer l’affectation|Zuweisung entfernen|Quitar asignación|Remover atribuição
+Remove all assignments|解除全部绑定|解除全部綁定|すべての割り当てを解除|모든 할당 해제|Supprimer les affectations|Alle Zuweisungen entfernen|Quitar todas las asignaciones|Remover todas as atribuições
+Connect Bluetooth MIDI|连接蓝牙 MIDI|連接藍牙 MIDI|Bluetooth MIDIを接続|Bluetooth MIDI 연결|Connecter un appareil MIDI Bluetooth|Bluetooth-MIDI verbinden|Conectar MIDI Bluetooth|Conectar MIDI Bluetooth
+Bluetooth MIDI|蓝牙 MIDI|藍牙 MIDI|Bluetooth MIDI|Bluetooth MIDI|MIDI Bluetooth|Bluetooth-MIDI|MIDI Bluetooth|MIDI Bluetooth
+Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.|键盘式踏板需要 App 保持在前台。锁屏控制请使用媒体或 MIDI 模式。|鍵盤式踏板需要 App 保持在前景。鎖定螢幕控制請使用媒體或 MIDI 模式。|キーボード式ペダルはアプリ表示中に動作します。ロック中はメディアまたはMIDIモードを使用してください。|키보드 방식 페달은 앱이 화면에 있을 때 작동합니다. 잠금 화면에서는 미디어 또는 MIDI 모드를 사용하세요.|Les pédales clavier fonctionnent avec l’app à l’écran. Pour l’écran verrouillé, utilisez un mode média ou MIDI.|Tastaturpedale benötigen die App im Vordergrund. Für den Sperrbildschirm einen Medien- oder MIDI-Modus verwenden.|Los pedales de teclado funcionan con la app en pantalla. Para la pantalla bloqueada, usa un modo multimedia o MIDI.|Pedais de teclado funcionam com o app na tela. Para a tela bloqueada, use o modo de mídia ou MIDI.
+Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio.|演出前请测试锁屏控制。来电和闹钟可能中断声音。|演出前請測試鎖定螢幕控制。來電和鬧鐘可能中斷聲音。|演奏前に画面ロック中の動作を確認してください。通話やアラームで音が途切れる場合があります。|공연 전에 잠금 화면에서 페달을 테스트하세요. 전화와 알람으로 소리가 중단될 수 있습니다.|Testez la pédale avec l’écran verrouillé avant de jouer. Les appels et alarmes peuvent interrompre le son.|Pedal vor dem Auftritt bei gesperrtem Bildschirm testen. Anrufe und Wecker können den Ton unterbrechen.|Prueba el pedal con la pantalla bloqueada antes de actuar. Las llamadas y alarmas pueden interrumpir el audio.|Teste o pedal com a tela bloqueada antes de tocar. Chamadas e alarmes podem interromper o áudio.
+Could not connect MIDI. Try again.|MIDI 连接失败，请重试。|MIDI 連接失敗，請重試。|MIDIに接続できませんでした。再試行してください。|MIDI에 연결하지 못했습니다. 다시 시도하세요.|Connexion MIDI impossible. Réessayez.|MIDI-Verbindung fehlgeschlagen. Erneut versuchen.|No se pudo conectar MIDI. Inténtalo de nuevo.|Não foi possível conectar o MIDI. Tente novamente.
+AUDIO INTERRUPTED|声音已中断|聲音已中斷|音声が中断されました|오디오 중단됨|AUDIO INTERROMPU|AUDIO UNTERBROCHEN|AUDIO INTERRUMPIDO|ÁUDIO INTERROMPIDO
+Cancel automatic resume|取消自动恢复|取消自動恢復|自動再開をキャンセル|자동 재개 취소|Annuler la reprise automatique|Automatisches Fortsetzen abbrechen|Cancelar reanudación automática|Cancelar retomada automática
+Cancel|取消|取消|キャンセル|취소|Annuler|Abbrechen|Cancelar|Cancelar
+Done|完成|完成|完了|완료|Terminé|Fertig|Listo|Concluído

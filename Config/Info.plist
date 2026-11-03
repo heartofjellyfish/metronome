@@ -8,6 +8,8 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Connect a Bluetooth MIDI pedal to control the metronome hands-free.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

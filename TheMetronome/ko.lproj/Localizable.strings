@@ -18,6 +18,7 @@
 "32ND NOTES" = "32분음표";
 "A MOMENT TO GET READY." = "시작 전, 잠깐 준비할 시간.";
 "ACCENT" = "강세";
+"AUDIO INTERRUPTED" = "오디오 중단됨";
 "AUDIO OUTPUT" = "오디오 출력";
 "Accented sound" = "강세음";
 "All sounds" = "모든 사운드";
@@ -28,9 +29,12 @@
 "BIG BEAT" = "큰 박";
 "BIG BEATS" = "큰 박";
 "BPM" = "BPM";
+"BPM +1" = "BPM +1";
 "BPM ADDED OR REMOVED AT EACH STEP." = "단계마다 더하거나 뺄 BPM.";
+"BPM −1" = "BPM −1";
 "Back to practice" = "연습 설정으로 돌아가기";
 "Beat %d, %@" = "%d번째 박, %@";
+"Bluetooth MIDI" = "Bluetooth MIDI";
 "CHANGE TEMPO AFTER THIS MANY BARS." = "이 마디 수마다 템포 변경.";
 "CHANGES PLAY LIVE" = "재생 중에도 바로 변경";
 "CLAP" = "박수";
@@ -43,9 +47,13 @@
 "CROSS-STICK" = "크로스 스틱";
 "CURRENT" = "현재 음색";
 "CUSTOM RHYTHM / SAVE" = "내 리듬 / 저장";
+"Cancel" = "취소";
+"Cancel automatic resume" = "자동 재개 취소";
 "Clear tempo" = "템포 지우기";
 "Close %@" = "%@ 닫기";
 "Close settings" = "설정 닫기";
+"Connect Bluetooth MIDI" = "Bluetooth MIDI 연결";
+"Could not connect MIDI. Try again." = "MIDI에 연결하지 못했습니다. 다시 시도하세요.";
 "DARK" = "어둡게";
 "DELETE" = "삭제";
 "DELETE THIS PRESET?" = "이 프리셋을 삭제할까요?";
@@ -57,6 +65,7 @@
 "Decrease tempo" = "템포 낮추기";
 "Delete %@" = "%@ 삭제";
 "Delete digit" = "한 자리 지우기";
+"Done" = "완료";
 "EIGHTHS" = "8분음표";
 "END" = "목표";
 "END TEMPO" = "목표 템포";
@@ -77,7 +86,9 @@
 "Increase tempo" = "템포 높이기";
 "KEEP" = "유지";
 "KEEP A GOOD RHYTHM." = "좋은 리듬은 저장해 둬요.";
+"Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode." = "키보드 방식 페달은 앱이 화면에 있을 때 작동합니다. 잠금 화면에서는 미디어 또는 MIDI 모드를 사용하세요.";
 "LIGHT" = "밝게";
+"LIVE MODE" = "라이브 모드";
 "METER" = "박자표";
 "METRONOME" = "메트로놈";
 "MORE METERS" = "다른 박자표";
@@ -88,6 +99,7 @@
 "NAME THIS RHYTHM" = "리듬 이름 짓기";
 "NOTE UNITS" = "음표 단위";
 "NOTE VALUE" = "음가";
+"Next song" = "다음 곡";
 "Note value /%d" = "음가 /%d";
 "OFF" = "끔";
 "OK" = "확인";
@@ -100,7 +112,10 @@
 "PRESET %02d / %@" = "프리셋 %02d / %@";
 "PRESETS" = "프리셋";
 "PRESETS / SAVE A RHYTHM" = "프리셋 / 리듬 저장";
+"Play / stop" = "시작 / 정지";
 "Practice settings" = "연습 설정";
+"Press now…" = "지금 밟으세요…";
+"Previous song" = "이전 곡";
 "QUARTERS" = "4분음표";
 "RAMP" = "변속";
 "RAMP INTERVAL" = "변속 간격";
@@ -108,6 +123,8 @@
 "REAL DRUMS / HATS & PERCUSSION" = "실제 드럼 / 심벌과 타악기";
 "RIDE" = "라이드";
 "RIMSHOT" = "림샷";
+"Remove all assignments" = "모든 할당 해제";
+"Remove assignment" = "할당 해제";
 "SAVE A RHYTHM" = "리듬 저장";
 "SET TEMPO" = "템포 설정";
 "SET VALUE" = "적용";
@@ -129,6 +146,7 @@
 "Save current rhythm" = "현재 리듬 저장";
 "Saved presets" = "저장된 프리셋";
 "Settings" = "설정";
+"Songs follow your saved preset order." = "저장된 프리셋 순서대로 곡을 바꿉니다.";
 "Start metronome" = "메트로놈 시작";
 "Stop metronome" = "메트로놈 정지";
 "Subdivision" = "세분음";
@@ -140,11 +158,13 @@
 "TRIPLET" = "셋잇단음";
 "TWO" = "2분할";
 "TYPE TO REPLACE" = "입력하여 변경";
+"Tap an action. Press your pedal." = "동작을 고르고 페달을 밟으세요.";
 "Tap tempo" = "탭으로 템포 설정";
 "Tap to change accent" = "탭하여 강세 변경";
 "Tempo" = "템포";
 "Tempo, %d BPM. Tap to enter a value" = "템포 %d BPM. 탭하여 값 입력";
 "Tempo, accents and practice settings — ready next time." = "템포, 강세, 연습 설정까지. 다음에도 바로.";
+"Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio." = "공연 전에 잠금 화면에서 페달을 테스트하세요. 전화와 알람으로 소리가 중단될 수 있습니다.";
 "Time signature" = "박자표";
 "WOOD" = "우드블록";
 "WOOD / CLICK / BELL" = "우드 / 클릭 / 벨";

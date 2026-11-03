@@ -18,6 +18,7 @@
 "32ND NOTES" = "三十二分音符";
 "A MOMENT TO GET READY." = "留一點時間，準備開始。";
 "ACCENT" = "重音";
+"AUDIO INTERRUPTED" = "聲音已中斷";
 "AUDIO OUTPUT" = "音訊輸出";
 "Accented sound" = "重音";
 "All sounds" = "全部音色";
@@ -28,9 +29,12 @@
 "BIG BEAT" = "大拍";
 "BIG BEATS" = "大拍";
 "BPM" = "BPM";
+"BPM +1" = "BPM +1";
 "BPM ADDED OR REMOVED AT EACH STEP." = "每次增加或減少的BPM。";
+"BPM −1" = "BPM −1";
 "Back to practice" = "返回練習設定";
 "Beat %d, %@" = "第 %d 拍，%@";
+"Bluetooth MIDI" = "藍牙 MIDI";
 "CHANGE TEMPO AFTER THIS MANY BARS." = "每隔多少小節變速一次。";
 "CHANGES PLAY LIVE" = "播放中也能隨時切換";
 "CLAP" = "拍手";
@@ -43,9 +47,13 @@
 "CROSS-STICK" = "鼓邊輕敲";
 "CURRENT" = "目前音色";
 "CUSTOM RHYTHM / SAVE" = "自訂節奏 / 儲存";
+"Cancel" = "取消";
+"Cancel automatic resume" = "取消自動恢復";
 "Clear tempo" = "清除速度";
 "Close %@" = "關閉%@";
 "Close settings" = "關閉設定";
+"Connect Bluetooth MIDI" = "連接藍牙 MIDI";
+"Could not connect MIDI. Try again." = "MIDI 連接失敗，請重試。";
 "DARK" = "深色";
 "DELETE" = "刪除";
 "DELETE THIS PRESET?" = "刪除這個預設？";
@@ -57,6 +65,7 @@
 "Decrease tempo" = "降低速度";
 "Delete %@" = "刪除%@";
 "Delete digit" = "刪除一位數字";
+"Done" = "完成";
 "EIGHTHS" = "八分音符";
 "END" = "目標";
 "END TEMPO" = "目標速度";
@@ -77,7 +86,9 @@
 "Increase tempo" = "提高速度";
 "KEEP" = "保留";
 "KEEP A GOOD RHYTHM." = "好節奏，留著下次用。";
+"Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode." = "鍵盤式踏板需要 App 保持在前景。鎖定螢幕控制請使用媒體或 MIDI 模式。";
 "LIGHT" = "淺色";
+"LIVE MODE" = "現場模式";
 "METER" = "拍號";
 "METRONOME" = "節拍器";
 "MORE METERS" = "更多拍號";
@@ -88,6 +99,7 @@
 "NAME THIS RHYTHM" = "為節奏取個名字";
 "NOTE UNITS" = "單位拍";
 "NOTE VALUE" = "音符時值";
+"Next song" = "下一首";
 "Note value /%d" = "音符時值 /%d";
 "OFF" = "關";
 "OK" = "好";
@@ -100,7 +112,10 @@
 "PRESET %02d / %@" = "預設 %02d / %@";
 "PRESETS" = "預設";
 "PRESETS / SAVE A RHYTHM" = "預設 / 儲存節奏";
+"Play / stop" = "開始／停止";
 "Practice settings" = "練習設定";
+"Press now…" = "現在踩一下…";
+"Previous song" = "上一首";
 "QUARTERS" = "四分音符";
 "RAMP" = "變速";
 "RAMP INTERVAL" = "變速間隔";
@@ -108,6 +123,8 @@
 "REAL DRUMS / HATS & PERCUSSION" = "真實鼓聲 / 鈸片與打擊樂";
 "RIDE" = "叮叮鈸";
 "RIMSHOT" = "邊擊";
+"Remove all assignments" = "解除全部綁定";
+"Remove assignment" = "解除綁定";
 "SAVE A RHYTHM" = "儲存節奏";
 "SET TEMPO" = "設定速度";
 "SET VALUE" = "確定";
@@ -129,6 +146,7 @@
 "Save current rhythm" = "儲存目前節奏";
 "Saved presets" = "已儲存的預設";
 "Settings" = "設定";
+"Songs follow your saved preset order." = "按儲存預設的順序切換歌曲。";
 "Start metronome" = "開始播放";
 "Stop metronome" = "停止播放";
 "Subdivision" = "細分";
@@ -140,11 +158,13 @@
 "TRIPLET" = "三連音";
 "TWO" = "二等分";
 "TYPE TO REPLACE" = "輸入以取代";
+"Tap an action. Press your pedal." = "點選動作，再踩一下踏板。";
 "Tap tempo" = "輕點定速";
 "Tap to change accent" = "輕點更改重音";
 "Tempo" = "速度";
 "Tempo, %d BPM. Tap to enter a value" = "速度 %d BPM。輕點輸入數值";
 "Tempo, accents and practice settings — ready next time." = "速度、重音和練習設定，下次直接用。";
+"Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio." = "演出前請測試鎖定螢幕控制。來電和鬧鐘可能中斷聲音。";
 "Time signature" = "拍號";
 "WOOD" = "木魚";
 "WOOD / CLICK / BELL" = "木魚 / 電子聲 / 鈴聲";

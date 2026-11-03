@@ -41,7 +41,8 @@ final class ModelTests: XCTestCase {
             userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue])
         try await Task.sleep(for: .milliseconds(150))
         XCTAssertFalse(model.playing); XCTAssertFalse(UIApplication.shared.isIdleTimerDisabled)
-        XCTAssertNil(MPNowPlayingInfoCenter.default().nowPlayingInfo)
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] as? Double, 0)
+        model.handleInterruption(type: AVAudioSession.InterruptionType.ended.rawValue, options: 0)
         model.start(); XCTAssertTrue(model.playing)
         NotificationCenter.default.post(name: AVAudioSession.routeChangeNotification, object: nil,
             userInfo: [AVAudioSessionRouteChangeReasonKey: AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue])

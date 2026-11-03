@@ -213,6 +213,27 @@ final class SampleClock {
         lastRampBar = -1; countInBars = value.countIn; self.barLimit = barLimit
         humanizer = DynamicHumanizer()
     }
+    /// Called only after the renderer stops. Preserve the musical grid across sample-rate changes.
+    func copy(atRate newRate: Double) -> SampleClock {
+        let copy = SampleClock(rate: newRate)
+        copy.rhythm = rhythm; copy.tempo = tempo; copy.tick = tick
+        copy.framesUntilTick = framesUntilTick * newRate / rate
+        copy.first = first; copy.lastRampBar = lastRampBar
+        copy.countInBars = countInBars; copy.barLimit = barLimit; copy.humanizer = humanizer
+        return copy
+    }
+    /// Move the timeline, without rendering missed sounds. O(ticks), not O(audio samples).
+    func skip(seconds: Double) {
+        guard seconds.isFinite, seconds > 0 else { return }
+        var frames = seconds * rate
+        while frames >= 1 {
+            if framesUntilTick > 0 {
+                let jump = min(floor(frames), ceil(framesUntilTick))
+                framesUntilTick -= jump; frames -= jump
+            } else { _ = advance(); frames -= 1 }
+        }
+        framesUntilTick -= frames
+    }
     func advance() -> (ClockEvent, Int)? {
         defer { framesUntilTick -= 1 }
         guard framesUntilTick <= 0 else { return nil }

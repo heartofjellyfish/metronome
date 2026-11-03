@@ -18,6 +18,7 @@
 "32ND NOTES" = "32ND NOTES";
 "A MOMENT TO GET READY." = "A MOMENT TO GET READY.";
 "ACCENT" = "ACCENT";
+"AUDIO INTERRUPTED" = "AUDIO INTERRUPTED";
 "AUDIO OUTPUT" = "AUDIO OUTPUT";
 "Accented sound" = "Accented sound";
 "All sounds" = "All sounds";
@@ -28,9 +29,12 @@
 "BIG BEAT" = "BIG BEAT";
 "BIG BEATS" = "BIG BEATS";
 "BPM" = "BPM";
+"BPM +1" = "BPM +1";
 "BPM ADDED OR REMOVED AT EACH STEP." = "BPM ADDED OR REMOVED AT EACH STEP.";
+"BPM −1" = "BPM −1";
 "Back to practice" = "Back to practice";
 "Beat %d, %@" = "Beat %d, %@";
+"Bluetooth MIDI" = "Bluetooth MIDI";
 "CHANGE TEMPO AFTER THIS MANY BARS." = "CHANGE TEMPO AFTER THIS MANY BARS.";
 "CHANGES PLAY LIVE" = "CHANGES PLAY LIVE";
 "CLAP" = "CLAP";
@@ -43,9 +47,13 @@
 "CROSS-STICK" = "CROSS-STICK";
 "CURRENT" = "CURRENT";
 "CUSTOM RHYTHM / SAVE" = "CUSTOM RHYTHM / SAVE";
+"Cancel" = "Cancel";
+"Cancel automatic resume" = "Cancel automatic resume";
 "Clear tempo" = "Clear tempo";
 "Close %@" = "Close %@";
 "Close settings" = "Close settings";
+"Connect Bluetooth MIDI" = "Connect Bluetooth MIDI";
+"Could not connect MIDI. Try again." = "Could not connect MIDI. Try again.";
 "DARK" = "DARK";
 "DELETE" = "DELETE";
 "DELETE THIS PRESET?" = "DELETE THIS PRESET?";
@@ -57,6 +65,7 @@
 "Decrease tempo" = "Decrease tempo";
 "Delete %@" = "Delete %@";
 "Delete digit" = "Delete digit";
+"Done" = "Done";
 "EIGHTHS" = "EIGHTHS";
 "END" = "END";
 "END TEMPO" = "END TEMPO";
@@ -77,7 +86,9 @@
 "Increase tempo" = "Increase tempo";
 "KEEP" = "KEEP";
 "KEEP A GOOD RHYTHM." = "KEEP A GOOD RHYTHM.";
+"Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode." = "Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.";
 "LIGHT" = "LIGHT";
+"LIVE MODE" = "LIVE MODE";
 "METER" = "METER";
 "METRONOME" = "METRONOME";
 "MORE METERS" = "MORE METERS";
@@ -88,6 +99,7 @@
 "NAME THIS RHYTHM" = "NAME THIS RHYTHM";
 "NOTE UNITS" = "NOTE UNITS";
 "NOTE VALUE" = "NOTE VALUE";
+"Next song" = "Next song";
 "Note value /%d" = "Note value /%d";
 "OFF" = "OFF";
 "OK" = "OK";
@@ -100,7 +112,10 @@
 "PRESET %02d / %@" = "PRESET %02d / %@";
 "PRESETS" = "PRESETS";
 "PRESETS / SAVE A RHYTHM" = "PRESETS / SAVE A RHYTHM";
+"Play / stop" = "Play / stop";
 "Practice settings" = "Practice settings";
+"Press now…" = "Press now…";
+"Previous song" = "Previous song";
 "QUARTERS" = "QUARTERS";
 "RAMP" = "RAMP";
 "RAMP INTERVAL" = "RAMP INTERVAL";
@@ -108,6 +123,8 @@
 "REAL DRUMS / HATS & PERCUSSION" = "REAL DRUMS / HATS & PERCUSSION";
 "RIDE" = "RIDE";
 "RIMSHOT" = "RIMSHOT";
+"Remove all assignments" = "Remove all assignments";
+"Remove assignment" = "Remove assignment";
 "SAVE A RHYTHM" = "SAVE A RHYTHM";
 "SET TEMPO" = "SET TEMPO";
 "SET VALUE" = "SET VALUE";
@@ -129,6 +146,7 @@
 "Save current rhythm" = "Save current rhythm";
 "Saved presets" = "Saved presets";
 "Settings" = "Settings";
+"Songs follow your saved preset order." = "Songs follow your saved preset order.";
 "Start metronome" = "Start metronome";
 "Stop metronome" = "Stop metronome";
 "Subdivision" = "Subdivision";
@@ -140,11 +158,13 @@
 "TRIPLET" = "TRIPLET";
 "TWO" = "TWO";
 "TYPE TO REPLACE" = "TYPE TO REPLACE";
+"Tap an action. Press your pedal." = "Tap an action. Press your pedal.";
 "Tap tempo" = "Tap tempo";
 "Tap to change accent" = "Tap to change accent";
 "Tempo" = "Tempo";
 "Tempo, %d BPM. Tap to enter a value" = "Tempo, %d BPM. Tap to enter a value";
 "Tempo, accents and practice settings — ready next time." = "Tempo, accents and practice settings — ready next time.";
+"Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio." = "Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio.";
 "Time signature" = "Time signature";
 "WOOD" = "WOOD";
 "WOOD / CLICK / BELL" = "WOOD / CLICK / BELL";

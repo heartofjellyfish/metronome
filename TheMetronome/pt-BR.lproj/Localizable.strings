@@ -18,6 +18,7 @@
 "32ND NOTES" = "FUSAS";
 "A MOMENT TO GET READY." = "UM INSTANTE PARA SE PREPARAR.";
 "ACCENT" = "ACENTOS";
+"AUDIO INTERRUPTED" = "ÁUDIO INTERROMPIDO";
 "AUDIO OUTPUT" = "SAÍDA DE ÁUDIO";
 "Accented sound" = "Som acentuado";
 "All sounds" = "Todos os sons";
@@ -28,9 +29,12 @@
 "BIG BEAT" = "PULSO GRANDE";
 "BIG BEATS" = "PULSOS GRANDES";
 "BPM" = "BPM";
+"BPM +1" = "BPM +1";
 "BPM ADDED OR REMOVED AT EACH STEP." = "BPM ADICIONADOS OU REMOVIDOS POR PASSO.";
+"BPM −1" = "BPM −1";
 "Back to practice" = "Voltar à prática";
 "Beat %d, %@" = "Tempo %d, %@";
+"Bluetooth MIDI" = "MIDI Bluetooth";
 "CHANGE TEMPO AFTER THIS MANY BARS." = "MUDE O ANDAMENTO A CADA GRUPO DE COMPASSOS.";
 "CHANGES PLAY LIVE" = "MUDE DURANTE A REPRODUÇÃO";
 "CLAP" = "PALMAS";
@@ -43,9 +47,13 @@
 "CROSS-STICK" = "CROSS-STICK";
 "CURRENT" = "ATUAL";
 "CUSTOM RHYTHM / SAVE" = "RITMO PERSONALIZADO / SALVAR";
+"Cancel" = "Cancelar";
+"Cancel automatic resume" = "Cancelar retomada automática";
 "Clear tempo" = "Limpar andamento";
 "Close %@" = "Fechar %@";
 "Close settings" = "Fechar ajustes";
+"Connect Bluetooth MIDI" = "Conectar MIDI Bluetooth";
+"Could not connect MIDI. Try again." = "Não foi possível conectar o MIDI. Tente novamente.";
 "DARK" = "ESCURO";
 "DELETE" = "EXCLUIR";
 "DELETE THIS PRESET?" = "EXCLUIR ESTA PREDEFINIÇÃO?";
@@ -57,6 +65,7 @@
 "Decrease tempo" = "Diminuir andamento";
 "Delete %@" = "Excluir %@";
 "Delete digit" = "Apagar dígito";
+"Done" = "Concluído";
 "EIGHTHS" = "COLCHEIAS";
 "END" = "FINAL";
 "END TEMPO" = "ANDAMENTO FINAL";
@@ -77,7 +86,9 @@
 "Increase tempo" = "Aumentar andamento";
 "KEEP" = "MANTER";
 "KEEP A GOOD RHYTHM." = "RITMO BOM A GENTE GUARDA.";
+"Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode." = "Pedais de teclado funcionam com o app na tela. Para a tela bloqueada, use o modo de mídia ou MIDI.";
 "LIGHT" = "CLARO";
+"LIVE MODE" = "MODO AO VIVO";
 "METER" = "COMPASSO";
 "METRONOME" = "METRÔNOMO";
 "MORE METERS" = "MAIS COMPASSOS";
@@ -88,6 +99,7 @@
 "NAME THIS RHYTHM" = "DÊ UM NOME AO RITMO";
 "NOTE UNITS" = "UNIDADES DE NOTA";
 "NOTE VALUE" = "VALOR DA NOTA";
+"Next song" = "Próxima música";
 "Note value /%d" = "Valor da nota /%d";
 "OFF" = "NÃO";
 "OK" = "OK";
@@ -100,7 +112,10 @@
 "PRESET %02d / %@" = "PREDEFINIÇÃO %02d / %@";
 "PRESETS" = "PREDEFINIÇÕES";
 "PRESETS / SAVE A RHYTHM" = "PREDEFINIÇÕES / SALVE UM RITMO";
+"Play / stop" = "Iniciar / parar";
 "Practice settings" = "Ajustes de prática";
+"Press now…" = "Pressione agora…";
+"Previous song" = "Música anterior";
 "QUARTERS" = "SEMÍNIMAS";
 "RAMP" = "RAMPA";
 "RAMP INTERVAL" = "INTERVALO";
@@ -108,6 +123,8 @@
 "REAL DRUMS / HATS & PERCUSSION" = "BATERIA / PRATOS E PERCUSSÃO";
 "RIDE" = "RIDE";
 "RIMSHOT" = "RIMSHOT";
+"Remove all assignments" = "Remover todas as atribuições";
+"Remove assignment" = "Remover atribuição";
 "SAVE A RHYTHM" = "SALVE UM RITMO";
 "SET TEMPO" = "AJUSTAR ANDAMENTO";
 "SET VALUE" = "APLICAR";
@@ -129,6 +146,7 @@
 "Save current rhythm" = "Salvar ritmo atual";
 "Saved presets" = "Predefinições salvas";
 "Settings" = "Ajustes";
+"Songs follow your saved preset order." = "As músicas seguem a ordem dos seus presets.";
 "Start metronome" = "Iniciar metrônomo";
 "Stop metronome" = "Parar metrônomo";
 "Subdivision" = "Subdivisão";
@@ -140,11 +158,13 @@
 "TRIPLET" = "TERCINA";
 "TWO" = "DOIS";
 "TYPE TO REPLACE" = "DIGITE PARA SUBSTITUIR";
+"Tap an action. Press your pedal." = "Toque em uma ação. Pressione o pedal.";
 "Tap tempo" = "Marcar andamento com toques";
 "Tap to change accent" = "Toque para mudar o acento";
 "Tempo" = "Andamento";
 "Tempo, %d BPM. Tap to enter a value" = "Andamento, %d BPM. Toque para digitar um valor";
 "Tempo, accents and practice settings — ready next time." = "Andamento, acentos e ajustes de prática. Prontos para a próxima.";
+"Test your pedal with the screen locked before a performance. Calls and alarms can interrupt audio." = "Teste o pedal com a tela bloqueada antes de tocar. Chamadas e alarmes podem interromper o áudio.";
 "Time signature" = "Fórmula de compasso";
 "WOOD" = "MADEIRA";
 "WOOD / CLICK / BELL" = "MADEIRA / CLIQUE / SINO";

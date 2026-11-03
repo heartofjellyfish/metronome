@@ -15,6 +15,12 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 
 6/8, 9/8 and 12/8 default to 2, 3 and 4 dotted-quarter pulses. BPM counts the displayed note unit; compound subdivisions offer one big beat, duplets, eighths and sixteenths (1/2/3/6 clicks). The meter panel also offers eighth-note counting. Older saved rhythms retain their original eighth-note BPM meaning. Beat numeral weight and ink tone express strong, secondary and weak metrical roles without extra marks. Recessed amber indicators reflect the same hierarchy in brightness. EVEN changes audio only: the visual meter hierarchy stays intact. The app is an initial functional build; purchasing and cross-app synchronization are not implemented.
 
+## Live Mode (1.0.2 test candidate)
+
+Settings → Live Mode provides six learnable pedal actions: next/previous saved song, BPM ±1, play/stop and tap tempo. Tap an action and press a pedal; the learning press does not operate transport. Supports foreground keyboard input, standard media remote commands and CoreMIDI Note/CC/Program Change messages. Songs follow saved preset order. Bindings persist locally.
+
+Keyboard pedals cannot control this app while locked/backgrounded. Media/MIDI device behavior, long-idle restart and actual call/alarm recovery still require physical validation; no universal hardware compatibility is claimed. Live playback with a learned binding owns the primary audio session, rather than mixing with other music. See `Design/LiveMode/README.md` for the protocol matrix, interruption policy and test evidence.
+
 ## Audio architecture
 
 `SampleClock` advances in audio sample frames with fractional interval carry, preventing cumulative rounded-interval drift. `AVAudioSourceNode` renders preallocated overlapping click voices. Audio thread parameter/status exchange uses a nonblocking try-lock once per buffer; the UI timer only polls visual state. The visual pulse is buffer-level and is not calibrated to Bluetooth output latency.

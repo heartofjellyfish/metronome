@@ -1,0 +1,27 @@
+import XCTest
+
+/// Real iPhone checks. No artificial calls, alarms or claims about audible continuity.
+final class PhysicalLiveModeTests: XCTestCase {
+    func testBackgroundPlaybackAndLiveSettings() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launch()
+        let transport = app.buttons["transport"]
+        XCTAssertTrue(transport.waitForExistence(timeout: 8))
+        let stoppedLabel = transport.label
+        transport.tap()
+        let runningLabel = transport.label
+        XCTAssertNotEqual(stoppedLabel, runningLabel)
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 30)
+        app.activate()
+        XCTAssertEqual(transport.label, runningLabel)
+        app.buttons["settings"].tap(); app.buttons["settings-pedal"].tap()
+        for action in ["next", "previous", "faster", "slower", "toggle", "tap"] {
+            XCTAssertTrue(app.buttons["pedal-\(action)"].exists)
+        }
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "Physical iPhone Live Mode 1.0.2 (3)"; shot.lifetime = .keepAlways; add(shot)
+        app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
+        transport.tap(); XCTAssertEqual(transport.label, stoppedLabel)
+    }
+}

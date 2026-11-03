@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum InstrumentPanelKind: String, Identifiable {
-    case tempo, meter, division, countIn, every, increment, practice, start, end, presets, audio, sounds
+    case tempo, meter, division, countIn, every, increment, practice, start, end, presets, audio, sounds, pedal
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -17,6 +17,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .presets: return L10n.text("PRESETS")
         case .audio: return L10n.text("AUDIO OUTPUT")
         case .sounds: return L10n.text("SOUND LIBRARY")
+        case .pedal: return L10n.text("LIVE MODE")
         }
     }
     var height: CGFloat {
@@ -28,6 +29,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .presets: return 560
         case .audio: return 300
         case .sounds: return 740
+        case .pedal: return 650
         default: return 300
         }
     }
@@ -111,6 +113,7 @@ struct InstrumentPanel: View {
         case .practice: practicePanel
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
+        case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p)
         case .audio:
             VStack(alignment: .leading, spacing: 25) {
                 Text(model.error ?? L10n.text("Audio output changed.")).font(.system(size: 15)).lineSpacing(5)

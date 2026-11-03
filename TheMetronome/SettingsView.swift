@@ -58,6 +58,15 @@ struct SettingsView: View {
                 navigationKey("PRESETS", subtitle: "SAVE A RHYTHM", route: .presets)
             }.frame(width: 359).position(x: 206.5, y: 555)
 
+            Button { present(.pedal) } label: {
+                HStack {
+                    Text("LIVE MODE").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.7)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 10))
+                }.padding(.horizontal, 15).frame(height: 44)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).frame(width: 359)
+                .position(x: 206.5, y: 624).accessibilityIdentifier("settings-pedal")
+
             SectionLabel(text: "04 VIEW", p: p).frame(width: 359).position(x: 206.5, y: 668)
             HStack {
                 Text("SKIN").technical(12, spacing: 1.7); Spacer()
