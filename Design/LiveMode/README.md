@@ -51,3 +51,11 @@ This build is a test candidate, not submitted to App Review. Version 1.0.1 (2) r
 ### Physical check detail
 
 The first unlocked run passed launch measurement. In the background journey, playback state remained active after 30 seconds away, but the following Settings tap reached a tempo-entry panel and the expected Live Mode entry was absent. That full UI test failed; it is not counted as passed. The retry adds foreground animation stability and a screenshot before tapping, but was blocked by the phone locking again and canceled; that retry is still pending. Physical audible continuity, real interruption recovery and pedal hardware remain pending.
+
+### Cassette-style setup implementation · 2026-11-03
+
+Two tabs: connect and assign. Assignment keys directly reuse HardwareKeySurface: gray/unassigned, pressed with blinking red LED/learning, raised with green LED/assigned. Lamp and caption are centered together, and the key column is inset. Any subset of six actions can be assigned; re-learning can be canceled without losing the original mapping. Common key names and all new setup text are localized across nine languages. Reduced Motion uses a steady learning light. Preparation notes expand/collapse and collapse scrolls back to the bindings.
+
+Connection status comes from an attached keyboard or online physical MIDI source, not merely a saved binding. Virtual MIDI endpoints do not mark the connection complete. A detected connection advances to assignment. The native picker handles Bluetooth MIDI; keyboard/page-turning pedals pair through iPhone Settings > Bluetooth. Background compatibility limitations above still apply.
+
+Verification: 7 LiveMode logic tests and 2 UI journey tests passed on iPhone 17 Pro Max simulator, iOS 26.3. Tests cover repeated learning/cancel, preserved reassignment, tabs, preparation collapse, stopped navigation and playback continuing after settings. Chinese, English and German screenshots were inspected. Native localization validation passes for 204 strings across nine languages. Final signed Debug 1.0.2 (3) installed successfully on the connected iPhone 14 Pro at 21:19. No new physical pedal, lock-screen or call tests were run. Real app screenshots in implemented/ use an isolated DEBUG assignment fixture; they are not proof of physical pedal compatibility.

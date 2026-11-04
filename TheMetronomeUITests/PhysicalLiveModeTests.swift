@@ -25,6 +25,7 @@ final class PhysicalLiveModeTests: XCTestCase {
         app.buttons["settings"].tap()
         XCTAssertTrue(app.buttons["settings-pedal"].waitForExistence(timeout: 5))
         app.buttons["settings-pedal"].tap()
+        app.buttons["pedal-tab-bind"].tap()
         for action in ["next", "previous", "faster", "slower", "toggle", "tap"] {
             XCTAssertTrue(app.buttons["pedal-\(action)"].exists)
         }

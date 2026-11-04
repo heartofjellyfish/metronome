@@ -10,13 +10,18 @@ struct PedalBinding: Codable, Equatable {
     var channel: Int = 0
     var source: Int32 = 0
     var label: String
+    var displayLabel: String {
+        guard kind == .keyboard else { return label }
+        let names = [40: "Return key", 44: "Space key", 79: "Right arrow", 80: "Left arrow", 81: "Down arrow", 82: "Up arrow", 75: "Page up", 78: "Page down"]
+        return names[code].map(L10n.text) ?? label
+    }
 }
 
 enum PedalAction: String, Codable, CaseIterable, Identifiable {
     case next, previous, faster, slower, toggle, tap
     var id: String { rawValue }
     var title: String {
-        L10n.text(["next": "Next song", "previous": "Previous song", "faster": "BPM +1", "slower": "BPM −1", "toggle": "Play / stop", "tap": "Tap tempo"][rawValue]!)
+        L10n.text(["next": "Next song", "previous": "Previous song", "faster": "BPM +1", "slower": "BPM −1", "toggle": "Play / stop", "tap": "Tap to set tempo"][rawValue]!)
     }
 }
 
@@ -84,6 +89,9 @@ final class PedalControl: ObservableObject {
     @Published private(set) var bindings: [PedalAction: PedalBinding] = [:]
     @Published private(set) var learning: PedalAction?
     @Published private(set) var midiSources = 0
+    @Published private(set) var keyboardConnected = false
+    @Published private(set) var physicalMIDISources = 0
+    var inputConnected: Bool { keyboardConnected || physicalMIDISources > 0 }
     @Published var problem: String?
     var perform: ((PedalAction) -> Void)?
     private var gate = PedalGate()
@@ -96,8 +104,16 @@ final class PedalControl: ObservableObject {
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--pedal-ui-test") {
+            let isolated = UserDefaults(suiteName: "Metronome.PedalUITests")!
+            isolated.removePersistentDomain(forName: "Metronome.PedalUITests")
+            self.defaults = isolated
+        } else { self.defaults = defaults }
+        #else
         self.defaults = defaults
-        bindings = defaults.data(forKey: "pedalBindings").flatMap { try? JSONDecoder().decode([PedalAction: PedalBinding].self, from: $0) } ?? [:]
+        #endif
+        bindings = self.defaults.data(forKey: "pedalBindings").flatMap { try? JSONDecoder().decode([PedalAction: PedalBinding].self, from: $0) } ?? [:]
         gate.bindings = bindings
         for name in [NSNotification.Name.GCKeyboardDidConnect, .GCKeyboardDidDisconnect, UIApplication.didBecomeActiveNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -114,6 +130,13 @@ final class PedalControl: ObservableObject {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in Task { @MainActor in self?.editing = false; self?.gate.clearHeld() } })
         }
         attachKeyboard()
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--pedal-fixture-bound") {
+            learn(.toggle)
+            receive(PedalBinding(kind: .keyboard, code: 40, label: "RETURN"), down: true)
+            receive(PedalBinding(kind: .keyboard, code: 40, label: "RETURN"), down: false)
+        }
+        #endif
         // CoreMIDI starts only after opt-in, never on the first launch path.
         if bindings.values.contains(where: { $0.kind == .midiCC || $0.kind == .midiNote || $0.kind == .midiProgram }) { Task { @MainActor [weak self] in self?.enableMIDI() } }
     }
@@ -147,6 +170,7 @@ final class PedalControl: ObservableObject {
         return assigned
     }
     private func attachKeyboard() {
+        keyboardConnected = GCKeyboard.coalesced != nil
         GCKeyboard.coalesced?.keyboardInput?.keyChangedHandler = { [weak self] _, _, key, down in
             Task { @MainActor in
                 guard let self, UIApplication.shared.applicationState == .active, !self.editing else { return }
@@ -197,6 +221,13 @@ final class PedalControl: ObservableObject {
         }
         if sources != connected { gate.clearHeld(); parsers.removeAll() }
         sources = connected; midiSources = connected.count
+        physicalMIDISources = connected.filter { endpoint in
+            var entity = MIDIEntityRef(); var device = MIDIDeviceRef(); var offline: Int32 = 0
+            guard MIDIEndpointGetEntity(endpoint, &entity) == noErr, entity != 0,
+                  MIDIEntityGetDevice(entity, &device) == noErr, device != 0 else { return false }
+            MIDIObjectGetIntegerProperty(device, kMIDIPropertyOffline, &offline)
+            return offline == 0
+        }.count
     }
 }
 
