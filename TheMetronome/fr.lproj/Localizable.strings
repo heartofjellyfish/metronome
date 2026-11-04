@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "AUDIO INTERROMPU";
 "AUDIO OUTPUT" = "SORTIE AUDIO";
 "Accented sound" = "Son accentué";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "Après le jumelage, ouvrez Assigner les commandes. Les touches enregistrées ne confirment pas une connexion active.";
 "All sounds" = "Tous les sons";
 "Assign controls" = "Commandes";
 "Assigned. Tap the key name to reassign." = "Associé. Touchez le nom de la touche pour modifier.";

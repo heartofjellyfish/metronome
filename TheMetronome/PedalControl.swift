@@ -88,10 +88,8 @@ struct PedalMIDIParser {
 final class PedalControl: ObservableObject {
     @Published private(set) var bindings: [PedalAction: PedalBinding] = [:]
     @Published private(set) var learning: PedalAction?
-    @Published private(set) var midiSources = 0
-    @Published private(set) var keyboardConnected = false
-    @Published private(set) var physicalMIDISources = 0
-    var inputConnected: Bool { keyboardConnected || physicalMIDISources > 0 }
+    // GCKeyboard merges physical and virtual keyboards. MIDI endpoints can be
+    // virtual or wired. Neither is evidence that a Bluetooth pedal is connected.
     @Published var problem: String?
     var perform: ((PedalAction) -> Void)?
     private var gate = PedalGate()
@@ -100,6 +98,8 @@ final class PedalControl: ObservableObject {
     private var port = MIDIPortRef()
     private var sources = Set<MIDIEndpointRef>()
     private var parsers: [Int32: PedalMIDIParser] = [:]
+    private weak var attachedKeyboard: GCKeyboard?
+    private var activeMIDISourceIDs = Set<Int32>()
     private var editing = false
     private let defaults: UserDefaults
 
@@ -117,11 +117,15 @@ final class PedalControl: ObservableObject {
         gate.bindings = bindings
         for name in [NSNotification.Name.GCKeyboardDidConnect, .GCKeyboardDidDisconnect, UIApplication.didBecomeActiveNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                Task { @MainActor in self?.gate.clearHeld(); self?.attachKeyboard() }
+                Task { @MainActor in
+                    self?.resetInputSession()
+                    self?.attachKeyboard()
+                    self?.refreshSources()
+                }
             })
         }
-        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.cancelLearning(); self?.gate.clearHeld() }
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.resetInputSession() }
         })
         for name in [UITextField.textDidBeginEditingNotification, UITextView.textDidBeginEditingNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in Task { @MainActor in self?.editing = true } })
@@ -144,6 +148,12 @@ final class PedalControl: ObservableObject {
         for observer in observers { NotificationCenter.default.removeObserver(observer) }
         if port != 0 { MIDIPortDispose(port) }
         if client != 0 { MIDIClientDispose(client) }
+    }
+    /// Invalidate transient input on device/lifecycle changes, preserving saved mappings.
+    func resetInputSession() {
+        cancelLearning()
+        gate.clearHeld()
+        parsers.removeAll()
     }
     func learn(_ action: PedalAction) { gate.clearHeld(); gate.learning = action; learning = action }
     func cancelLearning() { gate.learning = nil; learning = nil }
@@ -170,8 +180,9 @@ final class PedalControl: ObservableObject {
         return assigned
     }
     private func attachKeyboard() {
-        keyboardConnected = GCKeyboard.coalesced != nil
-        GCKeyboard.coalesced?.keyboardInput?.keyChangedHandler = { [weak self] _, _, key, down in
+        attachedKeyboard?.keyboardInput?.keyChangedHandler = nil
+        attachedKeyboard = GCKeyboard.coalesced
+        attachedKeyboard?.keyboardInput?.keyChangedHandler = { [weak self] _, _, key, down in
             Task { @MainActor in
                 guard let self, UIApplication.shared.applicationState == .active, !self.editing else { return }
                 let code = key.rawValue
@@ -205,29 +216,39 @@ final class PedalControl: ObservableObject {
         if result != noErr { MIDIClientDispose(client); client = 0; problem = L10n.text("Could not connect MIDI. Try again."); return }
         refreshSources()
     }
-    private func receiveMIDI(_ bytes: [UInt8], source: Int32) {
+    func receiveMIDI(_ bytes: [UInt8], source: Int32) {
+        guard activeMIDISourceIDs.contains(source) else { return }
         var parser = parsers[source] ?? PedalMIDIParser()
         let events = parser.feed(bytes, source: source); parsers[source] = parser
         for (input, down) in events { receive(input, down: down) }
     }
+    func updateMIDISources(_ identifiers: Set<Int32>) {
+        guard identifiers != activeMIDISourceIDs else { return }
+        resetInputSession()
+        activeMIDISourceIDs = identifiers
+    }
     private func refreshSources() {
         guard port != 0 else { return }
-        let current = Set((0..<MIDIGetNumberOfSources()).map { MIDIGetSource($0) }.filter { $0 != 0 })
+        let current = Set((0..<MIDIGetNumberOfSources()).map { MIDIGetSource($0) }.filter { endpoint in
+            guard endpoint != 0 else { return false }
+            var offline: Int32 = 1
+            // Do not treat an unreadable property as a successful connection.
+            return MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyOffline, &offline) == noErr && offline == 0
+        })
         for source in sources.subtracting(current) { MIDIPortDisconnectSource(port, source) }
         var connected = sources.intersection(current)
         for source in current.subtracting(sources) {
             if MIDIPortConnectSource(port, source, UnsafeMutableRawPointer(bitPattern: UInt(source))) == noErr { connected.insert(source) }
             else { problem = L10n.text("Could not connect MIDI. Try again.") }
         }
-        if sources != connected { gate.clearHeld(); parsers.removeAll() }
-        sources = connected; midiSources = connected.count
-        physicalMIDISources = connected.filter { endpoint in
-            var entity = MIDIEntityRef(); var device = MIDIDeviceRef(); var offline: Int32 = 0
-            guard MIDIEndpointGetEntity(endpoint, &entity) == noErr, entity != 0,
-                  MIDIEntityGetDevice(entity, &device) == noErr, device != 0 else { return false }
-            MIDIObjectGetIntegerProperty(device, kMIDIPropertyOffline, &offline)
-            return offline == 0
-        }.count
+        if sources != connected { resetInputSession() }
+        sources = connected
+        updateMIDISources(Set(connected.compactMap { endpoint in
+            var identifier: Int32 = 0
+            guard MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &identifier) == noErr,
+                  identifier != 0 else { return nil }
+            return identifier
+        }))
     }
 }
 

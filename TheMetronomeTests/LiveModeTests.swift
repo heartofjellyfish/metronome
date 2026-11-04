@@ -3,6 +3,77 @@ import AVFoundation
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
+    @MainActor func testDisconnectDuringRebindPreservesSavedKeyAndClearsHeldPress() {
+        let defaults = UserDefaults(suiteName: "PedalDisconnectTests")!
+        defaults.removePersistentDomain(forName: "PedalDisconnectTests")
+        defer { defaults.removePersistentDomain(forName: "PedalDisconnectTests") }
+        let pedal = PedalControl(defaults: defaults)
+        let key = PedalBinding(kind: .keyboard, code: 40, label: "RETURN")
+        pedal.learn(.toggle)
+        XCTAssertTrue(pedal.receive(key, down: true, at: 0))
+        pedal.learn(.toggle)
+        pedal.resetInputSession()
+        XCTAssertNil(pedal.learning)
+        XCTAssertEqual(pedal.bindings[.toggle], key)
+        var actions: [PedalAction] = []
+        pedal.perform = { actions.append($0) }
+        // Reconnect without an old key-up must not leave the pedal stuck.
+        XCTAssertTrue(pedal.receive(key, down: true, at: 1))
+        XCTAssertEqual(actions, [.toggle])
+        pedal.resetInputSession()
+        XCTAssertEqual(pedal.bindings[.toggle], key)
+    }
+    @MainActor func testMIDIDisconnectRejectsQueuedEventsAndReconnectNeedsFreshMessage() {
+        let defaults = UserDefaults(suiteName: "PedalMIDILifecycleTests")!
+        defaults.removePersistentDomain(forName: "PedalMIDILifecycleTests")
+        defer { defaults.removePersistentDomain(forName: "PedalMIDILifecycleTests") }
+        let pedal = PedalControl(defaults: defaults)
+        pedal.updateMIDISources([12])
+        pedal.learn(.toggle)
+        pedal.receiveMIDI([0x90, 60, 100], source: 12)
+        XCTAssertEqual(pedal.bindings[.toggle]?.source, 12)
+        var actions: [PedalAction] = []
+        pedal.perform = { actions.append($0) }
+        pedal.learn(.toggle)
+        pedal.updateMIDISources([])
+        XCTAssertNil(pedal.learning)
+        pedal.receiveMIDI([0x90, 60, 100], source: 12)
+        XCTAssertTrue(actions.isEmpty) // queued input after disconnection
+        XCTAssertNotNil(pedal.bindings[.toggle])
+        pedal.updateMIDISources([12])
+        pedal.receiveMIDI([0x90, 60], source: 12) // partial packet
+        pedal.updateMIDISources([])
+        pedal.updateMIDISources([12])
+        pedal.receiveMIDI([100], source: 12)
+        XCTAssertTrue(actions.isEmpty) // no running status carried across sessions
+        pedal.receiveMIDI([0x90, 60, 100], source: 99)
+        XCTAssertTrue(actions.isEmpty) // unknown source
+        pedal.receiveMIDI([0x90, 60, 100], source: 12)
+        XCTAssertEqual(actions, [.toggle])
+    }
+    @MainActor func testSameMIDITopologyDoesNotCancelLearningButSourceReplacementDoes() {
+        let defaults = UserDefaults(suiteName: "PedalTopologyTests")!
+        defer { defaults.removePersistentDomain(forName: "PedalTopologyTests") }
+        let pedal = PedalControl(defaults: defaults)
+        pedal.updateMIDISources([12]); pedal.learn(.tap)
+        pedal.updateMIDISources([12]); XCTAssertEqual(pedal.learning, .tap)
+        pedal.updateMIDISources([13]); XCTAssertNil(pedal.learning)
+        XCTAssertTrue(pedal.bindings.isEmpty)
+    }
+    @MainActor func testLeavingForegroundCancelsLearningWithoutDeletingAssignment() async throws {
+        let defaults = UserDefaults(suiteName: "PedalForegroundTests")!
+        defaults.removePersistentDomain(forName: "PedalForegroundTests")
+        defer { defaults.removePersistentDomain(forName: "PedalForegroundTests") }
+        let pedal = PedalControl(defaults: defaults)
+        let key = PedalBinding(kind: .keyboard, code: 44, label: "SPACE")
+        pedal.learn(.toggle); pedal.receive(key, down: true, at: 0)
+        pedal.learn(.next)
+        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertNil(pedal.learning)
+        XCTAssertEqual(pedal.bindings[.toggle], key)
+        XCTAssertNil(pedal.bindings[.next])
+    }
     func testLearnConsumesPressRebindAndHeldKeyDoesNotRepeat() {
         var gate = PedalGate()
         let key = PedalBinding(kind: .keyboard, code: 40, label: "RETURN")

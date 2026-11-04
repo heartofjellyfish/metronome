@@ -1,6 +1,29 @@
 import XCTest
 
 final class LiveModeUITests: XCTestCase {
+    func testUnpairedSetupDoesNotAutoAdvanceAndBackgroundCancelsLearning() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=pedal", "--pedal-ui-test"]
+        app.launch()
+        // The simulator exposes a GCKeyboard even without a Bluetooth pedal.
+        // This used to incorrectly mark the tab connected and navigate away.
+        XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["pedal-toggle"].exists)
+        XCTAssertFalse(app.images["checkmark"].exists)
+        capture(app, "Unpaired setup")
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 5))
+        app.buttons["pedal-tab-bind"].tap()
+        app.buttons["pedal-toggle"].tap()
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learning")
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
+        app.buttons["pedal-tab-connect"].tap()
+        XCTAssertTrue(app.buttons["pedal-midi"].exists)
+        XCTAssertFalse(app.images["checkmark"].exists)
+    }
     func testSixActionsLearningCancellationAndPlaybackRemainAccessible() {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -66,6 +89,8 @@ final class LiveModeUITests: XCTestCase {
             capture(app, "Preparation — \(language)")
             app.swipeDown(); app.buttons["pedal-preparation"].tap()
             app.buttons["pedal-tab-connect"].tap()
+            XCTAssertFalse(app.images["checkmark"].exists)
+            XCTAssertTrue(app.buttons["pedal-midi"].exists)
             capture(app, "Connection — \(language)")
             app.terminate()
         }

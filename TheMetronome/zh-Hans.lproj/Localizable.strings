@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "声音已中断";
 "AUDIO OUTPUT" = "音频输出";
 "Accented sound" = "重音";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "配对后，打开“绑定按键”。已保存的按键不代表踏板在线。";
 "All sounds" = "全部音色";
 "Assign controls" = "绑定按键";
 "Assigned. Tap the key name to reassign." = "已绑定。点键名可重新绑定。";

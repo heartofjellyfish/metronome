@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "音声が中断されました";
 "AUDIO OUTPUT" = "オーディオ出力";
 "Accented sound" = "アクセント音";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "ペアリング後、「操作を割り当て」を開いてください。保存済みのキーは接続中を意味しません。";
 "All sounds" = "すべてのサウンド";
 "Assign controls" = "操作の割り当て";
 "Assigned. Tap the key name to reassign." = "割り当て済み。キー名をタップして変更できます。";

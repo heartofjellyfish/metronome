@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "AUDIO UNTERBROCHEN";
 "AUDIO OUTPUT" = "AUDIOAUSGABE";
 "Accented sound" = "Akzentuierter Klang";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "Nach dem Koppeln Tasten zuweisen öffnen. Gespeicherte Tasten bestätigen keine aktive Verbindung.";
 "All sounds" = "Alle Klänge";
 "Assign controls" = "Tasten zuweisen";
 "Assigned. Tap the key name to reassign." = "Zugewiesen. Tippe zum Ändern auf den Tastennamen.";

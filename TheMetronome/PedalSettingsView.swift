@@ -11,7 +11,6 @@ struct PedalSettingsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var keyWidth: CGFloat = 138
     private let groups: [[PedalAction]] = [[.toggle, .tap], [.previous, .next], [.slower, .faster]]
-    private let green = Color(red: 0.28, green: 0.57, blue: 0.34)
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 16) {
@@ -57,10 +56,7 @@ struct PedalSettingsView: View {
             }
         }.foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light).accessibilityAddTraits(.isModal)
-            .onAppear { bindingTab = !pedal.bindings.isEmpty || pedal.inputConnected }
-            .onChange(of: pedal.inputConnected) { _, connected in
-                if connected { midiPicker = false; bindingTab = true }
-            }
+            .onAppear { bindingTab = !pedal.bindings.isEmpty }
             .onDisappear { pedal.cancelLearning() }
             .sheet(isPresented: $midiPicker) {
                 NavigationStack {
@@ -77,7 +73,6 @@ struct PedalSettingsView: View {
         Button(action: action) {
             VStack(spacing: 12) {
                 HStack(spacing: 5) {
-                    if id == "pedal-tab-connect" && pedal.inputConnected { Image(systemName: "checkmark").foregroundStyle(green) }
                     Text(title).font(.body.weight(selected ? .semibold : .regular)).foregroundStyle(selected ? p.ink : p.muted)
                 }.frame(minHeight: 32)
                 Rectangle().fill(selected ? InstrumentPalette.amber : .clear).frame(height: 2)
@@ -92,7 +87,7 @@ struct PedalSettingsView: View {
             Button { pedal.problem = nil; pedal.enableMIDI(); midiPicker = true } label: {
                 Text("Connect Bluetooth pedal").font(.body.weight(.medium)).frame(maxWidth: .infinity, minHeight: 58)
             }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 14)).accessibilityIdentifier("pedal-midi")
-            Text("Choose your pedal from the device list.").font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
+            Text("After pairing, open Assign controls. Saved keys do not indicate a live connection.").font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     private var bindingList: some View {

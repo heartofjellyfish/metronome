@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "AUDIO INTERRUMPIDO";
 "AUDIO OUTPUT" = "SALIDA DE AUDIO";
 "Accented sound" = "Sonido acentuado";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "Después de emparejar, abre Asignar controles. Las teclas guardadas no indican una conexión activa.";
 "All sounds" = "Todos los sonidos";
 "Assign controls" = "Asignar controles";
 "Assigned. Tap the key name to reassign." = "Asignado. Toca el nombre de la tecla para cambiarla.";

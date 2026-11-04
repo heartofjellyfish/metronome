@@ -21,6 +21,7 @@
 "AUDIO INTERRUPTED" = "오디오 중단됨";
 "AUDIO OUTPUT" = "오디오 출력";
 "Accented sound" = "강세음";
+"After pairing, open Assign controls. Saved keys do not indicate a live connection." = "페어링 후 버튼 할당을 여세요. 저장된 키는 연결 상태를 나타내지 않습니다.";
 "All sounds" = "모든 사운드";
 "Assign controls" = "버튼 지정";
 "Assigned. Tap the key name to reassign." = "지정됐습니다. 키 이름을 탭하면 변경합니다.";
