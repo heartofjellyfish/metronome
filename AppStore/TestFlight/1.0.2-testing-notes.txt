@@ -1,11 +1,11 @@
-WHAT TO TEST — 1.0.2 (4)
+WHAT TO TEST — 1.0.2 (5)
 
 Try the new pedal controls in Settings > Live Mode.
 
-Build 4 removes a misleading connection check. Saved keys indicate assignments, not a live Bluetooth connection.
+Build 5 refreshes the Settings icons and prevents assigning controls before a usable pedal input is available. Saved keys are retained when disconnected; they are not proof of a live Bluetooth connection.
 
 1. Connect your pedal. Keyboard/page-turning pedals pair in iPhone Settings > Bluetooth. Bluetooth MIDI pedals connect through the in-app picker.
-2. Assign any of six actions: play/stop, tap tempo, previous/next saved preset, BPM down/up. Tap Learn, then press a pedal key. Tap an assigned key name to change it; tap again while learning to cancel.
+2. For keyboard/media pedals, press once on the setup screen to verify input. This first press should not start playback. Until input is ready, assignment buttons should stay disabled. Assign any of six actions: play/stop, tap tempo, previous/next saved preset, BPM down/up. Tap Learn, then press a pedal key. Tap an assigned key name to change it; tap again while learning to cancel.
 3. Try repeated presses, reconnecting your pedal, and reopening the app. Save two presets to test previous/next.
 4. Check playback in the background and with the screen locked. Keyboard-mode pedals only control the app while it is on screen. MIDI and media-mode behavior depends on the controller and iOS; please report what works on yours.
 5. During a practice session, check what happens after a call or alarm. iOS may interrupt audio. Automatic recovery is conditional on iOS allowing it; this beta does not promise uninterrupted live-performance audio.
