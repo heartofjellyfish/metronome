@@ -1,6 +1,38 @@
 import XCTest
 
 final class LiveModeUITests: XCTestCase {
+    func testSettingsTilesAndBluetoothDisplay() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--pedal-ui-test"]
+        app.launch()
+        XCTAssertTrue(app.buttons["settings"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["pedal-display-status"].exists)
+        capture(app, "Home disconnected")
+        app.buttons["settings"].tap()
+        capture(app, "Settings physical tiles")
+        for identifier in ["practice", "settings-presets", "settings-pedal", "settings-pedal"] {
+            app.buttons[identifier].tap()
+            XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3))
+            app.buttons["close-panel"].tap()
+        }
+        app.buttons["theme-dark"].tap()
+        capture(app, "Settings physical tiles dark")
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--pedal-ui-test", "--pedal-fixture-bluetooth"]
+        app.launch()
+        let status = app.buttons["pedal-display-status"]
+        XCTAssertTrue(status.waitForExistence(timeout: 8))
+        capture(app, "Home Bluetooth fixture")
+        status.tap()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        app.buttons["transport"].tap()
+        status.tap()
+        app.buttons["close-panel"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, "Stop metronome")
+        app.buttons["transport"].tap()
+    }
     func testUnpairedSetupDoesNotAutoAdvanceAndBackgroundCancelsLearning() {
         continueAfterFailure = false
         let app = XCUIApplication()

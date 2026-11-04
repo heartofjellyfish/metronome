@@ -53,19 +53,11 @@ struct SettingsView: View {
             SoundDynamicsControl(model: model).frame(width: 359).position(x: 206.5, y: 418)
 
             SectionLabel(text: "03 MORE", p: p).frame(width: 359).position(x: 206.5, y: 487)
-            HStack(spacing: 17) {
-                navigationKey("PRACTICE", subtitle: "COUNT IN · RAMP · GAP", route: .practice)
-                navigationKey("PRESETS", subtitle: "SAVE A RHYTHM", route: .presets)
-            }.frame(width: 359).position(x: 206.5, y: 555)
-
-            Button { present(.pedal) } label: {
-                HStack {
-                    Text("LIVE MODE").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.7)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 10))
-                }.padding(.horizontal, 15).frame(height: 44)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).frame(width: 359)
-                .position(x: 206.5, y: 624).accessibilityIdentifier("settings-pedal")
+            HStack(spacing: 12) {
+                navigationKey("PRACTICE", icon: .practice, route: .practice)
+                navigationKey("PRESETS", icon: .presets, route: .presets)
+                navigationKey("LIVE MODE", icon: .pedal, route: .pedal)
+            }.frame(width: 359).position(x: 206.5, y: 565)
 
             SectionLabel(text: "04 VIEW", p: p).frame(width: 359).position(x: 206.5, y: 668)
             HStack {
@@ -74,19 +66,16 @@ struct SettingsView: View {
             }.frame(width: 359).position(x: 206.5, y: 714)
         }
     }
-    private func navigationKey(_ title: String, subtitle: String, route: InstrumentPanelKind) -> some View {
+    private func navigationKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
         Button { model.endSoundPreview(); present(route) } label: {
-            VStack(alignment: .leading, spacing: 13) {
-                HStack {
-                    Text(L10n.text(title)).technical(12, spacing: 1.2).lineLimit(1).minimumScaleFactor(0.75)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .medium))
-                }
-                Text(L10n.text(subtitle)).technical(8, spacing: 0.4).lineLimit(2).minimumScaleFactor(0.85).foregroundStyle(p.muted)
-            }.padding(15).frame(maxWidth: .infinity).frame(height: 81)
+            VStack(spacing: 8) {
+                SettingsIllustration(kind: icon).frame(width: 80, height: 64)
+                Text(L10n.text(title)).technical(11, spacing: 0.6)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }.frame(maxWidth: .infinity).frame(height: 114)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-            .accessibilityLabel(L10n.text(title == "PRESETS" ? "Saved presets" : "Practice settings"))
-            .accessibilityIdentifier(route == .presets ? "settings-presets" : route.rawValue)
+            .accessibilityLabel(L10n.text(title == "PRESETS" ? "Saved presets" : title == "PRACTICE" ? "Practice settings" : "LIVE MODE"))
+            .accessibilityIdentifier(route == .presets ? "settings-presets" : route == .pedal ? "settings-pedal" : route.rawValue)
     }
     private var skinKeys: some View {
         HStack(spacing: 9) {

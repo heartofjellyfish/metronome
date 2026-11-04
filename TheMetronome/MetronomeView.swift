@@ -67,6 +67,9 @@ struct MetronomeView: View {
             }.buttonStyle(.plain).position(x: 207, y: 114)
                 .accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("tempoDisplay")
 
+            PedalDisplayStatus(pedal: model.pedal, p: p) { present(.pedal) }
+                .frame(width: 44, height: 44).position(x: 365, y: 65)
+
             SectionLabel(text: "01  PULSE", p: p).frame(width: 360).position(x: 207, y: 206)
             beatKeys.frame(width: 360, height: 86).position(x: 207, y: 269)
 

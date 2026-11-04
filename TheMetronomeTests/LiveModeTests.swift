@@ -3,6 +3,34 @@ import AVFoundation
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
+    @MainActor func testBluetoothIndicatorRequiresMappedOnlineBluetoothSource() {
+        let defaults = UserDefaults(suiteName: "PedalBluetoothStatusTests")!
+        defaults.removePersistentDomain(forName: "PedalBluetoothStatusTests")
+        defer { defaults.removePersistentDomain(forName: "PedalBluetoothStatusTests") }
+        let pedal = PedalControl(defaults: defaults)
+        pedal.updateMIDISources([12], bluetooth: [12])
+        XCTAssertFalse(pedal.bluetoothConnected) // unrelated Bluetooth MIDI device
+        pedal.learn(.toggle)
+        pedal.receiveMIDI([0x90,60,100],source: 12)
+        XCTAssertTrue(pedal.bluetoothConnected)
+        XCTAssertEqual(pedal.pressRevision,1)
+        pedal.receiveMIDI([0x90,60,100],source: 12)
+        XCTAssertEqual(pedal.pressRevision,1) // held key must not pulse repeatedly
+        pedal.updateMIDISources([12])
+        XCTAssertFalse(pedal.bluetoothConnected) // wired/unknown transport
+        pedal.updateMIDISources([12],bluetooth: [12])
+        XCTAssertTrue(pedal.bluetoothConnected)
+        pedal.updateMIDISources([],bluetooth: [12])
+        XCTAssertFalse(pedal.bluetoothConnected) // stale Bluetooth metadata
+        pedal.receiveMIDI([0x90,60,100],source: 12)
+        XCTAssertEqual(pedal.pressRevision,1)
+        pedal.updateMIDISources([12],bluetooth: [12])
+        pedal.clearAll()
+        XCTAssertFalse(pedal.bluetoothConnected)
+        pedal.learn(.toggle)
+        pedal.receive(PedalBinding(kind: .keyboard,code: 40,label: "RETURN"),down: true)
+        XCTAssertFalse(pedal.bluetoothConnected) // HID cannot establish Bluetooth identity
+    }
     @MainActor func testDisconnectDuringRebindPreservesSavedKeyAndClearsHeldPress() {
         let defaults = UserDefaults(suiteName: "PedalDisconnectTests")!
         defaults.removePersistentDomain(forName: "PedalDisconnectTests")

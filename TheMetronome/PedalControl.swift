@@ -90,6 +90,9 @@ final class PedalControl: ObservableObject {
     @Published private(set) var learning: PedalAction?
     // GCKeyboard merges physical and virtual keyboards. MIDI endpoints can be
     // virtual or wired. Neither is evidence that a Bluetooth pedal is connected.
+    @Published private(set) var bluetoothConnected = false
+    @Published private(set) var pressRevision = 0
+    private var bluetoothMIDISourceIDs = Set<Int32>()
     @Published var problem: String?
     var perform: ((PedalAction) -> Void)?
     private var gate = PedalGate()
@@ -141,6 +144,15 @@ final class PedalControl: ObservableObject {
             receive(PedalBinding(kind: .keyboard, code: 40, label: "RETURN"), down: false)
         }
         #endif
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--pedal-ui-test"),
+           ProcessInfo.processInfo.arguments.contains("--pedal-fixture-bluetooth") {
+            updateMIDISources([120], bluetooth: [120])
+            learn(.toggle)
+            receiveMIDI([0x90, 60, 100, 0x80, 60, 0], source: 120)
+            return
+        }
+        #endif
         // CoreMIDI starts only after opt-in, never on the first launch path.
         if bindings.values.contains(where: { $0.kind == .midiCC || $0.kind == .midiNote || $0.kind == .midiProgram }) { Task { @MainActor [weak self] in self?.enableMIDI() } }
     }
@@ -163,13 +175,16 @@ final class PedalControl: ObservableObject {
     func clearAll() { cancelLearning(); gate = PedalGate(); persist() }
     private func persist() {
         bindings = gate.bindings
+        refreshBluetoothStatus()
         if let data = try? JSONEncoder().encode(bindings) { defaults.set(data, forKey: "pedalBindings") }
     }
     @discardableResult func receive(_ input: PedalBinding, down: Bool, at time: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
         switch gate.receive(input, down: down, at: time) {
         case .ignored: return false
-        case .learned: learning = nil; persist(); return true
-        case .perform(let action): perform?(action); return true
+        case .learned:
+            learning = nil; persist(); noteBluetoothPress(input); return true
+        case .perform(let action):
+            noteBluetoothPress(input); perform?(action); return true
         }
     }
     /// Media presses have no release callback. Keep their debounce window, but release the latch.
@@ -222,10 +237,22 @@ final class PedalControl: ObservableObject {
         let events = parser.feed(bytes, source: source); parsers[source] = parser
         for (input, down) in events { receive(input, down: down) }
     }
-    func updateMIDISources(_ identifiers: Set<Int32>) {
-        guard identifiers != activeMIDISourceIDs else { return }
-        resetInputSession()
+    func updateMIDISources(_ identifiers: Set<Int32>, bluetooth: Set<Int32> = []) {
+        if identifiers != activeMIDISourceIDs { resetInputSession() }
         activeMIDISourceIDs = identifiers
+        bluetoothMIDISourceIDs = bluetooth.intersection(identifiers)
+        refreshBluetoothStatus()
+    }
+    private func refreshBluetoothStatus() {
+        // A live Bluetooth transport AND an assignment to that source are required.
+        // HID keyboards/media commands intentionally cannot assert Bluetooth identity.
+        bluetoothConnected = bindings.values.contains {
+            [.midiCC, .midiNote, .midiProgram].contains($0.kind) && bluetoothMIDISourceIDs.contains($0.source)
+        }
+    }
+    private func noteBluetoothPress(_ input: PedalBinding) {
+        if bluetoothConnected && bluetoothMIDISourceIDs.contains(input.source)
+            && [.midiCC, .midiNote, .midiProgram].contains(input.kind) { pressRevision &+= 1 }
     }
     private func refreshSources() {
         guard port != 0 else { return }
@@ -243,12 +270,23 @@ final class PedalControl: ObservableObject {
         }
         if sources != connected { resetInputSession() }
         sources = connected
-        updateMIDISources(Set(connected.compactMap { endpoint in
+        var identifiers = Set<Int32>()
+        var bluetooth = Set<Int32>()
+        for endpoint in connected {
             var identifier: Int32 = 0
             guard MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &identifier) == noErr,
-                  identifier != 0 else { return nil }
-            return identifier
-        }))
+                  identifier != 0 else { continue }
+            identifiers.insert(identifier)
+            // Read the owning system driver, never the user-editable device name.
+            // Unknown drivers fail closed rather than guessing from “Bluetooth” text.
+            var owner: Unmanaged<CFString>?
+            if MIDIObjectGetStringProperty(endpoint, kMIDIPropertyDriverOwner, &owner) == noErr,
+               let name = owner?.takeRetainedValue() as String?,
+               name == "com.apple.AppleMIDIBluetoothDriver" {
+                bluetooth.insert(identifier)
+            }
+        }
+        updateMIDISources(identifiers, bluetooth: bluetooth)
     }
 }
 
