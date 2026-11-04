@@ -3,6 +3,41 @@ import AVFoundation
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
+    @MainActor func testInputVerificationUnlocksWithoutPerformingAndResets() {
+        let defaults = UserDefaults(suiteName: "PedalVerificationTests")!
+        defaults.removePersistentDomain(forName: "PedalVerificationTests")
+        defer { defaults.removePersistentDomain(forName: "PedalVerificationTests") }
+        let pedal = PedalControl(defaults: defaults)
+        let key = PedalBinding(kind: .keyboard, code: 40, label: "RETURN")
+        XCTAssertFalse(pedal.inputAvailable)
+        pedal.updateMIDISources([12])
+        XCTAssertFalse(pedal.inputAvailable) // virtual / unknown MIDI
+        pedal.updateMIDISources([12], physical: [12])
+        XCTAssertTrue(pedal.inputAvailable) // first assignment possible before any mapping
+        pedal.updateMIDISources([])
+        XCTAssertFalse(pedal.inputAvailable)
+        pedal.learn(.toggle); pedal.receive(key,down: true,at: 0)
+        pedal.resetInputSession()
+        var actions = 0
+        pedal.perform = { _ in actions += 1 }
+        pedal.setupVisible = true
+        XCTAssertFalse(pedal.receive(key,down: true,at: 1))
+        XCTAssertTrue(pedal.inputAvailable)
+        XCTAssertFalse(pedal.receive(key,down: true,at: 2)) // held verification press
+        XCTAssertEqual(actions,0)
+        pedal.receive(key,down: false,at: 3)
+        XCTAssertTrue(pedal.receive(key,down: true,at: 4))
+        XCTAssertEqual(actions,1)
+        pedal.learn(.tap)
+        pedal.resetInputSession()
+        XCTAssertFalse(pedal.inputAvailable)
+        XCTAssertNil(pedal.learning)
+        XCTAssertNotNil(pedal.bindings[.toggle])
+        pedal.clearAll()
+        XCTAssertTrue(pedal.media(0, label: "PLAY / PAUSE"))
+        XCTAssertTrue(pedal.inputAvailable)
+        XCTAssertEqual(actions, 1) // unassigned media verification is consumed too
+    }
     @MainActor func testBluetoothIndicatorRequiresMappedOnlineBluetoothSource() {
         let defaults = UserDefaults(suiteName: "PedalBluetoothStatusTests")!
         defaults.removePersistentDomain(forName: "PedalBluetoothStatusTests")

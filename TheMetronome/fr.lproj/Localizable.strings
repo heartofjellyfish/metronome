@@ -206,3 +206,7 @@
 "weak" = "faible";
 
 "Bluetooth pedal connected" = "Pédale Bluetooth connectée";
+
+"Connect your pedal, then press it once." = "Connectez votre pédale, puis appuyez dessus une fois.";
+
+"After pairing, press your pedal once, then open Assign controls." = "Après le jumelage, appuyez une fois sur la pédale, puis ouvrez l’attribution des commandes.";

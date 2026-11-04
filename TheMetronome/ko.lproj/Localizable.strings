@@ -206,3 +206,7 @@
 "weak" = "약박";
 
 "Bluetooth pedal connected" = "Bluetooth 페달 연결됨";
+
+"Connect your pedal, then press it once." = "페달을 연결한 다음 한 번 밟으세요.";
+
+"After pairing, press your pedal once, then open Assign controls." = "페어링 후 페달을 한 번 밟고 동작 할당을 여세요.";

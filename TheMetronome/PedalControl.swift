@@ -90,6 +90,11 @@ final class PedalControl: ObservableObject {
     @Published private(set) var learning: PedalAction?
     // GCKeyboard merges physical and virtual keyboards. MIDI endpoints can be
     // virtual or wired. Neither is evidence that a Bluetooth pedal is connected.
+    @Published private(set) var inputAvailable = false
+    private var verifiedDirectInput = false
+    private var physicalMIDISourceIDs = Set<Int32>()
+    var setupVisible = false
+    private var verificationPress: PedalBinding?
     @Published private(set) var bluetoothConnected = false
     @Published private(set) var pressRevision = 0
     private var bluetoothMIDISourceIDs = Set<Int32>()
@@ -153,6 +158,12 @@ final class PedalControl: ObservableObject {
             return
         }
         #endif
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--pedal-ui-test"),
+           ProcessInfo.processInfo.arguments.contains("--pedal-fixture-input") {
+            updateMIDISources([121], physical: [121])
+        }
+        #endif
         // CoreMIDI starts only after opt-in, never on the first launch path.
         if bindings.values.contains(where: { $0.kind == .midiCC || $0.kind == .midiNote || $0.kind == .midiProgram }) { Task { @MainActor [weak self] in self?.enableMIDI() } }
     }
@@ -164,6 +175,9 @@ final class PedalControl: ObservableObject {
     /// Invalidate transient input on device/lifecycle changes, preserving saved mappings.
     func resetInputSession() {
         cancelLearning()
+        verifiedDirectInput = false
+        verificationPress = nil
+        refreshInputAvailability()
         gate.clearHeld()
         parsers.removeAll()
     }
@@ -179,6 +193,17 @@ final class PedalControl: ObservableObject {
         if let data = try? JSONEncoder().encode(bindings) { defaults.set(data, forKey: "pedalBindings") }
     }
     @discardableResult func receive(_ input: PedalBinding, down: Bool, at time: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
+        if verificationPress == input {
+            if !down { verificationPress = nil }
+            return false
+        }
+        let wasAvailable = inputAvailable
+        if down && (input.kind == .keyboard || input.kind == .media) {
+            verifiedDirectInput = true
+            refreshInputAvailability()
+        }
+        // The initial verification press in setup must not start playback or alter a binding.
+        if setupVisible && !wasAvailable && down { verificationPress = input; return false }
         switch gate.receive(input, down: down, at: time) {
         case .ignored: return false
         case .learned:
@@ -190,7 +215,7 @@ final class PedalControl: ObservableObject {
     /// Media presses have no release callback. Keep their debounce window, but release the latch.
     func media(_ code: Int, label: String) -> Bool {
         let input = PedalBinding(kind: .media, code: code, label: label)
-        let assigned = learning != nil || bindings.values.contains { $0.kind == .media && $0.code == code }
+        let assigned = setupVisible || learning != nil || bindings.values.contains { $0.kind == .media && $0.code == code }
         receive(input, down: true); receive(input, down: false)
         return assigned
     }
@@ -237,11 +262,16 @@ final class PedalControl: ObservableObject {
         let events = parser.feed(bytes, source: source); parsers[source] = parser
         for (input, down) in events { receive(input, down: down) }
     }
-    func updateMIDISources(_ identifiers: Set<Int32>, bluetooth: Set<Int32> = []) {
+    func updateMIDISources(_ identifiers: Set<Int32>, bluetooth: Set<Int32> = [], physical: Set<Int32> = []) {
         if identifiers != activeMIDISourceIDs { resetInputSession() }
         activeMIDISourceIDs = identifiers
         bluetoothMIDISourceIDs = bluetooth.intersection(identifiers)
+        physicalMIDISourceIDs = physical.union(bluetooth).intersection(identifiers)
+        refreshInputAvailability()
         refreshBluetoothStatus()
+    }
+    private func refreshInputAvailability() {
+        inputAvailable = verifiedDirectInput || !physicalMIDISourceIDs.isEmpty
     }
     private func refreshBluetoothStatus() {
         // A live Bluetooth transport AND an assignment to that source are required.
@@ -272,11 +302,18 @@ final class PedalControl: ObservableObject {
         sources = connected
         var identifiers = Set<Int32>()
         var bluetooth = Set<Int32>()
+        var physical = Set<Int32>()
         for endpoint in connected {
             var identifier: Int32 = 0
             guard MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &identifier) == noErr,
                   identifier != 0 else { continue }
             identifiers.insert(identifier)
+            var entity = MIDIEntityRef()
+            var device = MIDIDeviceRef()
+            if MIDIEndpointGetEntity(endpoint, &entity) == noErr, entity != 0,
+               MIDIEntityGetDevice(entity, &device) == noErr, device != 0 {
+                physical.insert(identifier)
+            }
             // Read the owning system driver, never the user-editable device name.
             // Unknown drivers fail closed rather than guessing from “Bluetooth” text.
             var owner: Unmanaged<CFString>?
@@ -286,7 +323,7 @@ final class PedalControl: ObservableObject {
                 bluetooth.insert(identifier)
             }
         }
-        updateMIDISources(identifiers, bluetooth: bluetooth)
+        updateMIDISources(identifiers, bluetooth: bluetooth, physical: physical)
     }
 }
 

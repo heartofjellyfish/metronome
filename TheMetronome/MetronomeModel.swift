@@ -228,7 +228,12 @@ final class MetronomeModel: ObservableObject {
         if !pedal.media(code, label: label) { fallback() }
     }
     func beginPedalLearning(_ action: PedalAction) {
-        guard !interrupted else { return }
+        guard pedal.inputAvailable, preparePedalInput() else { return }
+        pedal.learn(action)
+    }
+    /// Explicit setup opt-in lets media pedals send a verification press before assignment.
+    @discardableResult func preparePedalInput() -> Bool {
+        guard !interrupted else { return false }
         do {
             // Becoming the primary player allows iOS media buttons to reach us while learning.
             // No silent keep-alive audio and no first-screen audio work.
@@ -237,8 +242,8 @@ final class MetronomeModel: ObservableObject {
             try? session.setPrefersNoInterruptionsFromSystemAlerts(true)
             try session.setActive(true)
             updateNowPlaying()
-            pedal.learn(action)
-        } catch { self.error = error.localizedDescription }
+            return true
+        } catch { self.error = error.localizedDescription; return false }
     }
     func performPedal(_ action: PedalAction) {
         switch action {

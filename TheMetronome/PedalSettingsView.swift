@@ -32,6 +32,13 @@ struct PedalSettingsView: View {
                             Text(hint).font(.subheadline).foregroundStyle(p.muted)
                                 .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
                                 .accessibilityIdentifier("pedal-hint")
+                            if !pedal.inputAvailable {
+                                Button { bindingTab = false } label: {
+                                    Text("Connect pedal").font(.subheadline.weight(.medium))
+                                        .padding(.horizontal, 16).frame(height: 44)
+                                }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+                                    .accessibilityIdentifier("pedal-connect-from-bindings")
+                            }
                             Divider().overlay(p.edge.opacity(0.2))
                             HStack {
                                 Text("Before performing").font(.body.weight(.medium))
@@ -56,8 +63,8 @@ struct PedalSettingsView: View {
             }
         }.foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light).accessibilityAddTraits(.isModal)
-            .onAppear { bindingTab = !pedal.bindings.isEmpty }
-            .onDisappear { pedal.cancelLearning() }
+            .onAppear { pedal.setupVisible = true; bindingTab = !pedal.bindings.isEmpty }
+            .onDisappear { pedal.setupVisible = false; pedal.cancelLearning() }
             .sheet(isPresented: $midiPicker) {
                 NavigationStack {
                     VStack(spacing: 0) {
@@ -84,10 +91,10 @@ struct PedalSettingsView: View {
             PedalIllustration(p: p).frame(width: 110, height: 150).padding(.top, 25).padding(.bottom, 12).accessibilityHidden(true)
             Text("Turn on iPhone Bluetooth and put your pedal in pairing mode.")
                 .font(.body.weight(.medium)).frame(maxWidth: .infinity, alignment: .leading)
-            Button { pedal.problem = nil; pedal.enableMIDI(); midiPicker = true } label: {
+            Button { pedal.problem = nil; model.preparePedalInput(); pedal.enableMIDI(); midiPicker = true } label: {
                 Text("Connect Bluetooth pedal").font(.body.weight(.medium)).frame(maxWidth: .infinity, minHeight: 58)
             }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 14)).accessibilityIdentifier("pedal-midi")
-            Text("After pairing, open Assign controls. Saved keys do not indicate a live connection.").font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
+            Text("After pairing, press your pedal once, then open Assign controls.").font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     private var bindingList: some View {
@@ -109,15 +116,18 @@ struct PedalSettingsView: View {
         let binding = pedal.bindings[action]
         let caption = listening ? L10n.text("Learning") : (binding?.displayLabel ?? L10n.text("Learn"))
         return Button {
+            guard pedal.inputAvailable else { return }
             if listening { pedal.cancelLearning() } else { model.beginPedalLearning(action) }
         } label: {
             HStack(spacing: 8) {
-                BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion)
+                BindingLamp(listening: listening, assigned: binding != nil && pedal.inputAvailable, reduceMotion: reduceMotion)
                 Text(caption).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.horizontal, 10).padding(.vertical, 12)
                 .frame(width: min(keyWidth, 180)).frame(minHeight: 48)
         }.buttonStyle(PedalKeyStyle(p: p, held: listening))
+            .disabled(!pedal.inputAvailable)
+            .opacity(pedal.inputAvailable ? 1 : 0.45)
             .accessibilityIdentifier("pedal-\(action.rawValue)")
             .accessibilityLabel(action.title).accessibilityValue(caption)
             .accessibilityHint(listening ? L10n.text("Cancel") : L10n.text("Tap the key name to reassign."))
@@ -126,6 +136,7 @@ struct PedalSettingsView: View {
             }
     }
     private var hint: String {
+        if !pedal.inputAvailable { return L10n.text("Connect your pedal, then press it once.") }
         if let action = pedal.learning { return L10n.format("Press your pedal now to assign %@. Tap again to cancel.", action.title) }
         return L10n.text(pedal.bindings.isEmpty ? "Tap Learn, then press the pedal key you want to use." : "Assigned. Tap the key name to reassign.")
     }

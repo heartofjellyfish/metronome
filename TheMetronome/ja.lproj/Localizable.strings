@@ -206,3 +206,7 @@
 "weak" = "弱拍";
 
 "Bluetooth pedal connected" = "Bluetoothペダル接続済み";
+
+"Connect your pedal, then press it once." = "ペダルを接続して、一度踏んでください。";
+
+"After pairing, press your pedal once, then open Assign controls." = "ペアリング後にペダルを一度踏み、「操作の割り当て」を開いてください。";

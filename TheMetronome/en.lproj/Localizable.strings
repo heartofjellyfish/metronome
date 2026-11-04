@@ -206,3 +206,7 @@
 "weak" = "weak";
 
 "Bluetooth pedal connected" = "Bluetooth pedal connected";
+
+"Connect your pedal, then press it once." = "Connect your pedal, then press it once.";
+
+"After pairing, press your pedal once, then open Assign controls." = "After pairing, press your pedal once, then open Assign controls.";

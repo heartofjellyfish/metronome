@@ -10,6 +10,8 @@ final class LiveModeUITests: XCTestCase {
         XCTAssertFalse(app.buttons["pedal-display-status"].exists)
         capture(app, "Home disconnected")
         app.buttons["settings"].tap()
+        XCTAssertTrue(app.buttons["settings-pedal"].waitForExistence(timeout: 3))
+        Thread.sleep(forTimeInterval: 0.5)
         capture(app, "Settings physical tiles")
         for identifier in ["practice", "settings-presets", "settings-pedal", "settings-pedal"] {
             app.buttons[identifier].tap()
@@ -47,11 +49,11 @@ final class LiveModeUITests: XCTestCase {
         XCUIDevice.shared.press(.home); app.activate()
         XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 5))
         app.buttons["pedal-tab-bind"].tap()
-        app.buttons["pedal-toggle"].tap()
-        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learning")
-        XCUIDevice.shared.press(.home); app.activate()
-        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
+        for action in ["toggle", "tap", "next", "previous", "faster", "slower"] {
+            XCTAssertFalse(app.buttons["pedal-\(action)"].isEnabled)
+        }
+        capture(app, "Unpaired disabled assignments")
+        app.buttons["pedal-connect-from-bindings"].tap()
         app.buttons["pedal-tab-connect"].tap()
         XCTAssertTrue(app.buttons["pedal-midi"].exists)
         XCTAssertFalse(app.images["checkmark"].exists)
@@ -59,7 +61,7 @@ final class LiveModeUITests: XCTestCase {
     func testSixActionsLearningCancellationAndPlaybackRemainAccessible() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--pedal-ui-test"]
+        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--pedal-ui-test", "--pedal-fixture-input"]
         app.launch()
         let transport = app.buttons["transport"]
         XCTAssertTrue(transport.waitForExistence(timeout: 8))
@@ -107,7 +109,7 @@ final class LiveModeUITests: XCTestCase {
     func testLocalizedStatesAndRebindCancellationPreserveAssignment() {
         for language in ["zh-Hans", "de", "en"] {
             let app = XCUIApplication()
-            app.launchArguments = ["-AppleLanguages", "(\(language))", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound"]
+            app.launchArguments = ["-AppleLanguages", "(\(language))", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound", "--pedal-fixture-input"]
             app.launch()
             let key = app.buttons["pedal-toggle"]
             XCTAssertTrue(key.waitForExistence(timeout: 8))

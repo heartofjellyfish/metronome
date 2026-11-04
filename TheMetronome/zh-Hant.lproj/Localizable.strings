@@ -206,3 +206,7 @@
 "weak" = "弱拍";
 
 "Bluetooth pedal connected" = "藍牙踏板已連接";
+
+"Connect your pedal, then press it once." = "先連接踏板，再踩一下。";
+
+"After pairing, press your pedal once, then open Assign controls." = "配對後踩一下踏板，再開啟「綁定按鍵」。";
