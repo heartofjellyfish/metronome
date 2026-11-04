@@ -71,3 +71,5 @@ Verification: 11 logic tests + 3 UI tests passed on iPhone 17 Pro Max simulator 
 Debug build 1.0.2 (4) installed successfully on iPhone 14 Pro. Physical UI verification initially waited for unlock, then failed to initialize with “Authentication canceled. Canceled by user.” No physical UI assertions ran. No Bluetooth power-toggle, actual pedal reconnect, or live call/alarm claims are established by simulator tests. The previous build 3 was uploaded but was not submitted to external beta review.
 
 Release archive 1.0.2 (4) uploaded successfully through Xcode Organizer. External group setup/review submission is still pending: Chrome interaction was repeatedly interrupted by active tab changes. No external invitation link is available yet.
+
+External TestFlight submission completed 2026-11-03: build 1.0.2 (4), status Waiting for Review. Group Friends · Live Mode, public tester limit 10, automatically notify testers enabled. Invitation link was created and delivered privately in chat, not stored in this repository. Apple explicitly says testers cannot join until the group has an approved build. Build 3 was not added to this group.
