@@ -29,9 +29,17 @@ struct PerformanceView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(model.currentSong?.name ?? L10n.text("Setlists"))
-                                .font(.system(size: 25, weight: .semibold)).lineLimit(2)
-                                .accessibilityIdentifier("performance-song")
+                            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                                Text(model.currentSong?.name ?? L10n.text("Setlists"))
+                                    .font(.system(size: 25, weight: .semibold)).lineLimit(2)
+                                    .accessibilityIdentifier("performance-song")
+                                Spacer(minLength: 0)
+                                if let position, let list = model.activeSetlist {
+                                    Text("\(position + 1)/\(list.songs.count)")
+                                        .font(.system(size: 16)).monospacedDigit().foregroundStyle(p.muted)
+                                        .fixedSize().accessibilityIdentifier("performance-position")
+                                }
+                            }
                             HStack(spacing: 8) {
                                 HStack(spacing: 0) {
                                     tempoKey("minus", delta: -1)

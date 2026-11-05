@@ -18,3 +18,8 @@ Build: 1.0.2 (13).
 - Final three UI tests passed after the corrections (`/tmp/metronome-performance-controls-final.xcresult`). Inspected the final Chinese light and English dark screenshots: display border/beat markers fully visible, header padding restored, both bottom rows and the parameter row remain single-line.
 - Signed Release iPhone build succeeded. Device discovery still reports the iPhone 14 Pro unavailable, so installation is pending the user's connection; no successful installation claimed.
 - Layout was checked on iPhone 17 Pro simulator at default text size; this change is not a complete iPad or Dynamic Type audit.
+
+## Song position follow-up — build 1.0.2 (14)
+
+- User requested restoring the position fraction on the current-song row, right-aligned in muted smaller text, instead of the top navigation row.
+- Existing stopped navigation UI journey passed; inspected its native screenshot showing 男孩别哭 with 2/3. Release device build succeeded. iPhone remains unavailable; installation pending connection.
