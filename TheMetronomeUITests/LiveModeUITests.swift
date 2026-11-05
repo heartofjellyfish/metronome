@@ -35,28 +35,29 @@ final class LiveModeUITests: XCTestCase {
         XCTAssertEqual(app.buttons["transport"].label, "Stop metronome")
         app.buttons["transport"].tap()
     }
-    func testUnpairedSetupDoesNotAutoAdvanceAndBackgroundCancelsLearning() {
+    func testLearningAvailableWithoutConnectionAndBackgroundCancels() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=pedal", "--pedal-ui-test"]
         app.launch()
-        // The simulator exposes a GCKeyboard even without a Bluetooth pedal.
-        // This used to incorrectly mark the tab connected and navigate away.
-        XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 8))
-        XCTAssertFalse(app.buttons["pedal-toggle"].exists)
-        XCTAssertFalse(app.images["checkmark"].exists)
-        capture(app, "Unpaired setup")
-        XCUIDevice.shared.press(.home); app.activate()
-        XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 5))
-        app.buttons["pedal-tab-bind"].tap()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["pedal-tab-connect"].exists)
         for action in ["toggle", "tap", "next", "previous", "faster", "slower"] {
-            XCTAssertFalse(app.buttons["pedal-\(action)"].isEnabled)
+            XCTAssertTrue(app.buttons["pedal-\(action)"].isEnabled)
         }
-        capture(app, "Unpaired disabled assignments")
-        app.buttons["pedal-connect-from-bindings"].tap()
-        app.buttons["pedal-tab-connect"].tap()
-        XCTAssertTrue(app.buttons["pedal-midi"].exists)
-        XCTAssertFalse(app.images["checkmark"].exists)
+        capture(app, "Direct assignment without device")
+        app.buttons["pedal-toggle"].tap()
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learning")
+        capture(app, "Direct learning")
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
+        app.buttons["pedal-toggle"].tap()
+        app.buttons["pedal-tap"].tap()
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
+        XCTAssertEqual(app.buttons["pedal-tap"].value as? String, "Learning")
+        app.buttons["pedal-tap"].tap()
+        XCTAssertEqual(app.buttons["pedal-tap"].value as? String, "Learn")
     }
     func testSixActionsLearningCancellationAndPlaybackRemainAccessible() {
         continueAfterFailure = false
@@ -68,10 +69,7 @@ final class LiveModeUITests: XCTestCase {
         transport.tap()
         app.buttons["settings"].tap()
         app.buttons["settings-pedal"].tap()
-        XCTAssertTrue(app.buttons["pedal-tab-connect"].waitForExistence(timeout: 5))
-        app.buttons["pedal-tab-connect"].tap()
-        XCTAssertTrue(app.buttons["pedal-midi"].waitForExistence(timeout: 5))
-        app.buttons["pedal-tab-bind"].tap()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 5))
         for action in ["next", "previous", "faster", "slower", "toggle", "tap"] {
             XCTAssertTrue(app.buttons["pedal-\(action)"].waitForExistence(timeout: 2))
         }
@@ -85,8 +83,7 @@ final class LiveModeUITests: XCTestCase {
             XCTAssertEqual(key.value as? String, "Learn")
         }
         app.buttons["pedal-toggle"].tap()
-        app.buttons["pedal-tab-connect"].tap()
-        app.buttons["pedal-tab-bind"].tap()
+        app.buttons["pedal-toggle"].tap()
         XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
         app.buttons["pedal-preparation"].tap()
         app.swipeUp()
@@ -99,9 +96,8 @@ final class LiveModeUITests: XCTestCase {
         XCTAssertEqual(transport.label, "Stop metronome")
         transport.tap()
         app.buttons["settings"].tap(); app.buttons["settings-pedal"].tap()
-        app.buttons["pedal-tab-bind"].tap(); app.buttons["pedal-toggle"].tap()
+        app.buttons["pedal-toggle"].tap()
         app.buttons["close-panel"].tap(); app.buttons["settings-pedal"].tap()
-        app.buttons["pedal-tab-bind"].tap()
         XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
         app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
         XCTAssertEqual(transport.label, "Start metronome")
@@ -122,10 +118,9 @@ final class LiveModeUITests: XCTestCase {
             app.buttons["pedal-preparation"].tap(); app.swipeUp()
             capture(app, "Preparation — \(language)")
             app.swipeDown(); app.buttons["pedal-preparation"].tap()
-            app.buttons["pedal-tab-connect"].tap()
             XCTAssertFalse(app.images["checkmark"].exists)
             XCTAssertTrue(app.buttons["pedal-midi"].exists)
-            capture(app, "Connection — \(language)")
+            capture(app, "Assignments — \(language)")
             app.terminate()
         }
     }

@@ -94,7 +94,6 @@ final class PedalControl: ObservableObject {
     private var verifiedDirectInput = false
     private var physicalMIDISourceIDs = Set<Int32>()
     var setupVisible = false
-    private var verificationPress: PedalBinding?
     @Published private(set) var bluetoothConnected = false
     @Published private(set) var pressRevision = 0
     private var bluetoothMIDISourceIDs = Set<Int32>()
@@ -176,7 +175,6 @@ final class PedalControl: ObservableObject {
     func resetInputSession() {
         cancelLearning()
         verifiedDirectInput = false
-        verificationPress = nil
         refreshInputAvailability()
         gate.clearHeld()
         parsers.removeAll()
@@ -193,17 +191,10 @@ final class PedalControl: ObservableObject {
         if let data = try? JSONEncoder().encode(bindings) { defaults.set(data, forKey: "pedalBindings") }
     }
     @discardableResult func receive(_ input: PedalBinding, down: Bool, at time: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
-        if verificationPress == input {
-            if !down { verificationPress = nil }
-            return false
-        }
-        let wasAvailable = inputAvailable
         if down && (input.kind == .keyboard || input.kind == .media) {
             verifiedDirectInput = true
             refreshInputAvailability()
         }
-        // The initial verification press in setup must not start playback or alter a binding.
-        if setupVisible && !wasAvailable && down { verificationPress = input; return false }
         switch gate.receive(input, down: down, at: time) {
         case .ignored: return false
         case .learned:

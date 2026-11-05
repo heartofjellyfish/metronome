@@ -5,7 +5,6 @@ struct PedalSettingsView: View {
     @ObservedObject var pedal: PedalControl
     let p: InstrumentPalette
     let close: () -> Void
-    @State private var bindingTab = false
     @State private var midiPicker = false
     @State private var preparation = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -20,42 +19,40 @@ struct PedalSettingsView: View {
                 Text("Pedal setup").font(.system(size: 25, weight: .semibold))
                 Spacer()
             }.padding(.horizontal, 12).padding(.vertical, 12)
-            HStack(spacing: 0) {
-                tab("Connect pedal", selected: !bindingTab, id: "pedal-tab-connect") { pedal.cancelLearning(); bindingTab = false }
-                tab("Assign controls", selected: bindingTab, id: "pedal-tab-bind") { bindingTab = true }
-            }.padding(.horizontal, 26).padding(.top, 12).padding(.bottom, 20)
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        if bindingTab {
-                            bindingList.id("bindings")
-                            Text(hint).font(.subheadline).foregroundStyle(p.muted)
-                                .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
-                                .accessibilityIdentifier("pedal-hint")
-                            if !pedal.inputAvailable {
-                                Button { bindingTab = false } label: {
-                                    Text("Connect pedal").font(.subheadline.weight(.medium))
-                                        .padding(.horizontal, 16).frame(height: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-                                    .accessibilityIdentifier("pedal-connect-from-bindings")
-                            }
-                            Divider().overlay(p.edge.opacity(0.2))
-                            HStack {
-                                Text("Before performing").font(.body.weight(.medium))
-                                Spacer()
-                                Button {
-                                    pedal.cancelLearning()
-                                    preparation.toggle()
-                                    if !preparation { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { proxy.scrollTo("bindings", anchor: .top) } }
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Text(preparation ? "Collapse" : "Expand")
-                                        Image(systemName: preparation ? "chevron.up" : "chevron.down").font(.caption)
-                                    }.font(.subheadline).padding(.horizontal, 12).frame(minHeight: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p, radius: 12)).accessibilityIdentifier("pedal-preparation")
-                            }
-                            if preparation { preparationNotes }
-                        } else { connection }
+                        bindingList.id("bindings")
+                        Text(hint).font(.subheadline).foregroundStyle(p.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
+                            .accessibilityIdentifier("pedal-hint")
+                        Button {
+                            pedal.cancelLearning()
+                            pedal.problem = nil
+                            model.preparePedalInput()
+                            pedal.enableMIDI()
+                            midiPicker = true
+                        } label: {
+                            Text("Connect MIDI pedal").font(.subheadline.weight(.medium))
+                                .padding(.horizontal, 16).frame(height: 44)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+                            .accessibilityIdentifier("pedal-midi")
+                        Divider().overlay(p.edge.opacity(0.2))
+                        HStack {
+                            Text("Before performing").font(.body.weight(.medium))
+                            Spacer()
+                            Button {
+                                pedal.cancelLearning()
+                                preparation.toggle()
+                                if !preparation { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { proxy.scrollTo("bindings", anchor: .top) } }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Text(preparation ? "Collapse" : "Expand")
+                                    Image(systemName: preparation ? "chevron.up" : "chevron.down").font(.caption)
+                                }.font(.subheadline).padding(.horizontal, 12).frame(minHeight: 44)
+                            }.buttonStyle(HardwareButtonStyle(p: p, radius: 12)).accessibilityIdentifier("pedal-preparation")
+                        }
+                        if preparation { preparationNotes }
                         if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }.padding(.horizontal, 28).padding(.top, 12).padding(.bottom, 32)
                         .frame(maxWidth: 520).frame(maxWidth: .infinity)
@@ -63,7 +60,7 @@ struct PedalSettingsView: View {
             }
         }.foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light).accessibilityAddTraits(.isModal)
-            .onAppear { pedal.setupVisible = true; bindingTab = !pedal.bindings.isEmpty }
+            .onAppear { pedal.setupVisible = true; model.preparePedalInput(); pedal.enableMIDI() }
             .onDisappear { pedal.setupVisible = false; pedal.cancelLearning() }
             .sheet(isPresented: $midiPicker) {
                 NavigationStack {
@@ -75,27 +72,6 @@ struct PedalSettingsView: View {
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { midiPicker = false } } }
                 }
             }
-    }
-    private func tab(_ title: LocalizedStringKey, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 12) {
-                HStack(spacing: 5) {
-                    Text(title).font(.body.weight(selected ? .semibold : .regular)).foregroundStyle(selected ? p.ink : p.muted)
-                }.frame(minHeight: 32)
-                Rectangle().fill(selected ? InstrumentPalette.amber : .clear).frame(height: 2)
-            }.frame(maxWidth: .infinity)
-        }.buttonStyle(.plain).accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
-    }
-    private var connection: some View {
-        VStack(spacing: 32) {
-            PedalIllustration(p: p).frame(width: 110, height: 150).padding(.top, 25).padding(.bottom, 12).accessibilityHidden(true)
-            Text("Turn on iPhone Bluetooth and put your pedal in pairing mode.")
-                .font(.body.weight(.medium)).frame(maxWidth: .infinity, alignment: .leading)
-            Button { pedal.problem = nil; model.preparePedalInput(); pedal.enableMIDI(); midiPicker = true } label: {
-                Text("Connect Bluetooth pedal").font(.body.weight(.medium)).frame(maxWidth: .infinity, minHeight: 58)
-            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 14)).accessibilityIdentifier("pedal-midi")
-            Text("After pairing, press your pedal once, then open Assign controls.").font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
-        }
     }
     private var bindingList: some View {
         VStack(spacing: 20) {
@@ -116,18 +92,15 @@ struct PedalSettingsView: View {
         let binding = pedal.bindings[action]
         let caption = listening ? L10n.text("Learning") : (binding?.displayLabel ?? L10n.text("Learn"))
         return Button {
-            guard pedal.inputAvailable else { return }
             if listening { pedal.cancelLearning() } else { model.beginPedalLearning(action) }
         } label: {
             HStack(spacing: 8) {
-                BindingLamp(listening: listening, assigned: binding != nil && pedal.inputAvailable, reduceMotion: reduceMotion)
+                BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion)
                 Text(caption).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.horizontal, 10).padding(.vertical, 12)
                 .frame(width: min(keyWidth, 180)).frame(minHeight: 48)
         }.buttonStyle(PedalKeyStyle(p: p, held: listening))
-            .disabled(!pedal.inputAvailable)
-            .opacity(pedal.inputAvailable ? 1 : 0.45)
             .accessibilityIdentifier("pedal-\(action.rawValue)")
             .accessibilityLabel(action.title).accessibilityValue(caption)
             .accessibilityHint(listening ? L10n.text("Cancel") : L10n.text("Tap the key name to reassign."))
@@ -136,9 +109,8 @@ struct PedalSettingsView: View {
             }
     }
     private var hint: String {
-        if !pedal.inputAvailable { return L10n.text("Connect your pedal, then press it once.") }
         if let action = pedal.learning { return L10n.format("Press your pedal now to assign %@. Tap again to cancel.", action.title) }
-        return L10n.text(pedal.bindings.isEmpty ? "Tap Learn, then press the pedal key you want to use." : "Assigned. Tap the key name to reassign.")
+        return L10n.text(pedal.bindings.isEmpty ? "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." : "Assigned. Tap the key name to reassign.")
     }
     private var preparationNotes: some View {
         VStack(alignment: .leading, spacing: 24) {

@@ -3,40 +3,38 @@ import AVFoundation
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
-    @MainActor func testInputVerificationUnlocksWithoutPerformingAndResets() {
-        let defaults = UserDefaults(suiteName: "PedalVerificationTests")!
-        defaults.removePersistentDomain(forName: "PedalVerificationTests")
-        defer { defaults.removePersistentDomain(forName: "PedalVerificationTests") }
+    @MainActor func testFirstPressLearnsWithoutVerificationAndSavedMappingWorksAfterReset() {
+        let defaults = UserDefaults(suiteName: "PedalDirectLearningTests")!
+        defaults.removePersistentDomain(forName: "PedalDirectLearningTests")
+        defer { defaults.removePersistentDomain(forName: "PedalDirectLearningTests") }
         let pedal = PedalControl(defaults: defaults)
         let key = PedalBinding(kind: .keyboard, code: 40, label: "RETURN")
-        XCTAssertFalse(pedal.inputAvailable)
-        pedal.updateMIDISources([12])
-        XCTAssertFalse(pedal.inputAvailable) // virtual / unknown MIDI
-        pedal.updateMIDISources([12], physical: [12])
-        XCTAssertTrue(pedal.inputAvailable) // first assignment possible before any mapping
-        pedal.updateMIDISources([])
-        XCTAssertFalse(pedal.inputAvailable)
-        pedal.learn(.toggle); pedal.receive(key,down: true,at: 0)
-        pedal.resetInputSession()
-        var actions = 0
-        pedal.perform = { _ in actions += 1 }
+        var actions: [PedalAction] = []
+        pedal.perform = { actions.append($0) }
         pedal.setupVisible = true
-        XCTAssertFalse(pedal.receive(key,down: true,at: 1))
-        XCTAssertTrue(pedal.inputAvailable)
-        XCTAssertFalse(pedal.receive(key,down: true,at: 2)) // held verification press
-        XCTAssertEqual(actions,0)
-        pedal.receive(key,down: false,at: 3)
-        XCTAssertTrue(pedal.receive(key,down: true,at: 4))
-        XCTAssertEqual(actions,1)
-        pedal.learn(.tap)
+        XCTAssertFalse(pedal.inputAvailable)
+        pedal.learn(.toggle)
+        XCTAssertTrue(pedal.receive(key, down: true, at: 0))
+        XCTAssertEqual(pedal.bindings[.toggle], key)
+        XCTAssertTrue(actions.isEmpty)
+        XCTAssertFalse(pedal.receive(key, down: true, at: 1))
+        pedal.receive(key, down: false, at: 2)
         pedal.resetInputSession()
         XCTAssertFalse(pedal.inputAvailable)
-        XCTAssertNil(pedal.learning)
-        XCTAssertNotNil(pedal.bindings[.toggle])
-        pedal.clearAll()
-        XCTAssertTrue(pedal.media(0, label: "PLAY / PAUSE"))
-        XCTAssertTrue(pedal.inputAvailable)
-        XCTAssertEqual(actions, 1) // unassigned media verification is consumed too
+        XCTAssertTrue(pedal.receive(key, down: true, at: 3))
+        XCTAssertEqual(actions, [.toggle])
+        pedal.receive(key, down: false, at: 4)
+        pedal.learn(.tap)
+        pedal.cancelLearning()
+        XCTAssertEqual(pedal.bindings[.toggle], key)
+        pedal.resetInputSession()
+        pedal.learn(.tap)
+        XCTAssertTrue(pedal.media(10, label: "NEXT"))
+        XCTAssertEqual(pedal.bindings[.tap]?.kind, .media)
+        XCTAssertEqual(actions, [.toggle])
+        let restored = PedalControl(defaults: defaults)
+        XCTAssertEqual(restored.bindings, pedal.bindings)
+        XCTAssertFalse(restored.bluetoothConnected)
     }
     @MainActor func testBluetoothIndicatorRequiresMappedOnlineBluetoothSource() {
         let defaults = UserDefaults(suiteName: "PedalBluetoothStatusTests")!

@@ -228,10 +228,10 @@ final class MetronomeModel: ObservableObject {
         if !pedal.media(code, label: label) { fallback() }
     }
     func beginPedalLearning(_ action: PedalAction) {
-        guard pedal.inputAvailable, preparePedalInput() else { return }
+        guard preparePedalInput() else { return }
         pedal.learn(action)
     }
-    /// Explicit setup opt-in lets media pedals send a verification press before assignment.
+    /// Opening pedal setup opts in to media input; device identity is not required for learning.
     @discardableResult func preparePedalInput() -> Bool {
         guard !interrupted else { return false }
         do {

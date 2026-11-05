@@ -210,3 +210,7 @@
 "Connect your pedal, then press it once." = "先連接踏板，再踩一下。";
 
 "After pairing, press your pedal once, then open Assign controls." = "配對後踩一下踏板，再開啟「綁定按鍵」。";
+
+"Connect MIDI pedal" = "連接 MIDI 踏板";
+
+"Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." = "先在 iPhone 藍牙設定中配對，再點綁定、踩一下踏板。";
