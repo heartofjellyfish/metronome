@@ -50,6 +50,25 @@ final class PerformanceUITests: XCTestCase {
         tap("close-panel"); tap("close-settings"); XCTAssertTrue(b("home-muted").exists)
         tap("home-muted"); XCTAssertFalse(b("home-muted").exists); tap("transport")
     }
+    func testStoppedNavigationAndControlRows() {
+        launch(); openList("周六演出"); tap("song-Gossip"); tap("open-performance")
+        XCTAssertFalse(b("performance-previous").isEnabled)
+        XCTAssertTrue(b("performance-next").label.contains("男孩别哭"))
+        tap("performance-next")
+        XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
+        XCTAssertEqual(b("performance-play").label, "开始播放")
+        XCTAssertTrue(b("performance-next").label.contains("夜来香"))
+        XCTAssertEqual(b("performance-previous").frame.midY, b("performance-next").frame.midY, accuracy: 2)
+        XCTAssertEqual(b("performance-tap").frame.midY, b("performance-play").frame.midY, accuracy: 2)
+        XCTAssertEqual(b("performance-tempo").frame.midY, b("performance-division").frame.midY, accuracy: 2)
+        shot("11-performance-stopped-layout")
+        tap("performance-next"); XCTAssertFalse(b("performance-next").isEnabled)
+        tap("performance-previous"); tap("performance-previous")
+        XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
+        XCTAssertEqual(b("performance-play").label, "开始播放")
+        tap("performance-tap"); tap("performance-tap")
+        XCTAssertTrue(b("performance-play").isHittable)
+    }
     func testSharedSongAddEditRemoveAndReuse() {
         launch("en"); openList("Saturday"); tap("choose-setlist")
         let field = app.textFields["setlist-name"]; field.tap(); field.typeText("Sunday"); tap("Create setlist")
