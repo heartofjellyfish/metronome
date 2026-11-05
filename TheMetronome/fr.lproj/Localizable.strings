@@ -382,3 +382,18 @@
 "SOUND" = "SON";
 
 "Playback sound" = "Son de lecture";
+
+"Practice" = "Pratique";
+"Tempo ramp" = "Progression du tempo";
+"Choose from library" = "Choisir dans la bibliothèque";
+"Import from presets" = "Importer un préréglage";
+"Add to %@" = "Ajouter à %@";
+"%d song" = "%d morceau";
+"Search" = "Rechercher";
+"No songs yet." = "Aucun morceau pour le moment.";
+"No matches." = "Aucun résultat.";
+"Delete this song from your library and all setlists?" = "Supprimer ce morceau de la bibliothèque et de toutes les setlists ?";
+"Delete" = "Supprimer";
+"First instrument" = "Premier instrument";
+"Second instrument" = "Deuxième instrument";
+"Back to polyrhythm" = "Retour à la polyrythmie";

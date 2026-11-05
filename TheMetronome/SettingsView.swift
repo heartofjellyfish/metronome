@@ -100,6 +100,7 @@ struct SettingsView: View {
                     }.padding(.horizontal, 26).padding(.bottom, 24)
                 }.scrollBounceBehavior(.basedOnSize).accessibilityIdentifier("settings-scroll")
             }
+            SettingsPlaybackBar(model: model, p: p).padding(.horizontal, 26).padding(.bottom, 12)
         }.frame(maxWidth: 460).frame(maxWidth: .infinity)
             .accessibilityElement(children: .contain).accessibilityHidden(panel != nil).allowsHitTesting(panel == nil)
             .foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
@@ -144,5 +145,25 @@ struct SettingsView: View {
                     .padding(.horizontal, 12).frame(height: 46).frame(maxWidth: .infinity)
             }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityIdentifier("settings-\(route.rawValue)").accessibilityLabel(title == "METER" ? L10n.text("Time signature") : title == "DIVISION" ? L10n.text("Subdivision") : "\(L10n.text(title)), \(value)")
         }.frame(maxWidth: .infinity)
+    }
+}
+
+/// One transport controls the same clock throughout setup, playback and comparison.
+struct SettingsPlaybackBar: View {
+    @ObservedObject var model: MetronomeModel
+    let p: InstrumentPalette
+    var identifier = "settings-transport"
+    var body: some View {
+        VStack(spacing: 12) {
+            Rectangle().fill(p.edge.opacity(0.4)).frame(height: 0.5)
+            HStack(spacing: 18) {
+                Text("\(model.event?.bpm ?? model.bpm) BPM").font(.system(size: 16, weight: .medium).monospacedDigit()).frame(minWidth: 85, alignment: .leading)
+                Button { model.endSoundPreview(); model.toggle() } label: {
+                    TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 48)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                    .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
+                    .accessibilityIdentifier(identifier)
+            }
+        }
     }
 }

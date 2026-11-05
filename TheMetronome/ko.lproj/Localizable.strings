@@ -382,3 +382,18 @@
 "SOUND" = "음색";
 
 "Playback sound" = "재생 소리";
+
+"Practice" = "연습";
+"Tempo ramp" = "템포 변화";
+"Choose from library" = "라이브러리에서 선택";
+"Import from presets" = "프리셋에서 가져오기";
+"Add to %@" = "「%@」에 추가";
+"%d song" = "%d곡";
+"Search" = "검색";
+"No songs yet." = "아직 곡이 없어요.";
+"No matches." = "검색 결과가 없어요.";
+"Delete this song from your library and all setlists?" = "이 곡을 라이브러리와 모든 세트리스트에서 삭제할까요?";
+"Delete" = "삭제";
+"First instrument" = "첫 번째 음색";
+"Second instrument" = "두 번째 음색";
+"Back to polyrhythm" = "폴리리듬으로 돌아가기";

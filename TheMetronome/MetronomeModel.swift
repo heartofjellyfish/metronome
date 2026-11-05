@@ -52,6 +52,9 @@ final class MetronomeAudio {
         let format = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2)!
         if acousticLibrary == nil { acousticLibrary = try AcousticLibrary.bundled() }
         let acoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
+        // Independent voice pools: the upper rhythm must not choke the lower lane's hi-hat.
+        // Both share the already-decoded sample library.
+        let crossAcoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
         let clock = saved?.clock.copy(atRate: rate) ?? SampleClock(rate: rate)
         var resumeReference: TimeInterval?
         if let saved {
@@ -66,6 +69,8 @@ final class MetronomeAudio {
         mailbox.set(rhythm)
         var voices = (ClickVoice(), ClickVoice(), ClickVoice(), ClickVoice())
         var voiceIndex = 0
+        var crossVoices = (ClickVoice(), ClickVoice(), ClickVoice(), ClickVoice())
+        var crossVoiceIndex = 0
         var latest: ClockEvent?
         var serial = 0
         let box = mailbox
@@ -88,6 +93,7 @@ final class MetronomeAudio {
                         var temporary = box.config
                         temporary.subdivision = candidate.subdivision; temporary.divisionMask = candidate.divisionMask; temporary.swing = candidate.swing
                         temporary.sound = candidate.sound; temporary.crossRhythm = candidate.crossRhythm; temporary.polyrhythmPrimary = candidate.polyrhythmPrimary
+                        temporary.polyrhythmPrimarySound = candidate.polyrhythmPrimarySound; temporary.polyrhythmSecondarySound = candidate.polyrhythmSecondarySound
                         clock.update(temporary)
                         let length = temporary.pulseCount * temporary.clockDivisions
                         auditionEndTick = (max(0, clock.tick) / length + 1) * length
@@ -102,26 +108,35 @@ final class MetronomeAudio {
                 }
                 if let (event, strength) = clock.advance() {
                     latest = event; serial += 1
-                    if event.crossStrength > 0 {
-                        acoustic.trigger(sound: InstrumentSound.bell.rawValue, strength: event.crossStrength, gainScale: 0.7)
-                    }
                     if strength > 0 {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
-                        let sound = clock.rhythm.crossCount > 0 ? InstrumentSound.wood.rawValue : clock.rhythm.sound
+                        let sound = clock.rhythm.crossCount > 0 ? clock.rhythm.primaryPulseSound : clock.rhythm.sound
                         if ![1, 16].contains(sound) {
                             acoustic.trigger(sound: sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn, gainScale: event.gainScale, hitInterval: event.hitInterval)
                         } else { switch voiceIndex % 4 {
-                        case 0: voices.0.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
-                        case 1: voices.1.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
-                        case 2: voices.2.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
-                        default: voices.3.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
+                        case 0: voices.0.trigger(sound: sound, strength: strength, gainScale: event.gainScale)
+                        case 1: voices.1.trigger(sound: sound, strength: strength, gainScale: event.gainScale)
+                        case 2: voices.2.trigger(sound: sound, strength: strength, gainScale: event.gainScale)
+                        default: voices.3.trigger(sound: sound, strength: strength, gainScale: event.gainScale)
                         }
                         }
                         voiceIndex += 1
                     }
+                    if event.crossStrength > 0 {
+                        let sound = clock.rhythm.secondaryPulseSound
+                        if [1, 16].contains(sound) {
+                            switch crossVoiceIndex % 4 {
+                            case 0: crossVoices.0.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7)
+                            case 1: crossVoices.1.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7)
+                            case 2: crossVoices.2.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7)
+                            default: crossVoices.3.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7)
+                            }
+                            crossVoiceIndex += 1
+                        } else { crossAcoustic.chokeHats(); crossAcoustic.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7) }
+                    }
                 }
-                let sample = voices.0.sample(rate: rate) + voices.1.sample(rate: rate) + voices.2.sample(rate: rate) + voices.3.sample(rate: rate) + acoustic.sample(rate: rate)
+                let sample = voices.0.sample(rate: rate) + voices.1.sample(rate: rate) + voices.2.sample(rate: rate) + voices.3.sample(rate: rate) + crossVoices.0.sample(rate: rate) + crossVoices.1.sample(rate: rate) + crossVoices.2.sample(rate: rate) + crossVoices.3.sample(rate: rate) + acoustic.sample(rate: rate) + crossAcoustic.sample(rate: rate)
                 for buffer in audioBuffers { buffer.mData?.assumingMemoryBound(to: Float.self)[frame] = sample }
             }
             timeline.renderedThrough = bufferStart + Double(count) / rate
@@ -222,6 +237,22 @@ final class MetronomeModel: ObservableObject {
         var value = (source ?? rhythm).performanceCopy
         value.bpm = bpm; value.sanitize()
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
+    }
+    /// Library entries can exist independently of a setlist.
+    func createLibrarySong(_ name: String, rhythm value: Rhythm) {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        songLibrary.append(SavedPreset(name: name, rhythm: value.performanceCopy))
+        persistSetlists()
+    }
+    /// Permanent deletion removes every membership. UI must confirm this explicitly.
+    func deleteLibrarySong(_ id: UUID) {
+        guard songLibrary.contains(where: { $0.id == id }) else { return }
+        if selectedSongID == id { stop(); selectedSongID = nil }
+        // Remove references first so persistence cannot fold the deleted song back in.
+        setlists = setlists.map { list in var copy = list; copy.songs.removeAll { $0.id == id }; return copy }
+        songLibrary.removeAll { $0.id == id }
+        persistSetlists()
     }
     /// Import a preset as a new independent song. The original preset stays unchanged.
     func importPreset(_ preset: SavedPreset, into target: UUID? = nil) {

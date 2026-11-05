@@ -382,3 +382,18 @@
 "SOUND" = "KLANG";
 
 "Playback sound" = "Wiedergabeton";
+
+"Practice" = "Üben";
+"Tempo ramp" = "Tempo steigern";
+"Choose from library" = "Aus Bibliothek wählen";
+"Import from presets" = "Aus Presets importieren";
+"Add to %@" = "Zu %@ hinzufügen";
+"%d song" = "%d Titel";
+"Search" = "Suchen";
+"No songs yet." = "Noch keine Titel.";
+"No matches." = "Keine Treffer.";
+"Delete this song from your library and all setlists?" = "Diesen Titel aus der Bibliothek und allen Setlists löschen?";
+"Delete" = "Löschen";
+"First instrument" = "Erstes Instrument";
+"Second instrument" = "Zweites Instrument";
+"Back to polyrhythm" = "Zurück zum Polyrhythmus";

@@ -24,7 +24,7 @@ final class RedesignUITests: XCTestCase {
         tap("division-count-8"); XCTAssertTrue(b("division-count-8").isSelected)
         tap("division-count-2"); XCTAssertTrue(b("division-count-2").isSelected)
         tap("division-patterns"); tap("pattern-family-3")
-        tap("preview-3-5"); XCTAssertFalse(b("pattern-3-5").isSelected)
+        XCTAssertFalse(b("preview-3-5").exists)
         tap("pattern-3-5"); XCTAssertTrue(b("pattern-3-5").isSelected)
         tap("pattern-3-6"); XCTAssertTrue(b("pattern-3-6").isSelected)
         shot("02-triplets-live")
@@ -32,7 +32,7 @@ final class RedesignUITests: XCTestCase {
         tap("editor-grid-4"); if b("Change").exists { b("Change").tap() }
         tap("division-pulse-1"); tap("division-pulse-3")
         tap("swing-options"); tap("2:1")
-        reveal(b("preview-draft")); shot("03-rhythm-editor")
+        shot("03-rhythm-editor")
         tap("close-panel"); XCTAssertEqual(b("transport").label,"Stop metronome")
         tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
         tap("close-panel"); tap("transport"); tap("home-division"); tap("division-even"); tap("division-count-6")

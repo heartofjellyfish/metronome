@@ -48,7 +48,7 @@ struct HardwareButtonStyle: ButtonStyle {
             // Press/release animates the hardware, not replacement text or symbols.
             // A glyph may still own its explicit animation (the transport contour).
             .transaction { $0.animation = nil }
-            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed) }
+            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed).id("\(p.dark)-\(charcoal)-\(green)") }
             .offset(y: configuration.isPressed ? 1.6 : 0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }

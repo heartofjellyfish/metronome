@@ -382,3 +382,18 @@
 "SOUND" = "SOUND";
 
 "Playback sound" = "Playback sound";
+
+"Practice" = "Practice";
+"Tempo ramp" = "Tempo ramp";
+"Choose from library" = "Choose from library";
+"Import from presets" = "Import from presets";
+"Add to %@" = "Add to %@";
+"%d song" = "%d song";
+"Search" = "Search";
+"No songs yet." = "No songs yet.";
+"No matches." = "No matches.";
+"Delete this song from your library and all setlists?" = "Delete this song from your library and all setlists?";
+"Delete" = "Delete";
+"First instrument" = "First instrument";
+"Second instrument" = "Second instrument";
+"Back to polyrhythm" = "Back to polyrhythm";

@@ -88,7 +88,7 @@ final class PerformanceUITests: XCTestCase {
     }
     func testPracticeEntryAndImmediateInPlacePlayback() {
         launch(); tap("settings"); tap("practice"); shot("06-practice-compact-zh")
-        XCTAssertFalse(b("practice-save-preset").exists); XCTAssertFalse(b("practice-transport").exists)
+        XCTAssertFalse(b("practice-save-preset").exists); XCTAssertTrue(b("practice-transport").exists)
         XCTAssertFalse(b("TOUCH FEEDBACK-on").exists)
         tap("practice-gap"); tap("SOUND / SILENCE-on"); tap("practice-transport")
         XCTAssertEqual(b("practice-transport").label, "停止播放"); shot("07-practice-playing-zh")
@@ -96,6 +96,68 @@ final class PerformanceUITests: XCTestCase {
         tap("practice-ramp"); XCTAssertEqual(b("practice-transport").label, "停止播放")
         tap("practice-transport"); tap("close-panel"); tap("close-panel")
         tap("general-haptics-off"); tap("general-haptics-on"); shot("08-general-haptics")
+    }
+    func testLibraryCreateSearchEditDeleteAndAddNavigation() {
+        launch("en"); openList("Saturday")
+        tap("add-song"); XCTAssertFalse(b("song-Gossip").exists); shot("13-add-sources")
+        tap("new-song"); tap("cancel-song"); XCTAssertTrue(b("new-song").exists)
+        tap("choose-setlist"); XCTAssertTrue(b("song-Gossip").exists)
+        tap("choose-setlist"); tap("manage-song-library")
+        tap("library-new-song")
+        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Encore")
+        tap("save-song"); XCTAssertTrue(b("import-song-Encore").exists)
+        let search = app.textFields["song-search"]; search.tap(); search.typeText("Encore"); search.typeText("\n")
+        XCTAssertFalse(b("import-song-Gossip").exists)
+        tap("import-song-Encore"); let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("127"); tap("save-song")
+        tap("library-share-Encore"); tap("share-to-Saturday")
+        let searchAgain = app.textFields["song-search"]; searchAgain.tap(); searchAgain.typeText("Encore\n")
+        shot("14-library-song")
+        tap("library-delete-Encore"); shot("15-library-delete-confirmation")
+        tap("Cancel"); XCTAssertTrue(b("import-song-Encore").exists)
+        tap("library-delete-Encore"); tap("confirm-delete-library-song")
+        XCTAssertFalse(b("import-song-Encore").exists)
+        tap("choose-setlist"); tap("setlist-Saturday"); XCTAssertFalse(b("song-Encore").exists)
+    }
+    func testSetlistRenameReorderAndDeleteKeepsLibrary() {
+        launch("en"); openList("Saturday"); tap("edit-setlist")
+        tap("move-down-Gossip"); tap("move-up-Gossip")
+        let name = app.textFields["setlist-name"]; name.tap()
+        let old = name.value as? String ?? ""
+        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "Friday")
+        tap("Rename"); XCTAssertTrue(app.staticTexts["Friday"].exists)
+        shot("19-setlist-edit")
+        tap("Delete setlist"); tap("Cancel"); XCTAssertTrue(b("song-Gossip").exists)
+        tap("Delete setlist"); tap("DELETE")
+        XCTAssertFalse(b("setlist-Friday").exists); tap("manage-song-library")
+        XCTAssertTrue(b("import-song-Gossip").exists)
+    }
+    func testPolyrhythmBothSoundsAndSharedPlaybackAcrossPages() {
+        launch(); tap("settings"); tap("practice"); tap("practice-polyrhythm")
+        tap("polyrhythm-3-2"); tap("practice-transport")
+        tap("poly-lane-0"); tap("poly-sound-1"); tap("poly-sound-5")
+        XCTAssertTrue(b("poly-sound-5").isSelected); XCTAssertEqual(b("practice-transport").label, "停止播放")
+        shot("16-poly-instrument-picker"); tap("close-panel")
+        tap("poly-lane-1"); tap("poly-sound-16"); XCTAssertTrue(b("poly-sound-16").isSelected)
+        tap("close-panel"); tap("polyrhythm-4-3"); shot("17-poly-two-instruments")
+        tap("close-panel"); tap("practice-polyrhythm"); tap("poly-lane-0")
+        XCTAssertTrue(b("poly-sound-5").isSelected); tap("close-panel")
+        tap("poly-lane-1"); XCTAssertTrue(b("poly-sound-16").isSelected); tap("close-panel")
+        tap("polyrhythm-off"); tap("close-panel"); tap("close-panel"); tap("close-settings")
+        tap("home-division"); tap("division-count-2"); tap("division-count-3")
+        tap("division-patterns"); tap("pattern-family-3"); tap("pattern-3-5"); tap("pattern-3-6")
+        XCTAssertTrue(b("pattern-3-6").isSelected); XCTAssertFalse(b("preview-3-5").exists)
+        XCTAssertEqual(b("settings-transport").label, "停止播放"); shot("18-pattern-shared-playback")
+        tap("settings-transport"); XCTAssertEqual(b("settings-transport").label, "开始播放")
+        tap("settings-transport"); tap("close-panel"); tap("home-division")
+        XCTAssertTrue(b("division-patterns").isSelected); tap("close-panel"); tap("transport")
+    }
+    func testFinalVisualStates() {
+        launch(); openList("周六演出"); shot("20-setlist-browse-final")
+        tap("add-song"); shot("21-add-sources-zh-final"); tap("choose-setlist"); tap("close-panel")
+        tap("practice"); tap("practice-polyrhythm"); tap("polyrhythm-3-2"); tap("polyrhythm-4-3")
+        tap("practice-transport"); XCTAssertTrue(b("polyrhythm-4-3").isSelected); shot("22-poly-selection-final")
+        tap("close-panel"); tap("close-panel"); tap("close-settings"); tap("home-division"); tap("division-patterns")
+        XCTAssertTrue(b("division-patterns").isSelected); shot("23-pattern-selection-final"); tap("settings-transport")
     }
     func testDarkPerformancePickerKeepsPlayingAcrossRepeatedChanges() {
         launch("en", dark: true); openList("Saturday"); tap("song-Gossip"); tap("open-performance"); tap("performance-play")

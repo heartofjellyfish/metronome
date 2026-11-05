@@ -11,8 +11,8 @@ enum InstrumentPanelKind: String, Identifiable {
         case .countIn: return L10n.text("COUNT IN")
         case .every: return L10n.text("RAMP INTERVAL")
         case .increment: return L10n.text("TEMPO STEP")
-        case .practice: return L10n.text("PRACTICE")
-        case .ramp: return L10n.text("TEMPO RAMP")
+        case .practice: return L10n.text("Practice")
+        case .ramp: return L10n.text("Tempo ramp")
         case .gap: return L10n.text("Silent bars")
         case .polyrhythm: return L10n.text("Polyrhythm")
         case .start: return L10n.text("START TEMPO")
@@ -29,7 +29,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .tempo, .start, .end: return 620
         case .meter: return 740
         case .division, .ramp, .gap, .polyrhythm: return 740
-        case .practice: return 490
+        case .practice: return 570
         case .setlists: return 740
         case .presets: return 560
         case .audio: return 300
@@ -52,6 +52,7 @@ struct InstrumentPanel: View {
     @State private var compoundPulse: Bool
     @State private var grouping: [Int]
     @State private var customMeter = false
+    @State private var polyrhythmSoundLane: Int?
     @State private var returnRoutes: [InstrumentPanelKind] = []
     private var returnsToPractice: Bool { !returnRoutes.isEmpty }
     @State private var panelContentHeight: CGFloat = 0
@@ -96,27 +97,25 @@ struct InstrumentPanel: View {
                 VStack(spacing: 0) {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 7) {
-                            Text(kind.title).technical(19, spacing: 3).lineLimit(2).minimumScaleFactor(0.8)
+                            Text(polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : "Second instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 5)
                         Button { dismiss() } label: {
-                            Image(systemName: returnsToPractice ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel(returnsToPractice ? L10n.text("Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
+                            Image(systemName: (returnsToPractice || polyrhythmSoundLane != nil) ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel((returnsToPractice || polyrhythmSoundLane != nil) ? L10n.text(polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     ScrollView {
                         content.padding(23)
                             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
-                    }.scrollBounceBehavior(.basedOnSize)
-                    if [.ramp, .gap, .polyrhythm].contains(kind) {
-                        Button { model.toggle() } label: { TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 50) }
-                            .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                            .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
-                            .accessibilityIdentifier("practice-transport").padding(.horizontal, 23).padding(.bottom, 18)
+                    }.scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
+                    if hasTransport {
+                        SettingsPlaybackBar(model: model, p: p, identifier: [.ramp, .gap, .polyrhythm, .practice].contains(kind) ? "practice-transport" : "settings-transport")
+                            .padding(.horizontal, 23).padding(.bottom, 18)
                     }
                 }
                 .frame(maxWidth: 460)
-                .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 460 : 365) : compactPanelHeight, geometry.size.height - 12))
+                .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 540 : 445) : compactPanelHeight, geometry.size.height - 12))
                 .background { InstrumentBody(p: p) }
                 .clipShape(RoundedRectangle(cornerRadius: 23, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
@@ -127,20 +126,21 @@ struct InstrumentPanel: View {
         }.transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             .preferredColorScheme(model.dark ? .dark : .light)
     }
+    private var hasTransport: Bool { [.division, .meter, .practice, .ramp, .gap, .polyrhythm, .sounds, .presets, .countIn, .every, .increment].contains(kind) }
     private var compactPanelHeight: CGFloat {
         guard [.presets, .practice, .ramp, .gap].contains(kind), panelContentHeight > 0 else { return kind.height }
-        return min(kind.height, max(300, panelContentHeight + ([.ramp, .gap].contains(kind) ? 172 : 104)))
+        return min(kind.height, max(300, panelContentHeight + (hasTransport ? 184 : 104)))
     }
     @ViewBuilder private var content: some View {
         switch kind {
         case .tempo, .start, .end: numberPad
         case .meter: meterPicker
-        case .division: DivisionPanel(rhythm: $model.rhythm, playing: model.playing, p: p, preview: model.previewRhythm, stopPreview: model.endSoundPreview, close: dismiss)
+        case .division: DivisionPanel(rhythm: $model.rhythm, playing: model.playing, p: p, stopPreview: model.endSoundPreview, close: dismiss)
         case .countIn, .every, .increment: quantityPicker
         case .practice: practicePanel
         case .ramp: rampPanel
         case .gap: gapPanel
-        case .polyrhythm: PolyrhythmPanel(model: model, p: p)
+        case .polyrhythm: PolyrhythmPanel(model: model, p: p, soundLane: $polyrhythmSoundLane)
         case .setlists: SetlistPanel(model: model, p: p, close: dismiss)
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
@@ -281,7 +281,7 @@ struct InstrumentPanel: View {
     }
     private var practicePanel: some View {
         VStack(spacing: 16) {
-            practiceRoute("TEMPO RAMP", detail: "\(model.rhythm.start) → \(model.rhythm.end) BPM", route: .ramp, enabled: model.rhythm.ramp)
+            practiceRoute("Tempo ramp", detail: "\(model.rhythm.start) → \(model.rhythm.end) BPM", route: .ramp, enabled: model.rhythm.ramp)
             practiceRoute("Silent bars", detail: L10n.format("%d sound bars · %d silent bars", model.rhythm.audibleBars, model.rhythm.silentBars), route: .gap, enabled: model.rhythm.gap)
             practiceRoute("Polyrhythm", detail: "\(model.rhythm.polyrhythmPrimary ?? 3) : \(model.rhythm.crossRhythm ?? 2)", route: .polyrhythm, enabled: model.rhythm.crossCount > 0)
             HStack {
@@ -425,7 +425,7 @@ struct InstrumentPanel: View {
     }
     // Live comparison keeps context; a stopped one-off choice returns to the instrument.
     private func finishLiveSelection() { if !model.playing { dismiss() } }
-    private func dismiss() { model.endSoundPreview(); if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
+    private func dismiss() { model.endSoundPreview(); if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack { Text(L10n.text(title)).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }

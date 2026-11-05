@@ -4,7 +4,6 @@ struct DivisionPanel: View {
     @Binding var rhythm: Rhythm
     let playing: Bool
     let p: InstrumentPalette
-    let preview: (Rhythm) -> Void
     let stopPreview: () -> Void
     let close: () -> Void
     @State private var patternTab: Bool
@@ -14,11 +13,9 @@ struct DivisionPanel: View {
     @State private var moreGrid = false
     @State private var swingExpanded = false
     @State private var message: String?
-    @State private var audition: String?
-    @State private var auditionToken = UUID()
     @State private var pendingGrid: Int?
-    init(rhythm: Binding<Rhythm>, playing: Bool, p: InstrumentPalette, preview: @escaping (Rhythm) -> Void, stopPreview: @escaping () -> Void, close: @escaping () -> Void) {
-        _rhythm = rhythm; self.playing = playing; self.p = p; self.preview = preview; self.stopPreview = stopPreview; self.close = close
+    init(rhythm: Binding<Rhythm>, playing: Bool, p: InstrumentPalette, stopPreview: @escaping () -> Void, close: @escaping () -> Void) {
+        _rhythm = rhythm; self.playing = playing; self.p = p; self.stopPreview = stopPreview; self.close = close
         let value = rhythm.wrappedValue
         _patternTab = State(initialValue: value.divisionMask != nil || value.swingRatio > 0.5)
         _family = State(initialValue: [2,3,4].contains(value.subdivision) ? value.subdivision : value.subdivision == 6 && value.enabledMask == 17 ? 3 : 4)
@@ -39,7 +36,7 @@ struct DivisionPanel: View {
             }
     }
     private func tab(_ title: String, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
-        Button { stopPreview(); audition = nil; action() } label: {
+        Button { stopPreview(); action() } label: {
             Text(L10n.text(title)).font(.system(size: 15, weight: selected ? .semibold : .medium)).lineLimit(1).minimumScaleFactor(0.75).frame(maxWidth: .infinity, minHeight: 44)
         }.buttonStyle(HardwareButtonStyle(p: p, charcoal: selected, radius: 10))
             .accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
@@ -78,7 +75,6 @@ struct DivisionPanel: View {
                             .overlay(alignment: .topLeading) { LED(on: selected, color: InstrumentPalette.amber, size: 8).padding(14) }
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11)).accessibilityIdentifier("pattern-\(pattern.id)")
                         .accessibilityLabel(L10n.format("Rhythm pattern %@", pattern.id)).accessibilityAddTraits(selected ? .isSelected : [])
-                    auditionKey(value, id: pattern.id)
                 }
             }
             Button { stopPreview(); draft = rhythm; editing = true } label: {
@@ -135,7 +131,6 @@ struct DivisionPanel: View {
                     RhythmScore(rhythm: draft, color: p.ink).frame(maxWidth: .infinity).frame(height: 55)
                     if draft.swingRatio > 0.5 { Text(L10n.format("Swing %d%%",Int((draft.swingRatio*100).rounded()))).font(.caption).foregroundStyle(p.muted) }
                 }
-                auditionKey(draft, id: "draft")
             }.padding(20).insetPanel(p, radius:14)
             if let message { Text(message).font(.subheadline).foregroundStyle(p.muted) }
             if !playing {
@@ -156,16 +151,6 @@ struct DivisionPanel: View {
     }
     private func withDivision(_ count:Int,from:Rhythm?=nil) -> Rhythm { var value=from ?? rhythm; value.setDivision(count); return value }
     private func changeGrid(_ count:Int) { draft.setDivision(count); changedDraft() }
-    private func changedDraft() { stopPreview(); audition=nil; if playing { rhythm=draft } }
-    private func apply(_ value:Rhythm) { stopPreview(); audition=nil; rhythm=value; if !playing { close() } }
-    private func auditionKey(_ value:Rhythm,id:String) -> some View {
-        Button {
-            if audition == id { stopPreview(); audition=nil } else {
-                audition=id; auditionToken=UUID(); let token=auditionToken; preview(value)
-                DispatchQueue.main.asyncAfter(deadline:.now()+Double(value.pulseCount)*60/Double(value.bpm)+0.9) { if auditionToken == token { audition=nil } }
-            }
-        } label: { Image(systemName:audition == id ? "stop.fill" : "speaker.wave.2").font(.system(size:17)).frame(width:44,height:44) }
-            .buttonStyle(HardwareButtonStyle(p:p,charcoal:audition == id,radius:9)).accessibilityLabel(L10n.text(audition == id ? "Stop preview" : "Preview rhythm"))
-            .accessibilityIdentifier("preview-\(id)")
-    }
+    private func changedDraft() { stopPreview(); if playing { rhythm=draft } }
+    private func apply(_ value:Rhythm) { stopPreview(); rhythm=value; if !playing { close() } }
 }

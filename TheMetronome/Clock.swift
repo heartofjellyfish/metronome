@@ -96,6 +96,14 @@ struct Rhythm: Codable, Equatable {
     var divisionMask: Int?
     var crossRhythm: Int?
     var polyrhythmPrimary: Int?
+    var polyrhythmPrimarySound: Int?
+    var polyrhythmSecondarySound: Int?
+    var primaryPulseSound: Int { validPulseSound(polyrhythmPrimarySound, fallback: .wood) }
+    var secondaryPulseSound: Int { validPulseSound(polyrhythmSecondarySound, fallback: .bell) }
+    private func validPulseSound(_ raw: Int?, fallback: InstrumentSound) -> Int {
+        guard let raw, InstrumentSound.allCases.contains(where: { $0.rawValue == raw }) else { return fallback.rawValue }
+        return raw
+    }
     var swing: Double?
     var enabledMask: Int { divisionMask ?? ((1 << subdivision) - 1) }
     var crossCount: Int { crossRhythm ?? 0 }

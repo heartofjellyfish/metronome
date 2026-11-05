@@ -382,3 +382,18 @@
 "SOUND" = "音色";
 
 "Playback sound" = "播放声音";
+
+"Practice" = "练习";
+"Tempo ramp" = "渐进提速";
+"Choose from library" = "从曲库选择";
+"Import from presets" = "从预设导入";
+"Add to %@" = "加入「%@」";
+"%d song" = "%d 首";
+"Search" = "搜索";
+"No songs yet." = "曲库还是空的。";
+"No matches." = "没有找到。";
+"Delete this song from your library and all setlists?" = "从曲库和所有歌单中删除这首歌？";
+"Delete" = "删除";
+"First instrument" = "第一路音色";
+"Second instrument" = "第二路音色";
+"Back to polyrhythm" = "返回复节奏";

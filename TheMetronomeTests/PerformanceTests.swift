@@ -1,4 +1,5 @@
 import XCTest
+import AVFoundation
 @testable import TheMetronome
 
 final class PerformanceTests: XCTestCase {
@@ -37,6 +38,64 @@ final class PerformanceTests: XCTestCase {
             let store = try JSONDecoder().decode(SongLibraryStore.self, from: data)
             XCTAssertEqual(store.songs.count, 1); XCTAssertEqual(store.lists[0].songIDs, [song.id])
         }
+    }
+    @MainActor func testLibraryCRUDPersistsWithoutListsAndDeletesEveryReference() throws {
+        try clean { m in
+            var r = Rhythm(); r.bpm = 123; r.setMeter(beats: 7, denominator: 8, compound: false)
+            m.createLibrarySong("  Independent  ", rhythm: r)
+            m.createLibrarySong("  ", rhythm: r)
+            XCTAssertEqual(m.songLibrary.count, 1); XCTAssertTrue(m.setlists.isEmpty)
+            let id = try XCTUnwrap(m.songLibrary.first?.id)
+            let restored = MetronomeModel(); defer { restored.stop() }
+            XCTAssertEqual(restored.songLibrary.first?.name, "Independent")
+            m.addSetlist("A"); m.addExistingSong(id)
+            m.addSetlist("B"); m.addExistingSong(id)
+            m.renameSetlist("  Show  "); XCTAssertEqual(m.activeSetlist?.name, "Show")
+            m.editSong(id, name: "Renamed", bpm: 150)
+            XCTAssertTrue(m.setlists.allSatisfy { $0.songs.first?.rhythm.bpm == 150 })
+            m.loadSong(m.songLibrary[0]); m.start(); XCTAssertTrue(m.playing)
+            m.deleteLibrarySong(id)
+            XCTAssertFalse(m.playing); XCTAssertNil(m.selectedSongID)
+            XCTAssertTrue(m.songLibrary.isEmpty); XCTAssertTrue(m.setlists.allSatisfy { $0.songs.isEmpty })
+            let deleted = MetronomeModel(); defer { deleted.stop() }
+            XCTAssertTrue(deleted.songLibrary.isEmpty); XCTAssertTrue(deleted.setlists.allSatisfy { $0.songs.isEmpty })
+            m.deleteActiveSetlist(); m.deleteActiveSetlist(); XCTAssertTrue(m.setlists.isEmpty)
+        }
+    }
+    func testPolyrhythmSyntheticAndAcousticChoicesProduceAudio() throws {
+        // Exercise the real renderer, including a synthetic second lane (previously bell-only).
+        for pair in [(InstrumentSound.rim, InstrumentSound.stageClick), (.click, .naturalHiHat)] {
+            let audio = MetronomeAudio()
+            var r = Rhythm(); r.bpm = 240; r.polyrhythmPrimary = 3; r.crossRhythm = 2
+            r.polyrhythmPrimarySound = pair.0.rawValue; r.polyrhythmSecondarySound = pair.1.rawValue
+            try audio.start(r)
+            let audible = expectation(description: "Audible \(pair.0) / \(pair.1)")
+            var fulfilled = false
+            audio.engine.mainMixerNode.installTap(onBus: 0, bufferSize: 512, format: nil) { buffer, _ in
+                guard !fulfilled, let samples = buffer.floatChannelData?[0] else { return }
+                for i in 0..<Int(buffer.frameLength) where abs(samples[i]) > 0.001 {
+                    fulfilled = true; audible.fulfill(); break
+                }
+            }
+            wait(for: [audible], timeout: 3)
+            audio.engine.mainMixerNode.removeTap(onBus: 0); audio.stop()
+        }
+    }
+    func testPolyrhythmSoundDefaultsMigrationAndIndependentChoices() throws {
+        var r = Rhythm(); r.polyrhythmPrimary = 3; r.crossRhythm = 2
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(r)) as? [String: Any])
+        json.removeValue(forKey: "polyrhythmPrimarySound"); json.removeValue(forKey: "polyrhythmSecondarySound")
+        let legacy = try JSONDecoder().decode(Rhythm.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertEqual(legacy.primaryPulseSound, InstrumentSound.wood.rawValue)
+        XCTAssertEqual(legacy.secondaryPulseSound, InstrumentSound.bell.rawValue)
+        for sound in InstrumentSound.allCases {
+            r.polyrhythmPrimarySound = sound.rawValue; r.polyrhythmSecondarySound = InstrumentSound.stageClick.rawValue
+            let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r))
+            XCTAssertEqual(restored.primaryPulseSound, sound.rawValue)
+            XCTAssertEqual(restored.secondaryPulseSound, InstrumentSound.stageClick.rawValue)
+        }
+        r.polyrhythmPrimarySound = 999; r.polyrhythmSecondarySound = -1
+        XCTAssertEqual(r.primaryPulseSound, InstrumentSound.wood.rawValue); XCTAssertEqual(r.secondaryPulseSound, InstrumentSound.bell.rawValue)
     }
     @MainActor func testLegacyListMigrationKeepsSongIDsOrderAndParameters() throws {
         try clean { _ in

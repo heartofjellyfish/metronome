@@ -382,3 +382,18 @@
 "SOUND" = "音色";
 
 "Playback sound" = "再生音";
+
+"Practice" = "練習";
+"Tempo ramp" = "テンポ変化";
+"Choose from library" = "ライブラリから選択";
+"Import from presets" = "プリセットから追加";
+"Add to %@" = "「%@」に追加";
+"%d song" = "%d 曲";
+"Search" = "検索";
+"No songs yet." = "曲はまだありません。";
+"No matches." = "見つかりません。";
+"Delete this song from your library and all setlists?" = "この曲をライブラリとすべてのセットリストから削除しますか？";
+"Delete" = "削除";
+"First instrument" = "1つ目の音色";
+"Second instrument" = "2つ目の音色";
+"Back to polyrhythm" = "ポリリズムに戻る";
