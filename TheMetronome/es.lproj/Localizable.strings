@@ -214,3 +214,77 @@
 "Connect MIDI pedal" = "Conectar pedal MIDI";
 
 "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." = "Empareja el pedal en los ajustes Bluetooth del iPhone. Toca Asignar y pisa el pedal.";
+
+"STAGE CLICK" = "CLIC ESCÉNICO";
+
+"BRIGHT / SHORT / FOCUSED" = "BRILLANTE / CORTO / CLARO";
+
+"More rhythms" = "Más ritmos";
+
+"Rests & swing" = "Silencios y swing";
+
+"Offbeat" = "Contratiempo";
+
+"Swing" = "Swing";
+
+"Triplet · rest first" = "Tresillo · silencio inicial";
+
+"Triplet · rest middle" = "Tresillo · silencio central";
+
+"Triplet · rest last" = "Tresillo · silencio final";
+
+"Sixteenths · offbeats" = "Semicorcheas · contratiempos";
+
+"Short · short · long" = "Corto · corto · largo";
+
+"Long · short · short" = "Largo · corto · corto";
+
+"Short · long · short" = "Corto · largo · corto";
+
+"Dotted" = "Con puntillo";
+
+"Build a rhythm" = "Crear un ritmo";
+
+"Choose divisions, then tap pulses to add rests." = "Elige la división y toca los pulsos para añadir silencios.";
+
+"Polyrhythm" = "Polirritmia";
+
+"A second pulse across the same beat." = "Un segundo pulso sobre el mismo tiempo.";
+
+"Pulse %d" = "Pulso %d";
+
+"Sound" = "Sonido";
+
+"Rest" = "Silencio";
+
+"Setlists" = "Repertorios";
+
+"Choose a setlist" = "Elige un repertorio";
+
+"Edit" = "Editar";
+
+"Setlist name" = "Nombre del repertorio";
+
+"Create setlist" = "Crear repertorio";
+
+"Rename" = "Renombrar";
+
+"Delete setlist" = "Eliminar repertorio";
+
+"Delete this setlist and its songs?" = "¿Eliminar este repertorio y sus canciones?";
+
+"Your next show, song by song." = "Tu próximo concierto, canción a canción.";
+
+"Move up" = "Subir";
+
+"Move down" = "Bajar";
+
+"Delete song" = "Eliminar canción";
+
+"Add song" = "Añadir canción";
+
+"Song name" = "Nombre de la canción";
+
+"Uses the current meter, sound and rhythm." = "Usa el compás, sonido y ritmo actuales.";
+
+"Save song" = "Guardar canción";

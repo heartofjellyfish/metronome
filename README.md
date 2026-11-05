@@ -7,17 +7,21 @@ Open `TheMetronome.xcodeproj`, select the `TheMetronome` scheme and an iPhone, a
 ## Implemented
 
 - Tactile tempo encoder, +/- adjustment, numeric entry, 20–300 BPM, tap tempo.
-- 1–12 beats, /2, /4, /8 and /16 meters, simple 1–4 or compound 1/2/3/6 subdivisions, per-beat accent/normal/mute.
-- Twelve curated sounds with tap-to-preview: eleven recorded percussion instruments and electronic CLICK. HI-HAT stays closed.
+- 1–12 beats, /2, /4, /8 and /16 meters, common subdivisions plus advanced 1–8 divisions, per-pulse rests, swing and polyrhythms. Per-beat accent/normal/mute.
+- Recorded percussion with tap-to-preview, electronic CLICK and a brighter STAGE CLICK for live practice. HI-HAT stays closed.
 - Zero, one or two count-in bars; ascending/descending tempo ramp; repeating audible/silent bars.
-- Ivory and graphite skins, control haptics, locally persisted settings and named presets.
+- Ivory and graphite skins, control haptics, locally persisted settings, named presets and multiple setlists of songs with individual tempos.
 - Background playback with other audio, lock-screen transport, headphone-disconnect and interruption handling.
 
 6/8, 9/8 and 12/8 default to 2, 3 and 4 dotted-quarter pulses. BPM counts the displayed note unit; compound subdivisions offer one big beat, duplets, eighths and sixteenths (1/2/3/6 clicks). The meter panel also offers eighth-note counting. Older saved rhythms retain their original eighth-note BPM meaning. Beat numeral weight and ink tone express strong, secondary and weak metrical roles without extra marks. Recessed amber indicators reflect the same hierarchy in brightness. EVEN changes audio only: the visual meter hierarchy stays intact. The app is an initial functional build; purchasing and cross-app synchronization are not implemented.
 
 ## Live Mode (1.0.2 test candidate)
 
-Settings → Live Mode provides six learnable pedal actions: next/previous saved song, BPM ±1, play/stop and tap tempo. Tap an action and press a pedal; the learning press does not operate transport. Supports foreground keyboard input, standard media remote commands and CoreMIDI Note/CC/Program Change messages. Songs follow saved preset order. Bindings persist locally.
+Settings → Live Mode provides six learnable pedal actions: next/previous saved song, BPM ±1, play/stop and tap tempo. Tap an action and press a pedal; the learning press does not operate transport. Supports foreground keyboard input, standard media remote commands and CoreMIDI Note/CC/Program Change messages. Songs follow the selected setlist, falling back to saved preset order when no setlist is active. Neither list wraps at its ends. Bindings persist locally.
+
+Settings → Setlists creates named lists, adds songs with BPM and the current meter/sound/rhythm, and supports editing, ordering and deletion. Selecting a song while stopped returns to the instrument; during playback it applies immediately and leaves the list open. Existing presets remain accessible through Saved presets.
+
+Division → More rhythms contains rest combinations and 2:1 swing, custom 1–8 pulse masks, and a second 2–9 pulse layer across one beat. A least-common-multiple sample grid schedules both layers; shared onsets produce one hit. Quick choices close only when stopped; custom editing remains open until explicitly closed. Existing rhythms and presets decode with their previous behavior when the optional mask/second-layer fields are absent.
 
 Keyboard pedals cannot control this app while locked/backgrounded. Media/MIDI device behavior, long-idle restart and actual call/alarm recovery still require physical validation; no universal hardware compatibility is claimed. Live playback with a learned binding owns the primary audio session, rather than mixing with other music. See `Design/LiveMode/README.md` for the protocol matrix, interruption policy and test evidence.
 

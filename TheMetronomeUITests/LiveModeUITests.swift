@@ -128,3 +128,100 @@ final class LiveModeUITests: XCTestCase {
         let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
     }
 }
+
+final class StageFeatureUITests: XCTestCase {
+    func testSetlistCreateSongsSelectAndEdit() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--stage-ui-test", "--panel=setlists"]
+        app.launch()
+        let name = app.textFields["setlist-name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 8)); name.tap(); name.typeText("Friday show")
+        app.buttons["Create setlist"].tap()
+        for (song, bpm) in [("Opening", "95"), ("Night drive", "140"), ("Encore", "85")] {
+            reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
+            let title = app.textFields["song-name"]; reveal(title, app); title.tap(); title.typeText(song)
+            let tempo = app.textFields["song-bpm"]; tempo.tap(); tempo.press(forDuration: 1.1)
+            if app.menuItems["Select All"].exists { app.menuItems["Select All"].tap(); tempo.typeText(bpm) }
+            else { tempo.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 3) + bpm) }
+            reveal(app.buttons["save-song"], app); app.buttons["save-song"].tap()
+        }
+        app.swipeDown(); capture(app, "Setlist three songs")
+        reveal(app.buttons["song-Opening"], app); app.buttons["song-Opening"].tap()
+        XCTAssertTrue(app.buttons["transport"].waitForExistence(timeout: 3))
+        app.buttons["transport"].tap()
+        app.buttons["settings"].tap(); app.buttons["settings-presets"].tap()
+        XCTAssertTrue(app.buttons["song-Opening"].waitForExistence(timeout: 3))
+        app.buttons["song-Night drive"].tap(); app.buttons["song-Encore"].tap()
+        XCTAssertTrue(app.buttons["song-Encore"].isSelected)
+        app.buttons["edit-setlist"].tap()
+        reveal(app.buttons["edit-song-Encore"], app); app.buttons["edit-song-Encore"].tap()
+        let revisedName = app.textFields["song-name"]; reveal(revisedName, app); revisedName.tap()
+        revisedName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "Encore revised")
+        let revisedTempo = app.textFields["song-bpm"]; revisedTempo.tap()
+        revisedTempo.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 2) + "86")
+        reveal(app.buttons["save-song"], app); app.buttons["save-song"].tap()
+        XCTAssertTrue(app.buttons["song-Encore revised"].isSelected)
+        reveal(app.buttons["move-up-Encore revised"], app); app.buttons["move-up-Encore revised"].tap()
+        XCTAssertLessThan(app.buttons["song-Encore revised"].frame.minY, app.buttons["song-Night drive"].frame.minY)
+        app.swipeDown(); app.swipeDown(); capture(app, "Setlist editing")
+        app.buttons["edit-setlist"].tap(); app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, "Stop metronome"); app.buttons["transport"].tap()
+        app.terminate(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=setlists"]; app.launch()
+        XCTAssertTrue(app.buttons["song-Encore revised"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["song-Encore revised"].isSelected)
+        capture(app, "Setlist saved and reopened")
+        app.terminate(); app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--panel=setlists"]; app.launch()
+        XCTAssertTrue(app.buttons["song-Encore revised"].waitForExistence(timeout: 8)); capture(app, "Setlist Chinese")
+        app.terminate(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=setlists"]; app.launch()
+        XCTAssertTrue(app.buttons["edit-setlist"].waitForExistence(timeout: 8)); app.buttons["edit-setlist"].tap()
+        reveal(app.buttons["edit-song-Encore revised"], app); app.buttons["edit-song-Encore revised"].tap()
+        reveal(app.buttons["delete-song-Encore revised"], app); app.buttons["delete-song-Encore revised"].tap()
+        reveal(app.buttons["DELETE"], app); app.buttons["DELETE"].tap()
+        XCTAssertFalse(app.buttons["song-Encore revised"].exists)
+        reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
+        XCTAssertTrue(app.textFields["song-name"].exists)
+    }
+    func testAdvancedDivisionKeepsLiveSelectionAndReopens() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--stage-ui-test"]
+        app.launch(); XCTAssertTrue(app.buttons["transport"].waitForExistence(timeout: 8)); app.buttons["transport"].tap()
+        app.buttons["Subdivision"].tap(); capture(app, "Common subdivisions")
+        reveal(app.buttons["more-divisions"], app); app.buttons["more-divisions"].tap()
+        reveal(app.buttons["pattern-6-17"], app); app.buttons["pattern-6-17"].tap()
+        XCTAssertTrue(app.buttons["pattern-6-17"].isSelected)
+        app.buttons["pattern-3-5"].tap(); XCTAssertTrue(app.buttons["pattern-3-5"].isSelected)
+        capture(app, "Advanced rhythms")
+        reveal(app.buttons["division-count-5"], app); app.buttons["division-count-5"].tap()
+        reveal(app.buttons["division-pulse-1"], app); app.buttons["division-pulse-1"].tap()
+        XCTAssertEqual(app.buttons["division-pulse-1"].value as? String, "Rest")
+        reveal(app.buttons["cross-rhythm-3"], app); app.buttons["cross-rhythm-3"].tap(); capture(app, "Custom rhythm and polyrhythm")
+        app.buttons["close-panel"].tap(); XCTAssertEqual(app.buttons["transport"].label, "Stop metronome")
+        app.buttons["Subdivision"].tap(); reveal(app.buttons["cross-rhythm-3"], app)
+        XCTAssertTrue(app.buttons["cross-rhythm-3"].isSelected)
+        app.buttons["close-panel"].tap(); app.buttons["transport"].tap()
+        app.terminate(); app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--panel=division"]; app.launch()
+        reveal(app.buttons["pattern-3-5"], app); capture(app, "Advanced rhythms Chinese")
+    }
+    func testStageClickAuditionsAndKeepsSelection() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--stage-ui-test", "--panel=sounds"]
+        app.launch()
+        let stage = app.buttons["classic-sound-16"]
+        reveal(stage, app); stage.tap(); XCTAssertTrue(stage.isSelected)
+        app.buttons["classic-sound-1"].tap(); XCTAssertFalse(stage.isSelected)
+        stage.tap(); XCTAssertTrue(stage.isSelected); capture(app, "Stage click sound")
+        app.buttons["close-panel"].tap(); app.buttons["transport"].tap()
+        app.buttons["settings"].tap(); app.buttons["all-sounds"].tap()
+        reveal(stage, app); XCTAssertTrue(stage.isSelected)
+        app.buttons["classic-sound-1"].tap(); stage.tap()
+        app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, "Stop metronome"); app.buttons["transport"].tap()
+    }
+    private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
+        for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }
+        XCTAssertTrue(element.isHittable)
+    }
+    private func capture(_ app: XCUIApplication, _ name: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
+    }
+}

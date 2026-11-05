@@ -1,18 +1,18 @@
 import Foundation
 
 enum InstrumentSound: Int, CaseIterable {
-    case wood, click, bell, hiHat, shaker, rim, acousticClosed, acousticOpen, acousticPedal, acousticStick, acousticShaker, naturalHiHat, snap, clap, ride, crossStick
+    case wood, click, bell, hiHat, shaker, rim, acousticClosed, acousticOpen, acousticPedal, acousticStick, acousticShaker, naturalHiHat, snap, clap, ride, crossStick, stageClick
     // Retired raw values remain decodable for existing presets.
-    static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat, .snap, .clap, .ride, .crossStick]
+    static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat, .snap, .clap, .ride, .crossStick, .stageClick]
     static let recommended: [InstrumentSound] = [.naturalHiHat, .wood, .click]
-    var title: String { L10n.text(["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK"][rawValue]) }
-    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10][rawValue] }
+    var title: String { L10n.text(["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK", "STAGE CLICK"][rawValue]) }
+    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10,1][rawValue] }
     var detail: String {
         ["REAL WOODBLOCK / DRY & FOCUSED", "SHORT / CLEAR / PRECISE", "REAL HAND BELL / ROUND & RINGING",
          "CLOSED HAT / DYNAMIC STROKES", "SOFT GRAIN / LIGHT SUBDIVISIONS", "REAL SNARE / HEAD & RIM",
          "REAL CLOSED HI-HAT / FOUR TAKES", "HALF-OPEN ACCENT / CLOSED SUBDIVISIONS",
          "REAL PEDAL CHICK / FOUR TAKES", "REAL DRUMSTICKS / FOUR HITS",
-         "REAL SHAKER / FOUR TAKES", "CLOSED STROKES / NATURAL ACCENTS", "REAL FINGER SNAPS / DRY & LIGHT", "SOLO HAND CLAPS / FOUR TAKES", "REAL RIDE / FOCUSED PING", "SNARE SIDE STICK / DRY KNOCK"][rawValue]
+         "REAL SHAKER / FOUR TAKES", "CLOSED STROKES / NATURAL ACCENTS", "REAL FINGER SNAPS / DRY & LIGHT", "SOLO HAND CLAPS / FOUR TAKES", "REAL RIDE / FOCUSED PING", "SNARE SIDE STICK / DRY KNOCK", "BRIGHT / SHORT / FOCUSED"][rawValue]
     }
 }
 
@@ -55,8 +55,8 @@ struct Rhythm: Codable, Equatable {
             : [2: "𝅗𝅥", 4: "♩", 8: "♪", 16: "𝅘𝅥𝅯"][denominator, default: "♩"]
     }
     func divisionNoteValue(_ count: Int) -> Int {
-        if usesCompoundPulse { return count == 1 ? denominator / 2 : count == 6 ? denominator * 2 : denominator }
-        return denominator * (count == 3 ? 2 : count)
+        if usesCompoundPulse { return count == 1 ? denominator / 2 : count >= 4 ? denominator * 2 : denominator }
+        return denominator * (count == 3 ? 2 : [5,6,7].contains(count) ? 4 : count)
     }
     func divisionTitle(_ count: Int) -> String {
         guard usesCompoundPulse else { return L10n.text([1: "ONE", 2: "TWO", 3: "TRIPLET", 4: "FOUR"][count, default: "ONE"]) }
@@ -92,6 +92,25 @@ struct Rhythm: Codable, Equatable {
     func displayStrength(_ beat: Int) -> Int { metricalStrength(beat) }
 
     var subdivision = 1
+    // Optional additions keep previously saved rhythms decodable.
+    var divisionMask: Int?
+    var crossRhythm: Int?
+    var enabledMask: Int { divisionMask ?? ((1 << subdivision) - 1) }
+    var crossCount: Int { crossRhythm ?? 0 }
+    var clockDivisions: Int {
+        guard crossCount > 0 else { return subdivision }
+        var a = subdivision, b = crossCount
+        while b != 0 { let r = a % b; a = b; b = r }
+        return subdivision / a * crossCount
+    }
+    var divisionSummary: String {
+        if crossCount > 0 { return "\(subdivision):\(crossCount)" }
+        if divisionMask != nil { return (0..<subdivision).map { enabledMask & (1 << $0) != 0 ? "●" : "·" }.joined(separator: " ") }
+        return L10n.format("%d / BEAT", subdivision)
+    }
+    mutating func setDivision(_ count: Int, mask: Int? = nil) {
+        subdivision = min(8, max(1, count)); divisionMask = mask; crossRhythm = nil
+    }
     var accents = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     var sound = 0
     // Optional storage decodes older saved rhythms without resetting their other settings.
@@ -148,12 +167,18 @@ struct Rhythm: Codable, Equatable {
         if changed || oldCompound != usesCompoundPulse {
             accents = [2] + Array(repeating: 1, count: 11)
             subdivision = usesCompoundPulse ? 3 : 1
+            divisionMask = nil; crossRhythm = nil
         }
     }
     mutating func sanitize() {
         bpm = min(300, max(20, bpm)); beats = min(12, max(1, beats))
         denominator = [2, 4, 8, 16].contains(denominator) ? denominator : 4
-        subdivision = usesCompoundPulse ? ([1, 2, 3, 6].contains(subdivision) ? subdivision : 3) : min(4, max(1, subdivision))
+        subdivision = min(8, max(1, subdivision))
+        if let mask = divisionMask {
+            let valid = mask & ((1 << subdivision) - 1)
+            divisionMask = valid == 0 || valid == (1 << subdivision) - 1 ? nil : valid
+        }
+        if let crossRhythm, !(2...9).contains(crossRhythm) { self.crossRhythm = nil }
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
         if let grouping, !Self.groupingOptions(beats).contains(grouping) { self.grouping = nil }
         switch sound {
@@ -200,10 +225,10 @@ final class SampleClock {
             lastRampBar = -1
         }
         // Changes to the pulse grid restart at a clean bar, never index stale accents.
-        if value.beats != rhythm.beats || value.denominator != rhythm.denominator || value.usesCompoundPulse != rhythm.usesCompoundPulse || value.subdivision != rhythm.subdivision {
+        if value.beats != rhythm.beats || value.denominator != rhythm.denominator || value.usesCompoundPulse != rhythm.usesCompoundPulse || value.clockDivisions != rhythm.clockDivisions {
             // Restart this bar's grid, preserving completed count-in and practice progress.
-            let bar = max(0, tick / (rhythm.pulseCount * rhythm.subdivision))
-            tick = bar * value.pulseCount * value.subdivision - 1; framesUntilTick = 0
+            let bar = max(0, tick / (rhythm.pulseCount * rhythm.clockDivisions))
+            tick = bar * value.pulseCount * value.clockDivisions - 1; framesUntilTick = 0
         }
         rhythm = value
     }
@@ -237,13 +262,13 @@ final class SampleClock {
     func advance() -> (ClockEvent, Int)? {
         defer { framesUntilTick -= 1 }
         guard framesUntilTick <= 0 else { return nil }
-        let ticksPerBar = rhythm.pulseCount * rhythm.subdivision
+        let ticksPerBar = rhythm.pulseCount * rhythm.clockDivisions
         // Stop scheduling hits at the exact boundary; renderers may finish their tails.
         if let barLimit, tick + 1 >= ticksPerBar * barLimit { return nil }
         tick += 1
         let bar = tick / ticksPerBar
-        let beat = (tick / rhythm.subdivision) % rhythm.pulseCount
-        let primary = tick % rhythm.subdivision == 0
+        let beat = (tick / rhythm.clockDivisions) % rhythm.pulseCount
+        let primary = tick % rhythm.clockDivisions == 0
         let counting = bar < countInBars
         let practiceBar = max(0, bar - countInBars)
         if primary && beat == 0 && !counting && rhythm.ramp && practiceBar != lastRampBar {
@@ -256,14 +281,18 @@ final class SampleClock {
             }
         }
         let silent = !counting && rhythm.gap && practiceBar % (rhythm.audibleBars + rhythm.silentBars) >= rhythm.audibleBars
-        framesUntilTick += rate * 60 / Double(tempo * rhythm.subdivision)
+        framesUntilTick += rate * 60 / Double(tempo * rhythm.clockDivisions)
         let mainStrength = rhythm.beatStrength(beat, counting: counting)
-        let strength = silent || mainStrength == 0 ? 0 : !rhythm.followsMeter ? 5
-            : primary ? mainStrength : 3
+        let position = tick % rhythm.clockDivisions
+        let step = rhythm.clockDivisions / rhythm.subdivision
+        let baseHit = position % step == 0 && rhythm.enabledMask & (1 << (position / step)) != 0
+        let crossHit = rhythm.crossCount > 0 && position % (rhythm.clockDivisions / max(1, rhythm.crossCount)) == 0
+        let strength = silent || mainStrength == 0 || !(baseHit || crossHit) ? 0 : !rhythm.followsMeter ? 5
+            : primary ? mainStrength : crossHit && !baseHit ? 4 : 3
         let variation = humanizer.nextGain()
         let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
-            : rhythm.subdivisionGainScale(beat: beat, division: tick % rhythm.subdivision, counting: counting) * variation
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: 60 / Double(tempo * rhythm.subdivision)), strength)
+            : (crossHit && !baseHit ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: 60 / Double(tempo * rhythm.clockDivisions)), strength)
     }
 }
 
@@ -288,9 +317,9 @@ struct ClickVoice {
     mutating func trigger(sound: Int, strength: Int, gainScale: Float = 1) {
         age = 0; self.sound = sound; accent = strength
         chokeTime = -1; lowNoise = 0; highNoise = 0
-        duration = sound == 3 ? 0.06 : sound == 4 ? 0.10 : 0.12
+        duration = sound == 16 ? 0.045 : sound == 3 ? 0.06 : sound == 4 ? 0.10 : 0.12
         self.strength = 0.65 * Double(BeatIntensity.gain(strength) * gainScale)
-        frequency = (sound == 0 ? 1050 : sound == 1 ? 1800 : 1450) * (strength == 2 ? 1.35 : 1)
+        frequency = (sound == 16 ? 3200 : sound == 0 ? 1050 : sound == 1 ? 1800 : 1450) * (strength == 2 ? 1.35 : 1)
     }
     mutating func sample(rate: Double) -> Float {
         guard age < duration else { return 0 }
@@ -305,6 +334,7 @@ struct ClickVoice {
         switch sound {
         case 0: wave = (sin(2 * .pi * frequency * t) + 0.35 * sin(2 * .pi * frequency * 1.47 * t)) * exp(-t * 115) / 1.35
         case 1: wave = sin(2 * .pi * frequency * t) * exp(-t * 190)
+        case 16: wave = (sin(2 * .pi * frequency * t) + 0.22 * sin(2 * .pi * frequency * 2 * t)) / 1.22 * exp(-t * 95)
         case 2: wave = (sin(2 * .pi * frequency * t) + 0.3 * sin(2 * .pi * frequency * 2.76 * t)) * exp(-t * 48) / 1.3
         case 3, 4:
             seed = seed &* 6364136223846793005 &+ 1442695040888963407

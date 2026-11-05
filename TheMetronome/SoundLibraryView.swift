@@ -40,7 +40,7 @@ struct SoundLibraryView: View {
                 [.acousticStick, .crossStick, .ride],
                 [.acousticShaker, .snap, .clap]
             ], namespace: "acoustic")
-            family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell]], namespace: "classic")
+            family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell], [.stageClick]], namespace: "classic")
             Text(L10n.text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW"))
                 .technical(8, spacing: 0.9).lineSpacing(6).foregroundStyle(p.muted)
         }

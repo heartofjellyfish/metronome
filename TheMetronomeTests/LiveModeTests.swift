@@ -267,3 +267,101 @@ final class LiveModeTests: XCTestCase {
         XCTAssertFalse(model.playing) // never resume through speaker after headphones disconnect
     }
 }
+
+final class StageFeatureTests: XCTestCase {
+    func testSubdivisionPatternsAndPolyrhythmsAtSampleBoundaries() throws {
+        for bpm in [20, 137, 300] {
+            for divisions in 1...8 {
+                for mask in 1..<(1 << divisions) {
+                    var r = Rhythm(); r.bpm = bpm; r.setDivision(divisions, mask: mask)
+                    let clock = SampleClock(rate: 1200); clock.reset(r)
+                    var hits: [Int] = []
+                    for frame in 0..<Int(ceil(1200 * 60 / Double(bpm))) {
+                        if let (_, strength) = clock.advance(), strength > 0 { hits.append(frame) }
+                    }
+                    let expected = (0..<divisions).filter { mask & (1 << $0) != 0 }.map { Int(ceil(Double($0) * 1200 * 60 / Double(bpm * divisions) - 0.000001)) }
+                    XCTAssertEqual(hits.count, expected.count)
+                    for (actual, target) in zip(hits, expected) { XCTAssertLessThanOrEqual(abs(actual - target), 1) }
+                }
+            }
+        }
+        var r = Rhythm(); r.bpm = 60; r.setDivision(3); r.crossRhythm = 2
+        let clock = SampleClock(rate: 600); clock.reset(r)
+        var hits: [Int] = []
+        for frame in 0..<600 { if let (_, s) = clock.advance(), s > 0 { hits.append(frame) } }
+        XCTAssertEqual(hits, [0, 200, 300, 400])
+        r.setDivision(6, mask: 17); clock.reset(r); hits = []
+        for frame in 0..<600 { if let (_, s) = clock.advance(), s > 0 { hits.append(frame) } }
+        XCTAssertEqual(hits, [0, 400]) // long-short swing, not equal eighths
+        r.sanitize()
+        XCTAssertEqual(try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r)), r)
+    }
+    func testStageClickIsBoundedShortAndBrighter() {
+        for rate in [44100.0, 48000.0] {
+            for strength in [1, 2, 3, 4, 5] {
+                var stage = ClickVoice(); stage.trigger(sound: 16, strength: strength)
+                var samples = (0..<Int(rate * 0.1)).map { _ in stage.sample(rate: rate) }
+                XCTAssertEqual(samples[0], 0)
+                XCTAssertTrue(samples.allSatisfy { $0.isFinite && abs($0) < 1 })
+                XCTAssertTrue(samples.suffix(Int(rate * 0.05)).allSatisfy { $0 == 0 })
+                let stageCrossings = zip(samples, samples.dropFirst()).filter { $0.0 <= 0 && $0.1 > 0 }.count
+                var classic = ClickVoice(); classic.trigger(sound: 1, strength: strength)
+                samples = (0..<Int(rate * 0.045)).map { _ in classic.sample(rate: rate) }
+                let classicCrossings = zip(samples, samples.dropFirst()).filter { $0.0 <= 0 && $0.1 > 0 }.count
+                XCTAssertGreaterThan(stageCrossings, classicCrossings)
+            }
+        }
+    }
+    func testEveryPolyrhythmPairAndLegacyRhythmDecoding() throws {
+        for bpm in [60, 137, 300] {
+            for base in 1...8 {
+                for secondary in 2...9 {
+                    var r = Rhythm(); r.bpm = bpm; r.setDivision(base); r.crossRhythm = secondary
+                    let rate = 6000.0, beatFrames = rate * 60 / Double(bpm)
+                    let clock = SampleClock(rate: rate); clock.reset(r)
+                    var hits: [Int] = []
+                    for frame in 0..<Int(ceil(beatFrames)) {
+                        if let (_, strength) = clock.advance(), strength > 0 { hits.append(frame) }
+                    }
+                    let expected = Set((0..<base).map { Int(ceil(Double($0) * beatFrames / Double(base) - 0.000001)) }
+                        + (0..<secondary).map { Int(ceil(Double($0) * beatFrames / Double(secondary) - 0.000001)) }).sorted()
+                    XCTAssertEqual(hits.count, expected.count, "\(base):\(secondary) at \(bpm)")
+                    for (actual, target) in zip(hits, expected) { XCTAssertLessThanOrEqual(abs(actual - target), 1) }
+                    r.accents = Array(repeating: 0, count: 12); clock.reset(r)
+                    for _ in 0..<Int(ceil(beatFrames)) { if let (_, s) = clock.advance() { XCTAssertEqual(s, 0) } }
+                }
+            }
+        }
+        var legacy = Rhythm(); legacy.bpm = 137; legacy.subdivision = 4
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(legacy)) as? [String: Any])
+        json.removeValue(forKey: "divisionMask"); json.removeValue(forKey: "crossRhythm")
+        let restored = try JSONDecoder().decode(Rhythm.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertEqual(restored, legacy); XCTAssertEqual(restored.clockDivisions, 4)
+    }
+    @MainActor func testSetlistCRUDPersistencePedalsAndPresetIsolation() throws {
+        let defaults = UserDefaults.standard
+        let keys = ["setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
+        let saved = keys.map { defaults.object(forKey: $0) }
+        defer { for (k,v) in zip(keys,saved) { defaults.set(v, forKey: k) } }
+        let m = MetronomeModel(); defer { m.stop() }
+        m.setlists = []; m.presets = []; m.rhythm = Rhythm()
+        m.addPreset("OLD"); m.addSetlist("Live")
+        m.addSong("First", bpm: 85); m.addSong("Second", bpm: 140)
+        let first = m.activeSetlist!.songs[0], second = m.activeSetlist!.songs[1]
+        m.performPedal(.next); XCTAssertEqual(m.bpm, 85)
+        m.performPedal(.next); XCTAssertEqual(m.bpm, 140)
+        m.performPedal(.next); XCTAssertEqual(m.selectedSongID, second.id) // no wrap
+        m.performPedal(.previous); XCTAssertEqual(m.selectedSongID, first.id)
+        m.editSong(first.id, name: "Opening", bpm: 90); XCTAssertEqual(m.bpm, 90)
+        m.moveSong(second.id, by: -1); XCTAssertEqual(m.activeSetlist?.songs.first?.id, second.id)
+        m.renameSetlist("Show")
+        let restored = MetronomeModel(); defer { restored.stop() }
+        XCTAssertEqual(restored.activeSetlist?.name, "Show")
+        XCTAssertEqual(restored.currentSong?.name, "Opening")
+        XCTAssertEqual(restored.activeSetlist?.songs.first?.rhythm.bpm, 140)
+        m.deleteSong(first.id); XCTAssertNil(m.selectedSongID)
+        m.deleteActiveSetlist(); XCTAssertTrue(m.setlists.isEmpty)
+        XCTAssertEqual(m.presets.count, 1)
+        m.load(m.presets[0]); XCTAssertNil(m.activeSetlistID)
+    }
+}

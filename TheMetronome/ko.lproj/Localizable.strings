@@ -214,3 +214,77 @@
 "Connect MIDI pedal" = "MIDI 페달 연결";
 
 "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." = "iPhone Bluetooth 설정에서 페어링한 뒤, 할당을 누르고 페달을 밟으세요.";
+
+"STAGE CLICK" = "스테이지 클릭";
+
+"BRIGHT / SHORT / FOCUSED" = "밝고 / 짧고 / 또렷하게";
+
+"More rhythms" = "더 많은 리듬";
+
+"Rests & swing" = "쉼표와 스윙";
+
+"Offbeat" = "엇박";
+
+"Swing" = "스윙";
+
+"Triplet · rest first" = "셋잇단 · 첫 쉼표";
+
+"Triplet · rest middle" = "셋잇단 · 중간 쉼표";
+
+"Triplet · rest last" = "셋잇단 · 끝 쉼표";
+
+"Sixteenths · offbeats" = "16분 · 엇박";
+
+"Short · short · long" = "짧게 · 짧게 · 길게";
+
+"Long · short · short" = "길게 · 짧게 · 짧게";
+
+"Short · long · short" = "짧게 · 길게 · 짧게";
+
+"Dotted" = "점음표";
+
+"Build a rhythm" = "리듬 만들기";
+
+"Choose divisions, then tap pulses to add rests." = "분할 수를 고른 뒤 음표를 눌러 쉼표로 바꾸세요.";
+
+"Polyrhythm" = "폴리리듬";
+
+"A second pulse across the same beat." = "같은 박에 다른 펄스를 겹칩니다.";
+
+"Pulse %d" = "펄스 %d";
+
+"Sound" = "소리";
+
+"Rest" = "쉼표";
+
+"Setlists" = "셋리스트";
+
+"Choose a setlist" = "셋리스트 선택";
+
+"Edit" = "편집";
+
+"Setlist name" = "셋리스트 이름";
+
+"Create setlist" = "셋리스트 만들기";
+
+"Rename" = "이름 변경";
+
+"Delete setlist" = "셋리스트 삭제";
+
+"Delete this setlist and its songs?" = "이 셋리스트와 곡을 삭제할까요?";
+
+"Your next show, song by song." = "다음 공연을 한 곡씩 준비하세요.";
+
+"Move up" = "위로";
+
+"Move down" = "아래로";
+
+"Delete song" = "곡 삭제";
+
+"Add song" = "곡 추가";
+
+"Song name" = "곡 이름";
+
+"Uses the current meter, sound and rhythm." = "현재 박자표, 음색과 리듬을 사용합니다.";
+
+"Save song" = "곡 저장";

@@ -214,3 +214,77 @@
 "Connect MIDI pedal" = "连接 MIDI 踏板";
 
 "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." = "先在 iPhone 蓝牙设置中配对，再点绑定、踩一下踏板。";
+
+"STAGE CLICK" = "舞台脉冲";
+
+"BRIGHT / SHORT / FOCUSED" = "明亮 / 短促 / 突出";
+
+"More rhythms" = "更多节奏";
+
+"Rests & swing" = "休止与摇摆";
+
+"Offbeat" = "反拍";
+
+"Swing" = "摇摆";
+
+"Triplet · rest first" = "三连音 · 前休止";
+
+"Triplet · rest middle" = "三连音 · 中休止";
+
+"Triplet · rest last" = "三连音 · 后休止";
+
+"Sixteenths · offbeats" = "十六分 · 反拍";
+
+"Short · short · long" = "短 · 短 · 长";
+
+"Long · short · short" = "长 · 短 · 短";
+
+"Short · long · short" = "短 · 长 · 短";
+
+"Dotted" = "附点";
+
+"Build a rhythm" = "自定义节奏";
+
+"Choose divisions, then tap pulses to add rests." = "选择细分数，点音符切换休止。";
+
+"Polyrhythm" = "复节奏";
+
+"A second pulse across the same beat." = "在同一拍内叠加另一组脉冲。";
+
+"Pulse %d" = "第 %d 个脉冲";
+
+"Sound" = "发声";
+
+"Rest" = "休止";
+
+"Setlists" = "歌单";
+
+"Choose a setlist" = "选择歌单";
+
+"Edit" = "编辑";
+
+"Setlist name" = "歌单名称";
+
+"Create setlist" = "新建歌单";
+
+"Rename" = "重命名";
+
+"Delete setlist" = "删除歌单";
+
+"Delete this setlist and its songs?" = "删除这个歌单及其中的歌曲？";
+
+"Your next show, song by song." = "下一场演出，一首一首准备。";
+
+"Move up" = "上移";
+
+"Move down" = "下移";
+
+"Delete song" = "删除歌曲";
+
+"Add song" = "添加歌曲";
+
+"Song name" = "歌名";
+
+"Uses the current meter, sound and rhythm." = "使用当前拍号、音色和节奏。";
+
+"Save song" = "保存歌曲";

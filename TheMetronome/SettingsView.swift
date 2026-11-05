@@ -29,7 +29,7 @@ struct SettingsView: View {
             SectionLabel(text: "01 RHYTHM", p: p).frame(width: 359).position(x: 206.5, y: 93)
             HStack(spacing: 17) {
                 menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
-                menuField("DIVISION", value: L10n.format("%d / BEAT", model.rhythm.subdivision), route: .division, fontSize: 17)
+                menuField("DIVISION", value: model.rhythm.divisionSummary, route: .division, fontSize: 17)
             }.frame(width: 359).position(x: 206.5, y: 154)
 
             HStack(spacing: 12) {
@@ -55,7 +55,7 @@ struct SettingsView: View {
             SectionLabel(text: "03 MORE", p: p).frame(width: 359).position(x: 206.5, y: 487)
             HStack(spacing: 12) {
                 navigationKey("PRACTICE", icon: .practice, route: .practice)
-                navigationKey("PRESETS", icon: .presets, route: .presets)
+                navigationKey("Setlists", icon: .presets, route: .setlists)
                 navigationKey("LIVE MODE", icon: .pedal, route: .pedal)
             }.frame(width: 359).position(x: 206.5, y: 565)
 
@@ -74,8 +74,8 @@ struct SettingsView: View {
                     .lineLimit(1).minimumScaleFactor(0.7)
             }.frame(maxWidth: .infinity).frame(height: 114)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-            .accessibilityLabel(L10n.text(title == "PRESETS" ? "Saved presets" : title == "PRACTICE" ? "Practice settings" : "LIVE MODE"))
-            .accessibilityIdentifier(route == .presets ? "settings-presets" : route == .pedal ? "settings-pedal" : route.rawValue)
+            .accessibilityLabel(L10n.text(title == "Setlists" ? "Setlists" : title == "PRESETS" ? "Saved presets" : title == "PRACTICE" ? "Practice settings" : "LIVE MODE"))
+            .accessibilityIdentifier((route == .presets || route == .setlists) ? "settings-presets" : route == .pedal ? "settings-pedal" : route.rawValue)
     }
     private var skinKeys: some View {
         HStack(spacing: 9) {

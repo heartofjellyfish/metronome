@@ -214,3 +214,77 @@
 "Connect MIDI pedal" = "MIDIペダルを接続";
 
 "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." = "iPhoneのBluetooth設定でペアリングし、割り当てをタップしてペダルを踏んでください。";
+
+"STAGE CLICK" = "ステージクリック";
+
+"BRIGHT / SHORT / FOCUSED" = "明るく / 短く / 明瞭に";
+
+"More rhythms" = "その他のリズム";
+
+"Rests & swing" = "休符とスウィング";
+
+"Offbeat" = "裏拍";
+
+"Swing" = "スウィング";
+
+"Triplet · rest first" = "3連符 · 最初を休む";
+
+"Triplet · rest middle" = "3連符 · 中央を休む";
+
+"Triplet · rest last" = "3連符 · 最後を休む";
+
+"Sixteenths · offbeats" = "16分 · 裏拍";
+
+"Short · short · long" = "短 · 短 · 長";
+
+"Long · short · short" = "長 · 短 · 短";
+
+"Short · long · short" = "短 · 長 · 短";
+
+"Dotted" = "付点";
+
+"Build a rhythm" = "リズムを作る";
+
+"Choose divisions, then tap pulses to add rests." = "分割数を選び、音符をタップして休符に。";
+
+"Polyrhythm" = "ポリリズム";
+
+"A second pulse across the same beat." = "同じ拍に別のパルスを重ねます。";
+
+"Pulse %d" = "パルス %d";
+
+"Sound" = "音";
+
+"Rest" = "休符";
+
+"Setlists" = "セットリスト";
+
+"Choose a setlist" = "セットリストを選択";
+
+"Edit" = "編集";
+
+"Setlist name" = "リスト名";
+
+"Create setlist" = "セットリストを作成";
+
+"Rename" = "名前を変更";
+
+"Delete setlist" = "セットリストを削除";
+
+"Delete this setlist and its songs?" = "このセットリストと曲を削除しますか？";
+
+"Your next show, song by song." = "次のライブを、一曲ずつ。";
+
+"Move up" = "上へ";
+
+"Move down" = "下へ";
+
+"Delete song" = "曲を削除";
+
+"Add song" = "曲を追加";
+
+"Song name" = "曲名";
+
+"Uses the current meter, sound and rhythm." = "現在の拍子・音色・リズムを使います。";
+
+"Save song" = "曲を保存";
