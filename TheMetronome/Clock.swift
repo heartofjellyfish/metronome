@@ -6,7 +6,7 @@ enum InstrumentSound: Int, CaseIterable {
     static let allCases: [InstrumentSound] = [.wood, .click, .bell, .rim, .acousticPedal, .acousticStick, .acousticShaker, .naturalHiHat, .snap, .clap, .ride, .crossStick, .stageClick]
     static let recommended: [InstrumentSound] = [.naturalHiHat, .wood, .click]
     var title: String { L10n.text(["WOOD", "CLICK", "BELL", "SYNTH HAT", "SHAKER", "RIMSHOT", "CLOSED", "OPEN", "PEDAL", "STICK", "SHAKER", "HI-HAT", "SNAP", "CLAP", "RIDE", "CROSS-STICK", "STAGE CLICK"][rawValue]) }
-    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10,1][rawValue] }
+    var illustration: Int { [0,1,2,3,4,5,3,3,3,6,4,3,7,8,9,10,11][rawValue] }
     var detail: String {
         ["REAL WOODBLOCK / DRY & FOCUSED", "SHORT / CLEAR / PRECISE", "REAL HAND BELL / ROUND & RINGING",
          "CLOSED HAT / DYNAMIC STROKES", "SOFT GRAIN / LIGHT SUBDIVISIONS", "REAL SNARE / HEAD & RIM",
@@ -317,9 +317,11 @@ struct ClickVoice {
     mutating func trigger(sound: Int, strength: Int, gainScale: Float = 1) {
         age = 0; self.sound = sound; accent = strength
         chokeTime = -1; lowNoise = 0; highNoise = 0
-        duration = sound == 16 ? 0.045 : sound == 3 ? 0.06 : sound == 4 ? 0.10 : 0.12
+        duration = sound == 16 ? 0.040 : sound == 3 ? 0.06 : sound == 4 ? 0.10 : 0.12
         self.strength = 0.65 * Double(BeatIntensity.gain(strength) * gainScale)
-        frequency = (sound == 16 ? 3200 : sound == 0 ? 1050 : sound == 1 ? 1800 : 1450) * (strength == 2 ? 1.35 : 1)
+        // Stage click keeps presence without pushing the downbeat above 4 kHz.
+        frequency = sound == 16 ? 2300 * (strength == 2 ? 1.20 : 1)
+            : (sound == 0 ? 1050 : sound == 1 ? 1800 : 1450) * (strength == 2 ? 1.35 : 1)
     }
     mutating func sample(rate: Double) -> Float {
         guard age < duration else { return 0 }
@@ -329,12 +331,12 @@ struct ClickVoice {
             highCoefficient = exp(-2 * .pi * min(10500, rate * 0.40) / rate)
         }
         let t = age; age += 1 / rate
-        let attack = min(1, t / 0.0008)
+        let attack = min(1, t / (sound == 16 ? 0.0012 : 0.0008))
         let wave: Double
         switch sound {
         case 0: wave = (sin(2 * .pi * frequency * t) + 0.35 * sin(2 * .pi * frequency * 1.47 * t)) * exp(-t * 115) / 1.35
         case 1: wave = sin(2 * .pi * frequency * t) * exp(-t * 190)
-        case 16: wave = (sin(2 * .pi * frequency * t) + 0.22 * sin(2 * .pi * frequency * 2 * t)) / 1.22 * exp(-t * 95)
+        case 16: wave = (sin(2 * .pi * frequency * t) + 0.08 * sin(2 * .pi * frequency * 2 * t)) / 1.08 * exp(-t * 125)
         case 2: wave = (sin(2 * .pi * frequency * t) + 0.3 * sin(2 * .pi * frequency * 2.76 * t)) * exp(-t * 48) / 1.3
         case 3, 4:
             seed = seed &* 6364136223846793005 &+ 1442695040888963407

@@ -213,6 +213,10 @@ final class StageFeatureUITests: XCTestCase {
         app.buttons["classic-sound-1"].tap(); stage.tap()
         app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
         XCTAssertEqual(app.buttons["transport"].label, "Stop metronome"); app.buttons["transport"].tap()
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--dark", "--stage-ui-test", "--panel=sounds"]
+        app.launch(); reveal(stage, app); stage.tap()
+        XCTAssertTrue(stage.isSelected); capture(app, "Stage click dark Chinese")
     }
     private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
         for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }

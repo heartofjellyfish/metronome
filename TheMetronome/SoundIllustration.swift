@@ -9,6 +9,7 @@ struct SoundIllustration: View {
                 if index == 0 { wood }
                 else if index == 1 { waveform }
                 else if index == 2 { bell }
+                else if index == 11 { stageClick }
                 else if index == 3 || index == 9 { hiHat }
                 else if index == 7 {
                     ZStack {
@@ -98,6 +99,36 @@ struct SoundIllustration: View {
             q.addLines([CGPoint(x: 23, y: 19), CGPoint(x: 28, y: 53), CGPoint(x: 35, y: 6), CGPoint(x: 41, y: 56), CGPoint(x: 47, y: 17), CGPoint(x: 53, y: 44)])
             q.addCurve(to: CGPoint(x: 75, y: 33), control1: CGPoint(x: 61, y: 11), control2: CGPoint(x: 62, y: 52))
         }.stroke(p.muted.opacity(0.65), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+    }
+    private var stageClick: some View {
+        // A small electronic click box, drawn face-on like the other instrument objects.
+        ZStack {
+            RoundedRectangle(cornerRadius: 7)
+                .fill(Color(hex: 0x77766D))
+                .frame(width: 45, height: 55).offset(y: 2)
+            RoundedRectangle(cornerRadius: 7)
+                .fill(LinearGradient(colors: [Color(hex: 0xD6D2C5), Color(hex: 0xAAA99C)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(hex: 0x77786E), lineWidth: 0.7))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(.white.opacity(0.45), lineWidth: 0.7).padding(2))
+                .frame(width: 45, height: 54)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color(hex: 0x42473E))
+                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color(hex: 0x8B8C7B), lineWidth: 0.7))
+                .frame(width: 31, height: 13).offset(y: -13)
+            Path { line in
+                line.addLines([CGPoint(x: 29, y: 21), CGPoint(x: 34, y: 21), CGPoint(x: 34, y: 16), CGPoint(x: 39, y: 16), CGPoint(x: 39, y: 21), CGPoint(x: 51, y: 21)])
+            }.stroke(Color(hex: 0xD1D1AF), style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
+            ForEach(0..<4) { row in
+                Capsule().fill(Color(hex: 0x707467))
+                    .overlay(Capsule().stroke(.white.opacity(0.18), lineWidth: 0.4).offset(y: 0.5))
+                    .frame(width: 26, height: 1.8).offset(y: CGFloat(row) * 4 - 1)
+            }
+            Circle().fill(LinearGradient(colors: [Color(hex: 0xD6BC83), Color(hex: 0x9B8150)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(Circle().stroke(Color(hex: 0x8B784F), lineWidth: 0.6))
+                .overlay(Capsule().fill(Color(hex: 0x66583E)).frame(width: 1, height: 2.5).offset(y: -1.7))
+                .frame(width: 8, height: 8).offset(y: 20)
+        }.position(x: 40, y: 31)
+            .shadow(color: .black.opacity(0.16), radius: 1.5, x: 0.7, y: 2)
     }
     private var bell: some View {
         ZStack {

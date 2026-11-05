@@ -296,19 +296,26 @@ final class StageFeatureTests: XCTestCase {
         r.sanitize()
         XCTAssertEqual(try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r)), r)
     }
-    func testStageClickIsBoundedShortAndBrighter() {
-        for rate in [44100.0, 48000.0] {
+    func testStageClickIsBoundedShortAndPresentWithoutShrillDownbeat() {
+        for rate in [44100.0, 48000.0, 96000.0] {
             for strength in [1, 2, 3, 4, 5] {
                 var stage = ClickVoice(); stage.trigger(sound: 16, strength: strength)
-                var samples = (0..<Int(rate * 0.1)).map { _ in stage.sample(rate: rate) }
+                let samples = (0..<Int(rate * 0.1)).map { _ in stage.sample(rate: rate) }
                 XCTAssertEqual(samples[0], 0)
                 XCTAssertTrue(samples.allSatisfy { $0.isFinite && abs($0) < 1 })
                 XCTAssertTrue(samples.suffix(Int(rate * 0.05)).allSatisfy { $0 == 0 })
-                let stageCrossings = zip(samples, samples.dropFirst()).filter { $0.0 <= 0 && $0.1 > 0 }.count
+                // Compare equal windows so a longer decay cannot masquerade as a higher pitch.
+                func pitch(_ signal: [Float]) -> Double {
+                    let window = Array(signal[Int(rate * 0.005)..<Int(rate * 0.025)])
+                    let crossings = zip(window, window.dropFirst()).filter { $0.0 <= 0 && $0.1 > 0 }.count
+                    return Double(crossings) / 0.020
+                }
+                let stagePitch = pitch(samples)
+                XCTAssertGreaterThan(stagePitch, 2000)
+                XCTAssertLessThan(stagePitch, 3000, "The accented hit should not return to the piercing 4 kHz register")
                 var classic = ClickVoice(); classic.trigger(sound: 1, strength: strength)
-                samples = (0..<Int(rate * 0.045)).map { _ in classic.sample(rate: rate) }
-                let classicCrossings = zip(samples, samples.dropFirst()).filter { $0.0 <= 0 && $0.1 > 0 }.count
-                XCTAssertGreaterThan(stageCrossings, classicCrossings)
+                let classicSamples = (0..<Int(rate * 0.1)).map { _ in classic.sample(rate: rate) }
+                XCTAssertGreaterThan(stagePitch, pitch(classicSamples))
             }
         }
     }
