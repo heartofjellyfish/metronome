@@ -380,3 +380,5 @@
 "%d sound bars · %d silent bars" = "%d compassos com som · %d em silêncio";
 
 "SOUND" = "SOM";
+
+"Playback sound" = "Som de reprodução";

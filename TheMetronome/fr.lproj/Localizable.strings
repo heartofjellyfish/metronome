@@ -380,3 +380,5 @@
 "%d sound bars · %d silent bars" = "%d mesures sonores · %d silencieuses";
 
 "SOUND" = "SON";
+
+"Playback sound" = "Son de lecture";

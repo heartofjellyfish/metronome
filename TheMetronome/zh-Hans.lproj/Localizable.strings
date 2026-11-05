@@ -380,3 +380,5 @@
 "%d sound bars · %d silent bars" = "有声 %d 小节 · 静音 %d 小节";
 
 "SOUND" = "音色";
+
+"Playback sound" = "播放声音";

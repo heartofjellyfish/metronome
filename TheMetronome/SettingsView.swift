@@ -69,6 +69,18 @@ struct SettingsView: View {
                         VStack(spacing: 16) {
                             SectionLabel(text: "04 GENERAL", p: p)
                             HStack {
+                                Text("Playback sound").technical(11, spacing: 1)
+                                Spacer()
+                                HStack(spacing: 8) {
+                                    ForEach([false, true], id: \.self) { on in
+                                        Button { model.soundEnabled = on } label: { Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44) }
+                                            .buttonStyle(HardwareButtonStyle(p: p, charcoal: model.soundEnabled == on))
+                                            .accessibilityIdentifier(on ? "general-sound-on" : "general-sound-off")
+                                            .accessibilityAddTraits(model.soundEnabled == on ? .isSelected : [])
+                                    }
+                                }
+                            }
+                            HStack {
                                 Text("TOUCH FEEDBACK").technical(11, spacing: 1)
                                 Spacer()
                                 HStack(spacing: 8) {

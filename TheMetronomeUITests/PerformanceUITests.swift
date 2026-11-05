@@ -21,10 +21,13 @@ final class PerformanceUITests: XCTestCase {
     private func shot(_ name: String) { let a = XCTAttachment(screenshot: app.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a) }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
     func testPerformanceVisualOnlyRepeatedSongsTempoAndReturning() {
-        launch(); openList("周六演出"); tap("song-男孩别哭"); shot("01-setlist-zh")
+        launch(); tap("settings"); tap("general-sound-off"); tap("close-settings")
+        openList("周六演出"); tap("song-男孩别哭"); shot("01-setlist-zh")
         tap("open-performance"); XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
-        tap("performance-play"); tap("performance-sound")
-        XCTAssertEqual(b("performance-sound").value as? String, "仅视觉拍点")
+        XCTAssertFalse(b("performance-sound").exists)
+        XCTAssertTrue(b("performance-division").exists)
+        XCTAssertTrue(app.staticTexts["下一首"].exists)
+        tap("performance-play")
         let cue = app.otherElements["performance-beat"]
         XCTAssertTrue(cue.waitForExistence(timeout: 3))
         let beat = cue.value as? String ?? ""
@@ -32,6 +35,9 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [changes], timeout: 3), .completed)
         tap("performance-plus"); tap("performance-plus"); XCTAssertTrue(b("performance-tempo").label.contains("87"))
         shot("02-performance-visual-zh")
+        let downbeat = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: cue)
+        XCTAssertEqual(XCTWaiter.wait(for: [downbeat], timeout: 4), .completed)
+        shot("10-performance-accent-zh")
         tap("performance-next"); XCTAssertEqual(app.staticTexts["performance-song"].label, "夜来香"); XCTAssertFalse(b("performance-next").isEnabled)
         tap("performance-previous"); XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
         tap("performance-previous"); XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip"); XCTAssertFalse(b("performance-previous").isEnabled)

@@ -380,3 +380,5 @@
 "%d sound bars · %d silent bars" = "소리 %d마디 · 무음 %d마디";
 
 "SOUND" = "음색";
+
+"Playback sound" = "재생 소리";

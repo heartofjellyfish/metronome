@@ -29,33 +29,32 @@ struct PerformanceView: View {
                 }
                 ScrollView {
                     VStack(spacing: 18) {
-                        VStack(spacing: 12) {
-                            Text(model.currentSong?.name ?? L10n.text("Setlists")).font(.system(size: 33, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.65).multilineTextAlignment(.center)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(model.currentSong?.name ?? L10n.text("Setlists"))
+                                .font(.system(size: 25, weight: .semibold)).lineLimit(2)
                                 .accessibilityIdentifier("performance-song")
-                            Button { panel = .tempo } label: {
-                                HStack(alignment: .lastTextBaseline, spacing: 8) {
-                                    Text("\(model.bpm)").font(InstrumentType.display(min(146, geometry.size.width * 0.34))).lineLimit(1).minimumScaleFactor(0.6)
-                                    Text("BPM").technical(12, spacing: 1).foregroundStyle(p.muted)
-                                }.frame(maxWidth: .infinity).contentShape(Rectangle())
-                            }.buttonStyle(.plain).accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("performance-tempo")
-                            HStack(spacing: 22) {
-                                Button { panel = .meter } label: { Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").font(InstrumentType.value(24)).frame(minWidth: 60, minHeight: 44) }.accessibilityIdentifier("performance-meter")
-                                Button { panel = .division } label: { RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 80, height: 44) }.accessibilityLabel("Subdivision").accessibilityIdentifier("performance-division")
+                            HStack(spacing: 20) {
+                                Button { panel = .tempo } label: {
+                                    Text("\(model.bpm) BPM").font(.system(size: 16, weight: .medium)).frame(minHeight: 44)
+                                }.accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("performance-tempo")
+                                Button { panel = .meter } label: {
+                                    Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").font(.system(size: 16, weight: .medium)).frame(minWidth: 44, minHeight: 44)
+                                }.accessibilityIdentifier("performance-meter")
+                                Button { panel = .division } label: {
+                                    RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 88, height: 44)
+                                }.accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary).accessibilityIdentifier("performance-division")
                             }.buttonStyle(.plain).foregroundStyle(p.muted)
-                            PerformanceBeatCue(model: model, p: p).frame(minHeight: 70)
-                            if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
-                        }.padding(22).frame(maxWidth: .infinity).insetPanel(p, radius: 18)
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        PerformanceBeatCue(model: model, p: p)
+                            .frame(height: max(260, min(460, geometry.size.height - 420)))
+                            .frame(maxWidth: .infinity).insetPanel(p, radius: 18)
+                        if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                         HStack(spacing: 12) {
                             tempoKey("minus", delta: -1)
                             Button { model.tap(); model.adjustCurrentSongTempo(model.bpm) } label: { Text("TAP").technical(14, spacing: 1).frame(maxWidth: .infinity, minHeight: 48) }
                                 .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("performance-tap")
                             tempoKey("plus", delta: 1)
-                            Button { model.soundEnabled.toggle() } label: {
-                                Image(systemName: model.soundEnabled ? "speaker.wave.2" : "speaker.slash").frame(width: 52, height: 48)
-                            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: !model.soundEnabled))
-                                .accessibilityLabel(L10n.text(model.soundEnabled ? "Mute sound" : "Turn sound on"))
-                                .accessibilityValue(L10n.text(model.soundEnabled ? "Sound on" : "Visual only"))
-                                .accessibilityIdentifier("performance-sound")
+
                         }
                         HStack {
                             VStack(alignment: .leading, spacing: 7) {
@@ -121,18 +120,36 @@ struct PerformanceBeatCue: View {
     let p: InstrumentPalette
     var body: some View {
         let count = model.rhythm.pulseCount
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: min(count, 6)), spacing: 8) {
-            ForEach(0..<count, id: \.self) { index in
-                let active = model.playing && model.event?.beat == index
-                Text(String(index + 1)).font(.system(size: 24, weight: .semibold, design: .monospaced))
-                    .frame(maxWidth: .infinity).frame(height: count > 6 ? 40 : 60)
-                    .foregroundStyle(active ? p.well : p.muted)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(active ? p.ink : p.muted.opacity(0.12)))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(index == 0 ? p.ink.opacity(0.35) : .clear, lineWidth: 1))
-            }
-        }.accessibilityElement(children: .ignore)
+        let current = model.playing ? model.event?.beat : nil
+        let strength = current.map { model.rhythm.beatStrength($0, counting: model.event?.countIn == true) } ?? 0
+        GeometryReader { geometry in
+            VStack(spacing: 6) {
+                Text(">")
+                    .font(.system(size: 40, weight: .bold))
+                    .opacity(strength == 2 ? 1 : strength == 4 ? 0.45 : 0)
+                    .frame(height: 36)
+                    .accessibilityHidden(true)
+                Text(current.map { String($0 + 1) } ?? "—")
+                    .font(InstrumentType.display(min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
+                    .monospacedDigit().lineLimit(1).minimumScaleFactor(0.65)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .foregroundStyle(current == nil || strength == 0 ? p.muted : p.ink)
+                    .contentTransition(.identity)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: min(count, 6)), spacing: 10) {
+                    ForEach(0..<count, id: \.self) { index in
+                        let accent = model.rhythm.beatStrength(index)
+                        Circle().fill(current == index ? p.ink : .clear)
+                            .frame(width: 12, height: 12)
+                            .overlay(Circle().stroke(p.ink.opacity(accent == 0 ? 0.25 : 0.7), lineWidth: 1.2))
+                            .overlay { if accent == 2 { Circle().stroke(p.ink.opacity(0.7), lineWidth: 1.2).padding(-4) } }
+                            .frame(height: 22)
+                    }
+                }.frame(maxWidth: 260).padding(.bottom, 2)
+            }.padding(22).frame(maxWidth: .infinity, maxHeight: .infinity)
+        }.foregroundStyle(p.ink)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel("Beat indicator")
-            .accessibilityValue(model.playing ? String((model.event?.beat ?? 0) + 1) : L10n.text("Stopped"))
+            .accessibilityValue(current.map { String($0 + 1) } ?? L10n.text("Stopped"))
             .accessibilityIdentifier("performance-beat")
     }
 }
