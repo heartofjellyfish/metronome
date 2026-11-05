@@ -29,7 +29,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .tempo, .start, .end: return 620
         case .meter: return 740
         case .division, .ramp, .gap, .polyrhythm: return 740
-        case .practice: return 740
+        case .practice: return 490
         case .setlists: return 740
         case .presets: return 560
         case .audio: return 300
@@ -84,7 +84,8 @@ struct InstrumentPanel: View {
         if kind == .pedal {
             PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
         } else {
-            standardPanel
+            if kind == .setlists { SetlistPanel(model: model, p: p, close: close) }
+            else { standardPanel }
         }
     }
     private var standardPanel: some View {
@@ -107,6 +108,12 @@ struct InstrumentPanel: View {
                         content.padding(23)
                             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
                     }.scrollBounceBehavior(.basedOnSize)
+                    if [.ramp, .gap, .polyrhythm].contains(kind) {
+                        Button { model.toggle() } label: { TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 50) }
+                            .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                            .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
+                            .accessibilityIdentifier("practice-transport").padding(.horizontal, 23).padding(.bottom, 18)
+                    }
                 }
                 .frame(maxWidth: 460)
                 .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 460 : 365) : compactPanelHeight, geometry.size.height - 12))
@@ -121,8 +128,8 @@ struct InstrumentPanel: View {
             .preferredColorScheme(model.dark ? .dark : .light)
     }
     private var compactPanelHeight: CGFloat {
-        guard [.presets, .setlists].contains(kind), panelContentHeight > 0 else { return kind.height }
-        return min(kind.height, max(300, panelContentHeight + 104))
+        guard [.presets, .practice, .ramp, .gap].contains(kind), panelContentHeight > 0 else { return kind.height }
+        return min(kind.height, max(300, panelContentHeight + ([.ramp, .gap].contains(kind) ? 172 : 104)))
     }
     @ViewBuilder private var content: some View {
         switch kind {
@@ -273,15 +280,17 @@ struct InstrumentPanel: View {
         }
     }
     private var practicePanel: some View {
-        VStack(spacing: 18) {
-            practiceRoute("TEMPO RAMP", detail: "Build speed, step by step.", route: .ramp, enabled: model.rhythm.ramp)
-            practiceRoute("Silent bars", detail: "Keep time when the click takes a break.", route: .gap, enabled: model.rhythm.gap)
-            practiceRoute("Polyrhythm", detail: "Two rhythms. One shared beat.", route: .polyrhythm, enabled: model.rhythm.crossCount > 0)
-            practiceChoice("COUNT IN", value: model.rhythm.countIn == 0 ? "OFF" : L10n.bars(model.rhythm.countIn), route: .countIn, selection: model.rhythm.countIn)
-            switchRow("TOUCH FEEDBACK", value: $model.haptics)
-            Button { navigate(.presets) } label: {
-                Label("Save as preset", systemImage: "square.and.arrow.down").font(.system(size: 15, weight: .medium)).frame(maxWidth: .infinity, minHeight: 48)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("practice-save-preset")
+        VStack(spacing: 16) {
+            practiceRoute("TEMPO RAMP", detail: "\(model.rhythm.start) → \(model.rhythm.end) BPM", route: .ramp, enabled: model.rhythm.ramp)
+            practiceRoute("Silent bars", detail: L10n.format("%d sound bars · %d silent bars", model.rhythm.audibleBars, model.rhythm.silentBars), route: .gap, enabled: model.rhythm.gap)
+            practiceRoute("Polyrhythm", detail: "\(model.rhythm.polyrhythmPrimary ?? 3) : \(model.rhythm.crossRhythm ?? 2)", route: .polyrhythm, enabled: model.rhythm.crossCount > 0)
+            HStack {
+                Text("COUNT IN").font(.subheadline)
+                Spacer()
+                Button { selected = model.rhythm.countIn; navigate(.countIn) } label: {
+                    HStack { Text(model.rhythm.countIn == 0 ? L10n.text("OFF") : L10n.bars(model.rhythm.countIn)); Image(systemName: "chevron.right").font(.caption) }.padding(.horizontal, 16).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("practice-countIn")
+            }.padding(.top, 5)
         }
     }
     private func practiceRoute(_ title: String, detail: String, route: InstrumentPanelKind, enabled: Bool) -> some View {
@@ -290,10 +299,10 @@ struct InstrumentPanel: View {
                 LED(on: enabled, color: InstrumentPalette.amber, size: 8)
                 VStack(alignment: .leading, spacing: 7) {
                     Text(L10n.text(title)).font(.system(size: 17, weight: .medium))
-                    Text(L10n.text(detail)).font(.system(size: 12)).foregroundStyle(p.muted)
+                    Text(detail).font(.system(size: 13)).foregroundStyle(p.muted)
                 }
                 Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption)
-            }.padding(18).frame(maxWidth: .infinity, minHeight: 84)
+            }.padding(16).frame(maxWidth: .infinity, minHeight: 72)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 12)).accessibilityIdentifier("practice-\(route.rawValue)")
     }
     private var rampPanel: some View {

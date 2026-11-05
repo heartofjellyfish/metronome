@@ -196,7 +196,7 @@ final class LiveModeTests: XCTestCase {
     }
     @MainActor func testSixActionsPersistenceAndSetlistBoundaries() {
         let defaults = UserDefaults.standard
-        let keys = ["rhythm", "presets", "selectedPresetID", "pedalBindings", "pedalProfiles", "pedalProfileID", "activeSetlistID", "selectedSongID", "setlists"]
+        let keys = ["rhythm", "presets", "selectedPresetID", "pedalBindings", "pedalProfiles", "pedalProfileID", "activeSetlistID", "selectedSongID", "songLibraryStore", "setlists"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
         let model = MetronomeModel(); defer { model.stop() }
@@ -347,7 +347,7 @@ final class StageFeatureTests: XCTestCase {
     }
     @MainActor func testSetlistCRUDPersistencePedalsAndPresetIsolation() throws {
         let defaults = UserDefaults.standard
-        let keys = ["setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
+        let keys = ["songLibraryStore", "setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (k,v) in zip(keys,saved) { defaults.set(v, forKey: k) } }
         let m = MetronomeModel(); defer { m.stop() }
@@ -376,7 +376,7 @@ final class StageFeatureTests: XCTestCase {
 final class OrganizationTests: XCTestCase {
     @MainActor func testPracticePresetCopiesToPerformanceSongWithoutEffects() throws {
         let defaults = UserDefaults.standard
-        let keys = ["setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
+        let keys = ["songLibraryStore", "setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (k,v) in zip(keys,saved) { defaults.set(v, forKey: k) } }
         let m = MetronomeModel(); defer { m.stop() }

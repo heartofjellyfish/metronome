@@ -39,7 +39,7 @@ final class MetronomeAudio {
     }
     func discardSuspension() { suspended = nil }
 
-    func start(_ rhythm: Rhythm, previewBars: Int? = nil, resuming: Bool = false, exclusive: Bool = false) throws {
+    func start(_ rhythm: Rhythm, previewBars: Int? = nil, resuming: Bool = false, exclusive: Bool = false, audible: Bool = true) throws {
         let saved = resuming ? suspended : nil
         stop(deactivate: false)
 
@@ -131,8 +131,10 @@ final class MetronomeAudio {
         }
         source = node; engine.attach(node)
         engine.connect(node, to: engine.mainMixerNode, format: format)
+        engine.mainMixerNode.outputVolume = audible ? 1 : 0
         engine.prepare(); try engine.start()
     }
+    func setAudible(_ enabled: Bool) { engine.mainMixerNode.outputVolume = enabled ? 1 : 0 }
     func stop(deactivate: Bool = true, discardTimeline: Bool = true) {
         engine.stop()
         if let source { engine.detach(source) }
@@ -156,11 +158,20 @@ struct SongSetlist: Identifiable, Codable {
     var songs: [SavedPreset] = []
 }
 
+/// Canonical catalog plus ordered references, saved together to avoid orphaned memberships.
+struct SongLibraryStore: Codable {
+    struct List: Codable { var id: UUID; var name: String; var songIDs: [UUID] }
+    var version = 1
+    var songs: [SavedPreset]
+    var lists: [List]
+}
+
 @MainActor
 final class MetronomeModel: ObservableObject {
     @Published var rhythm: Rhythm { didSet { audio.mailbox.set(rhythm); save(); if playing { updateNowPlaying() } } }
     @Published var dark: Bool { didSet { UserDefaults.standard.set(dark, forKey: "dark") } }
     @Published var haptics = true { didSet { UserDefaults.standard.set(haptics, forKey: "haptics") } }
+    @Published var soundEnabled = true { didSet { audio.setAudible(soundEnabled) } }
     @Published private(set) var playing = false
     @Published private(set) var interrupted = false
     let pedal = PedalControl()
@@ -183,6 +194,7 @@ final class MetronomeModel: ObservableObject {
         var saved = preset.rhythm; saved.sanitize()
         return preset.id == selectedPresetID && saved == rhythm
     }
+    @Published private(set) var songLibrary: [SavedPreset] = []
     @Published var setlists: [SongSetlist] = [] { didSet { persistSetlists() } }
     @Published var activeSetlistID: UUID? { didSet { UserDefaults.standard.set(activeSetlistID?.uuidString, forKey: "activeSetlistID") } }
     @Published private(set) var selectedSongID: UUID? { didSet { UserDefaults.standard.set(selectedSongID?.uuidString, forKey: "selectedSongID") } }
@@ -200,6 +212,7 @@ final class MetronomeModel: ObservableObject {
         setlists[index].name = name
     }
     func deleteActiveSetlist() {
+        if currentSong != nil { stop() }
         setlists.removeAll { $0.id == activeSetlistID }
         activeSetlistID = setlists.first?.id; selectedSongID = nil
     }
@@ -210,37 +223,39 @@ final class MetronomeModel: ObservableObject {
         value.bpm = bpm; value.sanitize()
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
     }
-    /// A setlist owns a copy. Editing either item never changes the other.
+    /// Import a preset as a new independent song. The original preset stays unchanged.
     func importPreset(_ preset: SavedPreset, into target: UUID? = nil) {
         guard let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
         let value = preset.rhythm.performanceCopy
         setlists[index].songs.append(SavedPreset(name: preset.name, rhythm: value))
     }
     func editSong(_ id: UUID, name: String, bpm: Int) {
-        guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
-              let index = setlists[list].songs.firstIndex(where: { $0.id == id }) else { return }
-        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return }
-        let newBPM = min(300, max(20, bpm))
-        let tempoChanged = setlists[list].songs[index].rhythm.bpm != newBPM
-        setlists[list].songs[index].name = clean
-        if tempoChanged {
-            setlists[list].songs[index].rhythm.bpm = newBPM
-            setlists[list].songs[index].rhythm.ramp = false
-        }
-        if selectedSongID == id {
-            if tempoChanged { setBPM(newBPM) }
-            updateNowPlaying()
-        }
+        guard var song = songLibrary.first(where: { $0.id == id }) else { return }
+        song.rhythm.bpm = min(300, max(20, bpm))
+        editSong(id, name: name, rhythm: song.rhythm)
     }
+    /// Songs are shared objects. Lists only store their order and membership.
     func editSong(_ id: UUID, name: String, rhythm value: Rhythm) {
-        guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
-              let index = setlists[list].songs.firstIndex(where: { $0.id == id }) else { return }
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return }
-        setlists[list].songs[index].name = clean
-        setlists[list].songs[index].rhythm = value.performanceCopy
-        if selectedSongID == id { loadSong(setlists[list].songs[index]) }
+        guard !clean.isEmpty, let index = songLibrary.firstIndex(where: { $0.id == id }) else { return }
+        let updated = SavedPreset(id: id, name: clean, rhythm: value.performanceCopy)
+        songLibrary[index] = updated
+        setlists = setlists.map { list in
+            var copy = list; copy.songs = list.songs.map { $0.id == id ? updated : $0 }; return copy
+        }
+        // Parameter changes keep the audio clock running; selecting a new song starts its bar.
+        if selectedSongID == id { rhythm = updated.rhythm; updateNowPlaying() }
+    }
+    func addExistingSong(_ id: UUID, to target: UUID? = nil) {
+        guard let song = songLibrary.first(where: { $0.id == id }),
+              let list = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }),
+              !setlists[list].songs.contains(where: { $0.id == id }) else { return }
+        setlists[list].songs.append(song)
+    }
+    func listsContainingSong(_ id: UUID) -> Int { setlists.filter { $0.songs.contains { $0.id == id } }.count }
+    func adjustCurrentSongTempo(_ bpm: Int) {
+        guard let song = currentSong else { return }
+        editSong(song.id, name: song.name, bpm: bpm)
     }
     func moveSong(_ id: UUID, by offset: Int) {
         guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
@@ -251,16 +266,23 @@ final class MetronomeModel: ObservableObject {
     func deleteSong(_ id: UUID) {
         guard let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
         setlists[index].songs.removeAll { $0.id == id }
-        if selectedSongID == id { selectedSongID = nil }
+        if selectedSongID == id { stop(); selectedSongID = nil }
     }
     func loadSong(_ song: SavedPreset) {
+        if selectedSongID == song.id, rhythm == song.rhythm.performanceCopy { return }
         let resume = playing; stop()
         let value = song.rhythm.performanceCopy
         selectedPresetID = nil; selectedSongID = song.id; rhythm = value
         if resume { start() }
     }
     private func persistSetlists() {
-        if let data = try? JSONEncoder().encode(setlists) { UserDefaults.standard.set(data, forKey: "setlists") }
+        // Fold new/legacy list entries into the catalog, retaining songs removed from lists.
+        var known = Set(songLibrary.map(\.id))
+        for song in setlists.flatMap(\.songs) where known.insert(song.id).inserted { songLibrary.append(song) }
+        let store = SongLibraryStore(songs: songLibrary, lists: setlists.map {
+            SongLibraryStore.List(id: $0.id, name: $0.name, songIDs: $0.songs.map(\.id))
+        })
+        if let data = try? JSONEncoder().encode(store) { UserDefaults.standard.set(data, forKey: "songLibraryStore") }
     }
     @Published var tapCount = 0
     private var audio = MetronomeAudio()
@@ -279,28 +301,38 @@ final class MetronomeModel: ObservableObject {
         dark = defaults.bool(forKey: "dark")
         presets = defaults.data(forKey: "presets").flatMap { try? JSONDecoder().decode([SavedPreset].self, from: $0) } ?? []
         selectedPresetID = defaults.string(forKey: "selectedPresetID").flatMap(UUID.init(uuidString:))
-        setlists = defaults.data(forKey: "setlists").flatMap { try? JSONDecoder().decode([SongSetlist].self, from: $0) } ?? []
+        if let store = defaults.data(forKey: "songLibraryStore").flatMap({ try? JSONDecoder().decode(SongLibraryStore.self, from: $0) }) {
+            songLibrary = store.songs
+            let catalog = Dictionary(store.songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            setlists = store.lists.map { SongSetlist(id: $0.id, name: $0.name, songs: $0.songIDs.compactMap { catalog[$0] }) }
+        } else {
+            setlists = defaults.data(forKey: "setlists").flatMap { try? JSONDecoder().decode([SongSetlist].self, from: $0) } ?? []
+            var seen = Set<UUID>()
+            songLibrary = setlists.flatMap(\.songs).filter { seen.insert($0.id).inserted }
+        }
         activeSetlistID = defaults.string(forKey: "activeSetlistID").flatMap(UUID.init(uuidString:))
         selectedSongID = defaults.string(forKey: "selectedSongID").flatMap(UUID.init(uuidString:))
         haptics = defaults.object(forKey: "haptics") as? Bool ?? true
         // Deterministic launch states for simulator visual verification only.
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--stage-ui-test") {
-            setlists = []; activeSetlistID = nil; selectedSongID = nil; rhythm = Rhythm()
+            songLibrary = []; setlists = []; activeSetlistID = nil; selectedSongID = nil; rhythm = Rhythm()
         }
         if ProcessInfo.processInfo.arguments.contains("--organization-ui-test") {
-            presets = []; setlists = []; selectedPresetID = nil; selectedSongID = nil; activeSetlistID = nil; rhythm = Rhythm()
+            songLibrary = []; presets = []; setlists = []; selectedPresetID = nil; selectedSongID = nil; activeSetlistID = nil; rhythm = Rhythm()
         }
         if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm() }
         if ProcessInfo.processInfo.arguments.contains("--dark") { dark = true }
         if ProcessInfo.processInfo.arguments.contains("--light") { dark = false }
         if ProcessInfo.processInfo.arguments.contains("--redesign-ui-test") {
+            songLibrary = []
             var slow = Rhythm(); slow.bpm = 85; slow.sound = 16
             var fast = Rhythm(); fast.bpm = 140
             var practice = Rhythm(); practice.ramp = true; practice.gap = true
             presets = [SavedPreset(name: "Warm hands", rhythm: practice), SavedPreset(name: "Gossip", rhythm: fast)]
             let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
             setlists = [SongSetlist(name: chinese ? "周六演出" : "Saturday", songs: [SavedPreset(name: "Gossip", rhythm: fast), SavedPreset(name: "男孩别哭", rhythm: slow), SavedPreset(name: "夜来香", rhythm: Rhythm())])]
+            songLibrary = setlists.flatMap(\.songs)
             activeSetlistID = nil; selectedSongID = nil; selectedPresetID = nil
         }
         #endif
@@ -381,9 +413,12 @@ final class MetronomeModel: ObservableObject {
     func performPedal(_ action: PedalAction) {
         switch action {
         case .toggle: toggle()
-        case .tap: tap()
-        case .faster: setBPM(bpm + 1)
-        case .slower: setBPM(bpm - 1)
+        case .tap:
+            tap(); if currentSong != nil { adjustCurrentSongTempo(bpm) }
+        case .faster:
+            if currentSong != nil { adjustCurrentSongTempo(bpm + 1) } else { setBPM(bpm + 1) }
+        case .slower:
+            if currentSong != nil { adjustCurrentSongTempo(bpm - 1) } else { setBPM(bpm - 1) }
         case .next, .previous:
             if let list = activeSetlist {
                 let index = list.songs.firstIndex { $0.id == selectedSongID }
@@ -445,7 +480,7 @@ final class MetronomeModel: ObservableObject {
         guard !playing, !interrupted else { return }
         previewTimer?.invalidate()
         do {
-            try audio.start(rhythm, resuming: resuming, exclusive: !pedal.bindings.isEmpty); playing = true; lastSerial = 0; event = nil
+            try audio.start(rhythm, resuming: resuming, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; lastSerial = 0; event = nil
             UIApplication.shared.isIdleTimerDisabled = true
             displayTimer = Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshBeat() }

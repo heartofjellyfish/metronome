@@ -6,7 +6,7 @@ import MediaPlayer
 final class ModelTests: XCTestCase {
     @MainActor func testRuntimeStatePresetsMetadataAndInterruptions() async throws {
         let defaults = UserDefaults.standard
-        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "setlists", "activeSetlistID", "selectedSongID"]
+        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "songLibraryStore", "setlists", "activeSetlistID", "selectedSongID"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
         let model = MetronomeModel()

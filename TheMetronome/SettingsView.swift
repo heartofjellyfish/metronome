@@ -66,6 +66,20 @@ struct SettingsView: View {
                                 .accessibilityValue(L10n.text(preparation ? "Collapse" : "Expand"))
                             if preparation { PerformancePreparation(p: p) }
                         }.id("live-section")
+                        VStack(spacing: 16) {
+                            SectionLabel(text: "04 GENERAL", p: p)
+                            HStack {
+                                Text("TOUCH FEEDBACK").technical(11, spacing: 1)
+                                Spacer()
+                                HStack(spacing: 8) {
+                                    ForEach([false, true], id: \.self) { on in
+                                        Button { model.haptics = on } label: { Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44) }
+                                            .buttonStyle(HardwareButtonStyle(p: p, charcoal: model.haptics == on))
+                                            .accessibilityIdentifier(on ? "general-haptics-on" : "general-haptics-off")
+                                    }
+                                }
+                            }
+                        }
                         HStack(spacing: 14) {
                             Text("SKIN").technical(11, spacing: 1.3)
                             Spacer(minLength: 0)

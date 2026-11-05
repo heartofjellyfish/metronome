@@ -357,3 +357,26 @@
 "iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOS 不提供翻頁踏板的身分，換踏板時請選擇對應的綁定。";
 "This key is assigned to %@. Move it?" = "這個鍵已綁定「%@」，要改綁嗎？";
 "Move" = "改綁";
+
+/* Performance and shared songs */
+"Perform" = "演出";
+"Song library" = "曲庫";
+"Changes apply in every setlist." = "修改會同步到所有歌單。";
+"Delete this setlist? Songs stay in your library." = "刪除歌單？歌曲仍保留在曲庫中。";
+"The song stays in your library." = "歌曲仍保留在曲庫中。";
+"Remove from setlist" = "移出歌單";
+"Remove" = "移出";
+"Add your first song." = "新增第一首歌。";
+"Close setlists" = "關閉歌單";
+"Up next" = "下一首";
+"End of setlist" = "最後一首";
+"Mute sound" = "關閉聲音";
+"Turn sound on" = "開啟聲音";
+"Sound on" = "有聲";
+"Visual only" = "僅視覺拍點";
+"Beat indicator" = "視覺拍點";
+"Stopped" = "已停止";
+"04 GENERAL" = "04 一般";
+"%d sound bars · %d silent bars" = "有聲 %d 小節 · 靜音 %d 小節";
+
+"SOUND" = "音色";

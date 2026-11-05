@@ -68,7 +68,7 @@ final class RedesignTests: XCTestCase {
     }
     @MainActor func testSongDraftAndTargetedImportDoNotSwitchPerformanceOrModifyPreset() throws {
         let d = UserDefaults.standard
-        let keys = ["setlists","activeSetlistID","selectedSongID","rhythm","presets","selectedPresetID"]
+        let keys = ["songLibraryStore", "setlists","activeSetlistID","selectedSongID","rhythm","presets","selectedPresetID"]
         let saved = keys.map { d.object(forKey:$0) }; defer { for (k,v) in zip(keys,saved) { d.set(v,forKey:k) } }
         let m = MetronomeModel(); defer { m.stop() }; m.setlists=[]; m.presets=[]; m.rhythm=Rhythm()
         m.rhythm.gap=true; m.rhythm.ramp=true; m.addPreset("Practice")

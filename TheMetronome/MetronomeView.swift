@@ -67,6 +67,12 @@ struct MetronomeView: View {
             }.buttonStyle(.plain).position(x: 207, y: 114)
                 .accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("tempoDisplay")
 
+            if !model.soundEnabled {
+                Button { model.soundEnabled = true } label: {
+                    Image(systemName: "speaker.slash").font(.system(size: 17)).frame(width: 44, height: 44)
+                }.position(x: 310, y: 65).accessibilityLabel("Turn sound on").accessibilityIdentifier("home-muted")
+            }
+
             PedalDisplayStatus(pedal: model.pedal, p: p) { present(.pedal) }
                 .frame(width: 44, height: 44).position(x: 365, y: 65)
 

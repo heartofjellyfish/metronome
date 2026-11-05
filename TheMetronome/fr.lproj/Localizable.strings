@@ -357,3 +357,26 @@
 "iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOS n'identifie pas les pédaliers tourne-pages. Choisissez les commandes enregistrées en changeant de pédalier.";
 "This key is assigned to %@. Move it?" = "Cette touche est assignée à %@. La réassigner ?";
 "Move" = "Réassigner";
+
+/* Performance and shared songs */
+"Perform" = "Jouer";
+"Song library" = "Bibliothèque";
+"Changes apply in every setlist." = "Les modifications s’appliquent à toutes les setlists.";
+"Delete this setlist? Songs stay in your library." = "Supprimer cette setlist ? Les morceaux restent dans la bibliothèque.";
+"The song stays in your library." = "Le morceau reste dans la bibliothèque.";
+"Remove from setlist" = "Retirer de la setlist";
+"Remove" = "Retirer";
+"Add your first song." = "Ajoutez votre premier morceau.";
+"Close setlists" = "Fermer les setlists";
+"Up next" = "À suivre";
+"End of setlist" = "Dernier morceau";
+"Mute sound" = "Couper le son";
+"Turn sound on" = "Activer le son";
+"Sound on" = "Son activé";
+"Visual only" = "Repère visuel seul";
+"Beat indicator" = "Repère de pulsation";
+"Stopped" = "Arrêté";
+"04 GENERAL" = "04 GÉNÉRAL";
+"%d sound bars · %d silent bars" = "%d mesures sonores · %d silencieuses";
+
+"SOUND" = "SON";

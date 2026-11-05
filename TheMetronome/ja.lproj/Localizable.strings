@@ -357,3 +357,26 @@
 "iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOSではページめくりペダルを識別できません。切り替え時は保存済みの割り当てを選んでください。";
 "This key is assigned to %@. Move it?" = "このキーは「%@」に割り当て済みです。変更しますか？";
 "Move" = "変更";
+
+/* Performance and shared songs */
+"Perform" = "演奏";
+"Song library" = "曲ライブラリ";
+"Changes apply in every setlist." = "変更はすべてのセットリストに反映されます。";
+"Delete this setlist? Songs stay in your library." = "セットリストを削除しますか？曲はライブラリに残ります。";
+"The song stays in your library." = "曲はライブラリに残ります。";
+"Remove from setlist" = "セットリストから外す";
+"Remove" = "外す";
+"Add your first song." = "最初の曲を追加。";
+"Close setlists" = "セットリストを閉じる";
+"Up next" = "次の曲";
+"End of setlist" = "最後の曲";
+"Mute sound" = "消音";
+"Turn sound on" = "音を出す";
+"Sound on" = "音あり";
+"Visual only" = "視覚のみ";
+"Beat indicator" = "拍の表示";
+"Stopped" = "停止中";
+"04 GENERAL" = "04 一般";
+"%d sound bars · %d silent bars" = "音あり %d 小節 · 無音 %d 小節";
+
+"SOUND" = "音色";

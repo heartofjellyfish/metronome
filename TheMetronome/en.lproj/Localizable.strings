@@ -357,3 +357,26 @@
 "iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOS does not identify page-turning pedals. Choose saved controls when switching pedals.";
 "This key is assigned to %@. Move it?" = "This key is assigned to %@. Move it?";
 "Move" = "Move";
+
+/* Performance and shared songs */
+"Perform" = "Perform";
+"Song library" = "Song library";
+"Changes apply in every setlist." = "Changes apply in every setlist.";
+"Delete this setlist? Songs stay in your library." = "Delete this setlist? Songs stay in your library.";
+"The song stays in your library." = "The song stays in your library.";
+"Remove from setlist" = "Remove from setlist";
+"Remove" = "Remove";
+"Add your first song." = "Add your first song.";
+"Close setlists" = "Close setlists";
+"Up next" = "Up next";
+"End of setlist" = "End of setlist";
+"Mute sound" = "Mute sound";
+"Turn sound on" = "Turn sound on";
+"Sound on" = "Sound on";
+"Visual only" = "Visual only";
+"Beat indicator" = "Beat indicator";
+"Stopped" = "Stopped";
+"04 GENERAL" = "04 GENERAL";
+"%d sound bars · %d silent bars" = "%d sound bars · %d silent bars";
+
+"SOUND" = "SOUND";
