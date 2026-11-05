@@ -365,3 +365,49 @@ final class StageFeatureTests: XCTestCase {
         m.load(m.presets[0]); XCTAssertNil(m.activeSetlistID)
     }
 }
+
+final class OrganizationTests: XCTestCase {
+    @MainActor func testPracticeCopiesStayIndependentAndRenamePreservesRamp() throws {
+        let defaults = UserDefaults.standard
+        let keys = ["setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
+        let saved = keys.map { defaults.object(forKey: $0) }
+        defer { for (k,v) in zip(keys,saved) { defaults.set(v, forKey: k) } }
+        let m = MetronomeModel(); defer { m.stop() }
+        m.presets = []; m.setlists = []; m.rhythm = Rhythm()
+        m.rhythm.ramp = true; m.rhythm.start = 72; m.rhythm.end = 110
+        m.rhythm.gap = true; m.rhythm.silentBars = 2; m.rhythm.sound = 16
+        m.rhythm.setDivision(3, mask: 5); m.rhythm.crossRhythm = 2
+        m.addPreset("  Warm hands  ")
+        let original = try XCTUnwrap(m.presets.first)
+        XCTAssertEqual(original.name, "Warm hands")
+        XCTAssertNil(m.activeSetlist)
+        m.addSetlist("Friday")
+        m.importPreset(original)
+        let copied = try XCTUnwrap(m.activeSetlist?.songs.first)
+        XCTAssertNotEqual(copied.id, original.id)
+        XCTAssertEqual(copied.rhythm, original.rhythm)
+        XCTAssertNil(m.selectedSongID) // Importing never starts or selects a song.
+        m.loadSong(copied)
+        m.editSong(copied.id, name: "Warm-up", bpm: copied.rhythm.bpm)
+        XCTAssertTrue(m.rhythm.ramp)
+        XCTAssertTrue(try XCTUnwrap(m.currentSong).rhythm.ramp)
+        m.editSong(copied.id, name: "Opening", bpm: 140)
+        XCTAssertFalse(m.rhythm.ramp)
+        XCTAssertFalse(try XCTUnwrap(m.currentSong).rhythm.ramp)
+        let currentQueue = m.activeSetlistID
+        m.addPreset("Opening snapshot")
+        XCTAssertEqual(m.activeSetlistID, currentQueue)
+        XCTAssertEqual(m.selectedSongID, copied.id)
+        XCTAssertEqual(m.presets.first?.rhythm, original.rhythm)
+        m.presets.removeAll()
+        let restored = MetronomeModel(); defer { restored.stop() }
+        XCTAssertEqual(restored.currentSong?.name, "Opening")
+        XCTAssertEqual(restored.currentSong?.rhythm.bpm, 140)
+        XCTAssertEqual(restored.currentSong?.rhythm.silentBars, 2)
+        XCTAssertTrue(restored.presets.isEmpty)
+        m.deleteActiveSetlist()
+        m.rhythm = original.rhythm; m.addPreset("Solo practice")
+        XCTAssertTrue(m.setlists.isEmpty)
+        XCTAssertEqual(m.presets.first?.rhythm, original.rhythm)
+    }
+}

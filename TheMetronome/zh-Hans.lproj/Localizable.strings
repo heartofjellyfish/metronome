@@ -288,3 +288,19 @@
 "Uses the current meter, sound and rhythm." = "使用当前拍号、音色和节奏。";
 
 "Save song" = "保存歌曲";
+
+"03 LIVE MODE" = "03 演出";
+
+"Pedal" = "踏板";
+
+"Save as preset" = "保存为预设";
+
+"Back to setlist" = "返回歌单";
+
+"Adds a copy. Your preset stays unchanged." = "添加一份副本，不会改动原预设。";
+
+"Add from presets" = "从预设添加";
+
+"%d silent bars" = "%d 小节静音";
+
+"Changing BPM turns off the tempo ramp." = "修改 BPM 会关闭渐进变速。";

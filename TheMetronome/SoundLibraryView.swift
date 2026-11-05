@@ -70,7 +70,7 @@ struct SoundDynamicsControl: View {
                         HStack(spacing: 7) {
                             LED(on: model.rhythm.followsMeter == enabled, color: InstrumentPalette.amber, size: 6)
                             Text(L10n.text(enabled ? "ACCENT" : "EVEN")).technical(10, spacing: 0.7).lineLimit(1).minimumScaleFactor(0.75)
-                        }.frame(width: 96, height: 32)
+                        }.frame(width: 96, height: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 7))
                         .accessibilityIdentifier(namespace + (enabled ? "dynamics-meter" : "dynamics-even"))
                         .accessibilityLabel(L10n.text(enabled ? "Follow meter accents" : "Even intensity"))

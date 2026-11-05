@@ -51,6 +51,7 @@ struct InstrumentPanel: View {
     @State private var advancedDivision = false
     @State private var customMeter = false
     @State private var returnsToPractice = false
+    @State private var panelContentHeight: CGFloat = 0
     @State private var presetName = ""
     @State private var deleting: UUID?
     @FocusState private var naming: Bool
@@ -101,10 +102,11 @@ struct InstrumentPanel: View {
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     ScrollView {
                         content.padding(23)
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
                     }.scrollBounceBehavior(.basedOnSize)
                 }
                 .frame(maxWidth: 460)
-                .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 460 : 365) : kind == .division && advancedDivision ? 740 : kind.height, geometry.size.height - 12))
+                .frame(height: min(kind == .meter && !customMeter ? (model.rhythm.isCompound ? 460 : 365) : kind == .division && advancedDivision ? 740 : compactPanelHeight, geometry.size.height - 12))
                 .background { InstrumentBody(p: p) }
                 .clipShape(RoundedRectangle(cornerRadius: 23, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
@@ -115,6 +117,10 @@ struct InstrumentPanel: View {
         }.transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             .preferredColorScheme(model.dark ? .dark : .light)
     }
+    private var compactPanelHeight: CGFloat {
+        guard [.presets, .setlists].contains(kind), panelContentHeight > 0 else { return kind.height }
+        return min(kind.height, max(300, panelContentHeight + 104))
+    }
     @ViewBuilder private var content: some View {
         switch kind {
         case .tempo, .start, .end: numberPad
@@ -122,7 +128,7 @@ struct InstrumentPanel: View {
         case .division: divisionPicker
         case .countIn, .every, .increment: quantityPicker
         case .practice: practicePanel
-        case .setlists: SetlistPanel(model: model, p: p, close: dismiss, presets: { kind = .presets })
+        case .setlists: SetlistPanel(model: model, p: p, close: dismiss)
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
         case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
@@ -279,7 +285,7 @@ struct InstrumentPanel: View {
                             .accessibilityIdentifier("division-count-\(n)")
                     }
                 }
-                HStack(spacing: 6) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: model.rhythm.subdivision > 4 ? (model.rhythm.subdivision + 1) / 2 : model.rhythm.subdivision), spacing: 8) {
                     ForEach(0..<model.rhythm.subdivision, id: \.self) { i in
                         let enabled = model.rhythm.enabledMask & (1 << i) != 0
                         Button {
@@ -310,10 +316,19 @@ struct InstrumentPanel: View {
     private func patternKey(_ title: String, count: Int, mask: Int) -> some View {
         Button { model.rhythm.setDivision(count, mask: mask); model.tickFeedback(); finishLiveSelection() } label: {
             VStack(spacing: 8) {
-                HStack(spacing: 7) {
-                    ForEach(0..<count, id: \.self) { i in
-                        DivisionPulseGlyph(sounding: mask & (1 << i) != 0, noteValue: count > 3 ? 16 : 8, color: p.ink)
-                            .frame(width: 14, height: 25)
+                VStack(spacing: 3) {
+                    if model.rhythm.usesCompoundPulse ? ![1, 3, 6].contains(count) : [3, 5, 6, 7].contains(count) {
+                        HStack(spacing: 4) {
+                            Rectangle().frame(height: 0.7)
+                            Text(String(count)).font(.system(size: 10, weight: .medium, design: .serif))
+                            Rectangle().frame(height: 0.7)
+                        }.frame(width: CGFloat(count) * 18)
+                    }
+                    HStack(spacing: 7) {
+                        ForEach(0..<count, id: \.self) { i in
+                            DivisionPulseGlyph(sounding: mask & (1 << i) != 0, noteValue: count > 3 ? 16 : 8, color: p.ink)
+                                .frame(width: 14, height: 25)
+                        }
                     }
                 }.accessibilityHidden(true)
                 Text(L10n.text(title)).font(.caption).multilineTextAlignment(.center)
@@ -376,19 +391,23 @@ struct InstrumentPanel: View {
             }
             SectionLabel(text: "FEEL", p: p)
             switchRow("TOUCH FEEDBACK", value: $model.haptics)
+            Button { returnsToPractice = true; kind = .presets } label: {
+                Label("Save as preset", systemImage: "square.and.arrow.down")
+                    .font(.system(size: 15, weight: .medium)).frame(maxWidth: .infinity, minHeight: 50)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("practice-save-preset")
         }
     }
     private var presetPanel: some View {
         VStack(alignment: .leading, spacing: 21) {
-            choice("Setlists", selected: false) { kind = .setlists }
             HStack(spacing: 11) {
-                TextField("NAME THIS RHYTHM", text: $presetName)
-                    .font(.system(size: 12, design: .monospaced)).textInputAutocapitalization(.characters)
+                TextField("NAME THIS RHYTHM", text: $presetName).accessibilityIdentifier("preset-name")
+                    .font(.system(size: 12, design: .monospaced)).textInputAutocapitalization(.sentences)
                     .autocorrectionDisabled().focused($naming).submitLabel(.done)
                     .onSubmit { savePreset() }.padding(15).insetPanel(p, radius: 9)
                 Button { savePreset() } label: { Image(systemName: "plus").font(.system(size: 22, weight: .light)).frame(width: 47, height: 47) }
                     .buttonStyle(HardwareButtonStyle(p: p)).disabled(presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityLabel("Save current rhythm")
+                    .opacity(presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+                    .accessibilityLabel("Save current rhythm").accessibilityIdentifier("save-preset")
             }
             if model.presets.isEmpty {
                 VStack(spacing: 15) {
@@ -403,10 +422,14 @@ struct InstrumentPanel: View {
                         Button { model.load(preset); finishLiveSelection() } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 7) {
-                                    Text(preset.name).technical(11, spacing: 1).lineLimit(2)
-                                    Text("\(preset.rhythm.beats)/\(preset.rhythm.denominator) · \(L10n.format("%d / BEAT", preset.rhythm.subdivision))").technical(8, spacing: 1).foregroundStyle(p.muted)
+                                    Text(preset.name).font(.system(size: 15, weight: .medium)).lineLimit(2).multilineTextAlignment(.leading)
+                                    Text(preset.rhythm.savedSummary).font(.system(size: 12)).foregroundStyle(p.muted).multilineTextAlignment(.leading)
                                 }
-                                Spacer(); Text(String(preset.rhythm.bpm)).font(InstrumentType.value(30))
+                                Spacer(minLength: 8)
+                                VStack(alignment: .trailing, spacing: 3) {
+                                    Text(preset.rhythm.savedTempo).font(InstrumentType.value(preset.rhythm.ramp ? 23 : 30)).fixedSize()
+                                    Text("BPM").technical(9, spacing: 1)
+                                }
                             }.padding(15).frame(maxWidth: .infinity, minHeight: 76)
                         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("load-preset-\(preset.name)")
                             .accessibilityAddTraits(model.isCurrentPreset(preset) ? .isSelected : [])
@@ -595,7 +618,7 @@ struct SetlistPanel: View {
     @ObservedObject var model: MetronomeModel
     let p: InstrumentPalette
     let close: () -> Void
-    let presets: () -> Void
+    @State private var importing = false
     @State private var choosing = false
     @State private var editing = false
     @State private var listName = ""
@@ -608,12 +631,31 @@ struct SetlistPanel: View {
     private var validSong: Bool { !songName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (20...300).contains(Int(tempo) ?? 0) }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+            if importing {
+                Button { importing = false } label: {
+                    Label("Back to setlist", systemImage: "chevron.left").frame(minHeight: 44)
+                }.accessibilityIdentifier("cancel-import")
+                Text("Adds a copy. Your preset stays unchanged.").font(.subheadline).foregroundStyle(p.muted)
+                ForEach(model.presets) { preset in
+                    Button { model.importPreset(preset); importing = false } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(preset.name).font(.body.weight(.medium))
+                                Text(preset.rhythm.savedSummary).font(.caption).foregroundStyle(p.muted)
+                            }
+                            Spacer()
+                            Text(preset.rhythm.savedTempo + " BPM").font(.system(size: 15, weight: .medium)).fixedSize()
+                            Image(systemName: "plus").font(.system(size: 14))
+                        }.padding(14).frame(maxWidth: .infinity, minHeight: 68)
+                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("import-preset-\(preset.name)")
+                }
+            } else {
             HStack {
                 Button { choosing.toggle(); listName = ""; editing = false; deletingList = false; songForm = false; editingSong = nil } label: {
                     HStack { Text(model.activeSetlist?.name ?? L10n.text("Choose a setlist")).lineLimit(2); Image(systemName: "chevron.down") }.frame(maxWidth: .infinity, minHeight: 44)
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("choose-setlist")
                 Button { editing.toggle(); choosing = false; listName = model.activeSetlist?.name ?? ""; songForm = false; deletingSong = nil } label: { Text(editing ? "DONE" : "Edit").padding(12) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).disabled(model.activeSetlist == nil).accessibilityIdentifier("edit-setlist")
+                    .buttonStyle(HardwareButtonStyle(p: p)).disabled(model.activeSetlist == nil).opacity(model.activeSetlist == nil ? 0.45 : 1).accessibilityIdentifier("edit-setlist")
             }
             if choosing || model.activeSetlist == nil {
                 ForEach(model.setlists) { list in
@@ -624,14 +666,14 @@ struct SetlistPanel: View {
                 HStack {
                     TextField("Setlist name", text: $listName).accessibilityIdentifier("setlist-name").textFieldStyle(.plain).padding(12).insetPanel(p, radius: 8)
                     Button { model.addSetlist(listName); listName = ""; choosing = false } label: { Image(systemName: "plus").frame(width: 44, height: 44) }
-                        .buttonStyle(HardwareButtonStyle(p: p)).disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityLabel("Create setlist")
+                        .buttonStyle(HardwareButtonStyle(p: p)).disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).opacity(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1).accessibilityLabel("Create setlist")
                 }
             }
             if let list = model.activeSetlist {
                 if editing {
                     HStack {
                         TextField("Setlist name", text: $listName).accessibilityIdentifier("setlist-name").padding(12).insetPanel(p, radius: 8)
-                        Button("Rename") { model.renameSetlist(listName); listName = "" }.disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Button("Rename") { model.renameSetlist(listName) }.disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     Button("Delete setlist") { deletingList = true }.foregroundStyle(p.muted)
                     if deletingList {
@@ -646,16 +688,16 @@ struct SetlistPanel: View {
                 if list.songs.isEmpty { Text("Your next show, song by song.").font(.subheadline).foregroundStyle(p.muted).padding(.vertical, 12) }
                 ForEach(Array(list.songs.enumerated()), id: \.element.id) { index, song in
                     VStack(spacing: 8) {
-                        Button { model.loadSong(song); if !model.playing { close() } } label: {
+                        Button { if editing { edit(song) } else { model.loadSong(song); if !model.playing { close() } } } label: {
                             HStack(spacing: 12) {
                                 LED(on: model.selectedSongID == song.id, size: 7)
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(song.name).font(.body.weight(.medium)).multilineTextAlignment(.leading)
-                                    Text("\(song.rhythm.beats)/\(song.rhythm.denominator)").font(.caption).foregroundStyle(p.muted)
+                                    Text(song.rhythm.savedSummary).font(.caption).foregroundStyle(p.muted)
                                 }
                                 Spacer(minLength: 4)
                                 VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(song.rhythm.bpm)").font(InstrumentType.value(30))
+                                    Text(song.rhythm.savedTempo).font(InstrumentType.value(song.rhythm.ramp ? 23 : 30)).fixedSize()
                                     Text("BPM").technical(8, spacing: 1)
                                 }
                             }.padding(14).frame(maxWidth: .infinity)
@@ -666,7 +708,7 @@ struct SetlistPanel: View {
                             HStack(spacing: 18) {
                                 Button { model.moveSong(song.id, by: -1) } label: { Image(systemName: "arrow.up").frame(width: 44, height: 44) }.disabled(index == 0).accessibilityLabel("Move up").accessibilityIdentifier("move-up-\(song.name)")
                                 Button { model.moveSong(song.id, by: 1) } label: { Image(systemName: "arrow.down").frame(width: 44, height: 44) }.disabled(index == list.songs.count - 1).accessibilityLabel("Move down").accessibilityIdentifier("move-down-\(song.name)")
-                                Button("Edit") { editingSong = song.id; songName = song.name; tempo = String(song.rhythm.bpm); songForm = true }
+                                Button("Edit") { edit(song) }
                                     .accessibilityIdentifier("edit-song-\(song.name)")
                                 Spacer()
                                 Button { deletingSong = song.id } label: { Image(systemName: "trash").frame(width: 44, height: 44) }.accessibilityLabel("Delete song").accessibilityIdentifier("delete-song-\(song.name)")
@@ -691,9 +733,16 @@ struct SetlistPanel: View {
                     if editingSong == nil { songEditor }
                 }
             }
-            Divider()
-            Button(action: presets) { Text("Saved presets").font(.subheadline).frame(minHeight: 44) }
+                if model.activeSetlist != nil && !songForm && !model.presets.isEmpty {
+                    Button { importing = true; editing = false; choosing = false } label: {
+                        Label("Add from presets", systemImage: "square.stack").font(.subheadline).frame(maxWidth: .infinity, minHeight: 48)
+                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("import-presets")
+                }
+            }
         }.foregroundStyle(p.ink)
+    }
+    private func edit(_ song: SavedPreset) {
+        editingSong = song.id; songName = song.name; tempo = String(song.rhythm.bpm); songForm = true; deletingSong = nil
     }
     private var songEditor: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -704,6 +753,9 @@ struct SetlistPanel: View {
                         Text("20–300").font(.caption).foregroundStyle(p.muted)
                     }
                     if editingSong == nil { Text("Uses the current meter, sound and rhythm.").font(.caption).foregroundStyle(p.muted) }
+                    if let id = editingSong, model.activeSetlist?.songs.first(where: { $0.id == id })?.rhythm.ramp == true {
+                        Text("Changing BPM turns off the tempo ramp.").font(.caption).foregroundStyle(p.muted)
+                    }
                     HStack {
                         Button("Cancel") { songForm = false }
                         Spacer()
@@ -714,5 +766,14 @@ struct SetlistPanel: View {
                         }.disabled(!validSong).accessibilityIdentifier("save-song")
                     }.frame(minHeight: 44)
         }
+    }
+}
+
+private extension Rhythm {
+    var savedTempo: String { ramp ? "\(start)–\(end)" : "\(bpm)" }
+    var savedSummary: String {
+        var parts = ["\(beats)/\(denominator)", divisionSummary]
+        if gap { parts.append(L10n.format("%d silent bars", silentBars)) }
+        return parts.joined(separator: " · ")
     }
 }

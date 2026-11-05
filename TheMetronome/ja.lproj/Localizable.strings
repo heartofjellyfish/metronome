@@ -288,3 +288,19 @@
 "Uses the current meter, sound and rhythm." = "現在の拍子・音色・リズムを使います。";
 
 "Save song" = "曲を保存";
+
+"03 LIVE MODE" = "03 ライブ";
+
+"Pedal" = "ペダル";
+
+"Save as preset" = "プリセットに保存";
+
+"Back to setlist" = "セットリストに戻る";
+
+"Adds a copy. Your preset stays unchanged." = "コピーを追加します。元のプリセットは変わりません。";
+
+"Add from presets" = "プリセットから追加";
+
+"%d silent bars" = "%d 小節の無音";
+
+"Changing BPM turns off the tempo ramp." = "BPMを変更するとテンポランプがオフになります。";

@@ -144,11 +144,11 @@ final class MetronomeModel: ObservableObject {
         didSet { UserDefaults.standard.set(selectedPresetID?.uuidString, forKey: "selectedPresetID") }
     }
     var presetCaption: String {
-        if let song = currentSong { return song.name + " · " + (activeSetlist?.name ?? "") }
+        if let list = activeSetlist { return currentSong.map { $0.name + " · " + list.name } ?? list.name }
         guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return L10n.text("PRESETS / SAVE A RHYTHM") }
         var saved = presets[index].rhythm; saved.sanitize()
         guard saved == rhythm else { return L10n.text("CUSTOM RHYTHM / SAVE") }
-        return L10n.format("PRESET %02d / %@", index + 1, presets[index].name)
+        return presets[index].name
     }
     func isCurrentPreset(_ preset: SavedPreset) -> Bool {
         var saved = preset.rhythm; saved.sanitize()
@@ -181,14 +181,28 @@ final class MetronomeModel: ObservableObject {
         value.bpm = bpm; value.ramp = false; value.sanitize()
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
     }
+    /// A setlist owns a copy. Editing either item never changes the other.
+    func importPreset(_ preset: SavedPreset) {
+        guard let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
+        var value = preset.rhythm; value.sanitize()
+        setlists[index].songs.append(SavedPreset(name: preset.name, rhythm: value))
+    }
     func editSong(_ id: UUID, name: String, bpm: Int) {
         guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
               let index = setlists[list].songs.firstIndex(where: { $0.id == id }) else { return }
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
+        let newBPM = min(300, max(20, bpm))
+        let tempoChanged = setlists[list].songs[index].rhythm.bpm != newBPM
         setlists[list].songs[index].name = clean
-        setlists[list].songs[index].rhythm.bpm = min(300, max(20, bpm))
-        if selectedSongID == id { setBPM(bpm); updateNowPlaying() }
+        if tempoChanged {
+            setlists[list].songs[index].rhythm.bpm = newBPM
+            setlists[list].songs[index].rhythm.ramp = false
+        }
+        if selectedSongID == id {
+            if tempoChanged { setBPM(newBPM) }
+            updateNowPlaying()
+        }
     }
     func moveSong(_ id: UUID, by offset: Int) {
         guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
@@ -235,6 +249,9 @@ final class MetronomeModel: ObservableObject {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--stage-ui-test") {
             setlists = []; activeSetlistID = nil; selectedSongID = nil; rhythm = Rhythm()
+        }
+        if ProcessInfo.processInfo.arguments.contains("--organization-ui-test") {
+            presets = []; setlists = []; selectedPresetID = nil; selectedSongID = nil; activeSetlistID = nil; rhythm = Rhythm()
         }
         if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm() }
         if ProcessInfo.processInfo.arguments.contains("--dark") { dark = true }
@@ -436,8 +453,11 @@ final class MetronomeModel: ObservableObject {
     func addPreset(_ name: String) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
-        let preset = SavedPreset(name: clean.uppercased(), rhythm: rhythm)
-        presets.append(preset); selectedPresetID = preset.id; selectedSongID = nil; activeSetlistID = nil
+        let preset = SavedPreset(name: clean, rhythm: rhythm)
+        presets.append(preset)
+        // Saving is a snapshot, not a change of playback queue.
+        if activeSetlistID == nil { selectedPresetID = preset.id }
+
     }
     func load(_ preset: SavedPreset) {
         activeSetlistID = nil; selectedSongID = nil

@@ -13,7 +13,7 @@ final class LiveModeUITests: XCTestCase {
         XCTAssertTrue(app.buttons["settings-pedal"].waitForExistence(timeout: 3))
         Thread.sleep(forTimeInterval: 0.5)
         capture(app, "Settings physical tiles")
-        for identifier in ["practice", "settings-presets", "settings-pedal", "settings-pedal"] {
+        for identifier in ["practice", "settings-presets", "settings-setlists", "settings-pedal"] {
             app.buttons[identifier].tap()
             XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3))
             app.buttons["close-panel"].tap()
@@ -85,14 +85,14 @@ final class LiveModeUITests: XCTestCase {
         app.buttons["pedal-toggle"].tap()
         app.buttons["pedal-toggle"].tap()
         XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learn")
-        app.buttons["pedal-preparation"].tap()
+        app.buttons["close-panel"].tap()
+        app.buttons["settings-preparation"].tap()
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["Avoid call interruptions"].exists)
         app.swipeDown()
-        app.buttons["pedal-preparation"].tap()
+        app.buttons["settings-preparation"].tap()
         XCTAssertFalse(app.staticTexts["Avoid call interruptions"].exists)
-        XCTAssertTrue(app.buttons["pedal-toggle"].isHittable)
-        app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
+        app.buttons["close-settings"].tap()
         XCTAssertEqual(transport.label, "Stop metronome")
         transport.tap()
         app.buttons["settings"].tap(); app.buttons["settings-pedal"].tap()
@@ -115,9 +115,6 @@ final class LiveModeUITests: XCTestCase {
             XCTAssertNotEqual(key.value as? String, assigned)
             capture(app, "Cassette learning — \(language)")
             key.tap(); XCTAssertEqual(key.value as? String, assigned)
-            app.buttons["pedal-preparation"].tap(); app.swipeUp()
-            capture(app, "Preparation — \(language)")
-            app.swipeDown(); app.buttons["pedal-preparation"].tap()
             XCTAssertFalse(app.images["checkmark"].exists)
             XCTAssertTrue(app.buttons["pedal-midi"].exists)
             capture(app, "Assignments — \(language)")
@@ -149,7 +146,7 @@ final class StageFeatureUITests: XCTestCase {
         reveal(app.buttons["song-Opening"], app); app.buttons["song-Opening"].tap()
         XCTAssertTrue(app.buttons["transport"].waitForExistence(timeout: 3))
         app.buttons["transport"].tap()
-        app.buttons["settings"].tap(); app.buttons["settings-presets"].tap()
+        app.buttons["settings"].tap(); app.buttons["settings-setlists"].tap()
         XCTAssertTrue(app.buttons["song-Opening"].waitForExistence(timeout: 3))
         app.buttons["song-Night drive"].tap(); app.buttons["song-Encore"].tap()
         XCTAssertTrue(app.buttons["song-Encore"].isSelected)
@@ -216,6 +213,111 @@ final class StageFeatureUITests: XCTestCase {
         app.buttons["classic-sound-1"].tap(); stage.tap()
         app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
         XCTAssertEqual(app.buttons["transport"].label, "Stop metronome"); app.buttons["transport"].tap()
+    }
+    private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
+        for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }
+        XCTAssertTrue(element.isHittable)
+    }
+    private func capture(_ app: XCUIApplication, _ name: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
+    }
+}
+
+final class OrganizationUITests: XCTestCase {
+    override func setUpWithError() throws { continueAfterFailure = false }
+    func testStandalonePracticeImportAndEditingDoNotChangePlayback() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--organization-ui-test"]
+        app.launch(); XCTAssertTrue(app.buttons["settings"].waitForExistence(timeout: 8))
+        app.buttons["settings"].tap(); app.buttons["practice"].tap()
+        app.buttons["RAMP-on"].tap()
+        reveal(app.buttons["SOUND / SILENCE-on"], app); app.buttons["SOUND / SILENCE-on"].tap()
+        reveal(app.buttons["practice-save-preset"], app); capture(app, "Practice save shortcut")
+        app.buttons["practice-save-preset"].tap()
+        XCTAssertFalse(app.buttons["choose-setlist"].exists)
+        app.textFields["preset-name"].tap(); app.textFields["preset-name"].typeText("Warm hands")
+        app.buttons["save-preset"].tap()
+        XCTAssertTrue(app.buttons["load-preset-Warm hands"].waitForExistence(timeout: 3))
+        capture(app, "Standalone practice saved")
+        app.buttons["close-panel"].tap()
+        XCTAssertTrue(app.buttons["practice-countIn"].exists)
+        app.buttons["close-panel"].tap(); app.buttons["settings-setlists"].tap()
+        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Friday show")
+        app.buttons["Create setlist"].tap()
+        app.buttons["import-presets"].tap(); capture(app, "Import preset copy")
+        app.buttons["cancel-import"].tap(); XCTAssertFalse(app.buttons["song-Warm hands"].exists)
+        app.buttons["import-presets"].tap(); app.buttons["import-preset-Warm hands"].tap()
+        XCTAssertTrue(app.buttons["song-Warm hands"].exists)
+        capture(app, "Setlist with practice copy")
+        app.buttons["song-Warm hands"].tap()
+        app.buttons["close-settings"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, "Start metronome")
+        app.buttons["transport"].tap(); app.buttons["settings"].tap(); app.buttons["settings-setlists"].tap()
+        app.buttons["edit-setlist"].tap(); app.buttons["song-Warm hands"].tap()
+        XCTAssertTrue(app.textFields["song-name"].exists)
+        XCTAssertTrue(app.buttons["close-panel"].exists) // Editing a row must never select/dismiss.
+        reveal(app.buttons["save-song"], app); app.buttons["save-song"].tap()
+        app.buttons["edit-setlist"].tap(); app.buttons["close-panel"].tap()
+        app.buttons["close-settings"].tap(); XCTAssertEqual(app.buttons["transport"].label, "Stop metronome")
+        app.buttons["transport"].tap(); app.buttons["settings"].tap(); app.buttons["settings-presets"].tap()
+        XCTAssertTrue(app.buttons["load-preset-Warm hands"].exists)
+        app.buttons["load-preset-Warm hands"].tap(); app.buttons["close-settings"].tap()
+        app.terminate(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=presets"]; app.launch()
+        XCTAssertTrue(app.buttons["load-preset-Warm hands"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["load-preset-Warm hands"].isSelected)
+        capture(app, "Standalone preset restored")
+    }
+    func testSettingsLanguagesThemesAndNavigation() {
+        for language in ["en", "zh-Hans", "de", "fr", "ja", "ko", "es", "pt-BR", "zh-Hant"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-AppleLanguages", "(\(language))", "--settings", "--light", "--reference"]
+            app.launch(); XCTAssertTrue(app.buttons["practice"].waitForExistence(timeout: 8))
+            capture(app, "Organized settings \(language)")
+            for id in ["settings-presets", "settings-setlists", "settings-pedal"] {
+                reveal(app.buttons[id], app); app.buttons[id].tap()
+                XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3)); app.buttons["close-panel"].tap()
+            }
+            if ["en", "zh-Hans", "de"].contains(language) {
+                reveal(app.buttons["settings-preparation"], app); app.buttons["settings-preparation"].tap()
+                app.swipeUp(); capture(app, "Performance preparation \(language)")
+                app.swipeDown(); reveal(app.buttons["settings-preparation"], app); app.buttons["settings-preparation"].tap()
+                XCTAssertFalse(app.otherElements["performance-preparation-notes"].exists)
+                reveal(app.buttons["theme-dark"], app); app.buttons["theme-dark"].tap()
+                app.swipeDown(); capture(app, "Organized settings dark \(language)")
+            }
+            app.terminate()
+        }
+    }
+    func testCompactAndLargeTextControls() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(fr)", "--light", "--settings", "--organization-ui-test"]
+        app.launch(); XCTAssertTrue(app.buttons["practice"].waitForExistence(timeout: 8))
+        capture(app, "Compact settings French")
+        for id in ["practice", "settings-presets", "settings-meter", "settings-division"] {
+            XCTAssertGreaterThanOrEqual(app.buttons[id].frame.height, 44)
+        }
+        reveal(app.buttons["settings-pedal"], app); app.buttons["settings-pedal"].tap()
+        XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 3))
+        app.buttons["pedal-toggle"].tap(); app.buttons["pedal-toggle"].tap()
+        capture(app, "Compact pedal French")
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=division", "--organization-ui-test"]
+        app.launch(); XCTAssertTrue(app.buttons["more-divisions"].waitForExistence(timeout: 8))
+        reveal(app.buttons["more-divisions"], app); app.buttons["more-divisions"].tap()
+        reveal(app.buttons["division-count-8"], app); app.buttons["division-count-8"].tap()
+        reveal(app.buttons["division-pulse-7"], app)
+        for i in 0..<8 { XCTAssertGreaterThanOrEqual(app.buttons["division-pulse-\(i)"].frame.width, 44) }
+        app.buttons["division-pulse-1"].tap(); app.buttons["division-pulse-2"].tap()
+        XCTAssertEqual(app.buttons["division-pulse-1"].value as? String, "Rest")
+        capture(app, "Compact eight divisions")
+        app.terminate()
+        app.launchArguments = ["-AppleLanguages", "(de)", "--light", "--panel=pedal", "--pedal-ui-test", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
+        app.launch(); XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 8))
+        app.buttons["pedal-toggle"].tap(); capture(app, "Accessible pedal German")
+        app.buttons["pedal-toggle"].tap()
+        reveal(app.buttons["pedal-tap"], app); app.buttons["pedal-tap"].tap()
+        XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Zuweisen")
+        app.buttons["close-panel"].tap()
     }
     private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
         for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }

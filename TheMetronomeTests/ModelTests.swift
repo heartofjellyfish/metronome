@@ -6,20 +6,20 @@ import MediaPlayer
 final class ModelTests: XCTestCase {
     @MainActor func testRuntimeStatePresetsMetadataAndInterruptions() async throws {
         let defaults = UserDefaults.standard
-        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics"]
+        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "setlists", "activeSetlistID", "selectedSongID"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
         let model = MetronomeModel()
         defer { model.stop() }
-        model.rhythm = Rhythm(); model.presets = []
+        model.rhythm = Rhythm(); model.presets = []; model.activeSetlistID = nil
         model.addPreset("  FIRST  ")
         model.setBPM(120); model.addPreset("SECOND")
-        XCTAssertEqual(model.presetCaption, "PRESET 02 / SECOND")
+        XCTAssertEqual(model.presetCaption, "SECOND")
         XCTAssertEqual(defaults.string(forKey: "selectedPresetID"), model.presets[1].id.uuidString)
         model.setBPM(121); XCTAssertEqual(model.presetCaption, "CUSTOM RHYTHM / SAVE")
         model.load(model.presets[1]); XCTAssertEqual(model.bpm, 120)
-        XCTAssertEqual(model.presetCaption, "PRESET 02 / SECOND")
-        model.presets.removeFirst(); XCTAssertEqual(model.presetCaption, "PRESET 01 / SECOND")
+        XCTAssertEqual(model.presetCaption, "SECOND")
+        model.presets.removeFirst(); XCTAssertEqual(model.presetCaption, "SECOND")
         model.presets = []; XCTAssertEqual(model.presetCaption, "PRESETS / SAVE A RHYTHM")
         model.addPreset("  \n "); XCTAssertTrue(model.presets.isEmpty)
 

@@ -7,75 +7,98 @@ struct SettingsView: View {
     @State private var panelSession = UUID()
     private func present(_ kind: InstrumentPanelKind) { panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
+    @State private var preparation = false
     var body: some View {
-        GeometryReader { geometry in
-            let scale = min(geometry.size.width / 414, geometry.size.height / 774)
-            face.accessibilityElement(children: .contain).accessibilityHidden(panel != nil).allowsHitTesting(panel == nil).frame(width: 414, height: 774).scaleEffect(scale, anchor: .top)
-                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-        }.foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
+        VStack(spacing: 0) {
+            HStack {
+                Text("SETTINGS").technical(22, spacing: 4).lineLimit(1).minimumScaleFactor(0.8)
+                Spacer()
+                Button { model.endSoundPreview(); dismiss() } label: {
+                    Image(systemName: "xmark").font(.system(size: 22, weight: .light)).frame(width: 44, height: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                    .accessibilityLabel("Close settings").accessibilityIdentifier("close-settings")
+            }.padding(.horizontal, 26).padding(.top, 14).padding(.bottom, 20)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 28) {
+                        VStack(spacing: 16) {
+                            SectionLabel(text: "01 RHYTHM", p: p)
+                            HStack(spacing: 14) {
+                                menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
+                                menuField("DIVISION", value: model.rhythm.divisionSummary, route: .division, fontSize: 17)
+                            }
+                            HStack(spacing: 14) {
+                                navigationKey("PRACTICE", icon: .practice, route: .practice)
+                                navigationKey("PRESETS", icon: .presets, route: .presets)
+                            }
+                        }
+                        VStack(spacing: 15) {
+                            HStack(spacing: 12) {
+                                SectionLabel(text: "02 SOUND", p: p)
+                                Button { present(.sounds) } label: {
+                                    HStack(spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text("All sounds").font(.system(size: 13, weight: .medium))
+                                            if !InstrumentSound.recommended.contains(where: { $0.rawValue == model.rhythm.sound }) {
+                                                Text(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "")
+                                                    .technical(10, spacing: 0.3).foregroundStyle(p.muted)
+                                            }
+                                        }
+                                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+                                    }.padding(.horizontal, 13).frame(minHeight: 44)
+                                }.buttonStyle(HardwareButtonStyle(p: p, radius: 8))
+                                    .accessibilityLabel(L10n.text("All sounds")).accessibilityIdentifier("all-sounds")
+                                    .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
+                            }
+                            SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "recommended")
+                            SoundDynamicsControl(model: model)
+                        }
+                        VStack(spacing: 14) {
+                            SectionLabel(text: "03 LIVE MODE", p: p)
+                            HStack(spacing: 14) {
+                                navigationKey("Setlists", icon: .setlists, route: .setlists)
+                                navigationKey("Pedal", icon: .pedal, route: .pedal)
+                            }
+                            Button {
+                                preparation.toggle()
+                                if !preparation { withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("live-section", anchor: .center) } }
+                            } label: {
+                                HStack {
+                                    Text("Before performing").font(.system(size: 14))
+                                    Spacer()
+                                    Image(systemName: preparation ? "chevron.up" : "chevron.down").font(.system(size: 11))
+                                }.frame(minHeight: 44).contentShape(Rectangle())
+                            }.buttonStyle(.plain).accessibilityIdentifier("settings-preparation")
+                                .accessibilityValue(L10n.text(preparation ? "Collapse" : "Expand"))
+                            if preparation { PerformancePreparation(p: p) }
+                        }.id("live-section")
+                        HStack(spacing: 14) {
+                            Text("SKIN").technical(11, spacing: 1.3)
+                            Spacer(minLength: 0)
+                            skinKeys.frame(maxWidth: 260).frame(height: 46)
+                        }
+                    }.padding(.horizontal, 26).padding(.bottom, 24)
+                }.scrollBounceBehavior(.basedOnSize).accessibilityIdentifier("settings-scroll")
+            }
+        }.frame(maxWidth: 460).frame(maxWidth: .infinity)
+            .accessibilityElement(children: .contain).accessibilityHidden(panel != nil).allowsHitTesting(panel == nil)
+            .foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light)
             .overlay { if let panel { InstrumentPanel(model: model, kind: panel) { self.panel = nil }.id(panelSession) } }
             .onDisappear { model.endSoundPreview() }
             .onChange(of: model.error) { _, value in if value != nil { present(.audio) } }
     }
-    private var face: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("SETTINGS").technical(22, spacing: 5).lineLimit(1).minimumScaleFactor(0.7)
-                Text("THE METRONOME / SETUP").technical(9, spacing: 2.5)
-            }.frame(width: 280, alignment: .leading).position(x: 167, y: 30)
-            Button { model.endSoundPreview(); dismiss() } label: { Image(systemName: "xmark").font(.system(size: 23, weight: .light)).frame(width: 43, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).position(x: 370, y: 28).accessibilityLabel("Close settings").accessibilityIdentifier("close-settings")
-            SectionLabel(text: "01 RHYTHM", p: p).frame(width: 359).position(x: 206.5, y: 93)
-            HStack(spacing: 17) {
-                menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
-                menuField("DIVISION", value: model.rhythm.divisionSummary, route: .division, fontSize: 17)
-            }.frame(width: 359).position(x: 206.5, y: 154)
-
-            HStack(spacing: 12) {
-                SectionLabel(text: "02 SOUND", p: p)
-                Button { present(.sounds) } label: {
-                    HStack(spacing: 8) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("CURRENT").technical(6, spacing: 1).foregroundStyle(p.muted)
-                            Text(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
-                                .technical(10, spacing: 0.5).lineLimit(1).minimumScaleFactor(0.8)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
-                    }.padding(.horizontal, 10).frame(width: 115, height: 32)
-                }.buttonStyle(HardwareButtonStyle(p: p, radius: 7))
-                    .accessibilityLabel("All sounds").accessibilityIdentifier("all-sounds")
-                    .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
-            }.frame(width: 359).position(x: 206.5, y: 228)
-            SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "recommended")
-                .frame(width: 359).position(x: 206.5, y: 322)
-            SoundDynamicsControl(model: model).frame(width: 359).position(x: 206.5, y: 418)
-
-            SectionLabel(text: "03 MORE", p: p).frame(width: 359).position(x: 206.5, y: 487)
-            HStack(spacing: 12) {
-                navigationKey("PRACTICE", icon: .practice, route: .practice)
-                navigationKey("Setlists", icon: .presets, route: .setlists)
-                navigationKey("LIVE MODE", icon: .pedal, route: .pedal)
-            }.frame(width: 359).position(x: 206.5, y: 565)
-
-            SectionLabel(text: "04 VIEW", p: p).frame(width: 359).position(x: 206.5, y: 668)
-            HStack {
-                Text("SKIN").technical(12, spacing: 1.7); Spacer()
-                skinKeys.frame(width: 261, height: 46)
-            }.frame(width: 359).position(x: 206.5, y: 714)
-        }
-    }
     private func navigationKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
         Button { model.endSoundPreview(); present(route) } label: {
-            VStack(spacing: 8) {
-                SettingsIllustration(kind: icon).frame(width: 80, height: 64)
-                Text(L10n.text(title)).technical(11, spacing: 0.6)
-                    .lineLimit(1).minimumScaleFactor(0.7)
-            }.frame(maxWidth: .infinity).frame(height: 114)
+            HStack(spacing: 7) {
+                SettingsIllustration(kind: icon).frame(width: 44, height: 44)
+                Text(L10n.text(title).uppercased()).technical(12, spacing: 0.4)
+                    .lineLimit(1).minimumScaleFactor(0.85).multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }.padding(.horizontal, 10).frame(maxWidth: .infinity).frame(minHeight: 66)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-            .accessibilityLabel(L10n.text(title == "Setlists" ? "Setlists" : title == "PRESETS" ? "Saved presets" : title == "PRACTICE" ? "Practice settings" : "LIVE MODE"))
-            .accessibilityIdentifier((route == .presets || route == .setlists) ? "settings-presets" : route == .pedal ? "settings-pedal" : route.rawValue)
+            .accessibilityLabel(L10n.text(title == "PRESETS" ? "Saved presets" : title == "PRACTICE" ? "Practice settings" : title))
+            .accessibilityIdentifier(route == .practice ? "practice" : "settings-\(route.rawValue)")
     }
     private var skinKeys: some View {
         HStack(spacing: 9) {

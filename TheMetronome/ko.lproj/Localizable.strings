@@ -288,3 +288,19 @@
 "Uses the current meter, sound and rhythm." = "현재 박자표, 음색과 리듬을 사용합니다.";
 
 "Save song" = "곡 저장";
+
+"03 LIVE MODE" = "03 라이브";
+
+"Pedal" = "페달";
+
+"Save as preset" = "프리셋으로 저장";
+
+"Back to setlist" = "세트리스트로 돌아가기";
+
+"Adds a copy. Your preset stays unchanged." = "복사본을 추가해요. 원본 프리셋은 그대로 유지돼요.";
+
+"Add from presets" = "프리셋에서 추가";
+
+"%d silent bars" = "%d 마디 무음";
+
+"Changing BPM turns off the tempo ramp." = "BPM을 변경하면 템포 램프가 꺼져요.";

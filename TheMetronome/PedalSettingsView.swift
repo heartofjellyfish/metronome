@@ -6,8 +6,8 @@ struct PedalSettingsView: View {
     let p: InstrumentPalette
     let close: () -> Void
     @State private var midiPicker = false
-    @State private var preparation = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var keyWidth: CGFloat = 138
     private let groups: [[PedalAction]] = [[.toggle, .tap], [.previous, .next], [.slower, .faster]]
     var body: some View {
@@ -37,22 +37,10 @@ struct PedalSettingsView: View {
                                 .padding(.horizontal, 16).frame(height: 44)
                         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
                             .accessibilityIdentifier("pedal-midi")
-                        Divider().overlay(p.edge.opacity(0.2))
-                        HStack {
-                            Text("Before performing").font(.body.weight(.medium))
-                            Spacer()
-                            Button {
-                                pedal.cancelLearning()
-                                preparation.toggle()
-                                if !preparation { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { proxy.scrollTo("bindings", anchor: .top) } }
-                            } label: {
-                                HStack(spacing: 6) {
-                                    Text(preparation ? "Collapse" : "Expand")
-                                    Image(systemName: preparation ? "chevron.up" : "chevron.down").font(.caption)
-                                }.font(.subheadline).padding(.horizontal, 12).frame(minHeight: 44)
-                            }.buttonStyle(HardwareButtonStyle(p: p, radius: 12)).accessibilityIdentifier("pedal-preparation")
+                        if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
+                            Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.")
+                                .font(.subheadline).foregroundStyle(p.muted)
                         }
-                        if preparation { preparationNotes }
                         if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }.padding(.horizontal, 28).padding(.top, 12).padding(.bottom, 32)
                         .frame(maxWidth: 520).frame(maxWidth: .infinity)
@@ -80,12 +68,19 @@ struct PedalSettingsView: View {
             }
         }
     }
-    private func bindingRow(_ action: PedalAction) -> some View {
-        HStack(spacing: 16) {
-            Text(action.title).font(.body.weight(.medium)).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-            bindingButton(action)
-        }.padding(.trailing, 12)
+    @ViewBuilder private func bindingRow(_ action: PedalAction) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(action.title).font(.body.weight(.medium))
+                bindingButton(action).frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        } else {
+            HStack(spacing: 16) {
+                Text(action.title).font(.body.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                bindingButton(action)
+            }.padding(.trailing, 12)
+        }
     }
     private func bindingButton(_ action: PedalAction) -> some View {
         let listening = pedal.learning == action
@@ -99,7 +94,8 @@ struct PedalSettingsView: View {
                 Text(caption).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.horizontal, 10).padding(.vertical, 12)
-                .frame(width: min(keyWidth, 180)).frame(minHeight: 48)
+                .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : min(keyWidth, 180))
+                .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil).frame(minHeight: 48)
         }.buttonStyle(PedalKeyStyle(p: p, held: listening))
             .accessibilityIdentifier("pedal-\(action.rawValue)")
             .accessibilityLabel(action.title).accessibilityValue(caption)
@@ -112,15 +108,16 @@ struct PedalSettingsView: View {
         if let action = pedal.learning { return L10n.format("Press your pedal now to assign %@. Tap again to cancel.", action.title) }
         return L10n.text(pedal.bindings.isEmpty ? "Pair in iPhone Bluetooth settings. Tap Learn, then press your pedal." : "Assigned. Tap the key name to reassign.")
     }
-    private var preparationNotes: some View {
-        VStack(alignment: .leading, spacing: 24) {
+}
+
+struct PerformancePreparation: View {
+    let p: InstrumentPalette
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
             note("Avoid call interruptions", "When you do not need calls: turn on Airplane Mode, turn off Wi-Fi, and keep Bluetooth on. Disable alarms and timers during your performance. Restore your settings afterward.")
             note("Resume on the same beat timeline", "Audio may pause. When iOS allows automatic recovery, playback follows the original beat timeline instead of restarting from beat one.")
             note("Try a press before going on stage", "Check that your pedal starts and stops playback.")
-            if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
-                Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.").font(.subheadline).foregroundStyle(p.muted)
-            }
-        }.padding(.bottom, 12).accessibilityIdentifier("pedal-preparation-notes")
+        }.padding(.bottom, 12).accessibilityIdentifier("performance-preparation-notes")
     }
     private func note(_ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 8) { Text(title).font(.body.weight(.semibold)); Text(detail).font(.subheadline).foregroundStyle(p.muted).lineSpacing(3) }

@@ -288,3 +288,19 @@
 "Uses the current meter, sound and rhythm." = "Utilise la mesure, le son et le rythme actuels.";
 
 "Save song" = "Enregistrer le morceau";
+
+"03 LIVE MODE" = "03 SCÈNE";
+
+"Pedal" = "Pédale";
+
+"Save as preset" = "Enregistrer un préréglage";
+
+"Back to setlist" = "Retour à la setlist";
+
+"Adds a copy. Your preset stays unchanged." = "Ajoute une copie. Le préréglage reste inchangé.";
+
+"Add from presets" = "Depuis les préréglages";
+
+"%d silent bars" = "%d mesures muettes";
+
+"Changing BPM turns off the tempo ramp." = "Changer les BPM désactive la rampe de tempo.";

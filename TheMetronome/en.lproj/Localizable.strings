@@ -288,3 +288,19 @@
 "Uses the current meter, sound and rhythm." = "Uses the current meter, sound and rhythm.";
 
 "Save song" = "Save song";
+
+"03 LIVE MODE" = "03 LIVE MODE";
+
+"Pedal" = "Pedal";
+
+"Save as preset" = "Save as preset";
+
+"Back to setlist" = "Back to setlist";
+
+"Adds a copy. Your preset stays unchanged." = "Adds a copy. Your preset stays unchanged.";
+
+"Add from presets" = "Add from presets";
+
+"%d silent bars" = "%d silent bars";
+
+"Changing BPM turns off the tempo ramp." = "Changing BPM turns off the tempo ramp.";
