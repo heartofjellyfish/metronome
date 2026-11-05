@@ -25,6 +25,12 @@ enum PedalAction: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+struct PedalProfile: Codable, Identifiable {
+    var id: String
+    var name: String
+    var bindings: [PedalAction: PedalBinding]
+}
+
 /// Learning consumes the press. Held keys and switch bounce cannot toggle twice.
 struct PedalGate {
     var bindings: [PedalAction: PedalBinding] = [:]
@@ -98,6 +104,14 @@ final class PedalControl: ObservableObject {
     @Published private(set) var pressRevision = 0
     private var bluetoothMIDISourceIDs = Set<Int32>()
     @Published var problem: String?
+    @Published private(set) var profiles: [PedalProfile] = []
+    @Published private(set) var profileID = "keyboard"
+    @Published private(set) var connectedName: String?
+    @Published private(set) var conflict: PedalAction?
+    private var pendingBinding: PedalBinding?
+    private var sourceNames: [Int32: String] = [:]
+    var profileName: String { profiles.first { $0.id == profileID }?.name ?? L10n.text("Saved controls") }
+    var isMIDIProfile: Bool { profileID.hasPrefix("midi:") }
     var perform: ((PedalAction) -> Void)?
     private var gate = PedalGate()
     private var observers: [NSObjectProtocol] = []
@@ -121,6 +135,19 @@ final class PedalControl: ObservableObject {
         self.defaults = defaults
         #endif
         bindings = self.defaults.data(forKey: "pedalBindings").flatMap { try? JSONDecoder().decode([PedalAction: PedalBinding].self, from: $0) } ?? [:]
+        if let data = self.defaults.data(forKey: "pedalProfiles"), let saved = try? JSONDecoder().decode([PedalProfile].self, from: data), !saved.isEmpty {
+            profiles = saved
+            profileID = self.defaults.string(forKey: "pedalProfileID") ?? saved[0].id
+            bindings = saved.first { $0.id == profileID }?.bindings ?? [:]
+        } else {
+            let legacy = bindings
+            profiles = [PedalProfile(id: "keyboard", name: L10n.text("Saved controls"), bindings: legacy.filter { [.keyboard, .media].contains($0.value.kind) })]
+            for source in Set(legacy.values.filter { ![.keyboard, .media].contains($0.kind) }.map(\.source)) {
+                profiles.append(PedalProfile(id: "midi:\(source)", name: "MIDI", bindings: legacy.filter { $0.value.source == source && ![.keyboard, .media].contains($0.value.kind) }))
+            }
+            if profiles[0].bindings.isEmpty, let midi = profiles.dropFirst().first { profileID = midi.id }
+            bindings = profiles.first { $0.id == profileID }?.bindings ?? [:]
+        }
         gate.bindings = bindings
         for name in [NSNotification.Name.GCKeyboardDidConnect, .GCKeyboardDidDisconnect, UIApplication.didBecomeActiveNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -179,21 +206,64 @@ final class PedalControl: ObservableObject {
         gate.clearHeld()
         parsers.removeAll()
     }
-    func learn(_ action: PedalAction) { gate.clearHeld(); gate.learning = action; learning = action }
-    func cancelLearning() { gate.learning = nil; learning = nil }
+    func learn(_ action: PedalAction) { cancelLearning(); gate.clearHeld(); gate.learning = action; learning = action }
+    func cancelLearning() { gate.learning = nil; learning = nil; conflict = nil; pendingBinding = nil }
+    func resolveConflict(replace: Bool) {
+        guard let input = pendingBinding, let action = learning else { cancelLearning(); return }
+        conflict = nil; pendingBinding = nil
+        if replace {
+            gate.clearHeld(); gate.learning = action
+            _ = gate.receive(input, down: true, at: ProcessInfo.processInfo.systemUptime)
+            learning = nil; persist()
+        } else { cancelLearning() }
+    }
+    func selectProfile(_ id: String) {
+        guard profiles.contains(where: { $0.id == id }), id != profileID else { return }
+        cancelLearning(); gate.clearHeld(); profileID = id
+        gate.bindings = profiles.first { $0.id == id }!.bindings
+        persist(); updateConnectedName()
+    }
+    func addProfile(_ name: String) {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let id = "keyboard:\(UUID().uuidString)"
+        profiles.append(PedalProfile(id: id, name: name, bindings: [:])); selectProfile(id)
+    }
+    private func selectInputProfile(_ input: PedalBinding) {
+        let target = [.keyboard, .media].contains(input.kind) ? (isMIDIProfile ? "keyboard" : profileID) : "midi:\(input.source)"
+        guard target != profileID else { return }
+        let assignment = learning
+        if !profiles.contains(where: { $0.id == target }) { profiles.append(PedalProfile(id: target, name: sourceNames[input.source] ?? "MIDI", bindings: [:])) }
+        selectProfile(target)
+        if let assignment { learn(assignment) }
+    }
+    private func updateConnectedName() {
+        guard isMIDIProfile, let source = Int32(profileID.dropFirst(5)), activeMIDISourceIDs.contains(source) else { connectedName = nil; return }
+        connectedName = sourceNames[source] ?? "MIDI"
+    }
     func clear(_ action: PedalAction) {
         cancelLearning(); gate.bindings.removeValue(forKey: action); persist()
     }
     func clearAll() { cancelLearning(); gate = PedalGate(); persist() }
     private func persist() {
         bindings = gate.bindings
+        if let index = profiles.firstIndex(where: { $0.id == profileID }) { profiles[index].bindings = bindings }
+        defaults.set(profileID, forKey: "pedalProfileID")
+        if let data = try? JSONEncoder().encode(profiles) { defaults.set(data, forKey: "pedalProfiles") }
         refreshBluetoothStatus()
         if let data = try? JSONEncoder().encode(bindings) { defaults.set(data, forKey: "pedalBindings") }
     }
     @discardableResult func receive(_ input: PedalBinding, down: Bool, at time: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
+        if conflict != nil { return true }
+        if down { selectInputProfile(input) }
         if down && (input.kind == .keyboard || input.kind == .media) {
             verifiedDirectInput = true
             refreshInputAvailability()
+        }
+        if down, let action = learning, let other = bindings.first(where: {
+            $0.key != action && $0.value.kind == input.kind && $0.value.source == input.source && $0.value.code == input.code && $0.value.channel == input.channel
+        })?.key {
+            conflict = other; pendingBinding = input; return true
         }
         switch gate.receive(input, down: down, at: time) {
         case .ignored: return false
@@ -253,11 +323,19 @@ final class PedalControl: ObservableObject {
         let events = parser.feed(bytes, source: source); parsers[source] = parser
         for (input, down) in events { receive(input, down: down) }
     }
-    func updateMIDISources(_ identifiers: Set<Int32>, bluetooth: Set<Int32> = [], physical: Set<Int32> = []) {
+    func updateMIDISources(_ identifiers: Set<Int32>, bluetooth: Set<Int32> = [], physical: Set<Int32> = [], names: [Int32: String] = [:]) {
         if identifiers != activeMIDISourceIDs { resetInputSession() }
         activeMIDISourceIDs = identifiers
         bluetoothMIDISourceIDs = bluetooth.intersection(identifiers)
         physicalMIDISourceIDs = physical.union(bluetooth).intersection(identifiers)
+        sourceNames = names
+        for (source, name) in names {
+            if let index = profiles.firstIndex(where: { $0.id == "midi:\(source)" }) { profiles[index].name = name }
+        }
+        if physicalMIDISourceIDs.count == 1, let source = physicalMIDISourceIDs.first {
+            selectInputProfile(PedalBinding(kind: .midiNote, source: source, label: ""))
+        }
+        updateConnectedName()
         refreshInputAvailability()
         refreshBluetoothStatus()
     }
@@ -294,11 +372,14 @@ final class PedalControl: ObservableObject {
         var identifiers = Set<Int32>()
         var bluetooth = Set<Int32>()
         var physical = Set<Int32>()
+        var names: [Int32: String] = [:]
         for endpoint in connected {
             var identifier: Int32 = 0
             guard MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &identifier) == noErr,
                   identifier != 0 else { continue }
             identifiers.insert(identifier)
+            var display: Unmanaged<CFString>?
+            if MIDIObjectGetStringProperty(endpoint, kMIDIPropertyDisplayName, &display) == noErr, let name = display?.takeRetainedValue() as String?, !name.isEmpty { names[identifier] = name }
             var entity = MIDIEntityRef()
             var device = MIDIDeviceRef()
             if MIDIEndpointGetEntity(endpoint, &entity) == noErr, entity != 0,
@@ -314,7 +395,7 @@ final class PedalControl: ObservableObject {
                 bluetooth.insert(identifier)
             }
         }
-        updateMIDISources(identifiers, bluetooth: bluetooth, physical: physical)
+        updateMIDISources(identifiers, bluetooth: bluetooth, physical: physical, names: names)
     }
 }
 

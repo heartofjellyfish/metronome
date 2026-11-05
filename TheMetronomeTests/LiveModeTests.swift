@@ -196,11 +196,11 @@ final class LiveModeTests: XCTestCase {
     }
     @MainActor func testSixActionsPersistenceAndSetlistBoundaries() {
         let defaults = UserDefaults.standard
-        let keys = ["rhythm", "presets", "selectedPresetID", "pedalBindings"]
+        let keys = ["rhythm", "presets", "selectedPresetID", "pedalBindings", "pedalProfiles", "pedalProfileID", "activeSetlistID", "selectedSongID", "setlists"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
         let model = MetronomeModel(); defer { model.stop() }
-        model.presets = []; model.rhythm = Rhythm(); model.addPreset("ONE")
+        model.presets = []; model.activeSetlistID = nil; model.rhythm = Rhythm(); model.addPreset("ONE")
         model.setBPM(130); model.addPreset("TWO")
         model.performPedal(.previous); XCTAssertEqual(model.bpm, 96)
         model.performPedal(.previous); XCTAssertEqual(model.bpm, 96)
@@ -288,10 +288,10 @@ final class StageFeatureTests: XCTestCase {
         var r = Rhythm(); r.bpm = 60; r.setDivision(3); r.crossRhythm = 2
         let clock = SampleClock(rate: 600); clock.reset(r)
         var hits: [Int] = []
-        for frame in 0..<600 { if let (_, s) = clock.advance(), s > 0 { hits.append(frame) } }
+        for frame in 0..<600 { if let (e, s) = clock.advance(), s > 0 || e.crossStrength > 0 { hits.append(frame) } }
         XCTAssertEqual(hits, [0, 200, 300, 400])
-        r.setDivision(6, mask: 17); clock.reset(r); hits = []
-        for frame in 0..<600 { if let (_, s) = clock.advance(), s > 0 { hits.append(frame) } }
+        r.setDivision(6, mask: 17); r.crossRhythm = nil; clock.reset(r); hits = []
+        for frame in 0..<600 { if let (e, s) = clock.advance(), s > 0 || e.crossStrength > 0 { hits.append(frame) } }
         XCTAssertEqual(hits, [0, 400]) // long-short swing, not equal eighths
         r.sanitize()
         XCTAssertEqual(try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r)), r)
@@ -328,7 +328,7 @@ final class StageFeatureTests: XCTestCase {
                     let clock = SampleClock(rate: rate); clock.reset(r)
                     var hits: [Int] = []
                     for frame in 0..<Int(ceil(beatFrames)) {
-                        if let (_, strength) = clock.advance(), strength > 0 { hits.append(frame) }
+                        if let (e, strength) = clock.advance(), strength > 0 || e.crossStrength > 0 { hits.append(frame) }
                     }
                     let expected = Set((0..<base).map { Int(ceil(Double($0) * beatFrames / Double(base) - 0.000001)) }
                         + (0..<secondary).map { Int(ceil(Double($0) * beatFrames / Double(secondary) - 0.000001)) }).sorted()
@@ -374,7 +374,7 @@ final class StageFeatureTests: XCTestCase {
 }
 
 final class OrganizationTests: XCTestCase {
-    @MainActor func testPracticeCopiesStayIndependentAndRenamePreservesRamp() throws {
+    @MainActor func testPracticePresetCopiesToPerformanceSongWithoutEffects() throws {
         let defaults = UserDefaults.standard
         let keys = ["setlists", "activeSetlistID", "selectedSongID", "rhythm", "presets", "selectedPresetID"]
         let saved = keys.map { defaults.object(forKey: $0) }
@@ -392,12 +392,14 @@ final class OrganizationTests: XCTestCase {
         m.importPreset(original)
         let copied = try XCTUnwrap(m.activeSetlist?.songs.first)
         XCTAssertNotEqual(copied.id, original.id)
-        XCTAssertEqual(copied.rhythm, original.rhythm)
+        XCTAssertEqual(copied.rhythm, original.rhythm.performanceCopy)
         XCTAssertNil(m.selectedSongID) // Importing never starts or selects a song.
         m.loadSong(copied)
         m.editSong(copied.id, name: "Warm-up", bpm: copied.rhythm.bpm)
-        XCTAssertTrue(m.rhythm.ramp)
-        XCTAssertTrue(try XCTUnwrap(m.currentSong).rhythm.ramp)
+        XCTAssertFalse(m.rhythm.ramp)
+        XCTAssertFalse(m.rhythm.gap)
+        XCTAssertEqual(m.rhythm.crossCount, 0)
+        XCTAssertFalse(try XCTUnwrap(m.currentSong).rhythm.ramp)
         m.editSong(copied.id, name: "Opening", bpm: 140)
         XCTAssertFalse(m.rhythm.ramp)
         XCTAssertFalse(try XCTUnwrap(m.currentSong).rhythm.ramp)

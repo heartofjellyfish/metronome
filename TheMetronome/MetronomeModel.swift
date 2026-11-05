@@ -9,7 +9,11 @@ final class AudioMailbox {
     var config = Rhythm()
     var event: ClockEvent?
     var serial = 0
-    func set(_ value: Rhythm) { lock.lock(); config = value; lock.unlock() }
+    var configRevision = 0
+    var audition: Rhythm?
+    var auditionRevision = 0
+    func set(_ value: Rhythm) { lock.lock(); config = value; configRevision += 1; audition = nil; auditionRevision += 1; lock.unlock() }
+    func preview(_ value: Rhythm?) { lock.lock(); audition = value; auditionRevision += 1; lock.unlock() }
 }
 
 final class MetronomeAudio {
@@ -65,6 +69,9 @@ final class MetronomeAudio {
         var latest: ClockEvent?
         var serial = 0
         let box = mailbox
+        var configRevision = -1, auditionRevision = -1
+        var restoreAfterAudition: Rhythm?
+        var auditionEndTick = 0
         let node = AVAudioSourceNode(format: format) { _, timestamp, count, buffers in
             let hostTime = timestamp.pointee.mHostTime
             let bufferStart = hostTime == 0 ? ProcessInfo.processInfo.systemUptime : AVAudioTime.seconds(forHostTime: hostTime)
@@ -72,16 +79,38 @@ final class MetronomeAudio {
                 clock.skip(seconds: max(0, bufferStart - resumeReference))
                 alignOnFirstRender = false
             }
-            if box.lock.try() { clock.update(box.config); box.lock.unlock() }
+            if box.lock.try() {
+                if configRevision != box.configRevision { clock.update(box.config); configRevision = box.configRevision; restoreAfterAudition = nil }
+                if auditionRevision != box.auditionRevision {
+                    auditionRevision = box.auditionRevision
+                    if let candidate = box.audition {
+                        restoreAfterAudition = box.config
+                        var temporary = box.config
+                        temporary.subdivision = candidate.subdivision; temporary.divisionMask = candidate.divisionMask; temporary.swing = candidate.swing
+                        temporary.sound = candidate.sound; temporary.crossRhythm = candidate.crossRhythm; temporary.polyrhythmPrimary = candidate.polyrhythmPrimary
+                        clock.update(temporary)
+                        let length = temporary.pulseCount * temporary.clockDivisions
+                        auditionEndTick = (max(0, clock.tick) / length + 1) * length
+                    } else if let restore = restoreAfterAudition { clock.update(restore); restoreAfterAudition = nil }
+                }
+                box.lock.unlock()
+            }
             let audioBuffers = UnsafeMutableAudioBufferListPointer(buffers)
             for frame in 0..<Int(count) {
+                if let restore = restoreAfterAudition, clock.nextTickIsDue, clock.tick + 1 >= auditionEndTick {
+                    clock.update(restore); restoreAfterAudition = nil
+                }
                 if let (event, strength) = clock.advance() {
                     latest = event; serial += 1
+                    if event.crossStrength > 0 {
+                        acoustic.trigger(sound: InstrumentSound.bell.rawValue, strength: event.crossStrength, gainScale: 0.7)
+                    }
                     if strength > 0 {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
-                        if ![1, 16].contains(clock.rhythm.sound) {
-                            acoustic.trigger(sound: clock.rhythm.sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn, gainScale: event.gainScale, hitInterval: event.hitInterval)
+                        let sound = clock.rhythm.crossCount > 0 ? InstrumentSound.wood.rawValue : clock.rhythm.sound
+                        if ![1, 16].contains(sound) {
+                            acoustic.trigger(sound: sound, strength: strength, beat: event.beat, beats: clock.rhythm.pulseCount, denominator: clock.rhythm.usesCompoundPulse ? 4 : clock.rhythm.denominator, counting: event.countIn, gainScale: event.gainScale, hitInterval: event.hitInterval)
                         } else { switch voiceIndex % 4 {
                         case 0: voices.0.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
                         case 1: voices.1.trigger(sound: clock.rhythm.sound, strength: strength, gainScale: event.gainScale)
@@ -177,14 +206,14 @@ final class MetronomeModel: ObservableObject {
     func addSong(_ name: String, bpm: Int, source: Rhythm? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
-        var value = source ?? rhythm
-        value.bpm = bpm; value.ramp = false; value.sanitize()
+        var value = (source ?? rhythm).performanceCopy
+        value.bpm = bpm; value.sanitize()
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
     }
     /// A setlist owns a copy. Editing either item never changes the other.
-    func importPreset(_ preset: SavedPreset) {
-        guard let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
-        var value = preset.rhythm; value.sanitize()
+    func importPreset(_ preset: SavedPreset, into target: UUID? = nil) {
+        guard let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
+        let value = preset.rhythm.performanceCopy
         setlists[index].songs.append(SavedPreset(name: preset.name, rhythm: value))
     }
     func editSong(_ id: UUID, name: String, bpm: Int) {
@@ -204,6 +233,15 @@ final class MetronomeModel: ObservableObject {
             updateNowPlaying()
         }
     }
+    func editSong(_ id: UUID, name: String, rhythm value: Rhythm) {
+        guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
+              let index = setlists[list].songs.firstIndex(where: { $0.id == id }) else { return }
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        setlists[list].songs[index].name = clean
+        setlists[list].songs[index].rhythm = value.performanceCopy
+        if selectedSongID == id { loadSong(setlists[list].songs[index]) }
+    }
     func moveSong(_ id: UUID, by offset: Int) {
         guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
               let index = setlists[list].songs.firstIndex(where: { $0.id == id }),
@@ -217,7 +255,7 @@ final class MetronomeModel: ObservableObject {
     }
     func loadSong(_ song: SavedPreset) {
         let resume = playing; stop()
-        var value = song.rhythm; value.sanitize()
+        let value = song.rhythm.performanceCopy
         selectedPresetID = nil; selectedSongID = song.id; rhythm = value
         if resume { start() }
     }
@@ -256,6 +294,15 @@ final class MetronomeModel: ObservableObject {
         if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm() }
         if ProcessInfo.processInfo.arguments.contains("--dark") { dark = true }
         if ProcessInfo.processInfo.arguments.contains("--light") { dark = false }
+        if ProcessInfo.processInfo.arguments.contains("--redesign-ui-test") {
+            var slow = Rhythm(); slow.bpm = 85; slow.sound = 16
+            var fast = Rhythm(); fast.bpm = 140
+            var practice = Rhythm(); practice.ramp = true; practice.gap = true
+            presets = [SavedPreset(name: "Warm hands", rhythm: practice), SavedPreset(name: "Gossip", rhythm: fast)]
+            let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
+            setlists = [SongSetlist(name: chinese ? "周六演出" : "Saturday", songs: [SavedPreset(name: "Gossip", rhythm: fast), SavedPreset(name: "男孩别哭", rhythm: slow), SavedPreset(name: "夜来香", rhythm: Rhythm())])]
+            activeSetlistID = nil; selectedSongID = nil; selectedPresetID = nil
+        }
         #endif
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let type = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
@@ -430,7 +477,20 @@ final class MetronomeModel: ObservableObject {
     func cycleAccent(_ index: Int) { rhythm.accents[index] = (rhythm.displayedAccent(index) + 1) % 3; tickFeedback() }
     func endSoundPreview() {
         previewTimer?.invalidate()
+        audio.mailbox.preview(nil)
         if !playing { audio.stop() }
+    }
+    func previewRhythm(_ value: Rhythm) {
+        previewTimer?.invalidate()
+        if playing { audio.mailbox.preview(value); return }
+        var preview = value
+        preview.countIn = 0; preview.ramp = false; preview.gap = false
+        do {
+            try audio.start(preview, previewBars: 1)
+            previewTimer = Timer.scheduledTimer(withTimeInterval: Double(preview.pulseCount) * 60 / Double(preview.bpm) + 0.8, repeats: false) { [weak self] _ in
+                Task { @MainActor in if self?.playing == false { self?.audio.stop() } }
+            }
+        } catch { audio.stop(); self.error = error.localizedDescription }
     }
     func setDynamics(_ followsMeter: Bool) {
         rhythm.followsMeter = followsMeter

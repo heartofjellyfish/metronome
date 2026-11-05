@@ -95,21 +95,25 @@ struct Rhythm: Codable, Equatable {
     // Optional additions keep previously saved rhythms decodable.
     var divisionMask: Int?
     var crossRhythm: Int?
+    var polyrhythmPrimary: Int?
+    var swing: Double?
     var enabledMask: Int { divisionMask ?? ((1 << subdivision) - 1) }
     var crossCount: Int { crossRhythm ?? 0 }
+    var clockBaseCount: Int { crossCount > 0 ? (polyrhythmPrimary ?? subdivision) : subdivision }
+    var swingRatio: Double { subdivision.isMultiple(of: 2) ? min(0.75, max(0.5, swing ?? 0.5)) : 0.5 }
     var clockDivisions: Int {
         guard crossCount > 0 else { return subdivision }
-        var a = subdivision, b = crossCount
+        var a = clockBaseCount, b = crossCount
         while b != 0 { let r = a % b; a = b; b = r }
-        return subdivision / a * crossCount
+        return clockBaseCount / a * crossCount
     }
     var divisionSummary: String {
-        if crossCount > 0 { return "\(subdivision):\(crossCount)" }
-        if divisionMask != nil { return (0..<subdivision).map { enabledMask & (1 << $0) != 0 ? "●" : "·" }.joined(separator: " ") }
+        if swingRatio > 0.5 { return L10n.format("Swing %d%%", Int((swingRatio * 100).rounded())) }
+        if divisionMask != nil { return L10n.text("Pattern") }
         return L10n.format("%d / BEAT", subdivision)
     }
     mutating func setDivision(_ count: Int, mask: Int? = nil) {
-        subdivision = min(8, max(1, count)); divisionMask = mask; crossRhythm = nil
+        subdivision = min(8, max(1, count)); divisionMask = mask; swing = nil
     }
     var accents = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     var sound = 0
@@ -167,7 +171,7 @@ struct Rhythm: Codable, Equatable {
         if changed || oldCompound != usesCompoundPulse {
             accents = [2] + Array(repeating: 1, count: 11)
             subdivision = usesCompoundPulse ? 3 : 1
-            divisionMask = nil; crossRhythm = nil
+            divisionMask = nil; swing = nil
         }
     }
     mutating func sanitize() {
@@ -179,6 +183,8 @@ struct Rhythm: Codable, Equatable {
             divisionMask = valid == 0 || valid == (1 << subdivision) - 1 ? nil : valid
         }
         if let crossRhythm, !(2...9).contains(crossRhythm) { self.crossRhythm = nil }
+        if let polyrhythmPrimary { self.polyrhythmPrimary = min(8, max(2, polyrhythmPrimary)) }
+        if let swing { self.swing = swing.isFinite && subdivision.isMultiple(of: 2) ? min(0.75, max(0.5, swing)) : nil }
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
         if let grouping, !Self.groupingOptions(beats).contains(grouping) { self.grouping = nil }
         switch sound {
@@ -201,6 +207,7 @@ struct ClockEvent {
     let silent: Bool
     var gainScale: Float = 1
     var hitInterval: Double = .infinity
+    var crossStrength: Int = 0
 }
 
 /// Driven by audio sample frames, never a UI timer. Owned exclusively by the render thread.
@@ -214,6 +221,10 @@ final class SampleClock {
     private var countInBars = 0
     private var barLimit: Int?
     private var humanizer = DynamicHumanizer()
+    // Floating-point arithmetic may leave a sub-billionth of a sample at an
+    // exact boundary. Treat it consistently during rendering and catch-up.
+    private let sampleEpsilon = 1e-8
+    var nextTickIsDue: Bool { framesUntilTick <= sampleEpsilon }
     let rate: Double
     init(rate: Double) { self.rate = rate }
 
@@ -251,9 +262,9 @@ final class SampleClock {
     func skip(seconds: Double) {
         guard seconds.isFinite, seconds > 0 else { return }
         var frames = seconds * rate
-        while frames >= 1 {
-            if framesUntilTick > 0 {
-                let jump = min(floor(frames), ceil(framesUntilTick))
+        while frames >= 1 - sampleEpsilon {
+            if !nextTickIsDue {
+                let jump = min(floor(frames + sampleEpsilon), ceil(framesUntilTick - sampleEpsilon))
                 framesUntilTick -= jump; frames -= jump
             } else { _ = advance(); frames -= 1 }
         }
@@ -261,7 +272,7 @@ final class SampleClock {
     }
     func advance() -> (ClockEvent, Int)? {
         defer { framesUntilTick -= 1 }
-        guard framesUntilTick <= 0 else { return nil }
+        guard nextTickIsDue else { return nil }
         let ticksPerBar = rhythm.pulseCount * rhythm.clockDivisions
         // Stop scheduling hits at the exact boundary; renderers may finish their tails.
         if let barLimit, tick + 1 >= ticksPerBar * barLimit { return nil }
@@ -281,18 +292,21 @@ final class SampleClock {
             }
         }
         let silent = !counting && rhythm.gap && practiceBar % (rhythm.audibleBars + rhythm.silentBars) >= rhythm.audibleBars
-        framesUntilTick += rate * 60 / Double(tempo * rhythm.clockDivisions)
+        let interval = 60 / Double(tempo * rhythm.clockDivisions)
+        let swingScale = rhythm.crossCount == 0 ? (tick.isMultiple(of: 2) ? rhythm.swingRatio * 2 : (1 - rhythm.swingRatio) * 2) : 1
+        framesUntilTick += rate * interval * swingScale
         let mainStrength = rhythm.beatStrength(beat, counting: counting)
         let position = tick % rhythm.clockDivisions
-        let step = rhythm.clockDivisions / rhythm.subdivision
-        let baseHit = position % step == 0 && rhythm.enabledMask & (1 << (position / step)) != 0
+        let step = rhythm.clockDivisions / rhythm.clockBaseCount
+        let baseHit = position % step == 0 && (rhythm.crossCount > 0 || rhythm.enabledMask & (1 << (position / step)) != 0)
         let crossHit = rhythm.crossCount > 0 && position % (rhythm.clockDivisions / max(1, rhythm.crossCount)) == 0
-        let strength = silent || mainStrength == 0 || !(baseHit || crossHit) ? 0 : !rhythm.followsMeter ? 5
-            : primary ? mainStrength : crossHit && !baseHit ? 4 : 3
+        let strength = silent || mainStrength == 0 || !baseHit ? 0 : !rhythm.followsMeter ? 5
+            : primary ? mainStrength : 3
         let variation = humanizer.nextGain()
         let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
-            : (crossHit && !baseHit ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: 60 / Double(tempo * rhythm.clockDivisions)), strength)
+            : (rhythm.crossCount > 0 ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
+        let lower = crossHit && !silent && mainStrength > 0 ? (primary ? 2 : 1) : 0
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, crossStrength: lower), strength)
     }
 }
 

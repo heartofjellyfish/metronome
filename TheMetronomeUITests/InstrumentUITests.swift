@@ -5,7 +5,7 @@ final class InstrumentUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["--reference", "--light"]
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
         app.launch()
     }
     func button(_ name: String) -> XCUIElement {
@@ -22,6 +22,7 @@ final class InstrumentUITests: XCTestCase {
         }
         return app.buttons[name]
     }
+    func deletePreset(_ name: String) { button("Options for \(name)").tap(); button("DELETE").tap() }
     func openTempo() { button("tempoDisplay").tap(); XCTAssertTrue(button("key-1").waitForExistence(timeout: 3)) }
     func type(_ value: String) { for character in value { button("key-\(character)").tap() } }
     func assertTempo(_ value: Int) { XCTAssertTrue(button("tempoDisplay").label.contains("\(value) BPM"), button("tempoDisplay").label) }
@@ -35,8 +36,8 @@ final class InstrumentUITests: XCTestCase {
         }
         XCTAssertTrue(element.isHittable)
     }
-    func openMeter() { button("settings").tap(); button("Time signature").tap() }
-    func closeMeterToHome() { button("Close meter").tap(); button("Close settings").tap() }
+    func openMeter() { button("Time signature").tap() }
+    func closeMeterToHome() { button("Close meter").tap() }
     func testMetricHierarchyInEvenModeAndGrouping() {
         let labels = (1...4).map { button("beat-\($0)").label }
         proof("Ivory typography hierarchy and recessed lamps")
@@ -61,7 +62,7 @@ final class InstrumentUITests: XCTestCase {
         reveal(button("Note value /2")); button("Note value /2").tap(); closeMeterToHome()
         XCTAssertTrue(button("beat-2").exists); XCTAssertFalse(button("beat-3").exists)
         proof("Cut time")
-        openMeter(); button("meter-4-4").tap(); button("DARK").tap(); button("Close settings").tap()
+        openMeter(); button("meter-4-4").tap(); button("settings").tap(); button("DARK").tap(); button("Close settings").tap()
         XCTAssertTrue(button("beat-3").label.contains("secondary"))
         proof("Graphite simple home")
     }
@@ -73,7 +74,7 @@ final class InstrumentUITests: XCTestCase {
         button("Close settings").tap()
         XCTAssertTrue(button("beat-2").label.contains("secondary")); XCTAssertFalse(button("beat-3").exists)
         proof("Six eight two dotted quarter pulses")
-        button("settings").tap(); button("Subdivision").tap()
+        button("Subdivision").tap()
         XCTAssertTrue(button("3 clicks per beat").isSelected)
         proof("Compound subdivision choices")
         button("6 clicks per beat").tap()
@@ -107,12 +108,12 @@ final class InstrumentUITests: XCTestCase {
         button("increase").tap(); assertTempo(97)
         button("decrease").tap(); assertTempo(96)
         button("tap").tap()
-        button("settings").tap(); proof("Essential settings")
+        button("settings").tap(); proof("Essential settings"); button("Close settings").tap()
         button("Subdivision").tap(); proof("Immediate subdivision choices")
         XCTAssertFalse(button("panelApply").exists)
         button("3 clicks per beat").tap(); XCTAssertFalse(button("Close division").exists)
         button("Subdivision").tap(); XCTAssertTrue(button("3 clicks per beat").isSelected); button("Close division").tap()
-        button("practice").tap(); proof("Progressive practice settings")
+        button("settings").tap(); button("practice").tap(); proof("Progressive practice settings")
         XCTAssertFalse(button("START, 60 BPM").exists)
         button("COUNT IN, OFF").tap(); button("2").tap()
         XCTAssertTrue(button("COUNT IN, 2 BAR").exists)
@@ -213,7 +214,7 @@ final class InstrumentUITests: XCTestCase {
         reveal(button("Note value /8")); button("Note value /8").tap(); proof("Custom meter immediate edits")
         XCTAssertFalse(button("panelApply").exists)
         closeMeterToHome(); XCTAssertTrue(button("beat-7").exists)
-        button("settings").tap(); button("Subdivision").tap()
+        button("Subdivision").tap()
         button("3 clicks per beat").tap()
         button("Subdivision").tap(); XCTAssertTrue(button("3 clicks per beat").isSelected)
         button("Close division").tap()
@@ -231,14 +232,14 @@ final class InstrumentUITests: XCTestCase {
         button("transport").tap(); button("settings").tap(); button("practice").tap()
         button("COUNT IN, OFF").tap(); proof("Count in choices"); button("2").tap()
         XCTAssertTrue(button("COUNT IN, 2 BAR").exists)
-        button("RAMP-on").tap()
+        button("practice-ramp").tap(); button("RAMP-on").tap()
         reveal(button("EVERY, 8 BARS")); button("EVERY, 8 BARS").tap(); proof("Ramp interval"); button("4").tap()
         reveal(button("STEP, 2 BPM")); button("STEP, 2 BPM").tap(); button("5").tap()
         XCTAssertTrue(button("STEP, 5 BPM").exists)
         button("START, 60 BPM").tap(); type("72"); button("panelApply").tap()
         XCTAssertTrue(button("START, 72 BPM").exists)
         proof("Expanded ramp controls")
-        button("Close practice").tap(); button("DARK").tap()
+        button("close-panel").tap(); button("Close practice").tap(); button("DARK").tap()
         XCTAssertTrue(button("DARK").isSelected); proof("Graphite settings")
         button("Close settings").tap(); XCTAssertEqual(button("transport").label, "Stop metronome")
         openTempo(); proof("Graphite keypad"); button("Close set tempo").tap()
@@ -303,9 +304,9 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertEqual(button("presets").value as? String, "CUSTOM RHYTHM / SAVE")
         button("presets").tap(); button("load-preset-AUDIT PRESET").tap()
         assertTempo(96)
-        button("presets").tap(); button("Delete AUDIT PRESET").tap(); button("KEEP").tap()
-        XCTAssertTrue(button("Delete AUDIT PRESET").exists)
-        button("Delete AUDIT PRESET").tap(); button("DELETE").tap(); button("Close presets").tap()
+        button("presets").tap(); deletePreset("AUDIT PRESET"); button("KEEP").tap()
+        XCTAssertTrue(button("Options for AUDIT PRESET").exists)
+        deletePreset("AUDIT PRESET"); button("DELETE").tap(); button("Close presets").tap()
         XCTAssertEqual(button("presets").value as? String, "PRESETS / SAVE A RHYTHM")
     }
     func testGapControlsHapticsAndTupletNotation() {
@@ -315,17 +316,17 @@ final class InstrumentUITests: XCTestCase {
         button("Subdivision").tap(); proof("Compound duplet numeral")
         button("2 clicks per beat").tap()
         button("settings").tap(); button("practice").tap()
-        button("SOUND / SILENCE-on").tap()
+        button("practice-gap").tap(); button("SOUND / SILENCE-on").tap()
         reveal(button("Increase SOUND BARS")); button("Increase SOUND BARS").tap()
         button("Decrease SILENT BARS").tap()
         button("Decrease SILENT BARS").tap() // lower limit holds at one
-        reveal(button("TOUCH FEEDBACK-off")); button("TOUCH FEEDBACK-off").tap()
+        button("close-panel").tap(); reveal(button("TOUCH FEEDBACK-off")); button("TOUCH FEEDBACK-off").tap()
         XCTAssertTrue(button("TOUCH FEEDBACK-off").isSelected)
         proof("Gap training and touch feedback")
         button("Close practice").tap(); button("Close settings").tap()
         app.terminate(); app.launchArguments = []; app.launch()
         button("settings").tap(); button("practice").tap()
-        XCTAssertTrue(button("SOUND / SILENCE-on").isSelected)
+        button("practice-gap").tap(); XCTAssertTrue(button("SOUND / SILENCE-on").isSelected); button("close-panel").tap()
         reveal(button("TOUCH FEEDBACK-off")); XCTAssertTrue(button("TOUCH FEEDBACK-off").isSelected)
         button("TOUCH FEEDBACK-on").tap()
     }
@@ -355,14 +356,14 @@ final class InstrumentUITests: XCTestCase {
         button("NOTE UNITS").tap(); XCTAssertTrue(button("NOTE UNITS").isSelected)
         button("BIG BEATS").tap(); XCTAssertTrue(button("BIG BEATS").isSelected)
         button("Close meter").tap()
-        button("settings").tap(); button("DARK").tap(); button("Subdivision").tap()
+        button("settings").tap(); button("DARK").tap(); button("Close settings").tap(); button("Subdivision").tap()
         for division in [2,6,3,1] {
             button("\(division) clicks per beat").tap()
             XCTAssertTrue(button("Close division").isHittable)
             XCTAssertTrue(button("\(division) clicks per beat").isSelected)
         }
         proof("Live compound division graphite")
-        button("Close division").tap(); button("Close settings").tap()
+        button("Close division").tap()
         XCTAssertEqual(button("transport").label, "Stop metronome")
         button("Subdivision").tap(); XCTAssertTrue(button("1 clicks per beat").isSelected)
         button("Close division").tap(); button("transport").tap()
@@ -391,7 +392,7 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertEqual(button("transport").label,"Stop metronome")
         button("transport").tap(); button("presets").tap()
         for name in ["LIVE A","LIVE B"] {
-            button("Delete \(name)").tap(); button("DELETE").tap()
+            deletePreset(name); button("DELETE").tap()
         }
         button("Close presets").tap()
         button("settings").tap()

@@ -289,7 +289,7 @@
 
 "Save song" = "Guardar canción";
 
-"03 LIVE MODE" = "03 EN DIRECTO";
+"03 LIVE MODE" = "03 DIRECTO";
 
 "Pedal" = "Pedal";
 
@@ -304,3 +304,56 @@
 "%d silent bars" = "%d compases en silencio";
 
 "Changing BPM turns off the tempo ramp." = "Cambiar los BPM desactiva la rampa de tempo.";
+
+"01 SOUND" = "01 SONIDO";
+"02 PRACTICE" = "02 PRÁCTICA";
+"Even divisions" = "Divisiones iguales";
+"Patterns" = "Patrones";
+"Pattern" = "Patrón";
+"One per beat" = "1 por pulso";
+"Two per beat" = "2 por pulso";
+"Three per beat" = "3 por pulso";
+"Four per beat" = "4 por pulso";
+"%d per beat" = "%d por pulso";
+"Eighths" = "Corcheas";
+"Triplets" = "Tresillos";
+"Sixteenths" = "Semicorcheas";
+"Edit rhythm" = "Editar ritmo";
+"More subdivisions" = "Más subdivisiones";
+"Changing the grid replaces this pattern." = "Cambiar la división restablece este patrón.";
+"Change" = "Cambiar";
+"Keep at least one note." = "Conserva al menos una nota.";
+"Swing needs an even subdivision." = "El swing necesita una división par.";
+"Swing amount" = "Intensidad de swing";
+"Swing %d%%" = "Swing %d%%";
+"Use" = "Usar";
+"Preview rhythm" = "Escuchar ritmo";
+"Stop preview" = "Detener escucha";
+"Rhythm pattern %@" = "Patrón %@";
+"Silent bars" = "Compases mudos";
+"Build speed, step by step." = "Aumenta la velocidad paso a paso.";
+"Keep time when the click takes a break." = "Mantén el pulso sin el clic.";
+"Two rhythms. One shared beat." = "Dos ritmos, un mismo pulso.";
+"Both rows start and finish together." = "Las dos filas empiezan y terminan juntas.";
+"%d over %d" = "%d contra %d";
+"Other ratios" = "Otras proporciones";
+"The click takes a break. You keep playing." = "El clic descansa. Tú sigues tocando.";
+"%d songs" = "%d canciones";
+"New song" = "Nueva canción";
+"Edit song" = "Editar canción";
+"Save" = "Guardar";
+"Add to setlist" = "Añadir al repertorio";
+"Added to setlist." = "Añadido al repertorio.";
+"Create a setlist first." = "Primero crea un repertorio.";
+"Song added. Practice effects stay in the preset." = "Canción añadida. Los efectos de práctica quedan en el preajuste.";
+"Options for %@" = "Opciones de %@";
+"Saved controls" = "Controles guardados";
+"Connected" = "Conectado";
+"Not connected. Assignments saved." = "Sin conexión. Asignaciones guardadas.";
+"Assignments saved on this iPhone." = "Asignaciones guardadas en este iPhone.";
+"Name a new pedal" = "Nombre del nuevo pedal";
+"Connection help" = "Ayuda de conexión";
+"Tap Learn, then press your pedal." = "Toca Asignar y pisa el pedal.";
+"iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOS no identifica los pedales pasapáginas. Al cambiar de pedal, elige sus controles guardados.";
+"This key is assigned to %@. Move it?" = "Esta tecla está asignada a %@. ¿Reasignarla?";
+"Move" = "Reasignar";

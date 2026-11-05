@@ -8,6 +8,10 @@ struct SettingsView: View {
     private func present(_ kind: InstrumentPanelKind) { panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     @State private var preparation = false
+    private var shelf: [InstrumentSound] {
+        let current = InstrumentSound(rawValue: model.rhythm.sound) ?? .naturalHiHat
+        return Array(([current] + InstrumentSound.recommended.filter { $0 != current }).prefix(3))
+    }
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -21,37 +25,27 @@ struct SettingsView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 28) {
-                        VStack(spacing: 16) {
-                            SectionLabel(text: "01 RHYTHM", p: p)
-                            HStack(spacing: 14) {
-                                menuField("METER", value: "\(model.rhythm.beats)/\(model.rhythm.denominator)", route: .meter)
-                                menuField("DIVISION", value: model.rhythm.divisionSummary, route: .division, fontSize: 17)
-                            }
-                            HStack(spacing: 14) {
-                                navigationKey("PRACTICE", icon: .practice, route: .practice)
-                                navigationKey("PRESETS", icon: .presets, route: .presets)
-                            }
-                        }
                         VStack(spacing: 15) {
                             HStack(spacing: 12) {
-                                SectionLabel(text: "02 SOUND", p: p)
+                                SectionLabel(text: "01 SOUND", p: p)
                                 Button { present(.sounds) } label: {
                                     HStack(spacing: 8) {
-                                        VStack(alignment: .leading, spacing: 3) {
-                                            Text("All sounds").font(.system(size: 13, weight: .medium))
-                                            if !InstrumentSound.recommended.contains(where: { $0.rawValue == model.rhythm.sound }) {
-                                                Text(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "")
-                                                    .technical(10, spacing: 0.3).foregroundStyle(p.muted)
-                                            }
-                                        }
+                                        Text("All sounds").font(.system(size: 13, weight: .medium))
                                         Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
                                     }.padding(.horizontal, 13).frame(minHeight: 44)
                                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 8))
                                     .accessibilityLabel(L10n.text("All sounds")).accessibilityIdentifier("all-sounds")
                                     .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
                             }
-                            SoundCardRow(model: model, sounds: InstrumentSound.recommended, namespace: "recommended")
+                            SoundCardRow(model: model, sounds: shelf, namespace: "recommended")
                             SoundDynamicsControl(model: model)
+                        }
+                        VStack(spacing: 16) {
+                            SectionLabel(text: "02 PRACTICE", p: p)
+                            HStack(spacing: 14) {
+                                navigationKey("PRACTICE", icon: .practice, route: .practice)
+                                navigationKey("PRESETS", icon: .presets, route: .presets)
+                            }
                         }
                         VStack(spacing: 14) {
                             SectionLabel(text: "03 LIVE MODE", p: p)

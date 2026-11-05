@@ -289,7 +289,7 @@
 
 "Save song" = "儲存歌曲";
 
-"03 LIVE MODE" = "03 演出";
+"03 LIVE MODE" = "03 現場模式";
 
 "Pedal" = "踏板";
 
@@ -304,3 +304,56 @@
 "%d silent bars" = "%d 小節靜音";
 
 "Changing BPM turns off the tempo ramp." = "修改 BPM 會關閉漸進變速。";
+
+"01 SOUND" = "01 音色";
+"02 PRACTICE" = "02 練習";
+"Even divisions" = "均分";
+"Patterns" = "節奏型";
+"Pattern" = "節奏型";
+"One per beat" = "每拍一下";
+"Two per beat" = "每拍兩下";
+"Three per beat" = "每拍三下";
+"Four per beat" = "每拍四下";
+"%d per beat" = "每拍 %d 下";
+"Eighths" = "八分";
+"Triplets" = "三連音";
+"Sixteenths" = "十六分";
+"Edit rhythm" = "編輯節奏";
+"More subdivisions" = "更多細分";
+"Changing the grid replaces this pattern." = "更換細分會重設這個節奏型。";
+"Change" = "更換";
+"Keep at least one note." = "至少保留一個音。";
+"Swing needs an even subdivision." = "Swing 適用於偶數細分。";
+"Swing amount" = "Swing 程度";
+"Swing %d%%" = "Swing %d%%";
+"Use" = "使用";
+"Preview rhythm" = "試聽節奏";
+"Stop preview" = "停止試聽";
+"Rhythm pattern %@" = "節奏型 %@";
+"Silent bars" = "靜音小節";
+"Build speed, step by step." = "循序提速。";
+"Keep time when the click takes a break." = "停了拍聲，繼續穩住。";
+"Two rhythms. One shared beat." = "兩個節奏，同起同落。";
+"Both rows start and finish together." = "兩行在同一拍內，起點和終點相同。";
+"%d over %d" = "%d 套 %d";
+"Other ratios" = "其他組合";
+"The click takes a break. You keep playing." = "拍聲歇一會兒，你繼續。";
+"%d songs" = "%d 首";
+"New song" = "新增歌曲";
+"Edit song" = "編輯歌曲";
+"Save" = "儲存";
+"Add to setlist" = "加入歌單";
+"Added to setlist." = "已加入歌單。";
+"Create a setlist first." = "先建一個歌單。";
+"Song added. Practice effects stay in the preset." = "已加歌，練習效果保留在原預設中。";
+"Options for %@" = "%@ 的選項";
+"Saved controls" = "已存綁定";
+"Connected" = "已連線";
+"Not connected. Assignments saved." = "未連線，綁定已儲存。";
+"Assignments saved on this iPhone." = "綁定儲存在這台 iPhone 上。";
+"Name a new pedal" = "新踏板名稱";
+"Connection help" = "連線說明";
+"Tap Learn, then press your pedal." = "點綁定，再踩一下。";
+"iOS does not identify page-turning pedals. Choose saved controls when switching pedals." = "iOS 不提供翻頁踏板的身分，換踏板時請選擇對應的綁定。";
+"This key is assigned to %@. Move it?" = "這個鍵已綁定「%@」，要改綁嗎？";
+"Move" = "改綁";

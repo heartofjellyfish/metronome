@@ -111,13 +111,7 @@ struct MetronomeView: View {
             HStack {
                 Spacer()
                 if title == "DIVISION" {
-                    Group {
-                        if model.rhythm.divisionMask != nil || model.rhythm.crossCount > 0 {
-                            Text(model.rhythm.divisionSummary).font(.system(size: 13, weight: .medium)).minimumScaleFactor(0.6)
-                        } else {
-                            RhythmNotation(count: model.rhythm.subdivision, compound: model.rhythm.usesCompoundPulse, noteValue: model.rhythm.divisionNoteValue(model.rhythm.subdivision), color: p.ink)
-                        }
-                    }.frame(width: 76, height: 32)
+                    RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 92, height: 32)
                 } else { Text(value).font(InstrumentType.value(24)) }
                 Spacer()
                 Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium))

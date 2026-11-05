@@ -72,7 +72,7 @@ struct HardwareKeySurface: View {
                 .shadow(color: .black.opacity(dark ? 0.25 : 0.13), radius: pressed ? 1 : 5, x: 1.3, y: pressed ? 1 : 4)
             outline
                 .fill(LinearGradient(colors: green ? [Color(hex: 0xAFC7A1), Color(hex: 0x8DA97D)] : dark
-                    ? [Color(hex: 0x3D3F3D), Color(hex: 0x303230)]
+                    ? (charcoal && p.dark ? [Color(hex: 0x252725), Color(hex: 0x181A18)] : [Color(hex: 0x3D3F3D), Color(hex: 0x303230)])
                     : [Color(hex: 0xEAE6DD), Color(hex: 0xDDD9CE)], startPoint: .topLeading, endPoint: .bottomTrailing)
                     .shadow(.inner(color: .white.opacity(dark ? 0.16 : 0.85), radius: 1.6, x: 1.4, y: 1.8))
                     .shadow(.inner(color: .black.opacity(dark ? 0.5 : 0.20), radius: 2.5, x: -1.7, y: -2.3)))
