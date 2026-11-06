@@ -362,10 +362,10 @@ struct SongEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if let picker {
-                Button { model.endSoundPreview(); if divisionEditing { divisionEditing = false } else { self.picker = nil } } label: { Label(L10n.text(divisionEditing ? "Back to subdivisions" : "Edit song"), systemImage: "chevron.left").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+                Button { model.endSoundPreview(); if divisionEditing { divisionEditing = false } else { self.picker = nil } } label: { Label(L10n.text(divisionEditing ? "Back to subdivisions" : "Edit song"), systemImage: "chevron.left").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("song-picker-back")
                 if divisionEditing { Text("Customize rhythm").font(.system(size: 22, weight: .semibold)) }
                 if picker == "division" {
-                    DivisionPanel(rhythm: $draft, editing: $divisionEditing, playing: false, p: p, stopPreview: model.endSoundPreview) { self.picker = nil }
+                    DivisionPanel(rhythm: $draft, editing: $divisionEditing, playing: false, p: p, stopPreview: model.endSoundPreview)
                 } else if picker == "sound" {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(InstrumentSound.allCases, id: \.rawValue) { sound in

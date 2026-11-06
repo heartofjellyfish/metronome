@@ -141,7 +141,7 @@ struct InstrumentPanel: View {
         switch kind {
         case .tempo, .start, .end: numberPad
         case .meter: meterPicker
-        case .division: DivisionPanel(rhythm: $model.rhythm, editing: $divisionEditing, playing: model.playing, p: p, stopPreview: model.endSoundPreview, close: dismiss)
+        case .division: DivisionPanel(rhythm: $model.rhythm, editing: $divisionEditing, playing: model.playing, p: p, stopPreview: model.endSoundPreview)
         case .countIn, .every, .increment: quantityPicker
         case .practice: practicePanel
         case .ramp: rampPanel

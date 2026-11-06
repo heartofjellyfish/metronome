@@ -13,6 +13,7 @@ final class PerformanceUITests: XCTestCase {
         return matches.first { $0.isHittable } ?? app.buttons[id].firstMatch
     }
     private func tap(_ id: String) {
+        if id.hasPrefix("pattern-family-"), id != "pattern-family-menu" { tap("pattern-family-menu") }
         let button = b(id)
         for _ in 0..<7 { if button.exists && button.isHittable { break }; (app.scrollViews.allElementsBoundByIndex.last { $0.isHittable } ?? app.scrollViews.firstMatch).swipeUp() }
         if !button.isHittable { print(app.debugDescription) }
@@ -241,14 +242,14 @@ final class PerformanceUITests: XCTestCase {
     }
     func testDarkPerformanceEditCancelSaveAndReopenKeepsPlaying() {
         launch("en", dark: true); openList("Saturday"); tap("song-Gossip"); tap("performance-play")
-        tap("performance-edit"); tap("song-division"); tap("division-count-3")
+        tap("performance-edit"); tap("song-division"); tap("division-count-3"); tap("song-picker-back")
         tap("cancel-song")
         XCTAssertEqual(b("performance-play").label, "Stop metronome")
-        tap("performance-edit"); tap("song-division"); tap("division-count-2"); tap("save-song")
+        tap("performance-edit"); tap("song-division"); tap("division-count-2"); tap("song-picker-back"); tap("save-song")
         XCTAssertEqual(b("performance-play").label, "Stop metronome")
         tap("performance-edit"); tap("song-division")
         XCTAssertTrue(b("division-count-2").isSelected)
-        tap("division-count-3"); tap("save-song")
+        tap("division-count-3"); tap("song-picker-back"); tap("save-song")
         shot("08-live-dark"); tap("performance-play"); tap("close-performance")
     }
 }

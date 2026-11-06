@@ -9,6 +9,13 @@ private enum MusicFont {
         }
         return CTFontCreateWithName("Bravura" as CFString, 100, nil)
     }()
+    /// SMuFL flags use their glyph origin at the stem tip, not their bounding-box center.
+    static func flag(_ code: UInt16, at tip: CGPoint) -> Path {
+        var character = code, glyph = CGGlyph()
+        guard CTFontGetGlyphsForCharacters(font, &character, &glyph, 1),
+              let outline = CTFontCreatePathForGlyph(font, glyph, nil) else { return Path() }
+        return Path(outline).applying(CGAffineTransform(a: 0.32, b: 0, c: 0, d: -0.32, tx: tip.x, ty: tip.y))
+    }
     static func path(_ code: UInt16, in box: CGRect) -> Path {
         var character = code, glyph = CGGlyph()
         guard CTFontGetGlyphsForCharacters(font, &character, &glyph, 1), let outline = CTFontCreatePathForGlyph(font, glyph, nil) else { return Path() }
@@ -23,7 +30,15 @@ struct RhythmPattern: Identifiable {
     let mask: Int
     var id: String { "\(count)-\(mask)" }
     static func choices(_ count: Int) -> [Self] {
-        let masks = count == 2 ? [2, 1] : count == 3 ? [5, 6, 3] : [7, 13, 11, 9, 10, 14]
+        // Familiar long/short and syncopated figures first, then the remaining rest
+        // combinations. The all-on grid already lives under Even divisions.
+        let masks: [Int]
+        switch count {
+        case 2: masks = [2, 1]
+        case 3: masks = [5, 3, 6, 1, 2, 4]
+        case 4: masks = [13, 7, 11, 9, 3, 10, 14, 6, 12, 5, 1, 2, 4, 8]
+        default: return []
+        }
         return masks.map { Self(count: count, mask: $0) }
     }
     func applying(to rhythm: Rhythm) -> Rhythm {
@@ -42,7 +57,9 @@ struct RhythmEngraving {
         if let i = singleSlot { notes = [Note(value: base, rest: mask & (1 << i) == 0)]; return }
         if !explicitSlots {
             if n == 3 && mask == 5 { notes = [Note(value: base / 2), Note(value: base)]; return }
+            if n == 3 && mask == 3 { notes = [Note(value: base), Note(value: base / 2)]; return }
             if n == 4 && !rhythm.usesCompoundPulse {
+                if mask == 3 { notes = [Note(value: base), Note(value: base / 2, dotted: true)]; return }
                 if mask == 9 { notes = [Note(value: base / 2, dotted: true), Note(value: base)]; return }
                 if mask == 7 { notes = [Note(value: base), Note(value: base), Note(value: base / 2)]; return }
                 if mask == 13 { notes = [Note(value: base / 2), Note(value: base), Note(value: base)]; return }
@@ -111,7 +128,7 @@ struct RhythmScore: View {
                 if note.dotted { context.fill(Path(ellipseIn:CGRect(x:x+9,y:bottom-5,width:3,height:3)),with:.color(color)) }
                 if note.value >= 8 && !engraving.connected(i) {
                     let code: UInt16 = note.value == 8 ? 0xE240 : note.value == 16 ? 0xE242 : note.value == 32 ? 0xE244 : note.value == 64 ? 0xE246 : 0xE248
-                    context.fill(MusicFont.path(code,in:CGRect(x:x+4,y:stemTop,width:11,height:24)),with:.color(color))
+                    context.fill(MusicFont.flag(code, at: CGPoint(x: x+4, y: stemTop)),with:.color(color))
                 }
             }
             context.stroke(stems,with:.color(color),lineWidth:1.5)
@@ -125,12 +142,17 @@ struct RhythmScore: View {
                 let characters = Array(tuplet)
                 let digitsWidth = CGFloat(characters.count) * 9
                 let y = stemTop-9
+                // Stem-side brackets terminate at the outer stems; rests use their
+                // visible edge. Keep both hooks inside the same notation footprint.
+                let left = start + (items.first?.rest == true ? -5 : 4)
+                let right = start + CGFloat(items.count-1)*step + (items.last?.rest == true ? 5 : 4)
+                let center = (left + right) / 2
                 var bracket=Path()
-                bracket.addLines([CGPoint(x:start-9,y:y+6),CGPoint(x:start-9,y:y),CGPoint(x:width/2-digitsWidth/2-4,y:y)])
-                bracket.addLines([CGPoint(x:width/2+digitsWidth/2+4,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y+6)])
+                bracket.addLines([CGPoint(x:left,y:y+5),CGPoint(x:left,y:y),CGPoint(x:center-digitsWidth/2-3,y:y)])
+                bracket.addLines([CGPoint(x:center+digitsWidth/2+3,y:y),CGPoint(x:right,y:y),CGPoint(x:right,y:y+5)])
                 context.stroke(bracket,with:.color(color),style: StrokeStyle(lineWidth: max(1.5, 1 / scale), lineCap: .square, lineJoin: .miter))
                 for (index,ch) in characters.enumerated() {
-                    let x=width/2-digitsWidth/2+CGFloat(index)*9
+                    let x=center-digitsWidth/2+CGFloat(index)*9
                     if let number=ch.wholeNumberValue { context.fill(MusicFont.path(UInt16(0xE880+number),in:CGRect(x:x,y:y-5,width:8,height:10)),with:.color(color)) }
                     else { for dy in [-2.0,2.0] { context.fill(Path(ellipseIn:CGRect(x:x+3,y:y+dy,width:1.5,height:1.5)),with:.color(color)) } }
                 }

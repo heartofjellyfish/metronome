@@ -17,6 +17,31 @@ final class RedesignTests: XCTestCase {
         let rests = RhythmEngraving(rhythm)
         XCTAssertTrue(rests.beams.isEmpty) // isolated sixteenths have flags, not floating partial beams
     }
+    func testPatternCatalogCoverageAndScoreOnsetsMatchAudio() {
+        for n in [2, 3, 4] {
+            let choices = RhythmPattern.choices(n)
+            XCTAssertEqual(Set(choices.map(\.mask)), Set(1..<((1 << n)-1)))
+            XCTAssertEqual(choices.count, Set(choices.map(\.id)).count)
+            for pattern in choices {
+                var r = pattern.applying(to: Rhythm()); r.bpm = 60
+                let score = RhythmEngraving(r)
+                var onset = 0.0, printed: [Int] = []
+                for note in score.notes {
+                    if !note.rest { printed.append(Int((onset * 4800).rounded())) }
+                    onset += 4.0 / Double(note.value) * (note.dotted ? 1.5 : 1) * (n == 3 ? 2.0/3 : 1)
+                }
+                XCTAssertEqual(onset, 1, accuracy: 0.00001, pattern.id)
+                let clock = SampleClock(rate: 4800); clock.reset(r)
+                var sounded: [Int] = []
+                for frame in 0..<4800 { if let (_, strength) = clock.advance(), strength > 0 { sounded.append(frame) } }
+                XCTAssertEqual(printed, sounded, pattern.id)
+            }
+        }
+        var r = Rhythm(); r.setDivision(4, mask: 3)
+        XCTAssertEqual(RhythmEngraving(r).notes, [.init(value: 16), .init(value: 8, dotted: true)])
+        r.setDivision(3, mask: 3)
+        XCTAssertEqual(RhythmEngraving(r).notes.map(\.value), [8, 4])
+    }
     func testCustomSixTupletSupportsPatternsBeyondTheShelfAndPersists() throws {
         var rhythm = Rhythm(); rhythm.bpm = 60; rhythm.setDivision(6, mask: 37)
         let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(rhythm))

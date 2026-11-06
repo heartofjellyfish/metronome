@@ -10,15 +10,52 @@ final class RedesignUITests: XCTestCase {
         app.launch(); XCTAssertTrue(app.buttons["settings"].waitForExistence(timeout: 5))
     }
     private func b(_ id: String) -> XCUIElement { app.buttons[id] }
-    private func tap(_ id: String) { let value=b(id); reveal(value); value.tap() }
+    private func tap(_ id: String) {
+        if id.hasPrefix("pattern-family-"), id != "pattern-family-menu" { tap("pattern-family-menu") }
+        let value=b(id); reveal(value); value.tap() }
     private func reveal(_ value: XCUIElement) {
         for _ in 0..<7 { if value.exists && value.isHittable { return }; app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<7 { if value.exists && value.isHittable { return }; app.scrollViews.firstMatch.swipeDown() }
         XCTAssertTrue(value.isHittable,"Missing control: \(value)")
     }
     private func shot(_ name: String) { let a = XCTAttachment(screenshot: app.screenshot()); a.name=name; a.lifetime = .keepAlways; add(a) }
+    func testCategoryDisclosureAndLowerCatalogVisuals() {
+        launch(); tap("home-division"); tap("division-patterns"); tap("pattern-family-menu")
+        shot("35-category-expanded")
+        b("pattern-family-4").tap()
+        tap("pattern-4-8"); shot("36-sixteenth-lower-combinations")
+        tap("close-panel")
+        tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
+        tap("pattern-family-menu"); b("pattern-family-2").tap()
+        tap("pattern-2-1"); tap("pattern-2-2"); shot("37-eighths-hierarchy")
+        XCTAssertTrue(b("pattern-2-2").isSelected); tap("close-panel")
+    }
+    func testDivisionHierarchyPersistentSelectionAndNotation() {
+        launch(); tap("home-division")
+        tap("division-count-3"); tap("division-count-5"); tap("division-count-7")
+        XCTAssertTrue(b("division-count-7").isSelected)
+        XCTAssertTrue(b("close-panel").exists)
+        app.scrollViews.firstMatch.swipeDown(); shot("30-even-hierarchy")
+        tap("close-panel"); shot("31-home-septuplet")
+        tap("home-division"); XCTAssertTrue(b("division-count-7").isSelected)
+        tap("division-patterns"); tap("pattern-family-3")
+        tap("pattern-3-5"); tap("pattern-3-3"); tap("pattern-3-2")
+        XCTAssertTrue(b("pattern-3-2").isSelected); shot("32-triplet-hierarchy")
+        tap("settings-transport"); XCTAssertEqual(b("settings-transport").label, "Stop metronome")
+        tap("pattern-3-5"); tap("pattern-3-3")
+        XCTAssertTrue(b("pattern-3-3").isSelected)
+        tap("pattern-family-4"); tap("pattern-4-3"); shot("33-sixteenth-hierarchy")
+        tap("pattern-4-8"); XCTAssertTrue(b("pattern-4-8").isSelected)
+        tap("close-panel"); XCTAssertEqual(b("transport").label, "Stop metronome")
+        tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
+        reveal(b("pattern-4-8")); XCTAssertTrue(b("pattern-4-8").isSelected)
+        tap("settings-transport"); tap("close-panel")
+        launch("zh-Hans", dark: true); tap("home-division"); tap("division-patterns"); tap("pattern-family-3")
+        tap("pattern-3-5"); shot("34-triplets-dark-zh")
+    }
     func testRepeatedDivisionSelectionsAuditionsAndReopening() {
         launch(); tap("transport"); tap("home-division")
-        XCTAssertTrue(b("division-count-8").isHittable)
+        reveal(b("division-count-8"))
         shot("01-even-all-eight")
         tap("division-count-5"); XCTAssertTrue(b("division-count-5").isSelected)
         tap("division-count-8"); XCTAssertTrue(b("division-count-8").isSelected)
@@ -37,13 +74,13 @@ final class RedesignUITests: XCTestCase {
         tap("close-panel"); XCTAssertEqual(b("transport").label,"Stop metronome")
         tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
         tap("close-panel"); tap("transport"); tap("home-division"); tap("division-even"); tap("division-count-6")
-        XCTAssertTrue(b("home-division").waitForExistence(timeout: 2)); XCTAssertFalse(b("division-count-6").exists)
+        XCTAssertTrue(b("division-count-6").isSelected); tap("close-panel")
         tap("home-division"); XCTAssertTrue(b("division-count-6").isSelected); tap("close-panel")
     }
     func testNotationCardsAndCustomRhythmStoppedWorkflow() {
-        launch(); tap("home-division"); tap("division-count-7")
+        launch(); tap("home-division"); tap("division-count-7"); tap("close-panel")
         shot("14-home-septuplet")
-        tap("home-division"); tap("division-count-6"); shot("15-home-sextuplet")
+        tap("home-division"); tap("division-count-6"); tap("close-panel"); shot("15-home-sextuplet")
         tap("transport"); tap("home-division"); tap("division-patterns"); tap("pattern-family-4")
         tap("pattern-4-11"); XCTAssertTrue(b("pattern-4-11").isSelected)
         shot("16-sixteenth-patterns")
@@ -54,7 +91,7 @@ final class RedesignUITests: XCTestCase {
         tap("division-pulse-1"); tap("division-pulse-3"); tap("division-pulse-4")
         XCTAssertEqual(b("division-pulse-1").value as? String, "Rest")
         shot("18-custom-six-slots")
-        tap("use-rhythm"); XCTAssertTrue(b("home-division").waitForExistence(timeout: 2))
+        tap("use-rhythm"); XCTAssertTrue(b("edit-rhythm").isSelected); tap("close-panel")
         tap("home-division"); XCTAssertTrue(b("edit-rhythm").isSelected)
         tap("edit-rhythm"); XCTAssertTrue(b("editor-grid-6").isSelected)
         XCTAssertEqual(b("division-pulse-4").value as? String, "Rest")
@@ -91,7 +128,7 @@ final class RedesignUITests: XCTestCase {
         tap("song-Gossip"); tap("performance-play"); tap("performance-next"); tap("close-performance")
         XCTAssertTrue(b("song-男孩别哭").isSelected); shot("08-setlist-playing")
         tap("edit-setlist"); tap("edit-song-Gossip"); shot("09-song-editor")
-        tap("song-division"); tap("division-count-5"); tap("Cancel")
+        tap("song-division"); tap("division-count-5"); tap("song-picker-back"); tap("Cancel")
         tap("edit-setlist"); tap("add-song"); tap("import-presets"); tap("import-preset-Warm hands")
         XCTAssertTrue(b("song-Warm hands").waitForExistence(timeout: 3))
         tap("song-Warm hands"); shot("10-song-imported"); tap("close-performance")

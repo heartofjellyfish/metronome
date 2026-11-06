@@ -6,8 +6,8 @@ struct DivisionPanel: View {
     let playing: Bool
     let p: InstrumentPalette
     let stopPreview: () -> Void
-    let close: () -> Void
     @State private var patternTab: Bool
+    @State private var choosingFamily = false
     @State private var family: Int
     @State private var draft: Rhythm
     @State private var message: String?
@@ -17,8 +17,8 @@ struct DivisionPanel: View {
     }
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
-    init(rhythm: Binding<Rhythm>, editing: Binding<Bool>, playing: Bool, p: InstrumentPalette, stopPreview: @escaping () -> Void, close: @escaping () -> Void) {
-        _rhythm = rhythm; _editing = editing; self.playing = playing; self.p = p; self.stopPreview = stopPreview; self.close = close
+    init(rhythm: Binding<Rhythm>, editing: Binding<Bool>, playing: Bool, p: InstrumentPalette, stopPreview: @escaping () -> Void) {
+        _rhythm = rhythm; _editing = editing; self.playing = playing; self.p = p; self.stopPreview = stopPreview
         let value = rhythm.wrappedValue
         _patternTab = State(initialValue: value.divisionMask != nil || value.swingRatio > 0.5)
         _family = State(initialValue: [2,3,4].contains(value.subdivision) ? value.subdivision : 4)
@@ -27,11 +27,17 @@ struct DivisionPanel: View {
     var body: some View {
         VStack(spacing: 18) {
             if editing { editor } else {
-                HStack(spacing: 10) {
-                    tab("Even divisions", selected: !patternTab, id: "division-even") { patternTab = false }
-                    tab("Patterns", selected: patternTab, id: "division-patterns") { patternTab = true }
-                }
-                if patternTab { patterns } else { equalDivisions }
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        tab("Even divisions", selected: !patternTab, id: "division-even") { patternTab = false }
+                        tab("Patterns", selected: patternTab, id: "division-patterns") { patternTab = true }
+                    }
+                    VStack(spacing: 14) {
+                        if patternTab { patterns } else { equalDivisions }
+                    }.padding(12)
+                }.insetPanel(p, radius: 14)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("division-browser")
                 Button {
                     stopPreview(); draft = rhythm; pendingGrid = nil; message = nil; editing = true
                 } label: {
@@ -43,9 +49,17 @@ struct DivisionPanel: View {
             .onChange(of: playing) { _, value in if editing && value { rhythm = draft } }
     }
     private func tab(_ title: String, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
-        Button { stopPreview(); action() } label: {
-            Text(L10n.text(title)).font(.system(size: 15, weight: selected ? .semibold : .medium)).lineLimit(1).minimumScaleFactor(0.75).frame(maxWidth: .infinity, minHeight: 44)
-        }.buttonStyle(HardwareButtonStyle(p: p, charcoal: selected, radius: 10))
+        Button { stopPreview(); choosingFamily = false; action() } label: {
+            VStack(spacing: 0) {
+                Text(L10n.text(title)).font(.system(size: 15, weight: selected ? .semibold : .medium))
+                    .lineLimit(1).minimumScaleFactor(0.75).frame(maxWidth: .infinity, minHeight: 48)
+                Rectangle().fill(selected ? p.ink : p.edge.opacity(0.25)).frame(height: selected ? 3 : 1)
+                    .frame(height: 3, alignment: .bottom)
+            }.foregroundStyle(selected ? p.ink : p.muted)
+                .background(selected ? p.well.opacity(0.35) : p.body.opacity(0.8))
+                .contentShape(Rectangle())
+        }.buttonStyle(.plain)
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: id == "division-even" ? 14 : 0, topTrailingRadius: id == "division-patterns" ? 14 : 0))
             .accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
     }
     private var equalDivisions: some View {
@@ -59,17 +73,31 @@ struct DivisionPanel: View {
     }
     private var patterns: some View {
         VStack(spacing: 14) {
-            // A recessed family selector sits inside Patterns; it is not another top-level tab.
-            HStack(spacing: 5) {
-                ForEach([2,3,4], id: \.self) { n in
-                    Button { family = n } label: {
-                        Text(L10n.text(n == 2 ? "Eighths" : n == 3 ? "Triplets" : "Sixteenths"))
-                            .font(.system(size: 13, weight: family == n ? .semibold : .regular))
-                            .lineLimit(1).minimumScaleFactor(0.8).frame(maxWidth: .infinity, minHeight: 42)
-                    }.buttonStyle(HardwareButtonStyle(p: p, charcoal: family == n, radius: 8))
-                        .accessibilityIdentifier("pattern-family-\(n)").accessibilityAddTraits(family == n ? .isSelected : [])
+            VStack(spacing: 8) {
+                Button { choosingFamily.toggle() } label: {
+                    HStack {
+                        Text(familyTitle(family)).font(.system(size: 15, weight: .semibold))
+                        Spacer()
+                        Image(systemName: choosingFamily ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .medium))
+                    }.padding(.horizontal, 14).frame(height: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                    .accessibilityIdentifier("pattern-family-menu")
+                    .accessibilityLabel(familyTitle(family))
+                if choosingFamily {
+                    VStack(spacing: 8) {
+                        ForEach([2,3,4], id: \.self) { n in
+                            Button { family = n; choosingFamily = false } label: {
+                                HStack {
+                                    Text(familyTitle(n))
+                                    Spacer()
+                                    if family == n { Image(systemName: "checkmark") }
+                                }.font(.system(size: 14)).padding(.horizontal, 14).frame(height: 44)
+                            }.buttonStyle(HardwareButtonStyle(p: p, radius: 8))
+                                .accessibilityIdentifier("pattern-family-\(n)").accessibilityAddTraits(family == n ? .isSelected : [])
+                        }
+                    }.padding(10).insetPanel(p, radius: 10)
                 }
-            }.padding(6).insetPanel(p, radius: 12)
+            }
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(RhythmPattern.choices(family)) { pattern in
                     let value = pattern.applying(to: rhythm)
@@ -78,6 +106,9 @@ struct DivisionPanel: View {
                 }
             }
         }
+    }
+    private func familyTitle(_ n: Int) -> String {
+        L10n.text(n == 2 ? "Eighths" : n == 3 ? "Triplets" : "Sixteenths")
     }
     private func scoreKey(_ value: Rhythm, selected: Bool, id: String, label: String, caption: String? = nil) -> some View {
         Button { apply(value) } label: {
@@ -143,7 +174,6 @@ struct DivisionPanel: View {
                     patternTab = draft.divisionMask != nil || draft.swingRatio > 0.5
                     family = [2,3,4].contains(draft.subdivision) ? draft.subdivision : family
                     editing = false
-                    if !playing { close() }
                 } label: { Text("Use").font(.system(size: 16, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8).frame(width: 100, height: 76) }
                     .buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 10)).accessibilityIdentifier("use-rhythm")
             }
@@ -177,5 +207,5 @@ struct DivisionPanel: View {
     private func withDivision(_ count: Int) -> Rhythm { var value = rhythm; value.setDivision(count); return value }
     private func changeGrid(_ count: Int) { draft.setDivision(count); message = nil; changedDraft() }
     private func changedDraft() { stopPreview(); if playing { rhythm = draft } }
-    private func apply(_ value: Rhythm) { stopPreview(); rhythm = value; if !playing { close() } }
+    private func apply(_ value: Rhythm) { stopPreview(); rhythm = value }
 }

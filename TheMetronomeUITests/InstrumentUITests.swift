@@ -78,7 +78,7 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertTrue(button("3 clicks per beat").isSelected)
         proof("Compound subdivision choices")
         button("6 clicks per beat").tap()
-        XCTAssertFalse(button("Close division").exists)
+        XCTAssertTrue(button("Close division").exists); button("Close division").tap()
         button("Time signature").tap(); button("NOTE UNITS").tap(); button("Close settings").tap()
         XCTAssertTrue(button("beat-4").label.contains("secondary"))
         for n in [2,3,5,6] { XCTAssertTrue(button("beat-\(n)").label.contains("weak")) }
@@ -111,7 +111,7 @@ final class InstrumentUITests: XCTestCase {
         button("settings").tap(); proof("Essential settings"); button("Close settings").tap()
         button("Subdivision").tap(); proof("Immediate subdivision choices")
         XCTAssertFalse(button("panelApply").exists)
-        button("3 clicks per beat").tap(); XCTAssertFalse(button("Close division").exists)
+        button("3 clicks per beat").tap(); XCTAssertTrue(button("Close division").exists); button("Close division").tap()
         button("Subdivision").tap(); XCTAssertTrue(button("3 clicks per beat").isSelected); button("Close division").tap()
         button("settings").tap(); button("practice").tap(); proof("Progressive practice settings")
         XCTAssertFalse(button("START, 60 BPM").exists)
@@ -215,7 +215,7 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertFalse(button("panelApply").exists)
         closeMeterToHome(); XCTAssertTrue(button("beat-7").exists)
         button("Subdivision").tap()
-        button("3 clicks per beat").tap()
+        button("3 clicks per beat").tap(); button("Close division").tap()
         button("Subdivision").tap(); XCTAssertTrue(button("3 clicks per beat").isSelected)
         button("Close division").tap()
     }
@@ -311,10 +311,10 @@ final class InstrumentUITests: XCTestCase {
     }
     func testGapControlsHapticsAndTupletNotation() {
         button("Subdivision").tap(); proof("Simple triplet numeral")
-        button("3 clicks per beat").tap(); proof("Home triplet numeral")
+        button("3 clicks per beat").tap(); button("Close division").tap(); proof("Home triplet numeral")
         button("Time signature").tap(); button("meter-6-8").tap()
         button("Subdivision").tap(); proof("Compound duplet numeral")
-        button("2 clicks per beat").tap()
+        button("2 clicks per beat").tap(); button("Close division").tap()
         button("settings").tap(); button("practice").tap()
         button("practice-gap").tap(); button("SOUND / SILENCE-on").tap()
         reveal(button("Increase SOUND BARS")); button("Increase SOUND BARS").tap()
@@ -367,9 +367,9 @@ final class InstrumentUITests: XCTestCase {
         XCTAssertEqual(button("transport").label, "Stop metronome")
         button("Subdivision").tap(); XCTAssertTrue(button("1 clicks per beat").isSelected)
         button("Close division").tap(); button("transport").tap()
-        // Stopped setup keeps the existing one-tap return to the instrument.
+        // Stopped setup also stays open until explicitly closed.
         button("Subdivision").tap(); button("3 clicks per beat").tap()
-        XCTAssertFalse(button("Close division").exists)
+        XCTAssertTrue(button("Close division").exists); button("Close division").tap()
     }
     func testLivePresetComparisonAndUniqueSoundLibrary() {
         for (name, bpm) in [("LIVE A",96),("LIVE B",120)] {
@@ -409,7 +409,7 @@ final class InstrumentUITests: XCTestCase {
         for division in [1,2,3,4] {
             button("Subdivision").tap(); proof("Simple division choices")
             button("\(division) clicks per beat").tap()
-            XCTAssertFalse(button("Close division").exists)
+            XCTAssertTrue(button("Close division").exists); button("Close division").tap()
             proof("Simple home division \(division)")
         }
         button("Time signature").tap(); button("meter-6-8").tap()

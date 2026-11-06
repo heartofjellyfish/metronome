@@ -8,7 +8,7 @@
 # Interaction acceptance checks
 
 - Before changing a control, identify the user's next action in three states: stopped setup, active playback, and repeated comparison/audition. Do not equate immediate application with automatic dismissal.
-- During playback, Division, Meter and preset choices apply immediately and stay open for comparison. Explicit close remains available. Stopped one-off choices return to the instrument; sound auditions stay open in either state.
+- Division choices apply immediately and stay open in both stopped and playing states; only explicit close/back exits. Meter and preset choices stay open during playback and return after stopped one-off choices. Sound auditions stay open in either state.
 - A persistent picker must show the current model selection after every change, not its initial selection. Verify multiple consecutive choices, closing, reopening and playback remaining active.
 - Give each visible datum one job. Remove decorative option numbers and synonymous subtitles when the icon/title already communicates the same fact. Preserve useful units, grouping and musical distinctions.
 - Settings owns the three recommended sounds. The full sound library lists each instrument once, without another copy of the recommendation shelf.
