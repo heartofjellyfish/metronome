@@ -397,3 +397,11 @@
 "First instrument" = "첫 번째 음색";
 "Second instrument" = "두 번째 음색";
 "Back to polyrhythm" = "폴리리듬으로 돌아가기";
+
+// Guided rhythm customization
+"Customize rhythm" = "리듬 만들기";
+"Parts per beat" = "한 박 나누기";
+"Choose which notes sound" = "소리 낼 음 선택";
+"Tap to mute. Tap again to restore." = "탭하면 음소거, 다시 탭하면 복원.";
+"Back to subdivisions" = "박자 분할로 돌아가기";
+"Off" = "끔";

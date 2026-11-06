@@ -397,3 +397,11 @@
 "First instrument" = "Erstes Instrument";
 "Second instrument" = "Zweites Instrument";
 "Back to polyrhythm" = "Zurück zum Polyrhythmus";
+
+// Guided rhythm customization
+"Customize rhythm" = "Rhythmus gestalten";
+"Parts per beat" = "Teilungen pro Schlag";
+"Choose which notes sound" = "Klingende Noten wählen";
+"Tap to mute. Tap again to restore." = "Antippen schaltet stumm. Erneut tippen aktiviert.";
+"Back to subdivisions" = "Zurück zur Unterteilung";
+"Off" = "Aus";

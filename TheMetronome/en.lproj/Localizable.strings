@@ -397,3 +397,11 @@
 "First instrument" = "First instrument";
 "Second instrument" = "Second instrument";
 "Back to polyrhythm" = "Back to polyrhythm";
+
+// Guided rhythm customization
+"Customize rhythm" = "Customize rhythm";
+"Parts per beat" = "Parts per beat";
+"Choose which notes sound" = "Choose which notes sound";
+"Tap to mute. Tap again to restore." = "Tap to mute. Tap again to restore.";
+"Back to subdivisions" = "Back to subdivisions";
+"Off" = "Off";

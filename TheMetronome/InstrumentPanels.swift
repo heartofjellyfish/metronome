@@ -53,6 +53,7 @@ struct InstrumentPanel: View {
     @State private var grouping: [Int]
     @State private var customMeter = false
     @State private var polyrhythmSoundLane: Int?
+    @State private var divisionEditing = false
     @State private var returnRoutes: [InstrumentPanelKind] = []
     private var returnsToPractice: Bool { !returnRoutes.isEmpty }
     @State private var panelContentHeight: CGFloat = 0
@@ -97,18 +98,21 @@ struct InstrumentPanel: View {
                 VStack(spacing: 0) {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 7) {
-                            Text(polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : "Second instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
+                            Text(divisionEditing ? L10n.text("Customize rhythm") : polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : "Second instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 5)
                         Button { dismiss() } label: {
-                            Image(systemName: (returnsToPractice || polyrhythmSoundLane != nil) ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel((returnsToPractice || polyrhythmSoundLane != nil) ? L10n.text(polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
+                            Image(systemName: (returnsToPractice || polyrhythmSoundLane != nil || divisionEditing) ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel((returnsToPractice || polyrhythmSoundLane != nil || divisionEditing) ? L10n.text(divisionEditing ? "Back to subdivisions" : polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
-                    ScrollView {
-                        content.padding(23)
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
-                    }.scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            content.padding(23).id("panel-top")
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
+                        }.scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
+                            .onChange(of: divisionEditing) { _, _ in proxy.scrollTo("panel-top", anchor: .top) }
+                    }
                     if hasTransport {
                         SettingsPlaybackBar(model: model, p: p, identifier: [.ramp, .gap, .polyrhythm, .practice].contains(kind) ? "practice-transport" : "settings-transport")
                             .padding(.horizontal, 23).padding(.bottom, 18)
@@ -135,7 +139,7 @@ struct InstrumentPanel: View {
         switch kind {
         case .tempo, .start, .end: numberPad
         case .meter: meterPicker
-        case .division: DivisionPanel(rhythm: $model.rhythm, playing: model.playing, p: p, stopPreview: model.endSoundPreview, close: dismiss)
+        case .division: DivisionPanel(rhythm: $model.rhythm, editing: $divisionEditing, playing: model.playing, p: p, stopPreview: model.endSoundPreview, close: dismiss)
         case .countIn, .every, .increment: quantityPicker
         case .practice: practicePanel
         case .ramp: rampPanel
@@ -425,7 +429,7 @@ struct InstrumentPanel: View {
     }
     // Live comparison keeps context; a stopped one-off choice returns to the instrument.
     private func finishLiveSelection() { if !model.playing { dismiss() } }
-    private func dismiss() { model.endSoundPreview(); if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
+    private func dismiss() { model.endSoundPreview(); if divisionEditing { divisionEditing = false; return }; if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack { Text(L10n.text(title)).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }

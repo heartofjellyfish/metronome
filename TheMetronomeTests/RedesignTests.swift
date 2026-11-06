@@ -2,6 +2,32 @@ import XCTest
 @testable import TheMetronome
 
 final class RedesignTests: XCTestCase {
+    func testSyncopatedSixteenthsUsePartialBeamsInsteadOfFlags() {
+        var rhythm = Rhythm(); rhythm.setDivision(4, mask: 11)
+        let score = RhythmEngraving(rhythm)
+        XCTAssertEqual(score.notes.map(\.value), [16, 8, 16])
+        XCTAssertTrue(score.notes.allSatisfy { !$0.rest })
+        XCTAssertEqual(score.beams.filter { $0.level == 0 }, [.init(from: 0, to: 1, level: 0), .init(from: 1, to: 2, level: 0)])
+        let partials = score.beams.filter { $0.level == 1 }
+        XCTAssertEqual(partials.count, 2)
+        XCTAssertEqual(partials[0].from, 0); XCTAssertGreaterThan(partials[0].to, 0); XCTAssertLessThan(partials[0].to, 1)
+        XCTAssertEqual(partials[1].from, 2); XCTAssertGreaterThan(partials[1].to, 1); XCTAssertLessThan(partials[1].to, 2)
+        for i in 0..<3 { XCTAssertTrue(score.connected(i)) }
+        rhythm.setDivision(4, mask: 10)
+        let rests = RhythmEngraving(rhythm)
+        XCTAssertTrue(rests.beams.isEmpty) // isolated sixteenths have flags, not floating partial beams
+    }
+    func testCustomSixTupletSupportsPatternsBeyondTheShelfAndPersists() throws {
+        var rhythm = Rhythm(); rhythm.bpm = 60; rhythm.setDivision(6, mask: 37)
+        let restored = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(rhythm))
+        XCTAssertEqual(restored, rhythm)
+        XCTAssertFalse([2,3,4].flatMap(RhythmPattern.choices).contains { $0.count == 6 && $0.mask == 37 })
+        XCTAssertEqual(RhythmEngraving(rhythm, explicitSlots: true).notes.map(\.rest), [false,true,false,true,true,false])
+        let clock = SampleClock(rate: 600); clock.reset(restored)
+        var audible: [Int] = []
+        for frame in 0..<600 { if let (_, strength) = clock.advance(), strength > 0 { audible.append(frame) } }
+        XCTAssertEqual(audible, [0,200,500])
+    }
     func testSwingTimingAndRecoveryAcrossAllEvenGrids() {
         for n in [2,4,6,8] {
             for ratio in [0.5, 2.0/3, 0.75] {

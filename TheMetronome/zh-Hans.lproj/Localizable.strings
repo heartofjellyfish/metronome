@@ -325,7 +325,7 @@
 "Keep at least one note." = "至少保留一个音。";
 "Swing needs an even subdivision." = "Swing 适用于偶数细分。";
 "Swing amount" = "Swing 程度";
-"Swing %d%%" = "Swing %d%%";
+"Swing %d%%" = "摇摆 %d%%";
 "Use" = "使用";
 "Preview rhythm" = "试听节奏";
 "Stop preview" = "停止试听";
@@ -397,3 +397,11 @@
 "First instrument" = "第一路音色";
 "Second instrument" = "第二路音色";
 "Back to polyrhythm" = "返回复节奏";
+
+// Guided rhythm customization
+"Customize rhythm" = "自定义节奏";
+"Parts per beat" = "一拍分几份";
+"Choose which notes sound" = "选出要响的音";
+"Tap to mute. Tap again to restore." = "点一下静音，再点一下恢复。";
+"Back to subdivisions" = "返回细分";
+"Off" = "关";

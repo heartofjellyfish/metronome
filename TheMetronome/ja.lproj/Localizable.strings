@@ -397,3 +397,11 @@
 "First instrument" = "1つ目の音色";
 "Second instrument" = "2つ目の音色";
 "Back to polyrhythm" = "ポリリズムに戻る";
+
+// Guided rhythm customization
+"Customize rhythm" = "リズムをカスタマイズ";
+"Parts per beat" = "1拍の分割数";
+"Choose which notes sound" = "鳴らす音を選ぶ";
+"Tap to mute. Tap again to restore." = "タップで消音。もう一度で戻す。";
+"Back to subdivisions" = "細分に戻る";
+"Off" = "オフ";

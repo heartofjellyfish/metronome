@@ -31,13 +31,50 @@ final class RedesignUITests: XCTestCase {
         tap("pattern-family-2"); tap("edit-rhythm")
         tap("editor-grid-4"); if b("Change").exists { b("Change").tap() }
         tap("division-pulse-1"); tap("division-pulse-3")
-        tap("swing-options"); tap("2:1")
+        tap("2:1")
         shot("03-rhythm-editor")
+        tap("use-rhythm"); XCTAssertTrue(b("edit-rhythm").isSelected)
         tap("close-panel"); XCTAssertEqual(b("transport").label,"Stop metronome")
         tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
         tap("close-panel"); tap("transport"); tap("home-division"); tap("division-even"); tap("division-count-6")
         XCTAssertTrue(b("home-division").waitForExistence(timeout: 2)); XCTAssertFalse(b("division-count-6").exists)
         tap("home-division"); XCTAssertTrue(b("division-count-6").isSelected); tap("close-panel")
+    }
+    func testNotationCardsAndCustomRhythmStoppedWorkflow() {
+        launch(); tap("home-division"); tap("division-count-7")
+        shot("14-home-septuplet")
+        tap("home-division"); tap("division-count-6"); shot("15-home-sextuplet")
+        tap("transport"); tap("home-division"); tap("division-patterns"); tap("pattern-family-4")
+        tap("pattern-4-11"); XCTAssertTrue(b("pattern-4-11").isSelected)
+        shot("16-sixteenth-patterns")
+        tap("pattern-family-2"); shot("17-eighth-patterns")
+        tap("close-panel"); tap("transport"); tap("home-division"); tap("edit-rhythm")
+        XCTAssertTrue(app.staticTexts["Customize rhythm"].exists)
+        tap("editor-grid-6"); tap("Change")
+        tap("division-pulse-1"); tap("division-pulse-3"); tap("division-pulse-4")
+        XCTAssertEqual(b("division-pulse-1").value as? String, "Rest")
+        shot("18-custom-six-slots")
+        tap("use-rhythm"); XCTAssertTrue(b("home-division").waitForExistence(timeout: 2))
+        tap("home-division"); XCTAssertTrue(b("edit-rhythm").isSelected)
+        tap("edit-rhythm"); XCTAssertTrue(b("editor-grid-6").isSelected)
+        XCTAssertEqual(b("division-pulse-4").value as? String, "Rest")
+        tap("division-pulse-0"); tap("close-panel") // Back discards a stopped draft.
+        tap("edit-rhythm"); XCTAssertEqual(b("division-pulse-0").value as? String, "Sound")
+        tap("division-pulse-0"); tap("division-pulse-2"); tap("division-pulse-5")
+        XCTAssertEqual(b("division-pulse-5").value as? String, "Sound") // keep the final note
+        XCTAssertTrue(app.staticTexts["Keep at least one note."].exists)
+        tap("close-panel"); tap("close-panel")
+    }
+    func testChineseCustomRhythmAndDarkPatternLayout() {
+        launch("zh-Hans"); tap("home-division"); tap("edit-rhythm"); tap("editor-grid-4")
+        tap("division-pulse-1"); tap("division-pulse-3"); tap("2:1")
+        XCTAssertTrue(b("use-rhythm").isHittable)
+        XCTAssertLessThan(b("use-rhythm").frame.maxY, b("settings-transport").frame.minY - 8)
+        shot("19-custom-zh-top")
+        reveal(b("use-rhythm")); shot("20-custom-zh-use")
+        tap("use-rhythm")
+        launch("en", dark: true); tap("home-division"); tap("division-patterns"); tap("pattern-family-4")
+        shot("21-patterns-dark")
     }
     func testChineseSettingsCurrentSoundAndPracticeHierarchy() {
         launch("zh-Hans"); tap("settings"); tap("all-sounds"); tap("classic-sound-16"); tap("close-panel")

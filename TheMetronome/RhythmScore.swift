@@ -23,7 +23,7 @@ struct RhythmPattern: Identifiable {
     let mask: Int
     var id: String { "\(count)-\(mask)" }
     static func choices(_ count: Int) -> [Self] {
-        let masks = count == 2 ? [2, 1] : count == 3 ? [5, 6, 3, 1, 2, 4] : [7, 13, 11, 9, 10, 5, 14, 6]
+        let masks = count == 2 ? [2, 1] : count == 3 ? [5, 6, 3] : [7, 13, 11, 9, 10, 14]
         return masks.map { Self(count: count, mask: $0) }
     }
     func applying(to rhythm: Rhythm) -> Rhythm {
@@ -31,25 +31,53 @@ struct RhythmPattern: Identifiable {
     }
 }
 
-/// A compact one-pulse engraving. Values follow the actual beat unit, including compound meters.
+/// Engraving and playback share the same onset mask. Common durations are merged
+/// for familiar reading; the custom editor shows each slot explicitly.
+struct RhythmEngraving {
+    struct Note: Equatable { var value: Int; var rest = false; var dotted = false }
+    struct Beam: Equatable { var from: Int; var to: Double; var level: Int }
+    let notes: [Note]
+    init(_ rhythm: Rhythm, singleSlot: Int? = nil, explicitSlots: Bool = false) {
+        let n = rhythm.subdivision, mask = rhythm.enabledMask, base = rhythm.divisionNoteValue(rhythm.subdivision)
+        if let i = singleSlot { notes = [Note(value: base, rest: mask & (1 << i) == 0)]; return }
+        if !explicitSlots {
+            if n == 3 && mask == 5 { notes = [Note(value: base / 2), Note(value: base)]; return }
+            if n == 4 && !rhythm.usesCompoundPulse {
+                if mask == 9 { notes = [Note(value: base / 2, dotted: true), Note(value: base)]; return }
+                if mask == 7 { notes = [Note(value: base), Note(value: base), Note(value: base / 2)]; return }
+                if mask == 13 { notes = [Note(value: base / 2), Note(value: base), Note(value: base)]; return }
+                if mask == 11 { notes = [Note(value: base), Note(value: base / 2), Note(value: base)]; return }
+            }
+        }
+        notes = (0..<n).map { Note(value: base, rest: mask & (1 << $0) == 0, dotted: rhythm.usesCompoundPulse && n == 1) }
+    }
+    func depth(_ i: Int) -> Int {
+        guard notes.indices.contains(i), !notes[i].rest else { return 0 }
+        return max(0, Int(log2(Double(notes[i].value))) - 2)
+    }
+    func connected(_ i: Int) -> Bool { depth(i) > 0 && (depth(i-1) > 0 || depth(i+1) > 0) }
+    var beams: [Beam] {
+        var result: [Beam] = []
+        for i in notes.indices where connected(i) {
+            for level in 0..<depth(i) {
+                if depth(i+1) > level { result.append(Beam(from: i, to: Double(i+1), level: level)) }
+                else if depth(i-1) <= level {
+                    // A partial beam points into its beamed group; it is never a flag.
+                    let direction = depth(i+1) > 0 ? 0.38 : -0.38
+                    result.append(Beam(from: i, to: Double(i) + direction, level: level))
+                }
+            }
+        }
+        return result
+    }
+}
+
+/// Includes both bracket hooks and flag extents in its bounds, even in home controls.
 struct RhythmScore: View {
     let rhythm: Rhythm
     var color: Color = .primary
     var singleSlot: Int? = nil
-    private struct Note { var value: Int; var rest = false; var dotted = false }
-    private var notes: [Note] {
-        let n = rhythm.subdivision, mask = rhythm.enabledMask
-        if let i = singleSlot { return [Note(value: rhythm.divisionNoteValue(n), rest: mask & (1 << i) == 0)] }
-        let base = rhythm.divisionNoteValue(n)
-        if n == 3 && mask == 5 { return [Note(value: base / 2), Note(value: base)] }
-        if n == 4 && !rhythm.usesCompoundPulse {
-            if mask == 9 { return [Note(value: base / 2, dotted: true), Note(value: base)] }
-            if mask == 7 { return [Note(value: base), Note(value: base), Note(value: base / 2)] }
-            if mask == 13 { return [Note(value: base / 2), Note(value: base), Note(value: base)] }
-            if mask == 11 { return [Note(value: base), Note(value: base / 2), Note(value: base)] }
-        }
-        return (0..<n).map { Note(value: base, rest: mask & (1 << $0) == 0, dotted: rhythm.usesCompoundPulse && n == 1) }
-    }
+    var explicitSlots = false
     private var tuplet: String? {
         guard singleSlot == nil else { return nil }
         let n = rhythm.subdivision
@@ -60,14 +88,16 @@ struct RhythmScore: View {
     }
     var body: some View {
         Canvas { context, size in
-            let items = notes
-            let maxWidth = CGFloat(max(1, items.count - 1)) * 25 + 22
-            let scale = min(1, min(size.width / maxWidth, size.height / 54))
+            let engraving = RhythmEngraving(rhythm, singleSlot: singleSlot, explicitSlots: explicitSlots)
+            let items = engraving.notes
+            let heightScale = min(1, size.height / 54)
+            let step = max(16, min(25, (size.width / max(0.01, heightScale) - 36) / CGFloat(max(1, items.count - 1))))
+            let maxWidth = CGFloat(items.count - 1) * step + 36
+            let scale = max(0.01, min(heightScale, size.width / maxWidth))
             let width = size.width / scale, height = size.height / scale
             context.scaleBy(x: scale, y: scale)
-            let step: CGFloat = 25, start = (width - CGFloat(items.count - 1) * step) / 2
-            let bottom = (height + 39) / 2, stemTop = bottom - 28
-            let beamable = items.count > 1 && items.allSatisfy { $0.value >= 8 }
+            let start = (width - CGFloat(items.count - 1) * step) / 2
+            let bottom = (height + 35) / 2, stemTop = bottom - 28
             var stems = Path()
             for i in items.indices {
                 let note = items[i], x = start + CGFloat(i) * step
@@ -79,40 +109,26 @@ struct RhythmScore: View {
                 context.fill(MusicFont.path(note.value <= 2 ? 0xE0A3 : 0xE0A4, in: CGRect(x:x-6,y:bottom-6,width:11,height:8)),with:.color(color))
                 stems.move(to:CGPoint(x:x+4,y:bottom-3)); stems.addLine(to:CGPoint(x:x+4,y:stemTop))
                 if note.dotted { context.fill(Path(ellipseIn:CGRect(x:x+9,y:bottom-5,width:3,height:3)),with:.color(color)) }
-                if note.value >= 8 && !beamable {
+                if note.value >= 8 && !engraving.connected(i) {
                     let code: UInt16 = note.value == 8 ? 0xE240 : note.value == 16 ? 0xE242 : note.value == 32 ? 0xE244 : note.value == 64 ? 0xE246 : 0xE248
                     context.fill(MusicFont.path(code,in:CGRect(x:x+4,y:stemTop,width:11,height:24)),with:.color(color))
                 }
             }
             context.stroke(stems,with:.color(color),lineWidth:1.5)
-            if beamable {
-                let sounding = items.indices.filter { !items[$0].rest }
-                for i in sounding {
-                    let beams = max(0, Int(log2(Double(items[i].value))) - 2)
-                    for level in 0..<beams {
-                        let next = i+1 < items.count && !items[i+1].rest && Int(log2(Double(items[i+1].value)))-2 > level
-                        let previous = i > 0 && !items[i-1].rest && Int(log2(Double(items[i-1].value)))-2 > level
-                        if next {
-                            context.fill(Path(CGRect(x:start+CGFloat(i)*step+4,y:stemTop+CGFloat(level)*5,width:step+1,height:2.8)),with:.color(color))
-                        } else if !previous {
-                            // Isolated notes keep their proper flag, not a beam across a rest.
-                            let flag = Path { p in
-                                let x = start+CGFloat(i)*step+4, y = stemTop+CGFloat(level)*5
-                                p.move(to:CGPoint(x:x,y:y)); p.addQuadCurve(to:CGPoint(x:x+8,y:y+12),control:CGPoint(x:x+13,y:y+3))
-                            }
-                            context.stroke(flag,with:.color(color),lineWidth:2)
-                        }
-                    }
-                }
+            for beam in engraving.beams {
+                let x1 = start + CGFloat(beam.from) * step + 4
+                let x2 = start + CGFloat(beam.to) * step + 4
+                context.fill(Path(CGRect(x: min(x1, x2), y: stemTop + CGFloat(beam.level) * 5,
+                                         width: abs(x2-x1) + 0.75, height: 2.8)), with: .color(color))
             }
             if let tuplet {
                 let characters = Array(tuplet)
                 let digitsWidth = CGFloat(characters.count) * 9
                 let y = stemTop-9
                 var bracket=Path()
-                bracket.addLines([CGPoint(x:start-9,y:y+4),CGPoint(x:start-9,y:y),CGPoint(x:width/2-digitsWidth/2-4,y:y)])
-                bracket.addLines([CGPoint(x:width/2+digitsWidth/2+4,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y+4)])
-                context.stroke(bracket,with:.color(color),lineWidth:1)
+                bracket.addLines([CGPoint(x:start-9,y:y+6),CGPoint(x:start-9,y:y),CGPoint(x:width/2-digitsWidth/2-4,y:y)])
+                bracket.addLines([CGPoint(x:width/2+digitsWidth/2+4,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y),CGPoint(x:start+CGFloat(items.count-1)*step+13,y:y+6)])
+                context.stroke(bracket,with:.color(color),style: StrokeStyle(lineWidth: max(1.5, 1 / scale), lineCap: .square, lineJoin: .miter))
                 for (index,ch) in characters.enumerated() {
                     let x=width/2-digitsWidth/2+CGFloat(index)*9
                     if let number=ch.wholeNumberValue { context.fill(MusicFont.path(UInt16(0xE880+number),in:CGRect(x:x,y:y-5,width:8,height:10)),with:.color(color)) }

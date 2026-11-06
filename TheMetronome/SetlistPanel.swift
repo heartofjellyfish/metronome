@@ -314,14 +314,16 @@ struct SongEditor: View {
     @State private var tempo = ""
     @State private var draft = Rhythm()
     @State private var picker: String?
+    @State private var divisionEditing = false
     @FocusState private var typing: Bool
     private var valid: Bool { !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (20...300).contains(Int(tempo) ?? 0) }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if let picker {
-                Button { model.endSoundPreview(); self.picker = nil } label: { Label("Edit song", systemImage: "chevron.left").frame(minHeight: 44) }
+                Button { model.endSoundPreview(); if divisionEditing { divisionEditing = false } else { self.picker = nil } } label: { Label(L10n.text(divisionEditing ? "Back to subdivisions" : "Edit song"), systemImage: "chevron.left").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
+                if divisionEditing { Text("Customize rhythm").font(.system(size: 22, weight: .semibold)) }
                 if picker == "division" {
-                    DivisionPanel(rhythm: $draft, playing: false, p: p, stopPreview: model.endSoundPreview) { self.picker = nil }
+                    DivisionPanel(rhythm: $draft, editing: $divisionEditing, playing: false, p: p, stopPreview: model.endSoundPreview) { self.picker = nil }
                 } else if picker == "sound" {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(InstrumentSound.allCases, id: \.rawValue) { sound in
