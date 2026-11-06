@@ -7,7 +7,6 @@ struct DivisionPanel: View {
     let p: InstrumentPalette
     let stopPreview: () -> Void
     @State private var patternTab: Bool
-    @State private var choosingFamily = false
     @State private var family: Int
     @State private var draft: Rhythm
     @State private var message: String?
@@ -27,15 +26,16 @@ struct DivisionPanel: View {
     var body: some View {
         VStack(spacing: 18) {
             if editing { editor } else {
-                VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        tab("Even divisions", selected: !patternTab, id: "division-even") { patternTab = false }
-                        tab("Patterns", selected: patternTab, id: "division-patterns") { patternTab = true }
-                    }
-                    VStack(spacing: 14) {
-                        if patternTab { patterns } else { equalDivisions }
-                    }.padding(12)
-                }.insetPanel(p, radius: 14)
+                HStack(spacing: 5) {
+                    modeKey("Even divisions", selected: !patternTab, id: "division-even") { patternTab = false }
+                    modeKey("Patterns", selected: patternTab, id: "division-patterns") { patternTab = true }
+                }.padding(5)
+                    .background { HardwareKeySurface(p: p, radius: 15, pressed: true) }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("division-modes")
+                VStack(spacing: 18) {
+                    if patternTab { patterns } else { equalDivisions }
+                }.padding(14).insetPanel(p, radius: 17)
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("division-browser")
                 Button {
@@ -48,18 +48,12 @@ struct DivisionPanel: View {
         }.onDisappear { stopPreview() }
             .onChange(of: playing) { _, value in if editing && value { rhythm = draft } }
     }
-    private func tab(_ title: String, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
-        Button { stopPreview(); choosingFamily = false; action() } label: {
-            VStack(spacing: 0) {
-                Text(L10n.text(title)).font(.system(size: 15, weight: selected ? .semibold : .medium))
-                    .lineLimit(1).minimumScaleFactor(0.75).frame(maxWidth: .infinity, minHeight: 48)
-                Rectangle().fill(selected ? p.ink : p.edge.opacity(0.25)).frame(height: selected ? 3 : 1)
-                    .frame(height: 3, alignment: .bottom)
-            }.foregroundStyle(selected ? p.ink : p.muted)
-                .background(selected ? p.well.opacity(0.35) : p.body.opacity(0.8))
-                .contentShape(Rectangle())
-        }.buttonStyle(.plain)
-            .clipShape(UnevenRoundedRectangle(topLeadingRadius: id == "division-even" ? 14 : 0, topTrailingRadius: id == "division-patterns" ? 14 : 0))
+    private func modeKey(_ title: String, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
+        Button { stopPreview(); action() } label: {
+            Text(L10n.text(title)).font(.system(size: 16, weight: .semibold))
+                .lineLimit(1).minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: 48)
+        }.buttonStyle(DivisionModeButtonStyle(p: p, selected: selected))
             .accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
     }
     private var equalDivisions: some View {
@@ -72,32 +66,19 @@ struct DivisionPanel: View {
         }
     }
     private var patterns: some View {
-        VStack(spacing: 14) {
-            VStack(spacing: 8) {
-                Button { choosingFamily.toggle() } label: {
-                    HStack {
-                        Text(familyTitle(family)).font(.system(size: 15, weight: .semibold))
-                        Spacer()
-                        Image(systemName: choosingFamily ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .medium))
-                    }.padding(.horizontal, 14).frame(height: 44)
-                }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                    .accessibilityIdentifier("pattern-family-menu")
-                    .accessibilityLabel(familyTitle(family))
-                if choosingFamily {
-                    VStack(spacing: 8) {
-                        ForEach([2,3,4], id: \.self) { n in
-                            Button { family = n; choosingFamily = false } label: {
-                                HStack {
-                                    Text(familyTitle(n))
-                                    Spacer()
-                                    if family == n { Image(systemName: "checkmark") }
-                                }.font(.system(size: 14)).padding(.horizontal, 14).frame(height: 44)
-                            }.buttonStyle(HardwareButtonStyle(p: p, radius: 8))
-                                .accessibilityIdentifier("pattern-family-\(n)").accessibilityAddTraits(family == n ? .isSelected : [])
-                        }
-                    }.padding(10).insetPanel(p, radius: 10)
+        VStack(spacing: 20) {
+            HStack(spacing: 10) {
+                ForEach([2,3,4], id: \.self) { n in
+                    Button { stopPreview(); family = n } label: {
+                        Text(familyTitle(n)).font(.system(size: 14, weight: .medium))
+                            .lineLimit(2).minimumScaleFactor(0.85).multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                    }.buttonStyle(HardwareButtonStyle(p: p, charcoal: family == n, radius: 9))
+                        .accessibilityIdentifier("pattern-family-\(n)")
+                        .accessibilityAddTraits(family == n ? .isSelected : [])
                 }
-            }
+            }.accessibilityElement(children: .contain)
+                .accessibilityIdentifier("pattern-families")
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(RhythmPattern.choices(family)) { pattern in
                     let value = pattern.applying(to: rhythm)
@@ -113,11 +94,11 @@ struct DivisionPanel: View {
     private func scoreKey(_ value: Rhythm, selected: Bool, id: String, label: String, caption: String? = nil) -> some View {
         Button { apply(value) } label: {
             VStack(spacing: 5) {
-                RhythmScore(rhythm: value, color: p.ink).frame(height: 45).padding(.horizontal, 15)
-                if let caption { Text(caption).font(.system(size: 12)).foregroundStyle(p.muted) }
-            }.frame(maxWidth: .infinity).frame(height: 100)
+                RhythmScore(rhythm: value, color: selected ? Color(hex: 0xF5F0E2) : p.ink).frame(height: 42).padding(.horizontal, 15)
+                if let caption { Text(caption).font(.system(size: 12)).foregroundStyle(selected ? Color(hex: 0xF5F0E2).opacity(0.75) : p.muted) }
+            }.frame(maxWidth: .infinity).frame(height: 84)
                 .overlay(alignment: .topLeading) { LED(on: selected, color: InstrumentPalette.amber, size: 8).padding(14) }
-        }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
+        }.buttonStyle(HardwareButtonStyle(p: p, charcoal: selected, radius: 11))
             .accessibilityIdentifier(id).accessibilityLabel(label).accessibilityAddTraits(selected ? .isSelected : [])
     }
     private func step(_ number: Int, _ title: String) -> some View {
@@ -208,4 +189,22 @@ struct DivisionPanel: View {
     private func changeGrid(_ count: Int) { draft.setDivision(count); message = nil; changedDraft() }
     private func changedDraft() { stopPreview(); if playing { rhythm = draft } }
     private func apply(_ value: Rhythm) { stopPreview(); rhythm = value }
+}
+
+/// One shared housing distinguishes the mode rocker from the separate family keys.
+private struct DivisionModeButtonStyle: ButtonStyle {
+    let p: InstrumentPalette
+    let selected: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(selected ? Color(hex: 0xF5F0E2) : p.ink)
+            .background {
+                if selected || configuration.isPressed {
+                    HardwareKeySurface(p: p, charcoal: selected, radius: 10, pressed: true)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
 }

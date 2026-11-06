@@ -29,7 +29,8 @@ enum InstrumentPanelKind: String, Identifiable {
         switch self {
         case .tempo, .start, .end: return 620
         case .meter: return 740
-        case .division, .ramp, .gap, .polyrhythm: return 740
+        case .division: return 800
+        case .ramp, .gap, .polyrhythm: return 740
         case .practice: return 570
         case .setlists, .songLibrary: return 740
         case .presets: return 560

@@ -13,7 +13,6 @@ final class PerformanceUITests: XCTestCase {
         return matches.first { $0.isHittable } ?? app.buttons[id].firstMatch
     }
     private func tap(_ id: String) {
-        if id.hasPrefix("pattern-family-"), id != "pattern-family-menu" { tap("pattern-family-menu") }
         let button = b(id)
         for _ in 0..<7 { if button.exists && button.isHittable { break }; (app.scrollViews.allElementsBoundByIndex.last { $0.isHittable } ?? app.scrollViews.firstMatch).swipeUp() }
         if !button.isHittable { print(app.debugDescription) }

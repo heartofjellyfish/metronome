@@ -11,22 +11,41 @@ final class RedesignUITests: XCTestCase {
     }
     private func b(_ id: String) -> XCUIElement { app.buttons[id] }
     private func tap(_ id: String) {
-        if id.hasPrefix("pattern-family-"), id != "pattern-family-menu" { tap("pattern-family-menu") }
         let value=b(id); reveal(value); value.tap() }
     private func reveal(_ value: XCUIElement) {
         for _ in 0..<7 { if value.exists && value.isHittable { return }; app.scrollViews.firstMatch.swipeUp() }
         for _ in 0..<7 { if value.exists && value.isHittable { return }; app.scrollViews.firstMatch.swipeDown() }
         XCTAssertTrue(value.isHittable,"Missing control: \(value)")
     }
-    private func shot(_ name: String) { let a = XCTAttachment(screenshot: app.screenshot()); a.name=name; a.lifetime = .keepAlways; add(a) }
-    func testCategoryDisclosureAndLowerCatalogVisuals() {
-        launch(); tap("home-division"); tap("division-patterns"); tap("pattern-family-menu")
-        shot("35-category-expanded")
+    private func shot(_ name: String) { RunLoop.current.run(until: Date().addingTimeInterval(0.3)); let a = XCTAttachment(screenshot: app.screenshot()); a.name=name; a.lifetime = .keepAlways; add(a) }
+    func testApprovedDivisionHardwareLayoutAndCategoryBrowsing() {
+        launch("zh-Hans"); tap("home-division"); tap("division-count-3")
+        XCTAssertTrue(b("division-count-8").isHittable)
+        shot("40-division-A-even-zh")
+        tap("division-patterns")
+        for n in [2,3,4] { XCTAssertTrue(b("pattern-family-\(n)").isHittable) }
+        tap("pattern-family-3"); tap("pattern-3-5")
+        XCTAssertTrue(b("pattern-3-5").isSelected)
+        shot("41-division-A-triplets-zh")
+        tap("pattern-family-4"); tap("pattern-family-2"); tap("pattern-family-3")
+        XCTAssertTrue(b("pattern-3-5").isSelected) // Browsing does not change the rhythm.
+        tap("close-panel"); tap("home-division")
+        XCTAssertTrue(b("pattern-family-3").isSelected)
+        XCTAssertTrue(b("pattern-3-5").isSelected)
+        launch("de"); tap("home-division"); tap("division-patterns"); tap("pattern-family-4")
+        for n in [2,3,4] { XCTAssertTrue(b("pattern-family-\(n)").isHittable) }
+        shot("42-division-A-families-de")
+    }
+    func testDirectCategoryKeysAndLowerCatalogVisuals() {
+        launch(); tap("home-division"); tap("division-patterns")
+        XCTAssertFalse(b("pattern-family-menu").exists)
+        for n in [2,3,4] { XCTAssertTrue(b("pattern-family-\(n)").isHittable) }
+        shot("35-direct-category-keys")
         b("pattern-family-4").tap()
         tap("pattern-4-8"); shot("36-sixteenth-lower-combinations")
         tap("close-panel")
         tap("home-division"); XCTAssertTrue(b("division-patterns").isSelected)
-        tap("pattern-family-menu"); b("pattern-family-2").tap()
+        b("pattern-family-2").tap()
         tap("pattern-2-1"); tap("pattern-2-2"); shot("37-eighths-hierarchy")
         XCTAssertTrue(b("pattern-2-2").isSelected); tap("close-panel")
     }
