@@ -1,10 +1,17 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SetlistPanel: View {
     @ObservedObject var model: MetronomeModel
     let p: InstrumentPalette
     let close: () -> Void
     @State private var library: Bool
+    @State private var browsingSetlistID: UUID?
+    @State private var creatingList = false
+    @State private var draggingSong: UUID?
+    @State private var dragSession = UUID()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var browsedList: SongSetlist? { model.setlists.first { $0.id == browsingSetlistID } }
     @State private var editing = false
     @State private var adding = false
     @State private var source: String?
@@ -19,25 +26,29 @@ struct SetlistPanel: View {
     @State private var search = ""
     @State private var deletingForever: SavedPreset?
     @FocusState private var namingList: Bool
-    init(model: MetronomeModel, p: InstrumentPalette, close: @escaping () -> Void) {
+    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, close: @escaping () -> Void) {
         self.model = model; self.p = p; self.close = close
-        _library = State(initialValue: model.activeSetlist == nil)
+        let initial = model.setlists.first { $0.id == initialSetlistID }?.id
+        _browsingSetlistID = State(initialValue: initial)
+        _library = State(initialValue: initial == nil)
     }
-    private var detail: Bool { !library && !adding && song == nil && source == nil && sharing == nil }
+    private var detail: Bool { !library && !creatingList && !adding && song == nil && source == nil && sharing == nil }
     private var pageID: String {
+        if creatingList { return "create-list" }
         if let song { return "edit-" + song.id.uuidString }
         if let sharing { return "share-" + sharing.id.uuidString }
         if let source { return "source-" + source }
         if adding { return "add" }
-        return library ? "lists" : "list-" + (model.activeSetlistID?.uuidString ?? "")
+        return library ? "lists" : "list-" + (browsingSetlistID?.uuidString ?? "")
     }
     private var title: String {
+        if creatingList { return L10n.text("New setlist") }
         if let song { return L10n.text(model.songLibrary.contains { $0.id == song.id } ? "Edit song" : "New song") }
         if sharing != nil { return L10n.text("Add to setlist") }
-        if source == "songs" { return L10n.text("Song library") }
+        if source == "songs" { return L10n.text("Saved songs") }
         if source == "presets" { return L10n.text("PRESETS") }
         if adding { return L10n.text("Add song") }
-        return library ? L10n.text("Setlists") : model.activeSetlist?.name ?? L10n.text("Setlists")
+        return library ? L10n.text("Setlists") : browsedList?.name ?? L10n.text("Setlists")
     }
     var body: some View {
         GeometryReader { geo in
@@ -48,31 +59,31 @@ struct SetlistPanel: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             VStack(alignment: .leading, spacing: 18) {
-                                if let song {
+                                if creatingList { newList }
+                                else if let song {
                                     if model.listsContainingSong(song.id) > 1 {
                                         Text("Changes apply in every setlist.").font(.subheadline).foregroundStyle(p.muted)
                                     }
                                     SongEditor(model: model, initial: song, p: p, cancel: { self.song = nil }) { value in
                                         if model.songLibrary.contains(where: { $0.id == value.id }) { model.editSong(value.id, name: value.name, rhythm: value.rhythm) }
                                         else if managingSongs { model.createLibrarySong(value.name, rhythm: value.rhythm) }
-                                        else { model.addSong(value.name, bpm: value.rhythm.bpm, source: value.rhythm) }
+                                        else { model.addSong(value.name, bpm: value.rhythm.bpm, source: value.rhythm, into: browsingSetlistID) }
                                         self.song = nil; adding = false; search = ""
                                     }.id(song.id)
                                 } else if let sharing { targets(sharing) }
                                 else if let source { sourceLibrary(source) }
                                 else if adding { addOptions }
                                 else if library { listLibrary }
-                                else if let list = model.activeSetlist { listDetail(list) }
+                                else if let list = browsedList { listDetail(list) }
                             }.padding(20)
                         }.scrollBounceBehavior(.basedOnSize).scrollDismissesKeyboard(.interactively).id(pageID)
+                            .transition(.opacity)
                             .onChange(of: model.selectedSongID) { _, id in
                                 if detail, !editing, let id { withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo(id, anchor: .center) } }
                             }
                     }
-                    if detail, !editing, model.activeSetlist?.songs.isEmpty == false {
-                        SetlistTransport(model: model, p: p).padding(.horizontal, 20).padding(.vertical, 16)
-                    }
-                }.frame(maxWidth: 560).frame(height: geo.size.height - 12).accessibilityHidden(performing)
+                }.animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: pageID)
+                    .frame(maxWidth: 560).frame(height: geo.size.height - 12).accessibilityHidden(performing)
                     .background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 23))
                     .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
                     .padding(.horizontal, 10).padding(.bottom, 7).accessibilityElement(children: .contain)
@@ -82,13 +93,14 @@ struct SetlistPanel: View {
     private var header: some View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
-                if !library || source != nil || song != nil || sharing != nil {
+                if !library || creatingList || source != nil || song != nil || sharing != nil {
                     Button {
-                        if song != nil { song = nil }
+                        if creatingList { creatingList = false; listName = "" }
+                        else if song != nil { song = nil }
                         else if sharing != nil { sharing = nil }
                         else if source != nil { source = nil; search = ""; managingSongs = false; deletingForever = nil }
                         else if adding { adding = false }
-                        else { library = true; editing = false; adding = false; listName = "" }
+                        else { library = true; browsingSetlistID = nil; editing = false; adding = false; listName = "" }
                         model.endSoundPreview(); notice = nil
                     } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Setlists").accessibilityIdentifier("choose-setlist")
@@ -97,9 +109,9 @@ struct SetlistPanel: View {
                 Spacer(minLength: 0)
                 if detail {
                     Button {
-                        if editing { model.renameSetlist(listName); namingList = false }
-                        else { listName = model.activeSetlist?.name ?? "" }
-                        editing.toggle(); adding = false; deleting = nil; deletingList = false
+                        if editing { model.renameSetlist(listName, in: browsingSetlistID); namingList = false }
+                        else { listName = browsedList?.name ?? "" }
+                        editing.toggle(); draggingSong = nil; adding = false; deleting = nil; deletingList = false
                     } label: { Text(L10n.text(editing ? "Done" : "Edit")).font(.system(size: 15, weight: .medium)).padding(.horizontal, 12).frame(minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("edit-setlist")
                 }
@@ -110,30 +122,39 @@ struct SetlistPanel: View {
         }.padding(.horizontal, 20).padding(.top, 18)
     }
     private var listLibrary: some View {
-        VStack(spacing: 14) {
-            ForEach(model.setlists) { list in
-                Button {
-                    if model.activeSetlistID != list.id {
-                        model.activeSetlistID = list.id
-                        if let first = list.songs.first { model.loadSong(first) } else { model.stop() }
+        VStack(spacing: 16) {
+            if model.setlists.isEmpty {
+                Text("Your next show, song by song.").font(.subheadline).foregroundStyle(p.muted).padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(model.setlists) { list in
+                        Button { browsingSetlistID = list.id; library = false } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 6) { Text(list.name).font(.headline); Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted) }
+                                Spacer(); Image(systemName: "chevron.right").font(.caption)
+                            }.padding(18).frame(minHeight: 76)
+                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
                     }
-                    library = false
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 6) { Text(list.name).font(.headline); Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted) }
-                        Spacer(); Image(systemName: "chevron.right").font(.caption)
-                    }.padding(18).frame(minHeight: 76)
-                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
+                }.padding(12).insetPanel(p, radius: 18)
             }
+            Button { listName = ""; creatingList = true } label: {
+                Label("New setlist", systemImage: "plus").frame(maxWidth: .infinity, minHeight: 48)
+            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-setlist")
             Button { managingSongs = true; source = "songs"; search = "" } label: {
-                Label("Song library", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 48)
+                Label("Saved songs", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 48)
             }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("manage-song-library")
-            if model.setlists.isEmpty { Text("Your next show, song by song.").font(.subheadline).foregroundStyle(p.muted).padding(.vertical, 15) }
-            HStack(spacing: 12) {
-                TextField("Setlist name", text: $listName).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("setlist-name")
-                Button { model.addSetlist(listName); library = false; listName = "" } label: { Image(systemName: "plus").frame(width: 48, height: 48) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityLabel("Create setlist")
-            }
+        }
+    }
+    private var newList: some View {
+        VStack(spacing: 18) {
+            TextField("Setlist name", text: $listName).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("setlist-name")
+            Button {
+                if let id = model.addSetlist(listName, activate: false) {
+                    browsingSetlistID = id; library = false; creatingList = false; listName = ""
+                }
+            } label: { Text("Create setlist").frame(maxWidth: .infinity, minHeight: 48) }
+                .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                .disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityIdentifier("create-setlist")
         }
     }
     private func listDetail(_ list: SongSetlist) -> some View {
@@ -141,25 +162,36 @@ struct SetlistPanel: View {
             if editing {
                 HStack {
                     TextField("Setlist name", text: $listName).focused($namingList).padding(14).insetPanel(p, radius: 10).accessibilityIdentifier("setlist-name")
-                    Button { model.renameSetlist(listName); namingList = false } label: { Text("Rename").padding(.horizontal, 12).frame(minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button { model.renameSetlist(listName, in: browsingSetlistID); namingList = false } label: { Text("Rename").padding(.horizontal, 12).frame(minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+                Text("Drag the handle to reorder.").font(.system(size: 13)).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                HStack {
-                    Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
-                    Spacer()
-                    Button {
-                        if model.currentSong == nil, let first = list.songs.first { model.loadSong(first) }
-                        performing = true
-                    } label: { Label("Perform", systemImage: "arrow.up.left.and.arrow.down.right").padding(.horizontal, 14).frame(minHeight: 44) }
-                        .buttonStyle(HardwareButtonStyle(p: p)).disabled(list.songs.isEmpty).accessibilityIdentifier("open-performance")
-                }
+                Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(spacing: 10) {
                 if list.songs.isEmpty { Text("Add your first song.").font(.subheadline).foregroundStyle(p.muted).padding(20) }
-                ForEach(Array(list.songs.enumerated()), id: \.element.id) { index, value in
-                    songRow(value).id(value.id)
-                    if editing { editControls(value, index: index, count: list.songs.count) }
-                    if index < list.songs.count-1 { Rectangle().fill(p.edge.opacity(0.3)).frame(height: 0.5).padding(.horizontal, 10) }
+                ForEach(list.songs) { value in
+                    VStack(spacing: 10) {
+                        HStack(spacing: 8) {
+                            songRow(value)
+                            if editing {
+                                Image(systemName: "line.3.horizontal").font(.system(size: 18)).foregroundStyle(p.muted)
+                                    .frame(width: 38, height: 70).contentShape(Rectangle())
+                                    .accessibilityIdentifier("drag-song-\(value.name)")
+                                    .onDrag {
+                                        let session = UUID(); dragSession = session; draggingSong = value.id
+                                        let provider = SongDragProvider(object: value.id.uuidString as NSString)
+                                        provider.onEnd = { DispatchQueue.main.async { if dragSession == session { draggingSong = nil } } }
+                                        return provider
+                                    } preview: { songRow(value).frame(width: 290).padding(5) }
+                            }
+                        }
+                        if editing { editControls(value) }
+                    }.id(value.id)
+                        .onDrop(of: [UTType.text], delegate: SongReorderDrop(target: value.id, dragging: $draggingSong) { id, target in
+                            guard editing, let list = browsedList, let destination = list.songs.firstIndex(where: { $0.id == target }) else { return }
+                            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) { model.moveSong(id, to: destination, in: list.id) }
+                        })
                 }
             }.padding(12).insetPanel(p, radius: 18)
             Button { adding = true; notice = nil; managingSongs = false; search = "" } label: {
@@ -172,7 +204,7 @@ struct SetlistPanel: View {
                     Text("Delete this setlist? Songs stay in your library.").font(.subheadline)
                     HStack(spacing: 12) {
                         Button { deletingList = false } label: { Text("Cancel").frame(maxWidth: .infinity, minHeight: 44) }
-                        Button { model.deleteActiveSetlist(); deletingList = false; library = true; editing = false; listName = "" } label: { Text("DELETE").frame(maxWidth: .infinity, minHeight: 44) }
+                        Button { if let id = browsingSetlistID { model.deleteSetlist(id) }; browsingSetlistID = nil; deletingList = false; library = true; editing = false; listName = "" } label: { Text("DELETE").frame(maxWidth: .infinity, minHeight: 44) }
                     }.buttonStyle(HardwareButtonStyle(p: p))
                 }
             }
@@ -180,9 +212,9 @@ struct SetlistPanel: View {
     }
     private var addOptions: some View {
         VStack(spacing: 16) {
-            if let list = model.activeSetlist { Text(L10n.format("Add to %@", list.name)).font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading) }
+            if let list = browsedList { Text(L10n.format("Add to %@", list.name)).font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading) }
             addOption("New song", icon: "plus", id: "new-song") { song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy) }
-            addOption("Choose from library", icon: "music.note.list", id: "import-songs") { source = "songs"; search = "" }
+            addOption("Choose saved songs", icon: "music.note.list", id: "import-songs") { source = "songs"; search = "" }
             addOption("Import from presets", icon: "square.and.arrow.down", id: "import-presets") { source = "presets"; search = "" }
         }
     }
@@ -200,11 +232,11 @@ struct SetlistPanel: View {
             }
             if entries.isEmpty { Text(L10n.text(search.isEmpty ? "No songs yet." : "No matches.")).font(.subheadline).foregroundStyle(p.muted).padding(.vertical, 20) }
             ForEach(entries) { value in
-                let exists = !managingSongs && source == "songs" && model.activeSetlist?.songs.contains(where: { $0.id == value.id }) == true
+                let exists = !managingSongs && source == "songs" && browsedList?.songs.contains(where: { $0.id == value.id }) == true
                 Button {
                     if managingSongs { song = value; return }
-                    if source == "songs" { model.addExistingSong(value.id) }
-                    else { model.importPreset(value) }
+                    if source == "songs" { model.addExistingSong(value.id, to: browsingSetlistID) }
+                    else { model.importPreset(value, into: browsingSetlistID) }
                     self.source = nil; adding = false; search = ""
                     notice = source == "presets" && value.rhythm.hasPracticeEffects ? L10n.text("Song added. Practice effects stay in the preset.") : nil
                 } label: {
@@ -246,7 +278,7 @@ struct SetlistPanel: View {
         }
     }
     private func songRow(_ value: SavedPreset) -> some View {
-        Button { if editing { song = value } else { model.loadSong(value) } } label: {
+        Button { if editing { song = value } else { model.loadSong(value, from: browsingSetlistID); performing = true } } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(value.name).font(.system(size: 17, weight: .medium)).multilineTextAlignment(.leading)
@@ -257,15 +289,20 @@ struct SetlistPanel: View {
                 }
                 Spacer(minLength: 0)
                 VStack(spacing: 3) { Text("\(value.rhythm.bpm)").font(InstrumentType.value(32)); Text("BPM").technical(8, spacing: 1).foregroundStyle(p.muted) }
+                if !editing { Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted) }
             }.padding(16).frame(maxWidth: .infinity, minHeight: 90).contentShape(Rectangle())
-                .overlay(alignment: .topLeading) { LED(on: model.selectedSongID == value.id, size: 7).padding(9) }
-        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("song-\(value.name)").accessibilityAddTraits(model.selectedSongID == value.id ? .isSelected : [])
+                .overlay(alignment: .topLeading) { LED(on: model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id, size: 7).padding(9) }
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("song-\(value.name)")
+            .accessibilityActions {
+                if editing {
+                    Button("Move up") { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) { model.moveSong(value.id, by: -1, in: browsingSetlistID) } }
+                    Button("Move down") { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) { model.moveSong(value.id, by: 1, in: browsingSetlistID) } }
+                }
+            }.accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
     }
-    private func editControls(_ value: SavedPreset, index: Int, count: Int) -> some View {
+    private func editControls(_ value: SavedPreset) -> some View {
         VStack(spacing: 6) {
             HStack {
-                Button { model.moveSong(value.id, by: -1) } label: { Image(systemName: "arrow.up").frame(width: 44, height: 44) }.disabled(index == 0).accessibilityIdentifier("move-up-\(value.name)")
-                Button { model.moveSong(value.id, by: 1) } label: { Image(systemName: "arrow.down").frame(width: 44, height: 44) }.disabled(index == count-1).accessibilityIdentifier("move-down-\(value.name)")
                 Button { song = value } label: { Text("Edit").padding(.horizontal, 10).frame(minHeight: 44) }.accessibilityIdentifier("edit-song-\(value.name)")
                 Spacer()
                 Button { sharing = value } label: { Image(systemName: "text.badge.plus").frame(width: 44, height: 44) }.accessibilityLabel("Add to setlist").accessibilityIdentifier("share-song-\(value.name)")
@@ -275,35 +312,27 @@ struct SetlistPanel: View {
                 Text("The song stays in your library.").font(.subheadline).foregroundStyle(p.muted)
                 HStack(spacing: 12) {
                     Button { deleting = nil } label: { Text("Cancel").frame(maxWidth: .infinity, minHeight: 44) }
-                    Button { model.deleteSong(value.id); deleting = nil } label: { Text("Remove").frame(maxWidth: .infinity, minHeight: 44) }
+                    Button { model.deleteSong(value.id, from: browsingSetlistID); deleting = nil } label: { Text("Remove").frame(maxWidth: .infinity, minHeight: 44) }
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("remove-song-confirmation")
             }
         }
     }
 }
 
-struct SetlistTransport: View {
-    @ObservedObject var model: MetronomeModel
-    let p: InstrumentPalette
-    var prefix = "setlist"
-    var body: some View {
-        HStack(spacing: 12) {
-            step("backward.end.fill", action: .previous, enabled: model.selectedSongID != model.activeSetlist?.songs.first?.id)
-            Button {
-                if model.currentSong == nil, let first = model.activeSetlist?.songs.first { model.loadSong(first) }
-                model.toggle()
-            } label: { TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 56).contentShape(Rectangle()) }
-                .buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityElement(children: .ignore).accessibilityAddTraits(.isButton).accessibilityIdentifier("\(prefix)-play")
-                .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
-            step("forward.end.fill", action: .next, enabled: model.selectedSongID != model.activeSetlist?.songs.last?.id)
-        }
-    }
-    private func step(_ icon: String, action: PedalAction, enabled: Bool) -> some View {
-        Button { model.performPedal(action) } label: { Image(systemName: icon).frame(width: 58, height: 56) }
-            .buttonStyle(HardwareButtonStyle(p: p)).disabled(!enabled).opacity(enabled ? 1 : 0.4).accessibilityLabel(action.title)
-            .accessibilityIdentifier("\(prefix)-\(action == .next ? "next" : "previous")")
-    }
+private final class SongDragProvider: NSItemProvider {
+    var onEnd: (() -> Void)?
+    deinit { onEnd?() }
 }
+private struct SongReorderDrop: DropDelegate {
+    let target: UUID
+    @Binding var dragging: UUID?
+    let move: (UUID, UUID) -> Void
+    func validateDrop(info: DropInfo) -> Bool { dragging != nil }
+    func dropEntered(info: DropInfo) { if let dragging, dragging != target { move(dragging, target) } }
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+    func performDrop(info: DropInfo) -> Bool { dragging = nil; return true }
+}
+
 struct SongEditor: View {
     @ObservedObject var model: MetronomeModel
     let initial: SavedPreset

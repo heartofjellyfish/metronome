@@ -28,7 +28,7 @@ final class PerformanceTests: XCTestCase {
             m.deleteSong(song.id)
             XCTAssertNil(m.selectedSongID); XCTAssertTrue(m.activeSetlist!.songs.isEmpty)
             XCTAssertEqual(m.songLibrary.first?.rhythm.bpm, 91)
-            m.deleteActiveSetlist(); m.deleteActiveSetlist()
+            for id in m.setlists.map(\.id) { m.deleteSetlist(id) }
             XCTAssertTrue(m.setlists.isEmpty); XCTAssertEqual(m.songLibrary.count, 1)
             let restored = MetronomeModel(); defer { restored.stop() }
             XCTAssertEqual(restored.songLibrary.first?.id, song.id)
@@ -59,7 +59,65 @@ final class PerformanceTests: XCTestCase {
             XCTAssertTrue(m.songLibrary.isEmpty); XCTAssertTrue(m.setlists.allSatisfy { $0.songs.isEmpty })
             let deleted = MetronomeModel(); defer { deleted.stop() }
             XCTAssertTrue(deleted.songLibrary.isEmpty); XCTAssertTrue(deleted.setlists.allSatisfy { $0.songs.isEmpty })
-            m.deleteActiveSetlist(); m.deleteActiveSetlist(); XCTAssertTrue(m.setlists.isEmpty)
+            for id in m.setlists.map(\.id) { m.deleteSetlist(id) }; XCTAssertTrue(m.setlists.isEmpty)
+        }
+    }
+    @MainActor func testBrowsingListMutationsNeverChangeLoadedSongOrClock() throws {
+        try clean { m in
+            let show = try XCTUnwrap(m.addSetlist("Show"))
+            m.addSong("Opener", bpm: 180)
+            let opener = try XCTUnwrap(m.activeSetlist?.songs.first)
+            m.loadSong(opener, from: show); m.start()
+            let original = m.rhythm
+            let other = try XCTUnwrap(m.addSetlist("Other", activate: false))
+            m.addExistingSong(opener.id, to: other)
+            m.addSong("Encore", bpm: 150, into: other)
+            m.renameSetlist("Rehearsal", in: other)
+            m.moveSong(opener.id, to: 1, in: other)
+            XCTAssertEqual(m.setlists.first { $0.id == other }?.songs.map(\.name), ["Encore", "Opener"])
+            m.deleteSong(opener.id, from: other)
+            m.deleteSetlist(other)
+            XCTAssertTrue(m.playing); XCTAssertEqual(m.activeSetlistID, show)
+            XCTAssertEqual(m.selectedSongID, opener.id); XCTAssertEqual(m.rhythm, original)
+            XCTAssertEqual(m.presetCaption, "Opener · Show")
+            let restored = MetronomeModel(); defer { restored.stop() }
+            XCTAssertEqual(restored.activeSetlistID, show); XCTAssertEqual(restored.presetCaption, m.presetCaption)
+        }
+    }
+    @MainActor func testReorderUsesStableSongsAndSelectingAcrossListsIsExplicit() throws {
+        try clean { m in
+            let first = try XCTUnwrap(m.addSetlist("Friday"))
+            for name in ["A", "B", "C", "D"] { m.addSong(name, bpm: 180) }
+            let a = m.activeSetlist!.songs[0], c = m.activeSetlist!.songs[2]
+            m.loadSong(c, from: first); m.start()
+            m.moveSong(a.id, to: 3, in: first)
+            XCTAssertEqual(m.activeSetlist?.songs.map(\.name), ["B", "C", "D", "A"])
+            m.moveSong(a.id, to: -1, in: first); m.moveSong(a.id, to: 4, in: first)
+            XCTAssertEqual(m.activeSetlist?.songs.map(\.name), ["B", "C", "D", "A"])
+            XCTAssertEqual(m.selectedSongID, c.id); XCTAssertTrue(m.playing)
+            let second = try XCTUnwrap(m.addSetlist("Saturday", activate: false))
+            m.addExistingSong(c.id, to: second)
+            Thread.sleep(forTimeInterval: 0.2); m.refreshBeat(); let beat = m.event
+            m.loadSong(c, from: second)
+            XCTAssertEqual(m.activeSetlistID, second); XCTAssertEqual(m.selectedSongID, c.id)
+            XCTAssertTrue(m.playing); XCTAssertEqual(m.event?.beat, beat?.beat)
+            m.loadSong(a, from: second) // Invalid membership must not change the live context.
+            XCTAssertEqual(m.selectedSongID, c.id)
+            m.deleteSetlist(first); XCTAssertTrue(m.playing)
+            m.deleteSetlist(second); XCTAssertFalse(m.playing); XCTAssertNil(m.activeSetlistID)
+        }
+    }
+    @MainActor func testRecentPresetCaptionSurvivesTweaksAndIndependentListCreation() throws {
+        try clean { m in
+            let preset = SavedPreset(name: "Warm hands", rhythm: Rhythm())
+            m.presets = [preset]; m.load(preset)
+            m.rhythm.bpm = 103
+            XCTAssertEqual(m.presetCaption, "Warm hands")
+            XCTAssertFalse(m.isCurrentPreset(preset))
+            m.addSetlist("Planning", activate: false)
+            XCTAssertNil(m.activeSetlistID); XCTAssertEqual(m.presetCaption, "Warm hands")
+            let restored = MetronomeModel(); defer { restored.stop() }
+            XCTAssertEqual(restored.presetCaption, "Warm hands"); XCTAssertEqual(restored.bpm, 103)
         }
     }
     func testPolyrhythmSyntheticAndAcousticChoicesProduceAudio() throws {

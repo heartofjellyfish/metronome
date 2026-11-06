@@ -6,8 +6,6 @@ struct PerformanceView: View {
     @ObservedObject var model: MetronomeModel
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
-    @State private var choosingSong = false
-    @State private var panel: InstrumentPanelKind?
     private var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     private var position: Int? { model.activeSetlist?.songs.firstIndex { $0.id == model.selectedSongID } }
     private var nextSong: SavedPreset? {
@@ -20,9 +18,8 @@ struct PerformanceView: View {
                 HStack(spacing: 12) {
                     Button { dismiss() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Setlists").accessibilityIdentifier("close-performance")
-                    Button { choosingSong = true } label: {
-                        HStack(spacing: 6) { Text(model.activeSetlist?.name ?? L10n.text("Setlists")).lineLimit(1); Image(systemName: "chevron.down").font(.caption) }.frame(minHeight: 44).padding(.horizontal, 12)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("performance-choose-song")
+                    Text(model.activeSetlist?.name ?? L10n.text("Setlists"))
+                        .font(.system(size: 18, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
                     Button { editing = true } label: { Text("Edit").frame(minWidth: 54, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityIdentifier("performance-edit")
                 }
@@ -40,26 +37,17 @@ struct PerformanceView: View {
                                         .fixedSize().accessibilityIdentifier("performance-position")
                                 }
                             }
-                            HStack(spacing: 8) {
-                                HStack(spacing: 0) {
-                                    tempoKey("minus", delta: -1)
-                                    Button { panel = .tempo } label: {
-                                        Text("\(model.bpm) BPM").font(.system(size: 15, weight: .medium)).monospacedDigit()
-                                            .lineLimit(1).minimumScaleFactor(0.8).frame(maxWidth: .infinity, minHeight: 44)
-                                    }.buttonStyle(HardwareButtonStyle(p: p))
-                                        .accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("performance-tempo")
-                                    tempoKey("plus", delta: 1)
-                                }
-                                Button { panel = .meter } label: {
-                                    Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").font(.system(size: 16, weight: .medium)).frame(width: 52, height: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("performance-meter")
-                                Button { panel = .division } label: {
-                                    RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 70, height: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary).accessibilityIdentifier("performance-division")
-                            }.padding(.top, 12)
+                            HStack(spacing: 15) {
+                                Text("\(model.bpm) BPM").monospacedDigit().accessibilityIdentifier("performance-tempo")
+                                Text("·").accessibilityHidden(true)
+                                Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").accessibilityIdentifier("performance-meter")
+                                Text("·").accessibilityHidden(true)
+                                RhythmScore(rhythm: model.rhythm, color: p.muted).frame(width: 76, height: 32)
+                                    .accessibilityHidden(false).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary).accessibilityIdentifier("performance-division")
+                            }.font(.system(size: 17, weight: .medium)).foregroundStyle(p.muted).padding(.top, 6)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                         PerformanceBeatCue(model: model, p: p)
-                            .frame(height: max(260, min(460, geometry.size.height - 410)))
+                            .frame(height: max(260, min(460, geometry.size.height - 395)))
                             .frame(maxWidth: .infinity).insetPanel(p, radius: 18)
                         if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }
@@ -80,7 +68,7 @@ struct PerformanceView: View {
                   }
                 }.frame(height: 64)
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
-                .accessibilityHidden(panel != nil || editing || choosingSong)
+                .accessibilityHidden(editing)
                 .background { InstrumentBody(p: p).ignoresSafeArea() }
                 .overlay {
                     if editing, let current = model.currentSong {
@@ -90,25 +78,10 @@ struct PerformanceView: View {
                                 model.editSong(value.id, name: value.name, rhythm: value.rhythm); editing = false
                             }.id(current.id)
                         }
-                    } else if choosingSong {
-                        overlayPanel("Setlists", close: { choosingSong = false }) {
-                            ForEach(model.activeSetlist?.songs ?? []) { song in
-                                Button { model.loadSong(song); choosingSong = false } label: {
-                                    HStack { Text(song.name); Spacer(); Text("\(song.rhythm.bpm) BPM") }.padding(18).frame(minHeight: 60)
-                                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: model.selectedSongID == song.id)).accessibilityIdentifier("performance-select-\(song.name)")
-                            }
-                        }
-                    } else if let panel {
-                        InstrumentPanel(model: model, kind: panel) { self.panel = nil }
                     }
                 }
         }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
-            .onChange(of: model.rhythm) { _, value in
-                // Only direct performance pickers write back; pedal switches already load a song.
-                if panel != nil, let song = model.currentSong, song.rhythm != value.performanceCopy {
-                    model.editSong(song.id, name: song.name, rhythm: value)
-                }
-            }
+
     }
     private var songNavigation: some View {
         HStack(spacing: 12) {
@@ -132,12 +105,6 @@ struct PerformanceView: View {
             }.buttonStyle(HardwareButtonStyle(p: p)).disabled(nextSong == nil).opacity(nextSong == nil ? 0.45 : 1)
                 .accessibilityIdentifier("performance-next")
         }
-    }
-    private func tempoKey(_ icon: String, delta: Int) -> some View {
-        Button { model.adjustCurrentSongTempo(model.bpm + delta) } label: { Image(systemName: icon).frame(width: 44, height: 44) }
-            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel(delta > 0 ? "Increase tempo" : "Decrease tempo")
-            .accessibilityIdentifier(delta > 0 ? "performance-plus" : "performance-minus")
-            .disabled(delta > 0 ? model.bpm >= 300 : model.bpm <= 20)
     }
     private func overlayPanel<Content: View>(_ title: String, close: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
         ZStack(alignment: .bottom) {

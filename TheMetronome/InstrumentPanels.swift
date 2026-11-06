@@ -44,6 +44,7 @@ enum InstrumentPanelKind: String, Identifiable {
 struct InstrumentPanel: View {
     @ObservedObject var model: MetronomeModel
     let close: () -> Void
+    let initialSetlistID: UUID?
     @State private var kind: InstrumentPanelKind
     @State private var digits: String
     @State private var replaceDigits = true
@@ -64,8 +65,8 @@ struct InstrumentPanel: View {
     @FocusState private var naming: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
-    init(model: MetronomeModel, kind: InstrumentPanelKind, close: @escaping () -> Void) {
-        self.model = model; self.close = close
+    init(model: MetronomeModel, kind: InstrumentPanelKind, initialSetlistID: UUID? = nil, close: @escaping () -> Void) {
+        self.model = model; self.close = close; self.initialSetlistID = initialSetlistID
         _kind = State(initialValue: kind)
         _digits = State(initialValue: String(kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm))
         _denominator = State(initialValue: model.rhythm.denominator)
@@ -86,7 +87,7 @@ struct InstrumentPanel: View {
         if kind == .pedal {
             PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
         } else {
-            if kind == .setlists { SetlistPanel(model: model, p: p, close: close) }
+            if kind == .setlists { SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, close: close) }
             else { standardPanel }
         }
     }
@@ -145,7 +146,7 @@ struct InstrumentPanel: View {
         case .ramp: rampPanel
         case .gap: gapPanel
         case .polyrhythm: PolyrhythmPanel(model: model, p: p, soundLane: $polyrhythmSoundLane)
-        case .setlists: SetlistPanel(model: model, p: p, close: dismiss)
+        case .setlists: SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, close: dismiss)
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
         case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)

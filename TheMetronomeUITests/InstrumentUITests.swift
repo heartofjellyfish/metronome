@@ -301,7 +301,7 @@ final class InstrumentUITests: XCTestCase {
         app.terminate(); app.launchArguments = []; app.launch()
         XCTAssertTrue((button("presets").value as? String ?? "").contains("AUDIT PRESET"))
         button("increase").tap()
-        XCTAssertEqual(button("presets").value as? String, "CUSTOM RHYTHM / SAVE")
+        XCTAssertEqual(button("presets").value as? String, "AUDIT PRESET")
         button("presets").tap(); button("load-preset-AUDIT PRESET").tap()
         assertTempo(96)
         button("presets").tap(); deletePreset("AUDIT PRESET"); button("KEEP").tap()

@@ -88,13 +88,13 @@ final class RedesignUITests: XCTestCase {
     }
     func testSetlistContainsSongsDraftCancellationAndPedalEquivalentNavigation() {
         launch(); tap("settings"); tap("settings-setlists"); tap("setlist-Saturday")
-        tap("song-Gossip"); tap("setlist-play"); tap("Next song")
+        tap("song-Gossip"); tap("performance-play"); tap("performance-next"); tap("close-performance")
         XCTAssertTrue(b("song-男孩别哭").isSelected); shot("08-setlist-playing")
         tap("edit-setlist"); tap("edit-song-Gossip"); shot("09-song-editor")
         tap("song-division"); tap("division-count-5"); tap("Cancel")
         tap("edit-setlist"); tap("add-song"); tap("import-presets"); tap("import-preset-Warm hands")
         XCTAssertTrue(b("song-Warm hands").waitForExistence(timeout: 3))
-        tap("song-Warm hands"); shot("10-song-imported")
+        tap("song-Warm hands"); shot("10-song-imported"); tap("close-performance")
         tap("close-panel"); tap("close-settings"); XCTAssertEqual(b("transport").label,"Stop metronome"); tap("transport")
     }
     func testDarkDivisionAndSavedPedalStatus() {

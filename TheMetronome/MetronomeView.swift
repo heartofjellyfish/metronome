@@ -25,7 +25,7 @@ struct MetronomeView: View {
         }.accessibilityHidden(settings || panel != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
-                if let panel { InstrumentPanel(model: model, kind: panel) { self.panel = nil }.id(panelSession) }
+                if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
             .onAppear {

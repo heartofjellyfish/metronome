@@ -201,8 +201,6 @@ final class MetronomeModel: ObservableObject {
     var presetCaption: String {
         if let list = activeSetlist { return currentSong.map { $0.name + " · " + list.name } ?? list.name }
         guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return L10n.text("PRESETS / SAVE A RHYTHM") }
-        var saved = presets[index].rhythm; saved.sanitize()
-        guard saved == rhythm else { return L10n.text("CUSTOM RHYTHM / SAVE") }
         return presets[index].name
     }
     func isCurrentPreset(_ preset: SavedPreset) -> Bool {
@@ -215,25 +213,30 @@ final class MetronomeModel: ObservableObject {
     @Published private(set) var selectedSongID: UUID? { didSet { UserDefaults.standard.set(selectedSongID?.uuidString, forKey: "selectedSongID") } }
     var activeSetlist: SongSetlist? { setlists.first { $0.id == activeSetlistID } }
     var currentSong: SavedPreset? { activeSetlist?.songs.first { $0.id == selectedSongID } }
-    func addSetlist(_ name: String) {
+    @discardableResult func addSetlist(_ name: String, activate: Bool = true) -> UUID? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+        guard !name.isEmpty else { return nil }
         let list = SongSetlist(name: name)
-        setlists.append(list); activeSetlistID = list.id; selectedSongID = nil
+        setlists.append(list)
+        if activate { activeSetlistID = list.id; selectedSongID = nil }
+        return list.id
     }
-    func renameSetlist(_ name: String) {
+    func renameSetlist(_ name: String, in target: UUID? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
+        guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
         setlists[index].name = name
     }
     func deleteActiveSetlist() {
-        if currentSong != nil { stop() }
-        setlists.removeAll { $0.id == activeSetlistID }
-        activeSetlistID = setlists.first?.id; selectedSongID = nil
+        guard let id = activeSetlistID else { return }
+        deleteSetlist(id)
     }
-    func addSong(_ name: String, bpm: Int, source: Rhythm? = nil) {
+    func deleteSetlist(_ id: UUID) {
+        if activeSetlistID == id { stop(); activeSetlistID = nil; selectedSongID = nil }
+        setlists.removeAll { $0.id == id }
+    }
+    func addSong(_ name: String, bpm: Int, source: Rhythm? = nil, into target: UUID? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
+        guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
         var value = (source ?? rhythm).performanceCopy
         value.bpm = bpm; value.sanitize()
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
@@ -288,18 +291,30 @@ final class MetronomeModel: ObservableObject {
         guard let song = currentSong else { return }
         editSong(song.id, name: song.name, bpm: bpm)
     }
-    func moveSong(_ id: UUID, by offset: Int) {
-        guard let list = setlists.firstIndex(where: { $0.id == activeSetlistID }),
+    func moveSong(_ id: UUID, by offset: Int, in target: UUID? = nil) {
+        guard let list = setlists.first(where: { $0.id == (target ?? activeSetlistID) }),
+              let index = list.songs.firstIndex(where: { $0.id == id }) else { return }
+        moveSong(id, to: index + offset, in: list.id)
+    }
+    func moveSong(_ id: UUID, to destination: Int, in target: UUID? = nil) {
+        guard let list = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }),
               let index = setlists[list].songs.firstIndex(where: { $0.id == id }),
-              setlists[list].songs.indices.contains(index + offset) else { return }
-        setlists[list].songs.swapAt(index, index + offset)
+              setlists[list].songs.indices.contains(destination), index != destination else { return }
+        var ordered = setlists[list].songs
+        let song = ordered.remove(at: index); ordered.insert(song, at: destination)
+        setlists[list].songs = ordered
     }
-    func deleteSong(_ id: UUID) {
-        guard let index = setlists.firstIndex(where: { $0.id == activeSetlistID }) else { return }
+    func deleteSong(_ id: UUID, from target: UUID? = nil) {
+        guard let listID = target ?? activeSetlistID,
+              let index = setlists.firstIndex(where: { $0.id == listID }) else { return }
         setlists[index].songs.removeAll { $0.id == id }
-        if selectedSongID == id { stop(); selectedSongID = nil }
+        if activeSetlistID == listID && selectedSongID == id { stop(); selectedSongID = nil }
     }
-    func loadSong(_ song: SavedPreset) {
+    func loadSong(_ song: SavedPreset, from target: UUID? = nil) {
+        if let target {
+            guard setlists.contains(where: { $0.id == target && $0.songs.contains(where: { $0.id == song.id }) }) else { return }
+            activeSetlistID = target
+        }
         if selectedSongID == song.id, rhythm == song.rhythm.performanceCopy { return }
         let resume = playing; stop()
         let value = song.rhythm.performanceCopy

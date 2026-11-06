@@ -16,7 +16,7 @@ final class ModelTests: XCTestCase {
         model.setBPM(120); model.addPreset("SECOND")
         XCTAssertEqual(model.presetCaption, "SECOND")
         XCTAssertEqual(defaults.string(forKey: "selectedPresetID"), model.presets[1].id.uuidString)
-        model.setBPM(121); XCTAssertEqual(model.presetCaption, "CUSTOM RHYTHM / SAVE")
+        model.setBPM(121); XCTAssertEqual(model.presetCaption, "SECOND")
         model.load(model.presets[1]); XCTAssertEqual(model.bpm, 120)
         XCTAssertEqual(model.presetCaption, "SECOND")
         model.presets.removeFirst(); XCTAssertEqual(model.presetCaption, "SECOND")
