@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct InstrumentPalette {
     var dark: Bool
@@ -250,4 +251,36 @@ struct MaterialGrain: View {
         return CGImage(width: side, height: side, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: side, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: 0), provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
     }()
     var body: some View { Image(decorative: Self.texture, scale: 2).resizable(resizingMode: .tile).allowsHitTesting(false).accessibilityHidden(true) }
+}
+
+/// Quiet list rows still acknowledge a press without moving the next screen.
+struct InsetRowButtonStyle: ButtonStyle {
+    let p: InstrumentPalette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(p.ink.opacity(configuration.isPressed ? 0.09 : 0), in: RoundedRectangle(cornerRadius: 8))
+            .transaction { $0.animation = nil }
+    }
+}
+
+func dismissTextInput() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+}
+
+/// A visible escape even for an empty search and a number pad with no return key.
+struct KeyboardDismissButton: View {
+    let p: InstrumentPalette
+    @State private var visible = false
+    var body: some View {
+        Group {
+            if visible {
+                Button(action: dismissTextInput) {
+                    Image(systemName: "keyboard.chevron.compact.down").frame(width: 44, height: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                    .accessibilityLabel("Hide keyboard").accessibilityIdentifier("hide-keyboard")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in visible = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in visible = false }
+    }
 }

@@ -54,37 +54,46 @@ struct SettingsIllustration: View {
         }
             .shadow(color: .black.opacity(0.12),radius: 1,x: 0,y: 2)
     }
+    private func object(_ width: CGFloat, _ height: CGFloat, _ color: Color, radius: CGFloat = 3) -> some View {
+        RoundedRectangle(cornerRadius: radius).fill(color).frame(width: width, height: height)
+    }
     private var songLibrary: some View {
-        // A bound score book: cloth spine, paper edge and an embossed musical mark.
+        // Approved L4: a small collection of tapes, in the same warm grey materials.
         ZStack {
-            RoundedRectangle(cornerRadius: 3).fill(Color(hex: 0x777A6C)).frame(width: 48, height: 57).offset(y: 2)
-            RoundedRectangle(cornerRadius: 2).fill(Color(hex: 0xE7DFCC)).frame(width: 43, height: 52).offset(x: 2, y: 1)
-            VStack(spacing: 2) {
-                ForEach(0..<3) { _ in Rectangle().fill(Color(hex: 0xBDB6A4)).frame(width: 38, height: 0.5) }
-            }.offset(x: 3, y: 25)
-            RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(hex: 0xB2B4A2), Color(hex: 0x939784)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color(hex: 0x7F8374), lineWidth: 0.7))
-                .frame(width: 48, height: 52).offset(y: -2)
-            RoundedRectangle(cornerRadius: 2).fill(graphite).frame(width: 7, height: 52).offset(x: -20, y: -2)
-            Rectangle().fill(Color.white.opacity(0.25)).frame(width: 0.8, height: 48).offset(x: -15, y: -2)
-            Image(systemName: "music.quarternote.3").font(.system(size: 23, weight: .medium))
-                .foregroundStyle(Color(hex: 0xEBE4D2)).offset(x: 3, y: -2)
+            object(63, 42, Color(hex: 0xB4AF9E)).offset(y: -5)
+            object(63, 42, Color(hex: 0xF1E9D8)).offset(y: 2)
+            object(63, 42, Color(hex: 0x969A8B)).overlay {
+                VStack(spacing: 4) {
+                    object(50, 14, Color(hex: 0xF1E9D8)).overlay {
+                        HStack(spacing: 5) {
+                            Circle().stroke(Color(hex: 0x96988A), lineWidth: 2)
+                            object(15, 4, Color(hex: 0x96988A))
+                            Circle().stroke(Color(hex: 0x96988A), lineWidth: 2)
+                        }.padding(5)
+                    }
+                    object(36, 8, Color(hex: 0xD8CEB7))
+                }
+            }.offset(y: 9)
         }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
     }
     private var setlist: some View {
+        // Approved S2: the paper setlist taped down on stage.
         ZStack {
-            RoundedRectangle(cornerRadius: 3).fill(Color(hex: 0x9B998C)).frame(width: 49, height: 59).offset(y: 2)
-            RoundedRectangle(cornerRadius: 2).fill(Color(hex: 0xECE5D5)).frame(width: 43, height: 54)
-            RoundedRectangle(cornerRadius: 2).fill(graphite).frame(width: 23, height: 9).offset(y: -25)
-            VStack(alignment: .leading, spacing: 7) {
-                ForEach(0..<4) { _ in
-                    HStack(spacing: 5) {
-                        Circle().fill(Color(hex: 0x8F907F)).frame(width: 3, height: 3)
-                        Capsule().fill(Color(hex: 0xABA99B)).frame(width: 24, height: 1.5)
+            object(49, 58, Color(hex: 0xF1E9D8)).overlay {
+                VStack(spacing: 7) {
+                    ForEach(0..<4) { index in
+                        HStack(spacing: 5) {
+                            Circle().fill(Color(hex: 0x96988A)).frame(width: 3, height: 3)
+                            object(index == 3 ? 24 : 31, 1.5, Color(hex: 0x96988A))
+                        }
                     }
-                }
-            }.offset(y: 3)
-        }.shadow(color: .black.opacity(0.12), radius: 1, x: 0, y: 2)
+                }.offset(y: 2)
+            }
+            object(24, 9, Color(hex: 0xC4B695).opacity(0.9), radius: 1)
+                .rotationEffect(.degrees(-7)).offset(x: -10, y: -28)
+            object(19, 8, Color(hex: 0xC4B695).opacity(0.85), radius: 1)
+                .rotationEffect(.degrees(8)).offset(x: 14, y: 27)
+        }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
     }
     private var pedal: some View {
         ZStack {

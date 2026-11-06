@@ -14,6 +14,8 @@ struct PerformanceView: View {
     @ObservedObject var model: MetronomeModel
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
+    @State private var songPicker: String?
+    @State private var songDivisionEditing = false
     @State private var showingNotes = false
     @State private var showingTitle = false
     @Environment(\.exitLiveMode) private var exitLiveMode
@@ -99,15 +101,15 @@ struct PerformanceView: View {
                     } else if showingTitle {
                         overlayPanel("Full title", close: { showingTitle = false }) { Text(model.currentSong?.name ?? "").font(.title2).frame(maxWidth: .infinity, alignment: .leading) }
                     } else if editing, let current = model.currentSong {
-                        overlayPanel("Edit song", close: { editing = false }) {
+                        overlayPanel(songPicker.map { SongEditor.title(for: songDivisionEditing ? "custom" : $0) } ?? "Edit song", close: { if songPicker != nil { model.endSoundPreview(); if songDivisionEditing { songDivisionEditing = false } else { songPicker = nil } } else { editing = false } }) {
                             if model.listsContainingSong(current.id) > 1 { Text("Changes apply in every setlist.").font(.subheadline).foregroundStyle(p.muted) }
-                            SongEditor(model: model, initial: current, p: p, cancel: { editing = false }) { value in
+                            SongEditor(model: model, initial: current, p: p, picker: $songPicker, divisionEditing: $songDivisionEditing, cancel: { editing = false }) { value in
                                 model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes); editing = false
                             }.id(current.id)
                         }
                     }
                 }
-        }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
+        }.onChange(of: editing) { _, _ in songPicker = nil; songDivisionEditing = false }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
 
     }
     private var songNavigation: some View {
@@ -137,8 +139,8 @@ struct PerformanceView: View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 18) {
-                HStack { Text(L10n.text(title)).font(.title3); Spacer(); Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("close-performance-overlay") }
-                ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }
+                HStack { Text(L10n.text(title)).font(.title3); Spacer(); KeyboardDismissButton(p: p); Button(action: close) { Image(systemName: editing && songPicker != nil ? "chevron.left" : "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing && songPicker != nil ? "song-picker-back" : "close-performance-overlay") }
+                ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }.scrollDismissesKeyboard(.immediately)
             }.padding(22).frame(maxWidth: 550).background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
         }.accessibilityElement(children: .contain)
     }

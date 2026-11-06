@@ -129,7 +129,7 @@ struct InstrumentPanel: View {
                 .padding(.horizontal, 10).padding(.bottom, 7)
                 .accessibilityAddTraits(.isModal)
             }.foregroundStyle(p.ink)
-        }.transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+        }.transition(.identity)
             .preferredColorScheme(model.dark ? .dark : .light)
     }
     private var hasTransport: Bool { [.division, .meter, .practice, .ramp, .gap, .polyrhythm, .sounds, .presets, .countIn, .every, .increment].contains(kind) }
