@@ -254,6 +254,13 @@ final class MetronomeModel: ObservableObject {
         songLibrary.append(SavedPreset(name: name, rhythm: value.performanceCopy, notes: notes))
         persistSetlists()
     }
+    /// Catalog order is independent of each setlist's performance order.
+    func moveLibrarySong(_ id: UUID, to destination: Int) {
+        guard let index = songLibrary.firstIndex(where: { $0.id == id }),
+              songLibrary.indices.contains(destination), index != destination else { return }
+        let value = songLibrary.remove(at: index); songLibrary.insert(value, at: destination)
+        persistSetlists()
+    }
     /// Permanent deletion removes every membership. UI must confirm this explicitly.
     func deleteLibrarySong(_ id: UUID) {
         guard songLibrary.contains(where: { $0.id == id }) else { return }

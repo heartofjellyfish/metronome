@@ -431,3 +431,11 @@
 "%@ copy" = "%@ のコピー";
 
 "Close song library" = "曲ライブラリを閉じる";
+
+"Song %d" = "%d 曲目";
+
+"Reorder" = "並べ替え";
+
+"Drag to reorder." = "ドラッグして並べ替え。";
+
+"Not in a setlist" = "セットリスト未登録";

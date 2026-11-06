@@ -431,3 +431,11 @@
 "%@ copy" = "%@ 복사본";
 
 "Close song library" = "곡 보관함 닫기";
+
+"Song %d" = "%d번째 곡";
+
+"Reorder" = "순서 변경";
+
+"Drag to reorder." = "드래그하여 순서를 바꾸세요.";
+
+"Not in a setlist" = "세트리스트에 없음";

@@ -30,8 +30,8 @@ struct PerformanceView: View {
                 HStack(spacing: 12) {
                     Button { dismiss() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Setlists").accessibilityIdentifier("close-performance")
-                    Text(model.activeSetlist?.name ?? L10n.text("Setlists"))
-                        .font(.system(size: 18, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                    Text(model.activeSetlist.map { "\($0.name) (\(L10n.format($0.songs.count == 1 ? "%d song" : "%d songs", $0.songs.count)))" } ?? L10n.text("Setlists"))
+                        .font(.system(size: 17, weight: .medium)).lineLimit(2).minimumScaleFactor(0.8).accessibilityIdentifier("performance-setlist")
                     Spacer(minLength: 0)
                     Button { editing = true } label: { Text("Edit").frame(minWidth: 54, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityIdentifier("performance-edit")
                     Button { exitLiveMode() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
@@ -40,36 +40,38 @@ struct PerformanceView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         VStack(alignment: .leading, spacing: 2) {
-                            if let position, let list = model.activeSetlist {
-                                Text(L10n.format("Song %d of %d", position + 1, list.songs.count))
-                                    .font(.system(size: 13)).foregroundStyle(p.muted).accessibilityIdentifier("performance-position")
+                            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                                Text(model.currentSong?.name ?? L10n.text("Setlists"))
+                                    .font(.system(size: 25, weight: .semibold)).lineLimit(2)
+                                    .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("performance-song")
+                                if let position {
+                                    Text(L10n.format("Song %d", position + 1))
+                                        .font(.system(size: 13)).foregroundStyle(p.muted).fixedSize().accessibilityIdentifier("performance-position")
+                                }
                             }
-                            Text(model.currentSong?.name ?? L10n.text("Setlists"))
-                                .font(.system(size: 25, weight: .semibold)).lineLimit(2)
-                                .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("performance-song")
                             if (model.currentSong?.name.count ?? 0) > 20 {
                                 Button { showingTitle = true } label: { Text("Full title").font(.caption).padding(10) }
                                     .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("full-song-title")
                             }
-                            HStack(spacing: 15) {
+                            HStack(spacing: 8) {
                                 Text("\(model.bpm) BPM").monospacedDigit().accessibilityIdentifier("performance-tempo")
                                 Text("·").accessibilityHidden(true)
                                 Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").accessibilityIdentifier("performance-meter")
                                 Text("·").accessibilityHidden(true)
-                                RhythmScore(rhythm: model.rhythm, color: p.muted).frame(width: 76, height: 32)
+                                RhythmScore(rhythm: model.rhythm, color: p.muted).frame(maxWidth: 76).frame(height: 32)
                                     .accessibilityHidden(false).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary).accessibilityIdentifier("performance-division")
-                            }.font(.system(size: 17, weight: .medium)).foregroundStyle(p.muted).padding(.top, 6)
+                                Spacer(minLength: 0)
+                                if !notes.isEmpty {
+                                    Button { showingNotes = true } label: {
+                                        Text("Notes").font(.system(size: 13, weight: .medium)).padding(.horizontal, 10).frame(minHeight: 44)
+                                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 8)).fixedSize()
+                                        .accessibilityIdentifier("view-song-notes")
+                                }
+                            }.font(.system(size: 16, weight: .medium)).foregroundStyle(p.muted).frame(height: 44).padding(.top, 6)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                         PerformanceBeatCue(model: model, p: p)
-                            .frame(height: max(260, min(460, geometry.size.height - (notes.isEmpty ? 420 : 485))))
+                            .frame(height: max(260, min(460, geometry.size.height - 395)))
                             .frame(maxWidth: .infinity).insetPanel(p, radius: 18)
-                        if !notes.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(notes).font(.system(size: 15)).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("performance-notes")
-                                Button { showingNotes = true } label: { Label("View notes", systemImage: "note.text").font(.system(size: 13)).padding(.horizontal, 12).frame(minHeight: 36) }
-                                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("view-song-notes")
-                            }
-                        }
                         if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }
                 }.scrollBounceBehavior(.basedOnSize).scrollClipDisabled()

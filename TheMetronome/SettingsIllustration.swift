@@ -55,14 +55,20 @@ struct SettingsIllustration: View {
             .shadow(color: .black.opacity(0.12),radius: 1,x: 0,y: 2)
     }
     private var songLibrary: some View {
+        // A bound score book: cloth spine, paper edge and an embossed musical mark.
         ZStack {
-            ForEach(0..<3) { i in
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Color(hex: i == 2 ? 0xECE5D5 : 0xB4B1A1))
-                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color(hex: 0x969787), lineWidth: 0.7))
-                    .frame(width: 43, height: 48).offset(x: CGFloat(i - 1) * 5, y: CGFloat(i - 1) * 4)
-            }
-            Image(systemName: "music.note").font(.system(size: 27, weight: .medium)).foregroundStyle(graphite).offset(x: 5, y: 4)
+            RoundedRectangle(cornerRadius: 3).fill(Color(hex: 0x777A6C)).frame(width: 48, height: 57).offset(y: 2)
+            RoundedRectangle(cornerRadius: 2).fill(Color(hex: 0xE7DFCC)).frame(width: 43, height: 52).offset(x: 2, y: 1)
+            VStack(spacing: 2) {
+                ForEach(0..<3) { _ in Rectangle().fill(Color(hex: 0xBDB6A4)).frame(width: 38, height: 0.5) }
+            }.offset(x: 3, y: 25)
+            RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(hex: 0xB2B4A2), Color(hex: 0x939784)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color(hex: 0x7F8374), lineWidth: 0.7))
+                .frame(width: 48, height: 52).offset(y: -2)
+            RoundedRectangle(cornerRadius: 2).fill(graphite).frame(width: 7, height: 52).offset(x: -20, y: -2)
+            Rectangle().fill(Color.white.opacity(0.25)).frame(width: 0.8, height: 48).offset(x: -15, y: -2)
+            Image(systemName: "music.quarternote.3").font(.system(size: 23, weight: .medium))
+                .foregroundStyle(Color(hex: 0xEBE4D2)).offset(x: 3, y: -2)
         }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
     }
     private var setlist: some View {

@@ -431,3 +431,11 @@
 "%@ copy" = "%@ 副本";
 
 "Close song library" = "關閉歌曲庫";
+
+"Song %d" = "第 %d 首";
+
+"Reorder" = "排序";
+
+"Drag to reorder." = "拖動調整順序。";
+
+"Not in a setlist" = "尚未加入歌單";

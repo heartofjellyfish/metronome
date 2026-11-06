@@ -12,6 +12,23 @@ final class PerformanceTests: XCTestCase {
         let model = MetronomeModel(); defer { model.stop() }
         try body(model)
     }
+    @MainActor func testCatalogReorderPersistsWithoutChangingSetlistsOrPlayback() throws {
+        try clean { m in
+            let list = try XCTUnwrap(m.addSetlist("Show"))
+            m.addSong("A", bpm: 100); m.addSong("B", bpm: 110); m.addSong("C", bpm: 120)
+            let original = try XCTUnwrap(m.activeSetlist).songs.map(\.id)
+            m.startSetlist(list)
+            m.moveLibrarySong(original[0], to: 2)
+            XCTAssertEqual(m.songLibrary.map(\.name), ["B","C","A"])
+            XCTAssertEqual(m.activeSetlist?.songs.map(\.id), original)
+            XCTAssertEqual(m.selectedSongID, original[0]); XCTAssertTrue(m.playing)
+            m.moveLibrarySong(original[0], to: -1)
+            XCTAssertEqual(m.songLibrary.map(\.name), ["B","C","A"])
+            let restored = MetronomeModel(); defer { restored.stop() }
+            XCTAssertEqual(restored.songLibrary.map(\.name), ["B","C","A"])
+            XCTAssertEqual(restored.activeSetlist?.songs.map(\.id), original)
+        }
+    }
     @MainActor func testSharedSongEditsMembershipRemovalAndRelaunch() throws {
         try clean { m in
             m.addSetlist("Friday"); let friday = m.activeSetlistID!

@@ -431,3 +431,11 @@
 "%@ copy" = "%@ Kopie";
 
 "Close song library" = "Songbibliothek schließen";
+
+"Song %d" = "Song %d";
+
+"Reorder" = "Sortieren";
+
+"Drag to reorder." = "Zum Sortieren ziehen.";
+
+"Not in a setlist" = "In keiner Setlist";
