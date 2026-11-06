@@ -413,3 +413,21 @@
 "Choose saved songs" = "保存した曲から選択";
 
 "Drag the handle to reorder." = "右のハンドルをドラッグして並べ替え。";
+
+"Start from first song" = "最初の曲から開始";
+
+"Song %d of %d" = "%d 曲目 / 全 %d 曲";
+
+"Notes" = "メモ";
+
+"View notes" = "メモを表示";
+
+"Full title" = "曲名を表示";
+
+"Return to metronome" = "メトロノームに戻る";
+
+"Duplicate setlist" = "セットリストを複製";
+
+"%@ copy" = "%@ のコピー";
+
+"Close song library" = "曲ライブラリを閉じる";

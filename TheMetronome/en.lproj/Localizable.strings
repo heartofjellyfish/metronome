@@ -413,3 +413,21 @@
 "Choose saved songs" = "Choose saved songs";
 
 "Drag the handle to reorder." = "Drag the handle to reorder.";
+
+"Start from first song" = "Start from first song";
+
+"Song %d of %d" = "Song %d of %d";
+
+"Notes" = "Notes";
+
+"View notes" = "View notes";
+
+"Full title" = "Full title";
+
+"Return to metronome" = "Return to metronome";
+
+"Duplicate setlist" = "Duplicate setlist";
+
+"%@ copy" = "%@ copy";
+
+"Close song library" = "Close song library";

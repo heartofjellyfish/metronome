@@ -413,3 +413,21 @@
 "Choose saved songs" = "저장된 곡 선택";
 
 "Drag the handle to reorder." = "오른쪽 핸들을 끌어 순서를 바꾸세요.";
+
+"Start from first song" = "첫 곡부터 시작";
+
+"Song %d of %d" = "%d번째 곡 · 총 %d곡";
+
+"Notes" = "메모";
+
+"View notes" = "메모 보기";
+
+"Full title" = "전체 곡명";
+
+"Return to metronome" = "메트로놈으로 돌아가기";
+
+"Duplicate setlist" = "세트리스트 복제";
+
+"%@ copy" = "%@ 복사본";
+
+"Close song library" = "곡 보관함 닫기";

@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum InstrumentPanelKind: String, Identifiable {
-    case tempo, meter, division, countIn, every, increment, practice, start, end, presets, audio, sounds, pedal, setlists, ramp, gap, polyrhythm
+    case tempo, meter, division, countIn, every, increment, practice, start, end, presets, audio, sounds, pedal, setlists, ramp, gap, polyrhythm, songLibrary
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -18,6 +18,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .start: return L10n.text("START TEMPO")
         case .end: return L10n.text("END TEMPO")
         case .setlists: return L10n.text("Setlists")
+        case .songLibrary: return L10n.text("Song library")
         case .presets: return L10n.text("PRESETS")
         case .audio: return L10n.text("AUDIO OUTPUT")
         case .sounds: return L10n.text("SOUND LIBRARY")
@@ -30,7 +31,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .meter: return 740
         case .division, .ramp, .gap, .polyrhythm: return 740
         case .practice: return 570
-        case .setlists: return 740
+        case .setlists, .songLibrary: return 740
         case .presets: return 560
         case .audio: return 300
         case .sounds: return 740
@@ -87,7 +88,7 @@ struct InstrumentPanel: View {
         if kind == .pedal {
             PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)
         } else {
-            if kind == .setlists { SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, close: close) }
+            if kind == .setlists || kind == .songLibrary { SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, startInSongLibrary: kind == .songLibrary, close: close) }
             else { standardPanel }
         }
     }
@@ -146,7 +147,7 @@ struct InstrumentPanel: View {
         case .ramp: rampPanel
         case .gap: gapPanel
         case .polyrhythm: PolyrhythmPanel(model: model, p: p, soundLane: $polyrhythmSoundLane)
-        case .setlists: SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, close: dismiss)
+        case .setlists, .songLibrary: SetlistPanel(model: model, p: p, initialSetlistID: initialSetlistID, startInSongLibrary: kind == .songLibrary, close: dismiss)
         case .presets: presetPanel
         case .sounds: SoundLibraryView(model: model)
         case .pedal: PedalSettingsView(model: model, pedal: model.pedal, p: p, close: close)

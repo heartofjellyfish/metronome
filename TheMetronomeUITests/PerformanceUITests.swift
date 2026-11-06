@@ -20,6 +20,41 @@ final class PerformanceUITests: XCTestCase {
     }
     private func shot(_ name: String) { RunLoop.current.run(until: Date().addingTimeInterval(0.4)); let a = XCTAttachment(screenshot: app.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a) }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testStartSetlistNotesAndExitToInstrument() {
+        launch(); tap("settings"); tap("settings-setlists"); shot("01-root")
+        tap("setlist-周六演出"); shot("02-song-list")
+        tap("start-setlist")
+        XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
+        XCTAssertEqual(b("performance-play").label, "停止播放")
+        XCTAssertEqual(app.staticTexts["performance-position"].label, "第 1 首 · 共 3 首")
+        tap("performance-edit")
+        let notes = app.textFields["song-notes"].firstMatch
+        notes.tap(); notes.typeText("Intro: wait four bars. Last chorus: stop on one.")
+        tap("save-song"); XCTAssertTrue(app.staticTexts["performance-notes"].exists)
+        shot("03-live-with-notes")
+        tap("view-song-notes"); shot("04-notes-expanded"); tap("close-performance-overlay")
+        tap("performance-next"); XCTAssertFalse(b("view-song-notes").exists)
+        tap("performance-previous"); XCTAssertTrue(b("view-song-notes").exists)
+        tap("exit-live-mode")
+        XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
+        XCTAssertEqual(b("transport").label, "停止播放")
+        tap("transport"); tap("presets"); tap("song-Gossip")
+        XCTAssertTrue(app.staticTexts["performance-notes"].exists)
+        XCTAssertEqual(b("performance-play").label, "开始播放")
+        tap("exit-live-mode"); XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
+        tap("settings"); tap("settings-setlists"); tap("edit-setlist"); tap("setlist-周六演出")
+        tap("duplicate-setlist"); tap("choose-setlist")
+        XCTAssertTrue(b("setlist-周六演出 副本").exists)
+    }
+    func testDirectSongLibraryEntry() {
+        launch(); tap("settings"); shot("05-settings-live-entries")
+        tap("settings-songLibrary"); XCTAssertTrue(b("import-song-Gossip").exists)
+        XCTAssertFalse(b("choose-setlist").exists); shot("06-song-library")
+        tap("import-song-Gossip"); tap("cancel-song")
+        XCTAssertTrue(b("import-song-Gossip").exists)
+        tap("close-panel"); tap("settings-setlists")
+        XCTAssertTrue(b("setlist-周六演出").exists)
+    }
     func testSettledNavigationScreens() {
         launch(); tap("settings"); tap("settings-setlists"); shot("09-root-zh")
         tap("setlist-周六演出"); XCTAssertTrue(b("song-Gossip").exists); shot("10-list-zh")

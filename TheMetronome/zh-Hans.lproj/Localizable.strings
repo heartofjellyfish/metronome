@@ -360,7 +360,7 @@
 
 /* Performance and shared songs */
 "Perform" = "演出";
-"Song library" = "曲库";
+"Song library" = "歌曲库";
 "Changes apply in every setlist." = "修改会同步到所有歌单。";
 "Delete this setlist? Songs stay in your library." = "删除歌单？歌曲仍保留在曲库中。";
 "The song stays in your library." = "歌曲仍保留在曲库中。";
@@ -413,3 +413,21 @@
 "Choose saved songs" = "选择已存歌曲";
 
 "Drag the handle to reorder." = "拖动右侧手柄调整顺序。";
+
+"Start from first song" = "从第一首开始";
+
+"Song %d of %d" = "第 %d 首 · 共 %d 首";
+
+"Notes" = "备注";
+
+"View notes" = "查看备注";
+
+"Full title" = "完整歌名";
+
+"Return to metronome" = "回到节拍器";
+
+"Duplicate setlist" = "复制歌单";
+
+"%@ copy" = "%@ 副本";
+
+"Close song library" = "关闭歌曲库";

@@ -50,8 +50,9 @@ struct SettingsView: View {
                         VStack(spacing: 14) {
                             SectionLabel(text: "03 LIVE MODE", p: p)
                             HStack(spacing: 14) {
-                                navigationKey("Setlists", icon: .setlists, route: .setlists)
-                                navigationKey("Pedal", icon: .pedal, route: .pedal)
+                                liveKey("Setlists", icon: .setlists, route: .setlists)
+                                liveKey("Song library", icon: .songLibrary, route: .songLibrary)
+                                liveKey("Pedal", icon: .pedal, route: .pedal)
                             }
                             Button {
                                 preparation.toggle()
@@ -108,6 +109,14 @@ struct SettingsView: View {
             .overlay { if let panel { InstrumentPanel(model: model, kind: panel) { self.panel = nil }.id(panelSession) } }
             .onDisappear { model.endSoundPreview() }
             .onChange(of: model.error) { _, value in if value != nil { present(.audio) } }
+    }
+    private func liveKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
+        Button { model.endSoundPreview(); present(route) } label: {
+            VStack(spacing: 5) {
+                SettingsIllustration(kind: icon).frame(width: 55, height: 44)
+                Text(L10n.text(title)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.center).frame(height: 30)
+            }.padding(.vertical, 10).frame(maxWidth: .infinity).contentShape(Rectangle())
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("settings-\(route.rawValue)")
     }
     private func navigationKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
         Button { model.endSoundPreview(); present(route) } label: {

@@ -120,6 +120,34 @@ final class PerformanceTests: XCTestCase {
             XCTAssertEqual(restored.presetCaption, "Warm hands"); XCTAssertEqual(restored.bpm, 103)
         }
     }
+    @MainActor func testNotesMigrationSharingAndManualSetlistStart() throws {
+        try clean { m in
+            let old = SavedPreset(name: "Legacy", rhythm: Rhythm())
+            var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+            json.removeValue(forKey: "notes")
+            XCTAssertNil(try JSONDecoder().decode(SavedPreset.self, from: JSONSerialization.data(withJSONObject: json)).notes)
+            let list = try XCTUnwrap(m.addSetlist("Show", activate: false))
+            m.addSong("First", bpm: 180, into: list, notes: "Enter after four bars")
+            m.addSong("Second", bpm: 100, into: list)
+            m.startSetlist(list)
+            XCTAssertTrue(m.playing); XCTAssertEqual(m.currentSong?.name, "First")
+            let id = try XCTUnwrap(m.currentSong?.id)
+            m.adjustCurrentSongTempo(181); XCTAssertEqual(m.currentSong?.notes, "Enter after four bars")
+            let other = try XCTUnwrap(m.addSetlist("Other", activate: false)); m.addExistingSong(id, to: other)
+            m.editSong(id, name: "First", rhythm: m.rhythm, notes: "Quiet ending")
+            XCTAssertEqual(m.setlists.first { $0.id == other }?.songs.first?.notes, "Quiet ending")
+            let restored = MetronomeModel(); defer { restored.stop() }
+            XCTAssertEqual(restored.currentSong?.notes, "Quiet ending")
+            m.performPedal(.next); XCTAssertEqual(m.currentSong?.name, "Second")
+            m.performPedal(.next); XCTAssertEqual(m.currentSong?.name, "Second")
+            m.startSetlist(list); XCTAssertEqual(m.currentSong?.name, "First")
+            let copy = try XCTUnwrap(m.duplicateSetlist(list))
+            XCTAssertEqual(m.activeSetlistID, list); XCTAssertTrue(m.playing)
+            XCTAssertEqual(m.setlists.first { $0.id == copy }?.songs.map(\.id), m.activeSetlist?.songs.map(\.id))
+            m.editSong(id, name: "First", rhythm: m.rhythm, notes: "")
+            XCTAssertEqual(m.currentSong?.notes, "")
+        }
+    }
     func testPolyrhythmSyntheticAndAcousticChoicesProduceAudio() throws {
         // Exercise the real renderer, including a synthetic second lane (previously bell-only).
         for pair in [(InstrumentSound.rim, InstrumentSound.stageClick), (.click, .naturalHiHat)] {

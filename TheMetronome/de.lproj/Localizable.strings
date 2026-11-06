@@ -413,3 +413,21 @@
 "Choose saved songs" = "Gespeicherte Songs wählen";
 
 "Drag the handle to reorder." = "Zum Sortieren am Griff ziehen.";
+
+"Start from first song" = "Beim ersten Song starten";
+
+"Song %d of %d" = "Song %d von %d";
+
+"Notes" = "Notizen";
+
+"View notes" = "Notizen anzeigen";
+
+"Full title" = "Vollständiger Titel";
+
+"Return to metronome" = "Zurück zum Metronom";
+
+"Duplicate setlist" = "Setlist duplizieren";
+
+"%@ copy" = "%@ Kopie";
+
+"Close song library" = "Songbibliothek schließen";

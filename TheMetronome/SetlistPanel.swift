@@ -5,6 +5,7 @@ struct SetlistPanel: View {
     @ObservedObject var model: MetronomeModel
     let p: InstrumentPalette
     let close: () -> Void
+    let startInSongLibrary: Bool
     @State private var library: Bool
     @State private var browsingSetlistID: UUID?
     @State private var creatingList = false
@@ -26,11 +27,13 @@ struct SetlistPanel: View {
     @State private var search = ""
     @State private var deletingForever: SavedPreset?
     @FocusState private var namingList: Bool
-    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, close: @escaping () -> Void) {
-        self.model = model; self.p = p; self.close = close
+    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, close: @escaping () -> Void) {
+        self.model = model; self.p = p; self.close = close; self.startInSongLibrary = startInSongLibrary
         let initial = model.setlists.first { $0.id == initialSetlistID }?.id
         _browsingSetlistID = State(initialValue: initial)
         _library = State(initialValue: initial == nil)
+        _managingSongs = State(initialValue: startInSongLibrary)
+        _source = State(initialValue: startInSongLibrary ? "songs" : nil)
     }
     private var detail: Bool { !library && !creatingList && !adding && song == nil && source == nil && sharing == nil }
     private var pageID: String {
@@ -45,7 +48,7 @@ struct SetlistPanel: View {
         if creatingList { return L10n.text("New setlist") }
         if let song { return L10n.text(model.songLibrary.contains { $0.id == song.id } ? "Edit song" : "New song") }
         if sharing != nil { return L10n.text("Add to setlist") }
-        if source == "songs" { return L10n.text("Saved songs") }
+        if source == "songs" { return L10n.text("Song library") }
         if source == "presets" { return L10n.text("PRESETS") }
         if adding { return L10n.text("Add song") }
         return library ? L10n.text("Setlists") : browsedList?.name ?? L10n.text("Setlists")
@@ -65,9 +68,9 @@ struct SetlistPanel: View {
                                         Text("Changes apply in every setlist.").font(.subheadline).foregroundStyle(p.muted)
                                     }
                                     SongEditor(model: model, initial: song, p: p, cancel: { self.song = nil }) { value in
-                                        if model.songLibrary.contains(where: { $0.id == value.id }) { model.editSong(value.id, name: value.name, rhythm: value.rhythm) }
-                                        else if managingSongs { model.createLibrarySong(value.name, rhythm: value.rhythm) }
-                                        else { model.addSong(value.name, bpm: value.rhythm.bpm, source: value.rhythm, into: browsingSetlistID) }
+                                        if model.songLibrary.contains(where: { $0.id == value.id }) { model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes) }
+                                        else if managingSongs { model.createLibrarySong(value.name, rhythm: value.rhythm, notes: value.notes) }
+                                        else { model.addSong(value.name, bpm: value.rhythm.bpm, source: value.rhythm, into: browsingSetlistID, notes: value.notes) }
                                         self.song = nil; adding = false; search = ""
                                     }.id(song.id)
                                 } else if let sharing { targets(sharing) }
@@ -93,7 +96,7 @@ struct SetlistPanel: View {
     private var header: some View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
-                if !library || creatingList || source != nil || song != nil || sharing != nil {
+                if !library || creatingList || (source != nil && !startInSongLibrary) || song != nil || sharing != nil {
                     Button {
                         if creatingList { creatingList = false; listName = "" }
                         else if song != nil { song = nil }
@@ -102,21 +105,21 @@ struct SetlistPanel: View {
                         else if adding { adding = false }
                         else { library = true; browsingSetlistID = nil; editing = false; adding = false; listName = "" }
                         model.endSoundPreview(); notice = nil
-                    } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
+                    } label: { HStack(spacing: 5) { Image(systemName: "chevron.left"); if detail { Text("Setlists").font(.system(size: 13)) } }.padding(.horizontal, 10).frame(minWidth: 44, minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Setlists").accessibilityIdentifier("choose-setlist")
                 }
                 Text(title).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                if detail {
+                if detail || (library && !creatingList && source == nil && song == nil && sharing == nil) {
                     Button {
-                        if editing { model.renameSetlist(listName, in: browsingSetlistID); namingList = false }
+                        if editing && detail { model.renameSetlist(listName, in: browsingSetlistID); namingList = false }
                         else { listName = browsedList?.name ?? "" }
                         editing.toggle(); draggingSong = nil; adding = false; deleting = nil; deletingList = false
                     } label: { Text(L10n.text(editing ? "Done" : "Edit")).font(.system(size: 15, weight: .medium)).padding(.horizontal, 12).frame(minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("edit-setlist")
                 }
                 Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Close setlists").accessibilityIdentifier("close-panel")
+                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel(L10n.text(startInSongLibrary ? "Close song library" : "Close setlists")).accessibilityIdentifier("close-panel")
             }
             Rectangle().fill(p.edge.opacity(0.4)).frame(height: 0.5)
         }.padding(.horizontal, 20).padding(.top, 18)
@@ -128,12 +131,12 @@ struct SetlistPanel: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(model.setlists) { list in
-                        Button { browsingSetlistID = list.id; library = false } label: {
+                        Button { browsingSetlistID = list.id; library = false; listName = list.name } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 6) { Text(list.name).font(.headline); Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted) }
-                                Spacer(); Image(systemName: "chevron.right").font(.caption)
-                            }.padding(18).frame(minHeight: 76)
-                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
+                                Spacer(); Image(systemName: editing ? "pencil" : "chevron.right").font(.caption)
+                            }.padding(16).frame(minHeight: 68).contentShape(Rectangle())
+                        }.buttonStyle(.plain).accessibilityIdentifier("setlist-\(list.name)")
                     }
                 }.padding(12).insetPanel(p, radius: 18)
             }
@@ -168,6 +171,11 @@ struct SetlistPanel: View {
             } else {
                 Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count)).font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading)
             }
+            if !editing && !list.songs.isEmpty {
+                Button { model.startSetlist(list.id); performing = true } label: {
+                    Label("Start from first song", systemImage: "play.fill").frame(maxWidth: .infinity, minHeight: 50)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("start-setlist")
+            }
             VStack(spacing: 10) {
                 if list.songs.isEmpty { Text("Add your first song.").font(.subheadline).foregroundStyle(p.muted).padding(20) }
                 ForEach(list.songs) { value in
@@ -199,6 +207,10 @@ struct SetlistPanel: View {
             }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("add-song")
             if let notice { Text(notice).font(.subheadline).foregroundStyle(p.muted) }
             if editing {
+                Button {
+                    if let id = model.duplicateSetlist(list.id) { browsingSetlistID = id; listName = browsedList?.name ?? ""; editing = false }
+                } label: { Label("Duplicate setlist", systemImage: "plus.square.on.square").frame(maxWidth: .infinity, minHeight: 44) }
+                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("duplicate-setlist")
                 Button { deletingList = true } label: { Text("Delete setlist").padding(.horizontal, 16).frame(minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).foregroundStyle(p.muted)
                 if deletingList {
                     Text("Delete this setlist? Songs stay in your library.").font(.subheadline)
@@ -340,6 +352,7 @@ struct SongEditor: View {
     let cancel: () -> Void
     let save: (SavedPreset) -> Void
     @State private var name = ""
+    @State private var notes = ""
     @State private var tempo = ""
     @State private var draft = Rhythm()
     @State private var picker: String?
@@ -372,13 +385,14 @@ struct SongEditor: View {
                 field("METER", value: "\(draft.beats)/\(draft.denominator)", route: "meter")
                 Button { typing = false; picker = "division" } label: { HStack { Text("DIVISION").font(.subheadline); Spacer(); RhythmScore(rhythm: draft, color: p.ink).frame(width: 90, height: 40); Image(systemName: "chevron.right").font(.caption) }.padding(.horizontal, 16).frame(height: 58) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("song-division")
                 field("SOUND", value: InstrumentSound(rawValue: draft.sound)?.title ?? "", route: "sound")
+                TextField("Notes", text: $notes, axis: .vertical).lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing)
                 HStack(spacing: 12) {
                     Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
-                    Button { draft.bpm = Int(tempo)!; save(SavedPreset(id: initial.id, name: name, rhythm: draft.performanceCopy)) } label: { Text("Save").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                    Button { draft.bpm = Int(tempo)!; save(SavedPreset(id: initial.id, name: name, rhythm: draft.performanceCopy, notes: notes)) } label: { Text("Save").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
                         .disabled(!valid).opacity(valid ? 1 : 0.45).accessibilityIdentifier("save-song")
                 }
             }
-        }.onAppear { name = initial.name; draft = initial.rhythm.performanceCopy; tempo = String(draft.bpm) }
+        }.onAppear { name = initial.name; notes = initial.notes ?? ""; draft = initial.rhythm.performanceCopy; tempo = String(draft.bpm) }
             .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { note in
                 guard let field = note.object as? UITextField, field.keyboardType == .numberPad else { return }
                 DispatchQueue.main.async { field.selectAll(nil) }

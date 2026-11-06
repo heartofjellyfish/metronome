@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Small physical objects, sharing the sound library's 80 × 64 drawing space.
 struct SettingsIllustration: View {
-    enum Kind { case practice, presets, pedal, setlists }
+    enum Kind { case practice, presets, pedal, setlists, songLibrary }
     let kind: Kind
     var body: some View {
         GeometryReader { g in
@@ -12,6 +12,7 @@ struct SettingsIllustration: View {
                 case .presets: disk
                 case .pedal: pedal
                 case .setlists: setlist
+                case .songLibrary: songLibrary
                 }
             }.frame(width: 80, height: 64)
                 .scaleEffect(min(g.size.width / 80, g.size.height / 64) * 0.82)
@@ -52,6 +53,17 @@ struct SettingsIllustration: View {
             }
         }
             .shadow(color: .black.opacity(0.12),radius: 1,x: 0,y: 2)
+    }
+    private var songLibrary: some View {
+        ZStack {
+            ForEach(0..<3) { i in
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color(hex: i == 2 ? 0xECE5D5 : 0xB4B1A1))
+                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color(hex: 0x969787), lineWidth: 0.7))
+                    .frame(width: 43, height: 48).offset(x: CGFloat(i - 1) * 5, y: CGFloat(i - 1) * 4)
+            }
+            Image(systemName: "music.note").font(.system(size: 27, weight: .medium)).foregroundStyle(graphite).offset(x: 5, y: 4)
+        }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
     }
     private var setlist: some View {
         ZStack {

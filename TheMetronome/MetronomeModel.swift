@@ -165,6 +165,7 @@ struct SavedPreset: Identifiable, Codable {
     var id = UUID()
     var name: String
     var rhythm: Rhythm
+    var notes: String? = nil
 }
 
 struct SongSetlist: Identifiable, Codable {
@@ -221,6 +222,11 @@ final class MetronomeModel: ObservableObject {
         if activate { activeSetlistID = list.id; selectedSongID = nil }
         return list.id
     }
+    @discardableResult func duplicateSetlist(_ id: UUID) -> UUID? {
+        guard let source = setlists.first(where: { $0.id == id }) else { return nil }
+        let copy = SongSetlist(name: L10n.format("%@ copy", source.name), songs: source.songs)
+        setlists.append(copy); return copy.id
+    }
     func renameSetlist(_ name: String, in target: UUID? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
@@ -234,18 +240,18 @@ final class MetronomeModel: ObservableObject {
         if activeSetlistID == id { stop(); activeSetlistID = nil; selectedSongID = nil }
         setlists.removeAll { $0.id == id }
     }
-    func addSong(_ name: String, bpm: Int, source: Rhythm? = nil, into target: UUID? = nil) {
+    func addSong(_ name: String, bpm: Int, source: Rhythm? = nil, into target: UUID? = nil, notes: String? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let index = setlists.firstIndex(where: { $0.id == (target ?? activeSetlistID) }) else { return }
         var value = (source ?? rhythm).performanceCopy
         value.bpm = bpm; value.sanitize()
-        setlists[index].songs.append(SavedPreset(name: name, rhythm: value))
+        setlists[index].songs.append(SavedPreset(name: name, rhythm: value, notes: notes))
     }
     /// Library entries can exist independently of a setlist.
-    func createLibrarySong(_ name: String, rhythm value: Rhythm) {
+    func createLibrarySong(_ name: String, rhythm value: Rhythm, notes: String? = nil) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        songLibrary.append(SavedPreset(name: name, rhythm: value.performanceCopy))
+        songLibrary.append(SavedPreset(name: name, rhythm: value.performanceCopy, notes: notes))
         persistSetlists()
     }
     /// Permanent deletion removes every membership. UI must confirm this explicitly.
@@ -269,10 +275,10 @@ final class MetronomeModel: ObservableObject {
         editSong(id, name: name, rhythm: song.rhythm)
     }
     /// Songs are shared objects. Lists only store their order and membership.
-    func editSong(_ id: UUID, name: String, rhythm value: Rhythm) {
+    func editSong(_ id: UUID, name: String, rhythm value: Rhythm, notes: String? = nil) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, let index = songLibrary.firstIndex(where: { $0.id == id }) else { return }
-        let updated = SavedPreset(id: id, name: clean, rhythm: value.performanceCopy)
+        let updated = SavedPreset(id: id, name: clean, rhythm: value.performanceCopy, notes: notes ?? songLibrary[index].notes)
         songLibrary[index] = updated
         setlists = setlists.map { list in
             var copy = list; copy.songs = list.songs.map { $0.id == id ? updated : $0 }; return copy
@@ -320,6 +326,10 @@ final class MetronomeModel: ObservableObject {
         let value = song.rhythm.performanceCopy
         selectedPresetID = nil; selectedSongID = song.id; rhythm = value
         if resume { start() }
+    }
+    func startSetlist(_ id: UUID) {
+        guard let first = setlists.first(where: { $0.id == id })?.songs.first else { return }
+        stop(); loadSong(first, from: id); start()
     }
     private func persistSetlists() {
         // Fold new/legacy list entries into the catalog, retaining songs removed from lists.

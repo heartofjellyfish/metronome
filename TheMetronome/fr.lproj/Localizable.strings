@@ -360,7 +360,7 @@
 
 /* Performance and shared songs */
 "Perform" = "Jouer";
-"Song library" = "Bibliothèque";
+"Song library" = "Bibliothèque de morceaux";
 "Changes apply in every setlist." = "Les modifications s’appliquent à toutes les setlists.";
 "Delete this setlist? Songs stay in your library." = "Supprimer cette setlist ? Les morceaux restent dans la bibliothèque.";
 "The song stays in your library." = "Le morceau reste dans la bibliothèque.";
@@ -413,3 +413,21 @@
 "Choose saved songs" = "Choisir un morceau enregistré";
 
 "Drag the handle to reorder." = "Faites glisser la poignée pour réordonner.";
+
+"Start from first song" = "Commencer au premier morceau";
+
+"Song %d of %d" = "Morceau %d sur %d";
+
+"Notes" = "Notes";
+
+"View notes" = "Voir les notes";
+
+"Full title" = "Titre complet";
+
+"Return to metronome" = "Revenir au métronome";
+
+"Duplicate setlist" = "Dupliquer la setlist";
+
+"%@ copy" = "Copie de %@";
+
+"Close song library" = "Fermer la bibliothèque";
