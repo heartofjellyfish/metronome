@@ -201,6 +201,7 @@ final class MetronomeModel: ObservableObject {
     }
     var presetCaption: String {
         if let list = activeSetlist { return currentSong.map { $0.name + " · " + list.name } ?? list.name }
+        if let song = currentSong { return song.name }
         guard let index = presets.firstIndex(where: { $0.id == selectedPresetID }) else { return L10n.text("PRESETS / SAVE A RHYTHM") }
         return presets[index].name
     }
@@ -213,7 +214,7 @@ final class MetronomeModel: ObservableObject {
     @Published var activeSetlistID: UUID? { didSet { UserDefaults.standard.set(activeSetlistID?.uuidString, forKey: "activeSetlistID") } }
     @Published private(set) var selectedSongID: UUID? { didSet { UserDefaults.standard.set(selectedSongID?.uuidString, forKey: "selectedSongID") } }
     var activeSetlist: SongSetlist? { setlists.first { $0.id == activeSetlistID } }
-    var currentSong: SavedPreset? { activeSetlist?.songs.first { $0.id == selectedSongID } }
+    var currentSong: SavedPreset? { songLibrary.first { $0.id == selectedSongID } }
     @discardableResult func addSetlist(_ name: String, activate: Bool = true) -> UUID? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return nil }
@@ -237,7 +238,7 @@ final class MetronomeModel: ObservableObject {
         deleteSetlist(id)
     }
     func deleteSetlist(_ id: UUID) {
-        if activeSetlistID == id { stop(); activeSetlistID = nil; selectedSongID = nil }
+        if activeSetlistID == id { activeSetlistID = nil }
         setlists.removeAll { $0.id == id }
     }
     func addSong(_ name: String, bpm: Int, source: Rhythm? = nil, into target: UUID? = nil, notes: String? = nil) {
@@ -248,17 +249,21 @@ final class MetronomeModel: ObservableObject {
         setlists[index].songs.append(SavedPreset(name: name, rhythm: value, notes: notes))
     }
     /// Library entries can exist independently of a setlist.
-    func createLibrarySong(_ name: String, rhythm value: Rhythm, notes: String? = nil) {
+    @discardableResult func createLibrarySong(_ name: String, rhythm value: Rhythm, notes: String? = nil) -> UUID? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        songLibrary.append(SavedPreset(name: name, rhythm: value.performanceCopy, notes: notes))
+        guard !name.isEmpty else { return nil }
+        let song = SavedPreset(name: name, rhythm: value.performanceCopy, notes: notes)
+        songLibrary.append(song)
         persistSetlists()
+        return song.id
     }
     /// Catalog order is independent of each setlist's performance order.
     func moveLibrarySong(_ id: UUID, to destination: Int) {
         guard let index = songLibrary.firstIndex(where: { $0.id == id }),
               songLibrary.indices.contains(destination), index != destination else { return }
-        let value = songLibrary.remove(at: index); songLibrary.insert(value, at: destination)
+        var ordered = songLibrary
+        let value = ordered.remove(at: index); ordered.insert(value, at: destination)
+        songLibrary = ordered
         persistSetlists()
     }
     /// Permanent deletion removes every membership. UI must confirm this explicitly.
@@ -321,9 +326,39 @@ final class MetronomeModel: ObservableObject {
         guard let listID = target ?? activeSetlistID,
               let index = setlists.firstIndex(where: { $0.id == listID }) else { return }
         setlists[index].songs.removeAll { $0.id == id }
-        if activeSetlistID == listID && selectedSongID == id { stop(); selectedSongID = nil }
+        if activeSetlistID == listID && selectedSongID == id { activeSetlistID = nil }
     }
-    func loadSong(_ song: SavedPreset, from target: UUID? = nil) {
+    /// Explicit standalone context; never inherit the last setlist or pedal queue.
+    func loadStandaloneSong(_ id: UUID) {
+        guard let song = songLibrary.first(where: { $0.id == id }) else { return }
+        activeSetlistID = nil
+        loadSong(song)
+    }
+    func moveSetlist(_ id: UUID, to destination: Int) {
+        guard let index = setlists.firstIndex(where: { $0.id == id }),
+              setlists.indices.contains(destination), index != destination else { return }
+        var ordered = setlists
+        let list = ordered.remove(at: index); ordered.insert(list, at: destination)
+        setlists = ordered
+    }
+    /// Commit a list draft once. Resolve current catalog objects, not stale editor copies.
+    @discardableResult func saveSetlist(id: UUID?, name: String, songIDs: [UUID]) -> UUID? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+        if let id, !setlists.contains(where: { $0.id == id }) { return nil }
+        var seen = Set<UUID>()
+        let catalog = Dictionary(songLibrary.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let songs = songIDs.filter { seen.insert($0).inserted }.compactMap { catalog[$0] }
+        let value = SongSetlist(id: id ?? UUID(), name: name, songs: songs)
+        if let index = setlists.firstIndex(where: { $0.id == value.id }) { setlists[index] = value }
+        else { setlists.append(value) }
+        if activeSetlistID == value.id, let selectedSongID, !songs.contains(where: { $0.id == selectedSongID }) {
+            activeSetlistID = nil
+        }
+        return value.id
+    }
+    func loadSong(_ input: SavedPreset, from target: UUID? = nil) {
+        guard let song = songLibrary.first(where: { $0.id == input.id }) else { return }
         if let target {
             guard setlists.contains(where: { $0.id == target && $0.songs.contains(where: { $0.id == song.id }) }) else { return }
             activeSetlistID = target
@@ -489,7 +524,7 @@ final class MetronomeModel: ObservableObject {
                 if list.songs.indices.contains(next) { loadSong(list.songs[next]) }
                 return
             }
-            guard !presets.isEmpty else { return }
+            guard currentSong == nil, !presets.isEmpty else { return }
             let index = presets.firstIndex { $0.id == selectedPresetID }
             let next = index.map { $0 + (action == .next ? 1 : -1) } ?? (action == .next ? 0 : presets.count - 1)
             guard presets.indices.contains(next) else { return } // No surprise wrap to the first song.
@@ -614,7 +649,7 @@ final class MetronomeModel: ObservableObject {
         let preset = SavedPreset(name: clean, rhythm: rhythm)
         presets.append(preset)
         // Saving is a snapshot, not a change of playback queue.
-        if activeSetlistID == nil { selectedPresetID = preset.id }
+        if activeSetlistID == nil && currentSong == nil { selectedPresetID = preset.id }
 
     }
     func load(_ preset: SavedPreset) {

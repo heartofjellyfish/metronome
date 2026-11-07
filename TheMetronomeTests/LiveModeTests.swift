@@ -199,6 +199,7 @@ final class LiveModeTests: XCTestCase {
         let keys = ["rhythm", "presets", "selectedPresetID", "pedalBindings", "pedalProfiles", "pedalProfileID", "activeSetlistID", "selectedSongID", "songLibraryStore", "setlists"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
+        for key in keys { defaults.removeObject(forKey: key) }
         let model = MetronomeModel(); defer { model.stop() }
         model.presets = []; model.activeSetlistID = nil; model.rhythm = Rhythm(); model.addPreset("ONE")
         model.setBPM(130); model.addPreset("TWO")
@@ -366,8 +367,8 @@ final class StageFeatureTests: XCTestCase {
         XCTAssertEqual(restored.activeSetlist?.name, "Show")
         XCTAssertEqual(restored.currentSong?.name, "Opening")
         XCTAssertEqual(restored.activeSetlist?.songs.first?.rhythm.bpm, 140)
-        m.deleteSong(first.id); XCTAssertNil(m.selectedSongID)
-        m.deleteActiveSetlist(); XCTAssertTrue(m.setlists.isEmpty)
+        m.deleteSong(first.id); XCTAssertEqual(m.selectedSongID, first.id); XCTAssertNil(m.activeSetlistID)
+        m.deleteSetlist(restored.activeSetlistID!); XCTAssertTrue(m.setlists.isEmpty)
         XCTAssertEqual(m.presets.count, 1)
         m.load(m.presets[0]); XCTAssertNil(m.activeSetlistID)
     }

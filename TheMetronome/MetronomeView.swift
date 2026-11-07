@@ -107,9 +107,9 @@ struct MetronomeView: View {
                 }.frame(width: 121, height: 100)
             }.buttonStyle(HardwareButtonStyle(p: p, radius: 13)).position(x: 327.5, y: 677)
                 .accessibilityLabel("Tap tempo").accessibilityIdentifier("tap")
-            Button { present(model.activeSetlist != nil ? .setlists : .presets) } label: {
+            Button { present(model.activeSetlist != nil ? .setlists : (model.currentSong != nil ? .songLibrary : .presets)) } label: {
                 Text(model.presetCaption).technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
-            }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel(L10n.text(model.activeSetlist != nil ? "Setlists" : "Saved presets")).accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
+            }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel(L10n.text(model.activeSetlist != nil ? "Setlists" : model.currentSong != nil ? "Song library" : "Saved presets")).accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
         }.foregroundStyle(p.ink)
     }
     func selector(_ title: String, value: String) -> some View {

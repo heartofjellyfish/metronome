@@ -441,3 +441,12 @@
 "Not in a setlist" = "尚未加入歌單";
 
 "Hide keyboard" = "收起鍵盤";
+
+/* Song and setlist navigation */
+"All setlists" = "全部歌單";
+"Back" = "返回";
+"Close" = "關閉";
+"Edit setlist" = "編輯歌單";
+"No setlists yet." = "還沒有歌單";
+"Song list" = "歌曲列表";
+"Songs stay in your library." = "歌曲仍保留在歌曲庫";

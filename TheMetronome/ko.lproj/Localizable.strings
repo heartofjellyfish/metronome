@@ -441,3 +441,12 @@
 "Not in a setlist" = "세트리스트에 없음";
 
 "Hide keyboard" = "키보드 닫기";
+
+/* Song and setlist navigation */
+"All setlists" = "모든 세트리스트";
+"Back" = "뒤로";
+"Close" = "닫기";
+"Edit setlist" = "세트리스트 편집";
+"No setlists yet." = "아직 세트리스트가 없습니다.";
+"Song list" = "곡 목록";
+"Songs stay in your library." = "곡은 라이브러리에 유지됩니다.";

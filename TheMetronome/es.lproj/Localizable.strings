@@ -441,3 +441,12 @@
 "Not in a setlist" = "Sin lista de canciones";
 
 "Hide keyboard" = "Ocultar teclado";
+
+/* Song and setlist navigation */
+"All setlists" = "Todas las listas";
+"Back" = "Volver";
+"Close" = "Cerrar";
+"Edit setlist" = "Editar lista";
+"No setlists yet." = "Aún no hay listas.";
+"Song list" = "Lista de canciones";
+"Songs stay in your library." = "Las canciones permanecen en tu biblioteca.";

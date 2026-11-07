@@ -441,3 +441,12 @@
 "Not in a setlist" = "In keiner Setlist";
 
 "Hide keyboard" = "Tastatur ausblenden";
+
+/* Song and setlist navigation */
+"All setlists" = "Alle Setlists";
+"Back" = "Zurück";
+"Close" = "Schließen";
+"Edit setlist" = "Setlist bearbeiten";
+"No setlists yet." = "Noch keine Setlists.";
+"Song list" = "Titelliste";
+"Songs stay in your library." = "Die Titel bleiben in deiner Bibliothek.";

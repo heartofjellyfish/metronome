@@ -12,6 +12,7 @@ extension EnvironmentValues {
 /// Opening, closing and muting this view never starts, stops or resets that clock.
 struct PerformanceView: View {
     @ObservedObject var model: MetronomeModel
+    var fromSongLibrary = false
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
     @State private var songPicker: String?
@@ -30,10 +31,10 @@ struct PerformanceView: View {
         GeometryReader { geometry in
             VStack(spacing: 18) {
                 HStack(spacing: 12) {
-                    Button { dismiss() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                        .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Setlists").accessibilityIdentifier("close-performance")
-                    Text(model.activeSetlist.map { "\($0.name) (\(L10n.format($0.songs.count == 1 ? "%d song" : "%d songs", $0.songs.count)))" } ?? L10n.text("Setlists"))
-                        .font(.system(size: 17, weight: .medium)).lineLimit(2).minimumScaleFactor(0.8).accessibilityIdentifier("performance-setlist")
+                    Button { dismiss() } label: {
+                        Label(L10n.text(fromSongLibrary ? "Song library" : "Song list"), systemImage: "chevron.left")
+                            .font(.system(size: 14)).padding(.horizontal, 12).frame(minHeight: 44)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("close-performance")
                     Spacer(minLength: 0)
                     Button { editing = true } label: { Text("Edit").frame(minWidth: 54, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityIdentifier("performance-edit")
                     Button { exitLiveMode() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
@@ -41,7 +42,12 @@ struct PerformanceView: View {
                 }
                 ScrollView {
                     VStack(spacing: 18) {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            if let list = model.activeSetlist {
+                                Text(list.name).font(.system(size: 18, weight: .medium)).foregroundStyle(p.muted)
+                                    .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityIdentifier("performance-setlist")
+                            }
                             HStack(alignment: .firstTextBaseline, spacing: 12) {
                                 Text(model.currentSong?.name ?? L10n.text("Setlists"))
                                     .font(.system(size: 25, weight: .semibold)).lineLimit(2)
@@ -72,12 +78,12 @@ struct PerformanceView: View {
                             }.font(.system(size: 16, weight: .medium)).foregroundStyle(p.muted).frame(height: 44).padding(.top, 6)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                         PerformanceBeatCue(model: model, p: p)
-                            .frame(height: max(260, min(460, geometry.size.height - 395)))
+                            .frame(height: max(260, min(580, geometry.size.height - (model.activeSetlist == nil ? 300 : 410))))
                             .frame(maxWidth: .infinity).insetPanel(p, radius: 18)
                         if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }
                 }.scrollBounceBehavior(.basedOnSize).scrollClipDisabled()
-                songNavigation
+                if model.activeSetlist != nil { songNavigation }
                 GeometryReader { controls in
                   HStack(spacing: 14) {
                     Button { model.tap(); model.adjustCurrentSongTempo(model.bpm) } label: {

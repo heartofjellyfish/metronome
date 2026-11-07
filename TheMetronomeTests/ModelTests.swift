@@ -9,6 +9,7 @@ final class ModelTests: XCTestCase {
         let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "songLibraryStore", "setlists", "activeSetlistID", "selectedSongID"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
+        for key in keys { defaults.removeObject(forKey: key) }
         let model = MetronomeModel()
         defer { model.stop() }
         model.rhythm = Rhythm(); model.presets = []; model.activeSetlistID = nil
