@@ -26,6 +26,33 @@ final class PerformanceUITests: XCTestCase {
         start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.42)))
     }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testSongNameTypingWhileLive() throws {
+        guard #available(iOS 26, *) else { throw XCTSkip("Hitch measurements require iOS 26.") }
+        launch("en"); openList("Saturday"); tap("song-Gossip"); tap("performance-play"); tap("performance-edit")
+        let name = app.textFields["song-name"]
+        name.tap()
+        let options = XCTMeasureOptions()
+        options.iterationCount = 3
+        measure(metrics: [XCTHitchMetric(application: app), XCTCPUMetric(application: app)], options: options) {
+            name.typeText("Crisis" + String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
+        }
+        XCTAssertEqual(name.value as? String, "Gossip")
+    }
+    func testSongMeterAndCategorizedSounds() {
+        launch("en"); openList("Saturday"); tap("song-Gossip"); tap("performance-edit")
+        tap("song-meter"); tap("meter-6-8")
+        XCTAssertTrue(b("meter-6-8").isSelected)
+        tap("More meters")
+        shot("27-song-meter")
+        tap("song-picker-back"); tap("song-sound")
+        tap("acoustic-sound-5"); XCTAssertTrue(b("acoustic-sound-5").isSelected)
+        tap("classic-sound-16"); XCTAssertTrue(b("classic-sound-16").isSelected)
+        shot("27-song-sounds")
+        tap("song-picker-back"); tap("cancel-song")
+        XCTAssertEqual(app.staticTexts["performance-meter"].label, "4/4")
+        tap("performance-edit"); tap("song-meter"); tap("meter-3-4"); tap("song-picker-back"); tap("save-song")
+        XCTAssertEqual(app.staticTexts["performance-meter"].label, "3/4")
+    }
     func testOverflowSearchAndFrequentSetlists() {
         launch("en", manyLists: true)
         tap("settings"); tap("settings-setlists")

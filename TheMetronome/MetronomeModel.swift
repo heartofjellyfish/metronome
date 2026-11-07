@@ -182,6 +182,11 @@ struct SongLibraryStore: Codable {
     var lists: [List]
 }
 
+/// Beat updates affect only views which read the current beat or running tempo.
+@Observable private final class BeatDisplayState {
+    var event: ClockEvent?
+}
+
 @MainActor
 final class MetronomeModel: ObservableObject {
     @Published var rhythm: Rhythm { didSet { audio.mailbox.set(rhythm); save(); if playing { updateNowPlaying() } } }
@@ -193,7 +198,11 @@ final class MetronomeModel: ObservableObject {
     let pedal = PedalControl()
     private var resumeAfterInterruption = false
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
-    @Published private(set) var event: ClockEvent?
+    private let displayState = BeatDisplayState()
+    private(set) var event: ClockEvent? {
+        get { displayState.event }
+        set { displayState.event = newValue }
+    }
     @Published var error: String?
     @Published var presets: [SavedPreset] { didSet { save() } }
     @Published private var selectedPresetID: UUID? {

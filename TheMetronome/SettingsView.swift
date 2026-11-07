@@ -37,7 +37,7 @@ struct SettingsView: View {
                                     .accessibilityLabel(L10n.text("All sounds")).accessibilityIdentifier("all-sounds")
                                     .accessibilityValue(InstrumentSound(rawValue: model.rhythm.sound)?.title ?? "HI-HAT")
                             }
-                            SoundCardRow(model: model, sounds: shelf, namespace: "recommended")
+                            SoundCardRow(selectedSound: model.rhythm.sound, selectSound: model.selectSound, sounds: shelf, namespace: "recommended", p: p)
                             SoundDynamicsControl(model: model)
                         }
                         VStack(spacing: 16) {

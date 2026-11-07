@@ -1,16 +1,17 @@
 import SwiftUI
 
 struct SoundCardRow: View {
-    @ObservedObject var model: MetronomeModel
+    let selectedSound: Int
+    let selectSound: (Int) -> Void
     let sounds: [InstrumentSound]
     let namespace: String
-    var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
+    let p: InstrumentPalette
     var body: some View {
         HStack(spacing: 13) {
             ForEach(sounds, id: \.rawValue) { sound in
-                Button { model.selectSound(sound.rawValue) } label: {
+                Button { selectSound(sound.rawValue) } label: {
                     ZStack(alignment: .topLeading) {
-                        LED(on: model.rhythm.sound == sound.rawValue, color: InstrumentPalette.amber, size: 10).padding(13)
+                        LED(on: selectedSound == sound.rawValue, color: InstrumentPalette.amber, size: 10).padding(13)
                         VStack(spacing: 11) {
                             SoundIllustration(index: sound.illustration, p: p).frame(height: 60)
                             Text(sound.title).technical(11, spacing: 0.7).lineLimit(1).minimumScaleFactor(0.8)
@@ -19,7 +20,7 @@ struct SoundCardRow: View {
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
                     .accessibilityLabel(L10n.format("%@ sound, tap to preview", sound.title))
                     .accessibilityIdentifier("\(namespace)-sound-\(sound.rawValue)")
-                    .accessibilityAddTraits(model.rhythm.sound == sound.rawValue ? .isSelected : [])
+                    .accessibilityAddTraits(selectedSound == sound.rawValue ? .isSelected : [])
             }
             ForEach(0..<max(0, 3 - sounds.count), id: \.self) { _ in
                 Color.clear.frame(maxWidth: .infinity).accessibilityHidden(true)
@@ -35,14 +36,24 @@ struct SoundLibraryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 27) {
             SoundDynamicsControl(model: model, namespace: "library-")
+            SoundFamilies(selectedSound: model.rhythm.sound, p: p, select: model.selectSound)
+            Text(L10n.text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW"))
+                .technical(8, spacing: 0.9).lineSpacing(6).foregroundStyle(p.muted)
+        }
+    }
+}
+struct SoundFamilies: View {
+    let selectedSound: Int
+    let p: InstrumentPalette
+    let select: (Int) -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 27) {
             family("01 ACOUSTIC", subtitle: "REAL DRUMS / HATS & PERCUSSION", rows: [
                 [.naturalHiHat, .acousticPedal, .rim],
                 [.acousticStick, .crossStick, .ride],
                 [.acousticShaker, .snap, .clap]
             ], namespace: "acoustic")
             family("02 CLASSIC", subtitle: "WOOD / CLICK / BELL", rows: [[.wood, .click, .bell], [.stageClick]], namespace: "classic")
-            Text(L10n.text(model.playing ? "CHANGES PLAY LIVE" : "ONE BAR PREVIEW"))
-                .technical(8, spacing: 0.9).lineSpacing(6).foregroundStyle(p.muted)
         }
     }
     private func family(_ title: String, subtitle: String, rows: [[InstrumentSound]], namespace: String) -> some View {
@@ -50,7 +61,7 @@ struct SoundLibraryView: View {
             SectionLabel(text: title, p: p)
             Text(L10n.text(subtitle)).technical(8, spacing: 1).foregroundStyle(p.muted)
             ForEach(rows.indices, id: \.self) { index in
-                SoundCardRow(model: model, sounds: rows[index], namespace: namespace)
+                SoundCardRow(selectedSound: selectedSound, selectSound: select, sounds: rows[index], namespace: namespace, p: p)
             }
         }
     }

@@ -51,9 +51,6 @@ struct InstrumentPanel: View {
     @State private var digits: String
     @State private var replaceDigits = true
     @State private var selected: Int
-    @State private var denominator: Int
-    @State private var compoundPulse: Bool
-    @State private var grouping: [Int]
     @State private var customMeter = false
     @State private var polyrhythmSoundLane: Int?
     @State private var divisionEditing = false
@@ -71,9 +68,6 @@ struct InstrumentPanel: View {
         self.model = model; self.close = close; self.initialSetlistID = initialSetlistID
         _kind = State(initialValue: kind)
         _digits = State(initialValue: String(kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm))
-        _denominator = State(initialValue: model.rhythm.denominator)
-        _compoundPulse = State(initialValue: model.rhythm.isCompound ? model.rhythm.usesCompoundPulse : true)
-        _grouping = State(initialValue: model.rhythm.effectiveGrouping)
         let value: Int
         switch kind {
         case .meter: value = model.rhythm.beats
@@ -201,68 +195,8 @@ struct InstrumentPanel: View {
         else if digits.count < 3 { digits = digits == "0" ? key : digits + key }
     }
     private var meterPicker: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 11), count: 3), spacing: 11) {
-                ForEach([2, 3, 4, 6, 9, 12], id: \.self) { beats in
-                    let unit = beats < 6 ? 4 : 8
-                    choice("\(beats)/\(unit)", selected: selected == beats && denominator == unit, height: 67) {
-                        selected = beats; denominator = unit; compoundPulse = true
-                        applyMeter(); finishLiveSelection()
-                    }.accessibilityIdentifier("meter-\(beats)-\(unit)")
-                }
-            }
-            if [4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) {
-                HStack(spacing: 10) {
-                    choice("BIG BEATS", selected: compoundPulse, height: 44) { compoundPulse = true; applyMeter(); finishLiveSelection() }
-                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { compoundPulse = false; applyMeter(); finishLiveSelection() }
-                }
-                Text(L10n.format("%d big beats or %d note units per bar.", selected / 3, selected))
-                    .font(.system(size: 12)).foregroundStyle(p.muted)
-            }
-            Button { customMeter.toggle(); model.tickFeedback() } label: {
-                HStack {
-                    Text("MORE METERS").technical(10, spacing: 1.4)
-                    Spacer()
-                    Text("\(selected)/\(denominator)").font(InstrumentType.value(16))
-                    Image(systemName: customMeter ? "chevron.up" : "chevron.down").font(.system(size: 10))
-                }.padding(.horizontal, 15).frame(height: 48)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("More meters")
-            if customMeter {
-                SectionLabel(text: "BEATS", p: p)
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
-                    ForEach(1...12, id: \.self) { value in
-                        choice(String(value), selected: selected == value, height: 48) { selected = value; applyMeter() }
-                    }
-                }
-                SectionLabel(text: "NOTE VALUE", p: p)
-                HStack(spacing: 10) {
-                    ForEach([2, 4, 8, 16], id: \.self) { unit in
-                        Button { denominator = unit; applyMeter(); model.tickFeedback() } label: {
-                            HStack(spacing: 5) {
-                                if denominator == unit { LED(on: true, size: 5) }
-                                RhythmGlyph(count: 1, noteValue: unit).fill(p.ink).frame(width: 24, height: 24)
-                                Text("/\(unit)").font(InstrumentType.value(19))
-                            }.frame(maxWidth: .infinity).frame(height: 51)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                            .accessibilityLabel(L10n.format("Note value /%d", unit))
-                            .accessibilityAddTraits(denominator == unit ? .isSelected : [])
-                    }
-                }
-                if !Rhythm.groupingOptions(selected).isEmpty {
-                    SectionLabel(text: "GROUPING", p: p)
-                    HStack(spacing: 9) {
-                        ForEach(Rhythm.groupingOptions(selected), id: \.self) { option in
-                            choice(option.map(String.init).joined(separator: "+"), selected: option == model.rhythm.effectiveGrouping, height: 44) { grouping = option; applyMeter() }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    private func applyMeter() {
-        var rhythm = model.rhythm
-        rhythm.setMeter(beats: selected, denominator: denominator, compound: compoundPulse, grouping: grouping)
-        model.rhythm = rhythm
+        MeterPicker(rhythm: $model.rhythm, customMeter: $customMeter, p: p,
+                    feedback: model.tickFeedback, finishSelection: finishLiveSelection)
     }
     private var quantities: [Int] {
         kind == .countIn ? [0, 1, 2] : kind == .every ? [1, 2, 4, 8, 16, 32] : [1, 2, 3, 5, 10, 20]
@@ -581,5 +515,88 @@ extension Rhythm {
         var parts = ["\(beats)/\(denominator)", divisionSummary]
         if gap { parts.append(L10n.format("%d silent bars", silentBars)) }
         return parts.joined(separator: " · ")
+    }
+}
+
+struct MeterPicker: View {
+    @Binding var rhythm: Rhythm
+    @Binding var customMeter: Bool
+    let p: InstrumentPalette
+    let feedback: () -> Void
+    let finishSelection: () -> Void
+    private var selected: Int { rhythm.beats }
+    private var denominator: Int { rhythm.denominator }
+    private var compoundPulse: Bool { !rhythm.isCompound || rhythm.usesCompoundPulse }
+    private func update(beats: Int? = nil, unit: Int? = nil, compound: Bool? = nil, group: [Int]? = nil) {
+        var value = rhythm
+        value.setMeter(beats: beats ?? selected, denominator: unit ?? denominator,
+                       compound: compound ?? compoundPulse, grouping: group ?? rhythm.effectiveGrouping)
+        rhythm = value
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 11), count: 3), spacing: 11) {
+                ForEach([2, 3, 4, 6, 9, 12], id: \.self) { beats in
+                    let unit = beats < 6 ? 4 : 8
+                    choice("\(beats)/\(unit)", selected: selected == beats && denominator == unit, height: 67) {
+                        update(beats: beats, unit: unit, compound: true); finishSelection()
+                    }.accessibilityIdentifier("meter-\(beats)-\(unit)")
+                }
+            }
+            if [4, 8, 16].contains(denominator) && [6, 9, 12].contains(selected) {
+                HStack(spacing: 10) {
+                    choice("BIG BEATS", selected: compoundPulse, height: 44) { update(compound: true); finishSelection() }
+                    choice("NOTE UNITS", selected: !compoundPulse, height: 44) { update(compound: false); finishSelection() }
+                }
+                Text(L10n.format("%d big beats or %d note units per bar.", selected / 3, selected))
+                    .font(.system(size: 12)).foregroundStyle(p.muted)
+            }
+            Button { customMeter.toggle(); feedback() } label: {
+                HStack {
+                    Text("MORE METERS").technical(10, spacing: 1.4)
+                    Spacer()
+                    Text("\(selected)/\(denominator)").font(InstrumentType.value(16))
+                    Image(systemName: customMeter ? "chevron.up" : "chevron.down").font(.system(size: 10))
+                }.padding(.horizontal, 15).frame(height: 48)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("More meters")
+            if customMeter {
+                SectionLabel(text: "BEATS", p: p)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
+                    ForEach(1...12, id: \.self) { value in
+                        choice(String(value), selected: selected == value, height: 48) { update(beats: value) }
+                    }
+                }
+                SectionLabel(text: "NOTE VALUE", p: p)
+                HStack(spacing: 10) {
+                    ForEach([2, 4, 8, 16], id: \.self) { unit in
+                        Button { update(unit: unit); feedback() } label: {
+                            HStack(spacing: 5) {
+                                if denominator == unit { LED(on: true, size: 5) }
+                                RhythmGlyph(count: 1, noteValue: unit).fill(p.ink).frame(width: 24, height: 24)
+                                Text("/\(unit)").font(InstrumentType.value(19))
+                            }.frame(maxWidth: .infinity).frame(height: 51)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+                            .accessibilityLabel(L10n.format("Note value /%d", unit))
+                            .accessibilityAddTraits(denominator == unit ? .isSelected : [])
+                    }
+                }
+                if !Rhythm.groupingOptions(selected).isEmpty {
+                    SectionLabel(text: "GROUPING", p: p)
+                    HStack(spacing: 9) {
+                        ForEach(Rhythm.groupingOptions(selected), id: \.self) { option in
+                            choice(option.map(String.init).joined(separator: "+"), selected: option == rhythm.effectiveGrouping, height: 44) { update(group: option) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private func choice(_ label: String, selected: Bool, height: CGFloat = 51, action: @escaping () -> Void) -> some View {
+        Button { action(); feedback() } label: {
+            HStack(spacing: 7) {
+                if selected { LED(on: true, size: 6) }
+                Text(L10n.text(label)).font(InstrumentType.value(label.count > 4 ? 16 : 23)).lineLimit(1).minimumScaleFactor(0.7)
+            }.frame(maxWidth: .infinity).frame(height: height)
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

@@ -434,6 +434,34 @@ private struct SongLabelFlow: Layout {
     }
 }
 
+@Observable private final class SongTextDraft {
+    var name: String
+    var notes: String
+    init(_ song: SavedPreset) {
+        name = song.name
+        notes = song.notes ?? ""
+    }
+}
+
+private struct SongSaveBar: View {
+    let text: SongTextDraft
+    let tempo: String
+    let p: InstrumentPalette
+    let cancel: () -> Void
+    let commit: (Int) -> Void
+    var body: some View {
+        let bpm = Int(tempo)
+        let valid = !text.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (20...300).contains(bpm ?? 0)
+        HStack(spacing: 12) {
+            Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 48) }
+                .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
+            Button { if let bpm { commit(bpm) } } label: { Text("Save").frame(maxWidth: .infinity, minHeight: 48) }
+                .buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).disabled(!valid).opacity(valid ? 1 : 0.45)
+                .accessibilityIdentifier("save-song")
+        }
+    }
+}
+
 struct SongEditor: View {
     let model: MetronomeModel
     let initial: SavedPreset
@@ -442,8 +470,8 @@ struct SongEditor: View {
     let delete: (() -> Void)?
     let cancel: () -> Void
     let save: (SavedPreset) -> Void
-    @State private var name = ""
-    @State private var notes = ""
+    @State private var text: SongTextDraft
+    @State private var customMeter = false
     @State private var tempo = ""
     @State private var draft = Rhythm()
     @Binding var picker: String?
@@ -455,37 +483,33 @@ struct SongEditor: View {
     }
     init(model: MetronomeModel, initial: SavedPreset, p: InstrumentPalette, picker: Binding<String?>, divisionEditing: Binding<Bool>, addToSetlist: (() -> Void)? = nil, delete: (() -> Void)? = nil, cancel: @escaping () -> Void, save: @escaping (SavedPreset) -> Void) {
         self.model = model; self.initial = initial; self.p = p
-        _name = State(initialValue: initial.name)
-        _notes = State(initialValue: initial.notes ?? "")
+        _text = State(initialValue: SongTextDraft(initial))
         _draft = State(initialValue: initial.rhythm.performanceCopy)
         _tempo = State(initialValue: String(initial.rhythm.bpm))
         self._picker = picker; self._divisionEditing = divisionEditing
         self.addToSetlist = addToSetlist; self.delete = delete
         self.cancel = cancel; self.save = save
     }
-    private var valid: Bool { !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (20...300).contains(Int(tempo) ?? 0) }
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        @Bindable var fields = text
+        return VStack(alignment: .leading, spacing: 20) {
             if let picker {
                 if picker == "division" {
                     DivisionPanel(rhythm: $draft, editing: $divisionEditing, playing: false, p: p, stopPreview: model.endSoundPreview)
                 } else if picker == "sound" {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(InstrumentSound.allCases, id: \.rawValue) { sound in
-                            Button {
-                                draft.sound = sound.rawValue; model.previewRhythm(draft)
-                            } label: {
-                                VStack(spacing: 10) { SoundIllustration(index: sound.illustration, p: p).frame(height: 55); Text(sound.title).font(.system(size: 12)) }.padding(17).frame(maxWidth: .infinity)
-                                    .overlay(alignment: .topLeading) { LED(on: draft.sound == sound.rawValue, size: 7).padding(10) }
-                            }.buttonStyle(HardwareButtonStyle(p: p))
-                        }
+                    SoundFamilies(selectedSound: draft.sound, p: p) { sound in
+                        draft.sound = sound
+                        model.previewRhythm(draft)
                     }
                 } else if picker == "tempo" {
                     HStack { Text("BPM"); Spacer(); TextField("BPM", text: $tempo).keyboardType(.numberPad).multilineTextAlignment(.trailing).font(InstrumentType.value(32)).frame(width: 110).focused($typing, equals: .tempo) }.padding(16).insetPanel(p, radius: 10).accessibilityIdentifier("song-bpm-input")
                     Text("20–300 BPM").font(.caption).foregroundStyle(p.muted)
-                } else { meterEditor }
+                } else {
+                    MeterPicker(rhythm: $draft, customMeter: $customMeter, p: p,
+                                feedback: model.tickFeedback, finishSelection: {})
+                }
             } else {
-                TextField("Song name", text: $name).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-name").focused($typing, equals: .name).submitLabel(.done).onSubmit { typing = nil }
+                TextField("Song name", text: $fields.name).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-name").focused($typing, equals: .name).submitLabel(.done).onSubmit { typing = nil }
                 VStack(spacing: 0) {
                     field("BPM", value: tempo, route: "tempo")
                     Divider()
@@ -496,17 +520,16 @@ struct SongEditor: View {
                     field("SOUND", value: InstrumentSound(rawValue: draft.sound)?.title ?? "", route: "sound")
                 }.insetPanel(p, radius: 12)
                 Text("Notes").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
-                TextField("", text: $notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
+                TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
                 if addToSetlist != nil || delete != nil {
                     HStack(spacing: 12) {
                         if let addToSetlist { Button(action: addToSetlist) { Label("Add to setlist", systemImage: "text.badge.plus").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("editor-add-to-setlist") }
                         if let delete { Button(action: delete) { Label("Delete", systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44) }.foregroundStyle(.red.opacity(0.8)).accessibilityIdentifier("editor-delete-song") }
                     }.buttonStyle(HardwareButtonStyle(p: p))
                 }
-                HStack(spacing: 12) {
-                    Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
-                    Button { draft.bpm = Int(tempo)!; save(SavedPreset(id: initial.id, name: name, rhythm: draft.performanceCopy, notes: notes)) } label: { Text("Save").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                        .disabled(!valid).opacity(valid ? 1 : 0.45).accessibilityIdentifier("save-song")
+                SongSaveBar(text: text, tempo: tempo, p: p, cancel: cancel) { bpm in
+                    draft.bpm = bpm
+                    save(SavedPreset(id: initial.id, name: text.name, rhythm: draft.performanceCopy, notes: text.notes))
                 }
                 if model.listsContainingSong(initial.id) > 0 {
                     Text("Saving updates this song in every setlist that includes it.").font(.footnote).foregroundStyle(p.muted)
@@ -524,17 +547,7 @@ struct SongEditor: View {
     private func field(_ title: String, value: String, route: String) -> some View {
         Button { typing = nil; picker = route } label: { HStack { Text(L10n.text(title)).font(.subheadline); Spacer(); Text(value).font(.system(size: 17, weight: .medium)); Image(systemName: "chevron.right").font(.caption) }.padding(.horizontal, 16).frame(height: 46).contentShape(Rectangle()) }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(route)")
     }
-    private var meterEditor: some View {
-        VStack(spacing: 18) {
-            Text("\(draft.beats)/\(draft.denominator)").font(InstrumentType.value(52)).frame(maxWidth: .infinity).padding(18).insetPanel(p, radius: 12)
-            HStack { ForEach([2,4,8,16], id: \.self) { d in
-                Button { draft.setMeter(beats: draft.beats, denominator: d, compound: true) } label: { Text("/\(d)").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: draft.denominator == d))
-            } }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) { ForEach(1...12, id: \.self) { n in
-                Button { draft.setMeter(beats: n, denominator: draft.denominator, compound: true); picker = nil } label: { Text("\(n)/\(draft.denominator)").frame(maxWidth: .infinity, minHeight: 48) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: draft.beats == n))
-            } }
-        }
-    }
+
 }
 
 private struct WholeSongDrag: ViewModifier {
