@@ -161,7 +161,7 @@ final class MetronomeAudio {
     }
 }
 
-struct SavedPreset: Identifiable, Codable {
+struct SavedPreset: Identifiable, Codable, Equatable {
     var id = UUID()
     var name: String
     var rhythm: Rhythm

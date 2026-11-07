@@ -238,7 +238,7 @@ struct SetlistPanel: View {
                 HStack(alignment: .firstTextBaseline, spacing: 10) { title; count }.fixedSize()
                 VStack(alignment: .leading, spacing: 4) { title; count }
             }
-            if !list.songs.isEmpty { songRows(list.songs, editing: false) }
+            if !list.songs.isEmpty { songRows(list.songs) }
         }
     }
     private var draftSongs: [SavedPreset] {
@@ -250,7 +250,24 @@ struct SetlistPanel: View {
             Text("Setlist name").font(.subheadline).foregroundStyle(p.muted)
             TextField("Setlist name", text: $listName).focused($namingList).submitLabel(.done).onSubmit { namingList = false }
                 .padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("setlist-name")
-            if !draftSongs.isEmpty { songRows(draftSongs, editing: true) }
+            if !draftSongs.isEmpty {
+                EditableSongOrder(songs: draftSongs, order: $draftSongIDs) { index, value in
+                    HStack(spacing: 6) {
+                        grip("drag-song-\(value.name)")
+                        Text(String(format: "%02d", index + 1)).monospacedDigit().font(.caption).foregroundStyle(p.muted)
+                            .accessibilityIdentifier("song-position-\(value.name)")
+                        songInfo(value).frame(maxWidth: .infinity, alignment: .leading)
+                        Button { song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
+                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Edit song").accessibilityIdentifier("edit-song-\(value.name)")
+                        Button { draftSongIDs.removeAll { $0 == value.id } } label: { Image(systemName: "minus").frame(width: 44, height: 44) }
+                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Remove from setlist").accessibilityIdentifier("delete-song-\(value.name)")
+                    }.padding(.horizontal, 10).padding(.vertical, 10).frame(minHeight: 76)
+                        .overlay(alignment: .bottom) { divider }
+                        .foregroundStyle(p.ink)
+                }
+                .frame(height: min(CGFloat(draftSongIDs.count) * 76, 456))
+                .insetPanel(p, radius: 16)
+            }
             Button { dismissTextInput(); adding = true; search = "" } label: { Label("Add song", systemImage: "plus").frame(maxWidth: .infinity, minHeight: 48) }
                 .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("add-song")
             if !creatingList {
@@ -260,43 +277,25 @@ struct SetlistPanel: View {
             }
         }
     }
-    private func songRows(_ songs: [SavedPreset], editing: Bool) -> some View {
+    private func songRows(_ songs: [SavedPreset]) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(songs.enumerated()), id: \.element.id) { index, value in
-                HStack(alignment: editing ? .center : .firstTextBaseline, spacing: editing ? 6 : 10) {
-                    if editing { grip("drag-song-\(value.name)") }
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(String(format: "%02d", index + 1)).monospacedDigit().font(.system(size: 13)).foregroundStyle(p.muted).frame(minWidth: 20)
                         .accessibilityIdentifier("song-position-\(value.name)")
-                    if editing {
-                        songInfo(value).frame(maxWidth: .infinity, alignment: .leading)
-                        Button { song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
-                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Edit song").accessibilityIdentifier("edit-song-\(value.name)")
-                        Button { draftSongIDs.removeAll { $0 == value.id } } label: { Image(systemName: "minus").frame(width: 44, height: 44) }
-                            .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Remove from setlist").accessibilityIdentifier("delete-song-\(value.name)")
-                    } else {
-                        Button {
-                            if let id = browsingSetlistID {
-                                useCounts[id.uuidString, default: 0] += 1
-                                UserDefaults.standard.set(useCounts, forKey: "performedSetlists")
-                            }
-                            model.loadSong(value, from: browsingSetlistID)
-                            performing = true
-                        } label: {
-                            HStack { songInfo(value); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
-                                .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
-                        }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
-                            .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
-                    }
-                }.padding(.horizontal, editing ? 10 : 16).padding(.vertical, 10).id(value.id)
-                    .modifier(WholeSongDrag(enabled: editing, id: value.id, dragging: $dragging, session: $dragSession) { id, target in
-                        guard let destination = songs.firstIndex(where: { $0.id == target }) else { return }
-                        reorder {
-                            if editing {
-                                guard let start = draftSongIDs.firstIndex(of: id), draftSongIDs.indices.contains(destination), start != destination else { return }
-                                let moved = draftSongIDs.remove(at: start); draftSongIDs.insert(moved, at: destination)
-                            } else { model.moveSong(id, to: destination, in: browsingSetlistID) }
+                    Button {
+                        if let id = browsingSetlistID {
+                            useCounts[id.uuidString, default: 0] += 1
+                            UserDefaults.standard.set(useCounts, forKey: "performedSetlists")
                         }
-                    })
+                        model.loadSong(value, from: browsingSetlistID)
+                        performing = true
+                    } label: {
+                        HStack { songInfo(value); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
+                            .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
+                    }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
+                        .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
+                }.padding(.horizontal, 16).padding(.vertical, 10)
                 if value.id != songs.last?.id { divider }
             }
         }.insetPanel(p, radius: 16)
@@ -312,26 +311,38 @@ struct SetlistPanel: View {
         }
     }
     private func score(_ value: SavedPreset) -> some View { RhythmScore(rhythm: value.rhythm, color: p.muted).frame(width: 48, height: 24) }
-    private func addOption(_ title: String, icon: String, id: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) { HStack(spacing: 14) { Image(systemName: icon).frame(width: 24); Text(L10n.text(title)); Spacer(); Image(systemName: "chevron.right").font(.caption) }.padding(18).frame(minHeight: 64) }
-            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(id)
-    }
     private var savedSongPicker: some View {
         let entries = model.songLibrary.filter { search.isEmpty || $0.name.localizedStandardContains(search) }
-        return VStack(spacing: 14) {
+        return VStack(alignment: .leading, spacing: 14) {
             searchField
-            addOption("New song", icon: "plus", id: "new-song") { dismissTextInput(); song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy) }
-            if entries.isEmpty { Text(L10n.text(search.isEmpty ? "No songs yet." : "No matches.")).foregroundStyle(p.muted).padding(.vertical, 20) }
-            ForEach(entries) { value in
-                let exists = draftSongIDs.contains(value.id)
+            HStack {
+                Text("Song library").font(.headline)
+                Spacer()
                 Button {
                     dismissTextInput()
-                    draftSongIDs.append(value.id)
-                    adding = false
-                    search = ""
+                    song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
                 } label: {
-                    HStack { songInfo(value); Spacer(); Image(systemName: exists ? "checkmark" : "plus") }.padding(16).frame(minHeight: 68)
-                }.buttonStyle(HardwareButtonStyle(p: p)).disabled(exists).accessibilityIdentifier("import-song-\(value.name)")
+                    Label("New song", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-song")
+            }
+            if entries.isEmpty {
+                Text(L10n.text(search.isEmpty ? "No songs yet." : "No matches.")).foregroundStyle(p.muted).padding(.vertical, 20)
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(entries) { value in
+                        let exists = draftSongIDs.contains(value.id)
+                        Button {
+                            dismissTextInput()
+                            draftSongIDs.append(value.id)
+                            adding = false
+                            search = ""
+                        } label: {
+                            HStack { songInfo(value); Spacer(); Image(systemName: exists ? "checkmark" : "plus") }
+                                .padding(14).frame(minHeight: 60).contentShape(Rectangle())
+                        }.buttonStyle(InsetRowButtonStyle(p: p)).disabled(exists).accessibilityIdentifier("import-song-\(value.name)")
+                        if value.id != entries.last?.id { divider }
+                    }
+                }.insetPanel(p, radius: 14)
             }
         }
     }
@@ -632,6 +643,86 @@ private struct FullSizeSongDrag<Content: View>: UIViewControllerRepresentable {
         }
         func dragInteraction(_ interaction: UIDragInteraction, session: UIDragSession, didEndWith operation: UIDropOperation) {
             if parent.session == token { parent.dragging = nil }
+        }
+    }
+}
+
+/// UIKit owns the moving gap until the gesture ends; SwiftUI owns the saved draft.
+private struct EditableSongOrder<Row: View>: UIViewRepresentable {
+    let songs: [SavedPreset]
+    @Binding var order: [UUID]
+    @ViewBuilder let row: (Int, SavedPreset) -> Row
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeUIView(context: Context) -> UICollectionView {
+        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(76))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: size, subitems: [NSCollectionLayoutItem(layoutSize: size)])
+        let layout = UICollectionViewCompositionalLayout(section: NSCollectionLayoutSection(group: group))
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = .clear
+        view.alwaysBounceVertical = false
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "song")
+        view.dataSource = context.coordinator
+        let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.drag(_:)))
+        gesture.minimumPressDuration = 0.18
+        gesture.delegate = context.coordinator
+        view.addGestureRecognizer(gesture)
+        return view
+    }
+    func updateUIView(_ view: UICollectionView, context: Context) {
+        let coordinator = context.coordinator
+        coordinator.parent = self
+        if !coordinator.moving && coordinator.items != songs {
+            coordinator.items = songs
+            view.reloadData()
+        }
+    }
+    final class Coordinator: NSObject, UICollectionViewDataSource, UIGestureRecognizerDelegate {
+        var parent: EditableSongOrder
+        var items: [SavedPreset]
+        var moving = false
+        var grabOffset: CGFloat = 0
+        init(_ parent: EditableSongOrder) { self.parent = parent; items = parent.songs }
+        func collectionView(_ view: UICollectionView, numberOfItemsInSection section: Int) -> Int { items.count }
+        func collectionView(_ view: UICollectionView, cellForItemAt path: IndexPath) -> UICollectionViewCell {
+            let cell = view.dequeueReusableCell(withReuseIdentifier: "song", for: path)
+            configure(cell, at: path.item)
+            return cell
+        }
+        private func configure(_ cell: UICollectionViewCell, at index: Int) {
+            cell.contentConfiguration = UIHostingConfiguration { parent.row(index, items[index]) }.margins(.all, 0)
+        }
+        func collectionView(_ view: UICollectionView, canMoveItemAt path: IndexPath) -> Bool { items.count > 1 }
+        func collectionView(_ view: UICollectionView, moveItemAt source: IndexPath, to destination: IndexPath) {
+            let moved = items.remove(at: source.item)
+            items.insert(moved, at: destination.item)
+            parent.order = items.map(\.id)
+            DispatchQueue.main.async {
+                for path in view.indexPathsForVisibleItems where self.items.indices.contains(path.item) {
+                    if let cell = view.cellForItem(at: path) { self.configure(cell, at: path.item) }
+                }
+            }
+        }
+        func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+            guard let view = recognizer.view as? UICollectionView else { return false }
+            let point = recognizer.location(in: view)
+            return items.count > 1 && point.x <= 48 && view.indexPathForItem(at: point) != nil
+        }
+        @objc func drag(_ gesture: UILongPressGestureRecognizer) {
+            guard let view = gesture.view as? UICollectionView else { return }
+            let point = gesture.location(in: view)
+            switch gesture.state {
+            case .began:
+                guard let path = view.indexPathForItem(at: point) else { return }
+                dismissTextInput()
+                grabOffset = (view.layoutAttributesForItem(at: path)?.center.y ?? point.y) - point.y
+                moving = view.beginInteractiveMovementForItem(at: path)
+            case .changed where moving:
+                view.updateInteractiveMovementTargetPosition(CGPoint(x: view.bounds.midX, y: point.y + grabOffset))
+            case .ended where moving: view.endInteractiveMovement(); moving = false
+            case .cancelled, .failed: view.cancelInteractiveMovement(); moving = false
+            default: break
+            }
         }
     }
 }

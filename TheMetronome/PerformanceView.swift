@@ -163,10 +163,10 @@ struct PerformanceBeatCue: View {
                     .frame(height: 36)
                     .accessibilityHidden(true)
                 Text(current.map { String($0 + 1) } ?? L10n.text("Ready?"))
-                    .font(InstrumentType.display(current == nil ? min(64, geometry.size.width * 0.19) : min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
+                    .font(InstrumentType.display(current == nil ? min(86, geometry.size.width * 0.25) : min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
                     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .foregroundStyle(current == nil || strength == 0 ? p.muted : p.ink)
+                    .foregroundStyle(current != nil && strength == 0 ? p.muted : p.ink)
                     .contentTransition(.identity)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: min(count, 6)), spacing: 10) {
                     ForEach(0..<count, id: \.self) { index in
