@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct TheMetronomeApp: App {
     @StateObject private var model = MetronomeModel()
-    var body: some Scene { WindowGroup { MetronomeView(model: model).preferredColorScheme(model.dark ? .dark : .light) } }
+    var body: some Scene { WindowGroup { MetronomeView(model: model).background(KeyboardGestures()).preferredColorScheme(model.dark ? .dark : .light) } }
 }
 
 struct MetronomeView: View {
@@ -28,6 +28,7 @@ struct MetronomeView: View {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .environment(\.exitLiveMode, { panel = nil; settings = false })
             .onAppear {
                 #if DEBUG

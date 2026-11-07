@@ -134,7 +134,7 @@ final class StageFeatureUITests: XCTestCase {
         XCTAssertTrue(app.buttons["new-setlist"].waitForExistence(timeout: 8)); app.buttons["new-setlist"].tap()
         let name = app.textFields["setlist-name"]
         XCTAssertTrue(name.waitForExistence(timeout: 8)); name.tap(); name.typeText("Friday show")
-        app.buttons["hide-keyboard"].tap()
+        app.textFields["setlist-name"].typeText("\n")
         for (song, bpm) in [("Opening", "95"), ("Night drive", "140"), ("Encore", "85")] {
             reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
             app.buttons["new-song"].tap()
@@ -238,10 +238,10 @@ final class OrganizationUITests: XCTestCase {
         app.buttons["close-panel"].tap()
         app.buttons["settings-setlists"].tap()
         app.buttons["new-setlist"].tap(); app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Friday show")
-        app.buttons["hide-keyboard"].tap(); app.buttons["add-song"].tap()
-        app.buttons["import-presets"].tap(); capture(app, "Import preset copy")
-        app.buttons["choose-setlist"].tap(); XCTAssertFalse(app.buttons["song-Warm hands"].exists)
-        app.buttons["import-presets"].tap(); app.buttons["import-preset-Warm hands"].tap(); app.buttons["save-setlist"].tap()
+        app.textFields["setlist-name"].typeText("\n"); app.buttons["add-song"].tap()
+        app.buttons["new-song"].tap()
+        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Warm hands\n")
+        app.buttons["save-song"].tap(); app.buttons["save-setlist"].tap()
         XCTAssertTrue(app.buttons["song-Warm hands"].exists)
         capture(app, "Setlist with practice copy")
         app.buttons["song-Warm hands"].tap(); app.buttons["close-performance"].tap(); app.buttons["close-panel"].tap()

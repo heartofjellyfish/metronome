@@ -3,9 +3,10 @@ import XCTest
 final class PerformanceUITests: XCTestCase {
     private var app: XCUIApplication!
     override func setUpWithError() throws { continueAfterFailure = false }
-    private func launch(_ lang: String = "zh-Hans", dark: Bool = false) {
+    private func launch(_ lang: String = "zh-Hans", dark: Bool = false, manyLists: Bool = false) {
         app = XCUIApplication()
         app.launchArguments = ["--reference", dark ? "--dark" : "--light", "--redesign-ui-test", "-AppleLanguages", "(\(lang))", "-AppleLocale", lang == "zh-Hans" ? "zh_CN" : "en_US"]
+        if manyLists { app.launchArguments.append("--many-setlists") }
         app.launch(); XCTAssertTrue(app.buttons["settings"].waitForExistence(timeout: 5))
     }
     private func b(_ id: String) -> XCUIElement {
@@ -20,7 +21,25 @@ final class PerformanceUITests: XCTestCase {
     }
     private func shot(_ name: String) { RunLoop.current.run(until: Date().addingTimeInterval(0.4)); let a = XCTAttachment(screenshot: app.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a) }
     private func settleDrop() { RunLoop.current.run(until: Date().addingTimeInterval(0.6)) }
+    private func swipeKeyboardAway() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.23))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.42)))
+    }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testOverflowSearchAndFrequentSetlists() {
+        launch("en", manyLists: true)
+        tap("settings"); tap("settings-setlists")
+        let search = app.textFields["setlist-search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 3))
+        search.tap()
+        XCTAssertTrue(app.staticTexts["Frequently used"].exists)
+        search.typeText("Tour 24")
+        XCTAssertFalse(b("setlist-Saturday").exists)
+        tap("setlist-Tour 24"); tap("song-Gossip")
+        XCTAssertEqual(b("close-performance").value as? String, "Tour 24")
+        shot("25-live")
+        tap("performance-edit"); shot("25-editor")
+    }
     func testLibraryRepeatedDragBothDirections() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
         for iteration in 0..<6 {
@@ -46,7 +65,7 @@ final class PerformanceUITests: XCTestCase {
         tap("cancel-song")
         XCTAssertEqual(second.frame.minY, oldY, accuracy: 2)
         let search = app.textFields["song-search"]
-        search.tap(); tap("hide-keyboard"); XCTAssertFalse(app.keyboards.firstMatch.exists)
+        search.tap(); swipeKeyboardAway(); XCTAssertFalse(app.keyboards.firstMatch.exists)
         tap("library-open-Gossip")
         XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
         XCTAssertFalse(app.staticTexts["performance-setlist"].exists)
@@ -76,14 +95,14 @@ final class PerformanceUITests: XCTestCase {
         tap("edit-setlist")
         let name = app.textFields["setlist-name"]
         name.tap(); name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "2026 湾区巡演 — Friday night with our friends")
-        tap("hide-keyboard")
+        swipeKeyboardAway()
         tap("delete-song-Gossip"); tap("save-setlist")
         XCTAssertFalse(b("song-Gossip").exists)
         XCTAssertEqual(app.staticTexts["song-position-男孩别哭"].label, "01")
         shot("23-07-long-name")
         tap("song-男孩别哭")
-        XCTAssertTrue(app.staticTexts["performance-setlist"].label.contains("Friday night"))
-        XCTAssertFalse(app.staticTexts["performance-setlist"].label.contains("2 首"))
+        XCTAssertTrue((b("close-performance").value as? String ?? "").contains("Friday night"))
+        XCTAssertFalse((b("close-performance").value as? String ?? "").contains("2 首"))
         XCTAssertEqual(b("performance-play").label, "开始播放")
         tap("performance-play"); tap("performance-next")
         XCTAssertEqual(app.staticTexts["performance-song"].label, "夜来香")
@@ -94,8 +113,8 @@ final class PerformanceUITests: XCTestCase {
         tap("new-setlist"); shot("23-09-new-list")
         XCTAssertFalse(b("save-setlist").isEnabled)
         tap("cancel-setlist"); XCTAssertFalse(app.textFields["setlist-name"].exists)
-        tap("new-setlist"); app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("New show"); tap("hide-keyboard")
-        tap("add-song"); tap("import-songs"); tap("import-song-Gossip")
+        tap("new-setlist"); app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("New show"); swipeKeyboardAway()
+        tap("add-song"); tap("import-song-Gossip")
         XCTAssertTrue(b("edit-song-Gossip").exists)
         tap("save-setlist"); XCTAssertTrue(b("song-Gossip").exists)
         tap("edit-setlist"); tap("delete-setlist")
@@ -109,6 +128,7 @@ final class PerformanceUITests: XCTestCase {
     func testBuild23WholeRowReorderAndEmptyList() {
         launch("en"); tap("settings"); tap("settings-setlists"); tap("setlist-Saturday")
         XCTAssertFalse(app.images["drag-song-Gossip"].exists)
+        XCTAssertFalse(app.textFields["setlist-search"].exists)
         shot("24-browse")
         tap("edit-setlist")
         app.images["drag-song-Gossip"].press(forDuration: 0.7, thenDragTo: app.images["drag-song-夜来香"], withVelocity: .slow, thenHoldForDuration: 0.2)
@@ -117,14 +137,19 @@ final class PerformanceUITests: XCTestCase {
         tap("cancel-setlist")
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "01")
         tap("choose-setlist"); tap("new-setlist")
-        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Empty"); tap("hide-keyboard"); tap("save-setlist")
+        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Empty"); swipeKeyboardAway(); tap("save-setlist")
         XCTAssertTrue(app.staticTexts["0 songs"].exists); XCTAssertFalse(b("add-song").exists)
         shot("23-11-empty-list")
         tap("edit-setlist"); tap("add-song"); tap("new-song")
-        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Long song title — a whole verse to test wrapping"); tap("hide-keyboard")
+        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Long song title — a whole verse to test wrapping"); swipeKeyboardAway()
         tap("save-song"); tap("save-setlist")
         XCTAssertTrue(b("song-Long song title — a whole verse to test wrapping").exists)
         shot("23-12-long-song")
+        tap("song-Long song title — a whole verse to test wrapping")
+        tap("full-song-title")
+        XCTAssertTrue(app.staticTexts["Long song title — a whole verse to test wrapping"].exists)
+        tap("close-performance-overlay")
+        tap("close-performance")
         tap("choose-setlist")
         app.images["drag-setlist-Empty"].press(forDuration: 0.7, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
@@ -143,7 +168,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(b("performance-play").label, "停止播放")
         XCTAssertEqual(app.staticTexts["performance-position"].label, "第 1 首")
         let cueHeight = app.otherElements["performance-beat"].frame.height
-        XCTAssertEqual(app.staticTexts["performance-setlist"].label, "周六演出")
+        XCTAssertEqual((b("close-performance").value as? String ?? ""), "周六演出")
         tap("performance-edit")
         let notes = app.textFields["song-notes"].firstMatch
         notes.tap(); notes.typeText("Intro: wait four bars. Last chorus: stop on one.")
@@ -165,25 +190,27 @@ final class PerformanceUITests: XCTestCase {
     func testKeyboardEscapeAndUniformSongEditor() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
         let search = app.textFields["song-search"]
+        let restingY = search.frame.minY
         search.tap(); XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
-        shot("21-empty-search-keyboard"); tap("hide-keyboard")
+        XCTAssertEqual(search.frame.minY, restingY, accuracy: 2)
+        shot("21-empty-search-keyboard"); swipeKeyboardAway()
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
-        search.tap(); search.typeText("Gossip"); tap("hide-keyboard")
+        search.tap(); search.typeText("Gossip"); swipeKeyboardAway()
         XCTAssertTrue(app.otherElements["library-row-Gossip"].exists)
-        search.tap(); search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6)); tap("hide-keyboard")
+        search.tap(); search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6)); swipeKeyboardAway()
         tap("library-new-song")
         let name = app.textFields["song-name"]
-        name.tap(); name.typeText("A new song with a longer title"); tap("hide-keyboard")
+        name.tap(); name.typeText("A new song with a longer title"); swipeKeyboardAway()
         XCTAssertEqual(name.value as? String, "A new song with a longer title")
         shot("22-uniform-song-editor")
         tap("song-tempo"); app.textFields["BPM"].tap(); app.textFields["BPM"].typeText("123")
-        tap("hide-keyboard"); XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
+        swipeKeyboardAway(); XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
         tap("song-picker-back"); XCTAssertTrue(b("song-tempo").label.contains("123"))
         tap("song-sound"); XCTAssertEqual(app.buttons.matching(identifier: "song-picker-back").count, 1)
         XCTAssertFalse(b("choose-setlist").exists); shot("23-single-sound-back")
         tap("song-picker-back"); XCTAssertEqual(name.value as? String, "A new song with a longer title")
         let notes = app.textFields["song-notes"]
-        notes.tap(); notes.typeText("Four bars in. Watch the ending."); tap("hide-keyboard")
+        notes.tap(); notes.typeText("Four bars in. Watch the ending."); swipeKeyboardAway()
         XCTAssertEqual(notes.value as? String, "Four bars in. Watch the ending.")
         tap("save-song"); XCTAssertTrue(app.otherElements["library-row-A new song with a longer title"].exists)
         XCTAssertFalse(b("library-reorder").exists); shot("24-library-always-draggable")
@@ -201,8 +228,8 @@ final class PerformanceUITests: XCTestCase {
     }
     func testLibraryMembershipLabelsAndIndependentReorder() {
         launch(); tap("settings"); tap("settings-setlists"); tap("new-setlist")
-        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Sunday"); tap("hide-keyboard")
-        tap("add-song"); tap("import-songs"); tap("import-song-Gossip"); tap("save-setlist")
+        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Sunday"); swipeKeyboardAway()
+        tap("add-song"); tap("import-song-Gossip"); tap("save-setlist")
         tap("close-panel"); tap("settings-songLibrary")
         XCTAssertTrue(app.staticTexts["membership-Gossip-周六演出"].exists)
         XCTAssertTrue(app.staticTexts["membership-Gossip-Sunday"].exists)
@@ -284,9 +311,9 @@ final class PerformanceUITests: XCTestCase {
         tap("close-performance"); tap("choose-setlist")
         XCTAssertTrue(b("setlist-Saturday").exists)
         tap("new-setlist")
-        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Sunday"); tap("hide-keyboard")
+        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Sunday"); swipeKeyboardAway()
         tap("add-song"); shot("05-add-song-sources")
-        tap("import-presets"); tap("import-preset-Warm hands"); tap("save-setlist")
+        tap("new-song"); app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Warm hands\n"); tap("save-song"); tap("save-setlist")
         XCTAssertTrue(b("song-Warm hands").exists)
         tap("close-panel"); tap("close-settings")
         XCTAssertTrue((b("presets").value as? String ?? "").contains("Gossip"))
@@ -305,15 +332,15 @@ final class PerformanceUITests: XCTestCase {
     }
     func testSharedSongAddEditRemoveAndReuse() {
         launch("en"); tap("settings"); tap("settings-setlists"); tap("new-setlist")
-        let field = app.textFields["setlist-name"]; field.tap(); field.typeText("Sunday"); tap("hide-keyboard")
-        tap("add-song"); tap("import-songs"); tap("import-song-Gossip")
+        let field = app.textFields["setlist-name"]; field.tap(); field.typeText("Sunday"); swipeKeyboardAway()
+        tap("add-song"); tap("import-song-Gossip")
         tap("edit-song-Gossip"); tap("song-tempo")
-        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("141"); tap("hide-keyboard"); tap("song-picker-back"); tap("save-song")
+        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("141"); swipeKeyboardAway(); tap("song-picker-back"); tap("save-song")
         tap("save-setlist"); tap("choose-setlist"); tap("setlist-Saturday")
         XCTAssertTrue(b("song-Gossip").label.contains("141"))
         tap("choose-setlist"); tap("setlist-Sunday"); tap("edit-setlist")
         tap("delete-song-Gossip"); tap("save-setlist"); XCTAssertFalse(b("song-Gossip").exists)
-        tap("edit-setlist"); tap("add-song"); tap("import-songs")
+        tap("edit-setlist"); tap("add-song")
         XCTAssertTrue(b("import-song-Gossip").exists)
         tap("import-song-Gossip"); tap("save-setlist")
         XCTAssertTrue(b("song-Gossip").label.contains("141")); shot("05-song-reused")
@@ -331,12 +358,12 @@ final class PerformanceUITests: XCTestCase {
     }
     func testLibraryCreateSearchEditDeleteAndAddNavigation() {
         launch("en"); tap("settings"); tap("settings-songLibrary"); tap("library-new-song")
-        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Encore"); tap("hide-keyboard")
+        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Encore"); swipeKeyboardAway()
         tap("save-song"); XCTAssertTrue(app.otherElements["library-row-Encore"].exists)
-        let search = app.textFields["song-search"]; search.tap(); search.typeText("Encore"); tap("hide-keyboard")
+        let search = app.textFields["song-search"]; search.tap(); search.typeText("Encore"); swipeKeyboardAway()
         XCTAssertFalse(app.otherElements["library-row-Gossip"].exists)
         tap("library-edit-Encore"); tap("song-tempo")
-        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("127"); tap("hide-keyboard"); tap("song-picker-back")
+        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("127"); swipeKeyboardAway(); tap("song-picker-back")
         tap("editor-add-to-setlist"); tap("share-to-Saturday")
         XCTAssertTrue(b("song-tempo").label.contains("127")); tap("save-song")
         tap("library-edit-Encore"); tap("editor-delete-song"); shot("15-library-delete-confirmation")
@@ -352,7 +379,7 @@ final class PerformanceUITests: XCTestCase {
     func testSetlistRenameReorderAndDeleteKeepsLibrary() {
         launch("en"); openList("Saturday"); tap("edit-setlist")
         let name = app.textFields["setlist-name"]; name.tap()
-        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "Friday"); tap("hide-keyboard")
+        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "Friday"); swipeKeyboardAway()
         tap("save-setlist"); XCTAssertEqual(app.staticTexts["setlist-title"].label, "Friday")
         tap("edit-setlist"); tap("delete-setlist"); tap("Cancel")
         XCTAssertTrue(b("edit-song-Gossip").exists)

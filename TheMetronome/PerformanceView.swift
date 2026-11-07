@@ -13,7 +13,7 @@ extension EnvironmentValues {
 struct PerformanceView: View {
     @ObservedObject var model: MetronomeModel
     var fromSongLibrary = false
-    @Environment(\.dismiss) private var dismiss
+    let back: () -> Void
     @State private var editing = false
     @State private var songPicker: String?
     @State private var songDivisionEditing = false
@@ -31,23 +31,19 @@ struct PerformanceView: View {
         GeometryReader { geometry in
             VStack(spacing: 18) {
                 HStack(spacing: 12) {
-                    Button { dismiss() } label: {
-                        Label(L10n.text(fromSongLibrary ? "Song library" : "Song list"), systemImage: "chevron.left")
-                            .font(.system(size: 14)).padding(.horizontal, 12).frame(minHeight: 44)
+                    Button { back() } label: {
+                        Label(model.activeSetlist?.name ?? L10n.text(fromSongLibrary ? "Song library" : "Song list"), systemImage: "chevron.left")
+                            .font(.system(size: 14)).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 12).frame(minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("close-performance")
+                        .accessibilityValue(model.activeSetlist?.name ?? "")
                     Spacer(minLength: 0)
-                    Button { editing = true } label: { Text("Edit").frame(minWidth: 54, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityIdentifier("performance-edit")
+                    Button { editing = true } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityLabel("Edit").accessibilityIdentifier("performance-edit")
                     Button { exitLiveMode() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Return to metronome").accessibilityIdentifier("exit-live-mode")
                 }
                 ScrollView {
                     VStack(spacing: 18) {
                         VStack(alignment: .leading, spacing: 8) {
-                            if let list = model.activeSetlist {
-                                Text(list.name).font(.system(size: 18, weight: .medium)).foregroundStyle(p.muted)
-                                    .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-                                    .accessibilityIdentifier("performance-setlist")
-                            }
                             HStack(alignment: .firstTextBaseline, spacing: 12) {
                                 Text(model.currentSong?.name ?? L10n.text("Setlists"))
                                     .font(.system(size: 25, weight: .semibold)).lineLimit(2)
@@ -100,6 +96,7 @@ struct PerformanceView: View {
                 }.frame(height: 64)
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
                 .accessibilityHidden(editing || showingNotes || showingTitle)
+                .allowsHitTesting(!editing && !showingNotes && !showingTitle)
                 .background { InstrumentBody(p: p).ignoresSafeArea() }
                 .overlay {
                     if showingNotes {
@@ -108,7 +105,6 @@ struct PerformanceView: View {
                         overlayPanel("Full title", close: { showingTitle = false }) { Text(model.currentSong?.name ?? "").font(.title2).frame(maxWidth: .infinity, alignment: .leading) }
                     } else if editing, let current = model.currentSong {
                         overlayPanel(songPicker.map { SongEditor.title(for: songDivisionEditing ? "custom" : $0) } ?? "Edit song", close: { if songPicker != nil { model.endSoundPreview(); if songDivisionEditing { songDivisionEditing = false } else { songPicker = nil } } else { editing = false } }) {
-                            if model.listsContainingSong(current.id) > 1 { Text("Changes apply in every setlist.").font(.subheadline).foregroundStyle(p.muted) }
                             SongEditor(model: model, initial: current, p: p, picker: $songPicker, divisionEditing: $songDivisionEditing, cancel: { editing = false }) { value in
                                 model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes); editing = false
                             }.id(current.id)
@@ -145,7 +141,7 @@ struct PerformanceView: View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 18) {
-                HStack { Text(L10n.text(title)).font(.title3); Spacer(); KeyboardDismissButton(p: p); Button(action: close) { Image(systemName: editing && songPicker != nil ? "chevron.left" : "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing && songPicker != nil ? "song-picker-back" : "close-performance-overlay") }
+                HStack { Text(L10n.text(title)).font(.title3); Spacer(); Button(action: close) { Image(systemName: editing && songPicker != nil ? "chevron.left" : "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing && songPicker != nil ? "song-picker-back" : "close-performance-overlay") }
                 ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }.scrollDismissesKeyboard(.immediately)
             }.padding(22).frame(maxWidth: 550).background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
         }.accessibilityElement(children: .contain)
@@ -166,8 +162,8 @@ struct PerformanceBeatCue: View {
                     .opacity(strength == 2 ? 1 : strength == 4 ? 0.45 : 0)
                     .frame(height: 36)
                     .accessibilityHidden(true)
-                Text(current.map { String($0 + 1) } ?? "—")
-                    .font(InstrumentType.display(min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
+                Text(current.map { String($0 + 1) } ?? L10n.text("Ready?"))
+                    .font(InstrumentType.display(current == nil ? min(64, geometry.size.width * 0.19) : min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
                     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .foregroundStyle(current == nil || strength == 0 ? p.muted : p.ink)

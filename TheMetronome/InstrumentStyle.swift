@@ -267,20 +267,83 @@ func dismissTextInput() {
     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
 }
 
-/// A visible escape even for an empty search and a number pad with no return key.
-struct KeyboardDismissButton: View {
-    let p: InstrumentPalette
-    @State private var visible = false
-    var body: some View {
-        Group {
-            if visible {
-                Button(action: dismissTextInput) {
-                    Image(systemName: "keyboard.chevron.compact.down").frame(width: 44, height: 44)
-                }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                    .accessibilityLabel("Hide keyboard").accessibilityIdentifier("hide-keyboard")
+/// Observe touches on the app window so short, non-scrolling forms also dismiss naturally.
+struct KeyboardGestures: UIViewRepresentable {
+    final class Observer: UIView, UIGestureRecognizerDelegate {
+        private weak var attached: UIWindow?
+        private lazy var tap = UITapGestureRecognizer(target: self, action: #selector(hide))
+        private lazy var swipe: UISwipeGestureRecognizer = {
+            let gesture = UISwipeGestureRecognizer(target: self, action: #selector(hide))
+            gesture.direction = .down
+            return gesture
+        }()
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            NotificationCenter.default.removeObserver(self)
+            for gesture in [tap, swipe] as [UIGestureRecognizer] { attached?.removeGestureRecognizer(gesture) }
+            attached = window
+            guard let window else { return }
+            for gesture in [tap, swipe] as [UIGestureRecognizer] {
+                gesture.delegate = self
+                gesture.cancelsTouchesInView = false
+                gesture.isEnabled = false
+                window.addGestureRecognizer(gesture)
+            }
+            NotificationCenter.default.addObserver(self, selector: #selector(toggle(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(toggle(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        }
+        private weak var adjustedScroll: UIScrollView?
+        private var originalInset: CGFloat = 0
+        private func restoreInset() {
+            adjustedScroll?.contentInset.bottom = originalInset
+            adjustedScroll = nil
+        }
+        private func revealInput(over keyboard: CGRect) {
+            guard let window = attached else { return }
+            func responder(in view: UIView) -> UIView? {
+                if view.isFirstResponder { return view }
+                for child in view.subviews {
+                    if let input = responder(in: child) { return input }
+                }
+                return nil
+            }
+            guard let input = responder(in: window) else { return }
+            var ancestor = input.superview
+            while let view = ancestor {
+                if let scroll = view as? UIScrollView, !(scroll is UITextView) {
+                    let frame = scroll.convert(scroll.bounds, to: window)
+                    let obstruction = frame.intersection(window.convert(keyboard, from: window.screen.coordinateSpace))
+                    guard !obstruction.isNull else { return }
+                    if adjustedScroll !== scroll {
+                        restoreInset()
+                        adjustedScroll = scroll
+                        originalInset = scroll.contentInset.bottom
+                    }
+                    scroll.contentInset.bottom = max(originalInset, obstruction.height)
+                    scroll.scrollRectToVisible(input.convert(input.bounds, to: scroll).insetBy(dx: 0, dy: -10), animated: false)
+                    return
+                }
+                ancestor = view.superview
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in visible = true }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in visible = false }
+        @objc private func toggle(_ note: Notification) {
+            tap.isEnabled = note.name == UIResponder.keyboardWillShowNotification
+            swipe.isEnabled = tap.isEnabled
+            if tap.isEnabled, let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                revealInput(over: frame)
+            } else { restoreInset() }
+        }
+        @objc private func hide() { attached?.endEditing(true) }
+        func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var view = touch.view
+            while let current = view {
+                if current is UITextField || current is UITextView { return false }
+                view = current.superview
+            }
+            return true
+        }
+        func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
     }
+    func makeUIView(context: Context) -> Observer { Observer() }
+    func updateUIView(_ view: Observer, context: Context) {}
 }

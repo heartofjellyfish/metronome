@@ -431,6 +431,10 @@ final class MetronomeModel: ObservableObject {
             let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
             setlists = [SongSetlist(name: chinese ? "周六演出" : "Saturday", songs: [SavedPreset(name: "Gossip", rhythm: fast), SavedPreset(name: "男孩别哭", rhythm: slow), SavedPreset(name: "夜来香", rhythm: Rhythm())])]
             songLibrary = setlists.flatMap(\.songs)
+            if ProcessInfo.processInfo.arguments.contains("--many-setlists") {
+                setlists += (1...24).map { SongSetlist(name: "Tour \($0)", songs: songLibrary) }
+                defaults.set([setlists[0].id.uuidString: 3], forKey: "performedSetlists")
+            }
             activeSetlistID = nil; selectedSongID = nil; selectedPresetID = nil
         }
         #endif

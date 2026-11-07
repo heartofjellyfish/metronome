@@ -450,3 +450,7 @@
 "No setlists yet." = "セットリストはまだありません。";
 "Song list" = "曲一覧";
 "Songs stay in your library." = "曲はライブラリに残ります。";
+"Ready?" = "準備はいい？";
+"Saving updates this song in every setlist that includes it." = "保存すると、この曲を含むすべてのセットリストに反映されます。";
+"Frequently used" = "よく使う";
+"Clear search" = "検索をクリア";

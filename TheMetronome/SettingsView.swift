@@ -107,6 +107,7 @@ struct SettingsView: View {
             .foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light)
             .overlay { if let panel { InstrumentPanel(model: model, kind: panel) { self.panel = nil }.id(panelSession) } }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .onDisappear { model.endSoundPreview() }
             .onChange(of: model.error) { _, value in if value != nil { present(.audio) } }
     }

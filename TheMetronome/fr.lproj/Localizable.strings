@@ -450,3 +450,7 @@
 "No setlists yet." = "Aucune setlist pour le moment.";
 "Song list" = "Liste des morceaux";
 "Songs stay in your library." = "Les morceaux restent dans votre bibliothèque.";
+"Ready?" = "Prêt ?";
+"Saving updates this song in every setlist that includes it." = "Les modifications seront appliquées à toutes les setlists contenant ce morceau.";
+"Frequently used" = "Fréquentes";
+"Clear search" = "Effacer la recherche";
