@@ -95,6 +95,7 @@ struct RhythmScore: View {
     var color: Color = .primary
     var singleSlot: Int? = nil
     var explicitSlots = false
+    var alignsTrailingInk = false
     private var tuplet: String? {
         guard singleSlot == nil else { return nil }
         let n = rhythm.subdivision
@@ -115,28 +116,33 @@ struct RhythmScore: View {
             context.scaleBy(x: scale, y: scale)
             let start = (width - CGFloat(items.count - 1) * step) / 2
             let bottom = (height + 35) / 2, stemTop = bottom - 28
+            var outlines: [Path] = []
+            func fill(_ path: Path) {
+                if alignsTrailingInk { outlines.append(path) }
+                else { context.fill(path, with: .color(color)) }
+            }
             var stems = Path()
             for i in items.indices {
                 let note = items[i], x = start + CGFloat(i) * step
                 if note.rest {
                     let restCode: UInt16 = note.value <= 2 ? 0xE4E4 : note.value == 4 ? 0xE4E5 : note.value == 8 ? 0xE4E6 : note.value == 16 ? 0xE4E7 : note.value == 32 ? 0xE4E8 : note.value == 64 ? 0xE4E9 : 0xE4EA
-                    context.fill(MusicFont.path(restCode, in: CGRect(x: x-6, y: bottom-27, width: 12, height: 27)), with: .color(color))
+                    fill(MusicFont.path(restCode, in: CGRect(x: x-6, y: bottom-27, width: 12, height: 27)))
                     continue
                 }
-                context.fill(MusicFont.path(note.value <= 2 ? 0xE0A3 : 0xE0A4, in: CGRect(x:x-6,y:bottom-6,width:11,height:8)),with:.color(color))
+                fill(MusicFont.path(note.value <= 2 ? 0xE0A3 : 0xE0A4, in: CGRect(x:x-6,y:bottom-6,width:11,height:8)))
                 stems.move(to:CGPoint(x:x+4,y:bottom-3)); stems.addLine(to:CGPoint(x:x+4,y:stemTop))
-                if note.dotted { context.fill(Path(ellipseIn:CGRect(x:x+9,y:bottom-5,width:3,height:3)),with:.color(color)) }
+                if note.dotted { fill(Path(ellipseIn:CGRect(x:x+9,y:bottom-5,width:3,height:3))) }
                 if note.value >= 8 && !engraving.connected(i) {
                     let code: UInt16 = note.value == 8 ? 0xE240 : note.value == 16 ? 0xE242 : note.value == 32 ? 0xE244 : note.value == 64 ? 0xE246 : 0xE248
-                    context.fill(MusicFont.flag(code, at: CGPoint(x: x+4, y: stemTop)),with:.color(color))
+                    fill(MusicFont.flag(code, at: CGPoint(x: x+4, y: stemTop)))
                 }
             }
-            context.stroke(stems,with:.color(color),lineWidth:1.5)
+            fill(stems.strokedPath(StrokeStyle(lineWidth: 1.5)))
             for beam in engraving.beams {
                 let x1 = start + CGFloat(beam.from) * step + 4
                 let x2 = start + CGFloat(beam.to) * step + 4
-                context.fill(Path(CGRect(x: min(x1, x2), y: stemTop + CGFloat(beam.level) * 5,
-                                         width: abs(x2-x1) + 0.75, height: 2.8)), with: .color(color))
+                fill(Path(CGRect(x: min(x1, x2), y: stemTop + CGFloat(beam.level) * 5,
+                                         width: abs(x2-x1) + 0.75, height: 2.8)))
             }
             if let tuplet {
                 let characters = Array(tuplet)
@@ -150,12 +156,16 @@ struct RhythmScore: View {
                 var bracket=Path()
                 bracket.addLines([CGPoint(x:left,y:y+5),CGPoint(x:left,y:y),CGPoint(x:center-digitsWidth/2-3,y:y)])
                 bracket.addLines([CGPoint(x:center+digitsWidth/2+3,y:y),CGPoint(x:right,y:y),CGPoint(x:right,y:y+5)])
-                context.stroke(bracket,with:.color(color),style: StrokeStyle(lineWidth: max(1.5, 1 / scale), lineCap: .square, lineJoin: .miter))
+                fill(bracket.strokedPath(StrokeStyle(lineWidth: max(1.5, 1 / scale), lineCap: .square, lineJoin: .miter)))
                 for (index,ch) in characters.enumerated() {
                     let x=center-digitsWidth/2+CGFloat(index)*9
-                    if let number=ch.wholeNumberValue { context.fill(MusicFont.path(UInt16(0xE880+number),in:CGRect(x:x,y:y-5,width:8,height:10)),with:.color(color)) }
-                    else { for dy in [-2.0,2.0] { context.fill(Path(ellipseIn:CGRect(x:x+3,y:y+dy,width:1.5,height:1.5)),with:.color(color)) } }
+                    if let number=ch.wholeNumberValue { fill(MusicFont.path(UInt16(0xE880+number),in:CGRect(x:x,y:y-5,width:8,height:10))) }
+                    else { for dy in [-2.0,2.0] { fill(Path(ellipseIn:CGRect(x:x+3,y:y+dy,width:1.5,height:1.5))) } }
                 }
+            }
+            if alignsTrailingInk, let edge = outlines.filter({ !$0.isEmpty }).map({ $0.boundingRect.maxX }).max() {
+                context.translateBy(x: width - edge, y: 0)
+                for outline in outlines { context.fill(outline, with: .color(color)) }
             }
         }.accessibilityHidden(true)
     }

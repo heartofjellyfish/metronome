@@ -122,7 +122,7 @@ struct SongEditor: View {
                     field("METER", value: "\(draft.beats)/\(draft.denominator)", route: "meter")
                     Divider()
                     settingRow("DIVISION", route: "division") {
-                        RhythmScore(rhythm: draft, color: p.ink).frame(width: 90, height: 40)
+                        RhythmScore(rhythm: draft, color: p.ink, alignsTrailingInk: true).frame(width: 90, height: 40)
                     }
                     Divider()
                     field("SOUND", value: InstrumentSound(rawValue: draft.sound)?.title ?? "", route: "sound")
