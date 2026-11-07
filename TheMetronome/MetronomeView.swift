@@ -29,7 +29,6 @@ struct MetronomeView: View {
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
             .ignoresSafeArea(.keyboard, edges: .bottom)
-            .environment(\.exitLiveMode, { panel = nil; settings = false })
             .onAppear {
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--settings") { settings = true }

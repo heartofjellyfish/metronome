@@ -1,13 +1,5 @@
 import SwiftUI
 
-private struct ExitLiveModeKey: EnvironmentKey { static let defaultValue: () -> Void = {} }
-extension EnvironmentValues {
-    var exitLiveMode: () -> Void {
-        get { self[ExitLiveModeKey.self] }
-        set { self[ExitLiveModeKey.self] = newValue }
-    }
-}
-
 /// The performance surface shares the transport and clock with the instrument.
 /// Opening, closing and muting this view never starts, stops or resets that clock.
 struct PerformanceView: View {
@@ -18,8 +10,6 @@ struct PerformanceView: View {
     @State private var songPicker: String?
     @State private var songDivisionEditing = false
     @State private var showingNotes = false
-    @State private var showingTitle = false
-    @Environment(\.exitLiveMode) private var exitLiveMode
     private var notes: String { model.currentSong?.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
     private var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     private var position: Int? { model.activeSetlist?.songs.firstIndex { $0.id == model.selectedSongID } }
@@ -30,56 +20,16 @@ struct PerformanceView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 18) {
-                HStack(spacing: 12) {
-                    Button { back() } label: {
-                        Label(model.activeSetlist?.name ?? L10n.text(fromSongLibrary ? "Song library" : "Song list"), systemImage: "chevron.left")
-                            .font(.system(size: 14)).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 12).frame(minHeight: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("close-performance")
-                        .accessibilityValue(model.activeSetlist?.name ?? "")
-                    Spacer(minLength: 0)
-                    Button { editing = true } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(model.currentSong == nil).accessibilityLabel("Edit").accessibilityIdentifier("performance-edit")
-                    Button { exitLiveMode() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                        .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Return to metronome").accessibilityIdentifier("exit-live-mode")
-                }
                 ScrollView {
                     VStack(spacing: 18) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                                Text(model.currentSong?.name ?? L10n.text("Setlists"))
-                                    .font(.system(size: 25, weight: .semibold)).lineLimit(2)
-                                    .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("performance-song")
-                                if let position {
-                                    Text(L10n.format("Song %d", position + 1))
-                                        .font(.system(size: 13)).foregroundStyle(p.muted).fixedSize().accessibilityIdentifier("performance-position")
-                                }
-                            }
-                            if (model.currentSong?.name.count ?? 0) > 20 {
-                                Button { showingTitle = true } label: { Text("Full title").font(.caption).padding(10) }
-                                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("full-song-title")
-                            }
-                            HStack(spacing: 8) {
-                                Text("\(model.bpm) BPM").monospacedDigit().accessibilityIdentifier("performance-tempo")
-                                Text("·").accessibilityHidden(true)
-                                Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").accessibilityIdentifier("performance-meter")
-                                Text("·").accessibilityHidden(true)
-                                RhythmScore(rhythm: model.rhythm, color: p.muted).frame(maxWidth: 76).frame(height: 32)
-                                    .accessibilityHidden(false).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary).accessibilityIdentifier("performance-division")
-                                Spacer(minLength: 0)
-                                if !notes.isEmpty {
-                                    Button { showingNotes = true } label: {
-                                        Text("Notes").font(.system(size: 13, weight: .medium)).padding(.horizontal, 10).frame(minHeight: 44)
-                                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 8)).fixedSize()
-                                        .accessibilityIdentifier("view-song-notes")
-                                }
-                            }.font(.system(size: 16, weight: .medium)).foregroundStyle(p.muted).frame(height: 44).padding(.top, 6)
-                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        songHeader
                         PerformanceBeatCue(model: model, p: p)
                             .frame(height: max(260, min(580, geometry.size.height - (model.activeSetlist == nil ? 300 : 410))))
-                            .frame(maxWidth: .infinity).insetPanel(p, radius: 18)
+                            .frame(maxWidth: .infinity).insetPanel(p, radius: 18).padding(.horizontal, 22)
                         if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }
                 }.scrollBounceBehavior(.basedOnSize).scrollClipDisabled()
-                if model.activeSetlist != nil { songNavigation }
+                if model.activeSetlist != nil { songNavigation.padding(.horizontal, 22) }
                 GeometryReader { controls in
                   HStack(spacing: 14) {
                     Button { model.tap(); model.adjustCurrentSongTempo(model.bpm) } label: {
@@ -93,16 +43,14 @@ struct PerformanceView: View {
                         .accessibilityIdentifier("performance-play")
                         .layoutPriority(1)
                   }
-                }.frame(height: 64)
-            }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
-                .accessibilityHidden(editing || showingNotes || showingTitle)
-                .allowsHitTesting(!editing && !showingNotes && !showingTitle)
+                }.frame(height: 64).padding(.horizontal, 22)
+            }.padding(.bottom, 22).frame(maxWidth: 600).frame(maxWidth: .infinity)
+                .accessibilityHidden(editing || showingNotes)
+                .allowsHitTesting(!editing && !showingNotes)
                 .background { InstrumentBody(p: p).ignoresSafeArea() }
                 .overlay {
                     if showingNotes {
                         overlayPanel("Notes", close: { showingNotes = false }) { Text(notes).font(.title3).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled) }
-                    } else if showingTitle {
-                        overlayPanel("Full title", close: { showingTitle = false }) { Text(model.currentSong?.name ?? "").font(.title2).frame(maxWidth: .infinity, alignment: .leading) }
                     } else if editing, let current = model.currentSong {
                         overlayPanel(songPicker.map { SongEditor.title(for: songDivisionEditing ? "custom" : $0) } ?? "Edit song", close: { if songPicker != nil { model.endSoundPreview(); if songDivisionEditing { songDivisionEditing = false } else { songPicker = nil } } else { editing = false } }) {
                             SongEditor(model: model, initial: current, p: p, picker: $songPicker, divisionEditing: $songDivisionEditing, cancel: { editing = false }) { value in
@@ -114,6 +62,62 @@ struct PerformanceView: View {
         }.onChange(of: editing) { _, _ in songPicker = nil; songDivisionEditing = false }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
 
     }
+    private func editCurrentSong() {
+        guard model.currentSong != nil else { return }
+        editing = true
+    }
+
+    private var songHeader: some View {
+        let panel = InstrumentPalette(dark: true)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Button(action: back) {
+                    Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                }
+                .buttonStyle(HardwareButtonStyle(p: panel, radius: 8))
+                .accessibilityLabel(L10n.text(fromSongLibrary ? "Song library" : "Song list"))
+                .accessibilityIdentifier("close-performance")
+                if let list = model.activeSetlist {
+                    Text(list.name).font(.headline).foregroundStyle(panel.muted)
+                        .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("performance-setlist")
+                }
+                Spacer()
+            }
+            HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    if let position {
+                        Text(String(format: "%02d", position + 1))
+                            .font(InstrumentType.display(34)).foregroundStyle(panel.muted)
+                            .accessibilityLabel(L10n.format("Song %d", position + 1))
+                            .accessibilityIdentifier("performance-position")
+                        Rectangle().fill(panel.muted.opacity(0.45)).frame(width: 1, height: 46)
+                    }
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(model.currentSong?.name ?? L10n.text("Song library"))
+                            .font(.system(size: 30, weight: .bold)).fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("performance-song")
+                            .accessibilityAction(named: Text("Edit song"), editCurrentSong)
+                            .accessibilityAction(.default, editCurrentSong)
+                        HStack(spacing: 6) {
+                            Text("\(model.bpm) BPM").monospacedDigit().accessibilityIdentifier("performance-tempo")
+                            Text("·")
+                            Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").accessibilityIdentifier("performance-meter")
+                            Text("·")
+                            RhythmScore(rhythm: model.rhythm, color: panel.ink).frame(width: 58, height: 27)
+                                .accessibilityHidden(false).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary)
+                        }.font(.subheadline).foregroundStyle(panel.ink)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                    .onTapGesture(count: 2, perform: editCurrentSong)
+                if !notes.isEmpty {
+                    Button { showingNotes = true } label: { Text("Notes").font(.footnote).padding(.horizontal, 8).frame(minHeight: 44) }
+                        .buttonStyle(HardwareButtonStyle(p: panel, radius: 8)).accessibilityIdentifier("view-song-notes")
+                }
+            }
+        }.padding(.horizontal, 22).padding(.vertical, 14).foregroundStyle(panel.ink)
+            .background { InstrumentBody(p: panel) }
+    }
+
     private var songNavigation: some View {
         HStack(spacing: 12) {
             Button { model.performPedal(.previous) } label: {

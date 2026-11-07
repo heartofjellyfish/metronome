@@ -13,6 +13,7 @@ final class PerformanceUITests: XCTestCase {
         let matches = app.buttons.matching(identifier: id).allElementsBoundByIndex
         return matches.first { $0.isHittable } ?? app.buttons[id].firstMatch
     }
+    private var liveSongTitle: XCUIElement { app.descendants(matching: .any)["performance-song"].firstMatch }
     private func tap(_ id: String) {
         let button = b(id)
         for _ in 0..<7 { if button.exists && button.isHittable { break }; (app.scrollViews.allElementsBoundByIndex.last { $0.isHittable } ?? app.scrollViews.firstMatch).swipeUp() }
@@ -29,12 +30,17 @@ final class PerformanceUITests: XCTestCase {
         for digit in value { tap("key-\(digit)") }
         tap("panelApply")
     }
+    private func returnToInstrument() {
+        tap("close-performance")
+        tap("close-panel")
+        if b("close-settings").isHittable { tap("close-settings") }
+    }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
     func testSongNameTypingWhileLive() throws { try measureSongName(playing: true) }
     func testSongNameTypingWhileStopped() throws { try measureSongName(playing: false) }
     private func measureSongName(playing: Bool) throws {
         guard #available(iOS 26, *) else { throw XCTSkip("Hitch measurements require iOS 26.") }
-        launch("en"); openList("Saturday"); tap("song-Gossip"); if playing { tap("performance-play") }; tap("performance-edit")
+        launch("en"); openList("Saturday"); tap("song-Gossip"); if playing { tap("performance-play") }; liveSongTitle.doubleTap()
         let name = app.textFields["song-name"]
         name.tap()
         let options = XCTMeasureOptions()
@@ -65,8 +71,21 @@ final class PerformanceUITests: XCTestCase {
         tap("cancel-song")
         #endif
     }
+    func testDarkHeaderGestures() {
+        launch("en"); openList("Saturday"); tap("song-Gossip")
+        let title = liveSongTitle
+        title.tap()
+        XCTAssertFalse(app.textFields["song-name"].exists)
+        XCTAssertFalse(b("exit-live-mode").exists)
+        XCTAssertFalse(b("performance-edit").exists)
+        shot("31-live-header")
+        tap("performance-play"); title.doubleTap()
+        XCTAssertTrue(app.textFields["song-name"].exists)
+        tap("cancel-song"); XCTAssertEqual(b("performance-play").label, "Stop metronome")
+        tap("close-performance"); XCTAssertTrue(b("song-Gossip").exists)
+    }
     func testSongMeterAndCategorizedSounds() {
-        launch("en"); openList("Saturday"); tap("song-Gossip"); tap("performance-edit")
+        launch("en"); openList("Saturday"); tap("song-Gossip"); liveSongTitle.doubleTap()
         tap("song-meter"); tap("meter-6-8")
         XCTAssertTrue(b("meter-6-8").isSelected)
         tap("More meters")
@@ -77,7 +96,7 @@ final class PerformanceUITests: XCTestCase {
         shot("27-song-sounds")
         tap("song-picker-back"); tap("cancel-song")
         XCTAssertEqual(app.staticTexts["performance-meter"].label, "4/4")
-        tap("performance-edit"); tap("song-meter"); tap("meter-3-4"); tap("song-picker-back"); tap("save-song")
+        liveSongTitle.doubleTap(); tap("song-meter"); tap("meter-3-4"); tap("song-picker-back"); tap("save-song")
         XCTAssertEqual(app.staticTexts["performance-meter"].label, "3/4")
     }
     func testOverflowSearchAndFrequentSetlists() {
@@ -90,9 +109,9 @@ final class PerformanceUITests: XCTestCase {
         search.typeText("Tour 24")
         XCTAssertFalse(b("setlist-Saturday").exists)
         tap("setlist-Tour 24"); tap("song-Gossip")
-        XCTAssertEqual(b("close-performance").value as? String, "Tour 24")
+        XCTAssertEqual(app.staticTexts["performance-setlist"].label, "Tour 24")
         shot("25-live")
-        tap("performance-edit"); shot("25-editor")
+        liveSongTitle.doubleTap(); shot("25-editor")
     }
     func testLibraryRepeatedDragBothDirections() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
@@ -121,18 +140,18 @@ final class PerformanceUITests: XCTestCase {
         let search = app.textFields["song-search"]
         search.tap(); swipeKeyboardAway(); XCTAssertFalse(app.keyboards.firstMatch.exists)
         tap("library-open-Gossip")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
+        XCTAssertEqual(liveSongTitle.label, "Gossip")
         XCTAssertFalse(app.staticTexts["performance-setlist"].exists)
         XCTAssertFalse(app.staticTexts["performance-position"].exists)
         XCTAssertFalse(b("performance-next").exists)
         XCTAssertEqual(b("performance-play").label, "开始播放")
         tap("performance-play"); shot("23-03-standalone-live")
         tap("close-performance"); tap("library-open-男孩别哭")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
+        XCTAssertEqual(liveSongTitle.label, "男孩别哭")
         XCTAssertEqual(b("performance-play").label, "停止播放")
         tap("close-performance"); tap("library-open-夜来香")
         XCTAssertEqual(b("performance-play").label, "停止播放")
-        tap("performance-play"); tap("exit-live-mode")
+        tap("performance-play"); returnToInstrument()
         XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
     }
     func testBuild23ListBrowseDraftCancelSaveAndContext() {
@@ -155,11 +174,11 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["song-position-男孩别哭"].label, "01")
         shot("23-07-long-name")
         tap("song-男孩别哭")
-        XCTAssertTrue((b("close-performance").value as? String ?? "").contains("Friday night"))
-        XCTAssertFalse((b("close-performance").value as? String ?? "").contains("2 首"))
+        XCTAssertTrue(app.staticTexts["performance-setlist"].label.contains("Friday night"))
+        XCTAssertFalse(app.staticTexts["performance-setlist"].label.contains("2 首"))
         XCTAssertEqual(b("performance-play").label, "开始播放")
         tap("performance-play"); tap("performance-next")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "夜来香")
+        XCTAssertEqual(liveSongTitle.label, "夜来香")
         XCTAssertEqual(b("performance-play").label, "停止播放")
         shot("23-08-setlist-live")
         tap("performance-previous"); tap("performance-play"); tap("close-performance")
@@ -213,9 +232,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("song-Long song title — a whole verse to test wrapping").exists)
         shot("23-12-long-song")
         tap("song-Long song title — a whole verse to test wrapping")
-        tap("full-song-title")
         XCTAssertTrue(app.staticTexts["Long song title — a whole verse to test wrapping"].exists)
-        tap("close-performance-overlay")
         tap("close-performance")
         tap("choose-setlist")
         app.images["drag-setlist-Empty"].press(forDuration: 0.7, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)
@@ -231,28 +248,29 @@ final class PerformanceUITests: XCTestCase {
         launch(); tap("settings"); tap("settings-setlists"); shot("01-root")
         tap("setlist-周六演出"); shot("02-song-list")
         tap("song-Gossip"); tap("performance-play")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
+        XCTAssertEqual(liveSongTitle.label, "Gossip")
         XCTAssertEqual(b("performance-play").label, "停止播放")
         XCTAssertEqual(app.staticTexts["performance-position"].label, "第 1 首")
         let cueHeight = app.otherElements["performance-beat"].frame.height
-        XCTAssertEqual((b("close-performance").value as? String ?? ""), "周六演出")
-        tap("performance-edit")
+        XCTAssertEqual(app.staticTexts["performance-setlist"].label, "周六演出")
+        liveSongTitle.doubleTap()
         let notes = app.textFields["song-notes"].firstMatch
         notes.tap(); notes.typeText("Intro: wait four bars. Last chorus: stop on one.")
+        swipeKeyboardAway()
         tap("save-song"); XCTAssertFalse(app.staticTexts["performance-notes"].exists)
         XCTAssertEqual(app.otherElements["performance-beat"].frame.height, cueHeight, accuracy: 1)
-        XCTAssertEqual(b("view-song-notes").frame.midY, app.staticTexts["performance-tempo"].frame.midY, accuracy: 2)
+        XCTAssertTrue(b("view-song-notes").isHittable)
         shot("03-live-with-notes")
         tap("view-song-notes"); shot("04-notes-expanded"); tap("close-performance-overlay")
         tap("performance-next"); XCTAssertFalse(b("view-song-notes").exists)
         tap("performance-previous"); XCTAssertTrue(b("view-song-notes").exists)
-        tap("exit-live-mode")
+        returnToInstrument()
         XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
         XCTAssertEqual(b("transport").label, "停止播放")
         tap("transport"); tap("presets"); tap("song-Gossip")
         XCTAssertTrue(b("view-song-notes").exists)
         XCTAssertEqual(b("performance-play").label, "开始播放")
-        tap("exit-live-mode"); XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
+        returnToInstrument(); XCTAssertTrue(b("settings").waitForExistence(timeout: 3))
     }
     func testKeyboardEscapeAndUniformSongEditor() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
@@ -318,7 +336,7 @@ final class PerformanceUITests: XCTestCase {
     func testPerformanceVisualOnlyRepeatedSongsTempoAndReturning() {
         launch(); tap("settings"); tap("general-sound-off"); tap("close-settings")
         openList("周六演出"); shot("01-songs-zh"); tap("song-男孩别哭")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
+        XCTAssertEqual(liveSongTitle.label, "男孩别哭")
         XCTAssertFalse(b("performance-sound").exists)
         XCTAssertFalse(b("performance-division").exists)
         XCTAssertFalse(b("performance-plus").exists)
@@ -330,15 +348,15 @@ final class PerformanceUITests: XCTestCase {
         let changes = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value != %@", beat), object: cue)
         XCTAssertEqual(XCTWaiter.wait(for: [changes], timeout: 3), .completed)
         shot("02-live-playing-zh")
-        tap("performance-next"); XCTAssertEqual(app.staticTexts["performance-song"].label, "夜来香"); XCTAssertFalse(b("performance-next").isEnabled)
-        tap("performance-previous"); XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
-        tap("performance-previous"); XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip"); XCTAssertFalse(b("performance-previous").isEnabled)
+        tap("performance-next"); XCTAssertEqual(liveSongTitle.label, "夜来香"); XCTAssertFalse(b("performance-next").isEnabled)
+        tap("performance-previous"); XCTAssertEqual(liveSongTitle.label, "男孩别哭")
+        tap("performance-previous"); XCTAssertEqual(liveSongTitle.label, "Gossip"); XCTAssertFalse(b("performance-previous").isEnabled)
         tap("performance-next")
-        tap("performance-edit"); shot("03-live-editor")
+        liveSongTitle.doubleTap(); shot("03-live-editor")
         tap("song-tempo"); enterTempo("87"); tap("save-song")
         XCTAssertEqual(app.staticTexts["performance-tempo"].label, "87 BPM")
         XCTAssertEqual(b("performance-play").label, "停止播放")
-        tap("performance-edit"); tap("cancel-song")
+        liveSongTitle.doubleTap(); tap("cancel-song")
         XCTAssertEqual(app.staticTexts["performance-tempo"].label, "87 BPM")
         tap("close-performance"); XCTAssertTrue(b("song-男孩别哭").isSelected)
         XCTAssertFalse(b("setlist-play").exists)
@@ -356,7 +374,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(b("performance-previous").isEnabled)
         XCTAssertTrue(b("performance-next").label.contains("男孩别哭"))
         tap("performance-next")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "男孩别哭")
+        XCTAssertEqual(liveSongTitle.label, "男孩别哭")
         XCTAssertEqual(b("performance-play").label, "开始播放")
         XCTAssertTrue(b("performance-next").label.contains("夜来香"))
         XCTAssertEqual(b("performance-previous").frame.midY, b("performance-next").frame.midY, accuracy: 2)
@@ -366,7 +384,7 @@ final class PerformanceUITests: XCTestCase {
         shot("04-live-stopped")
         tap("performance-next"); XCTAssertFalse(b("performance-next").isEnabled)
         tap("performance-previous"); tap("performance-previous")
-        XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip")
+        XCTAssertEqual(liveSongTitle.label, "Gossip")
         XCTAssertEqual(b("performance-play").label, "开始播放")
         tap("performance-tap"); tap("performance-tap")
         XCTAssertTrue(b("performance-play").isHittable)
@@ -388,7 +406,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("setlist-Saturday").exists); XCTAssertTrue(b("setlist-Sunday").exists)
         shot("06-all-setlists")
         tap("setlist-Sunday"); XCTAssertFalse(b("song-Warm hands").isSelected)
-        tap("song-Warm hands"); XCTAssertEqual(app.staticTexts["performance-song"].label, "Warm hands")
+        tap("song-Warm hands"); XCTAssertEqual(liveSongTitle.label, "Warm hands")
         tap("close-performance"); tap("close-panel"); tap("close-settings")
         XCTAssertTrue((b("presets").value as? String ?? "").contains("Sunday"))
         tap("presets"); XCTAssertTrue(b("song-Warm hands").exists)
@@ -482,12 +500,12 @@ final class PerformanceUITests: XCTestCase {
     }
     func testDarkPerformanceEditCancelSaveAndReopenKeepsPlaying() {
         launch("en", dark: true); openList("Saturday"); tap("song-Gossip"); tap("performance-play")
-        tap("performance-edit"); tap("song-division"); tap("division-count-3"); tap("song-picker-back")
+        liveSongTitle.doubleTap(); tap("song-division"); tap("division-count-3"); tap("song-picker-back")
         tap("cancel-song")
         XCTAssertEqual(b("performance-play").label, "Stop metronome")
-        tap("performance-edit"); tap("song-division"); tap("division-count-2"); tap("song-picker-back"); tap("save-song")
+        liveSongTitle.doubleTap(); tap("song-division"); tap("division-count-2"); tap("song-picker-back"); tap("save-song")
         XCTAssertEqual(b("performance-play").label, "Stop metronome")
-        tap("performance-edit"); tap("song-division")
+        liveSongTitle.doubleTap(); tap("song-division")
         XCTAssertTrue(b("division-count-2").isSelected)
         tap("division-count-3"); tap("song-picker-back"); tap("save-song")
         shot("08-live-dark"); tap("performance-play"); tap("close-performance")
