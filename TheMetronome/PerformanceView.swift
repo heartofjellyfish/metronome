@@ -69,32 +69,33 @@ struct PerformanceView: View {
 
     private var songHeader: some View {
         let panel = InstrumentPalette(dark: true)
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
                 Button(action: back) {
-                    Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
+                        .frame(width: 32, height: 30)
                 }
-                .buttonStyle(HardwareButtonStyle(p: panel, radius: 8))
+                .buttonStyle(LiveBackKeyStyle(palette: panel))
                 .accessibilityLabel(L10n.text(fromSongLibrary ? "Song library" : "Song list"))
                 .accessibilityIdentifier("close-performance")
                 if let list = model.activeSetlist {
-                    Text(list.name).font(.headline).foregroundStyle(panel.muted)
+                    Text(list.name).font(.subheadline.weight(.medium)).foregroundStyle(Color(hex: 0xD4D0C7))
                         .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("performance-setlist")
                 }
                 Spacer()
-            }
+            }.padding(.leading, 11).padding(.trailing, 22)
             HStack(alignment: .center, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 16) {
                     if let position {
                         Text(String(format: "%02d", position + 1))
-                            .font(InstrumentType.display(34)).foregroundStyle(panel.muted)
+                            .font(InstrumentType.display(40)).foregroundStyle(Color(hex: 0xBDB9AF))
                             .accessibilityLabel(L10n.format("Song %d", position + 1))
                             .accessibilityIdentifier("performance-position")
-                        Rectangle().fill(panel.muted.opacity(0.45)).frame(width: 1, height: 46)
+                        Rectangle().fill(panel.muted.opacity(0.45)).frame(width: 1, height: 54)
                     }
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(model.currentSong?.name ?? L10n.text("Song library"))
-                            .font(.system(size: 30, weight: .bold)).fixedSize(horizontal: false, vertical: true)
+                            .font(.system(size: 44, weight: .bold)).tracking(-1).foregroundStyle(Color(hex: 0xF6F2E9)).fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier("performance-song")
                             .accessibilityAction(named: Text("Edit song"), editCurrentSong)
                             .accessibilityAction(.default, editCurrentSong)
@@ -105,7 +106,7 @@ struct PerformanceView: View {
                             Text("·")
                             RhythmScore(rhythm: model.rhythm, color: panel.ink).frame(width: 58, height: 27)
                                 .accessibilityHidden(false).accessibilityLabel("Subdivision").accessibilityValue(model.rhythm.divisionSummary)
-                        }.font(.subheadline).foregroundStyle(panel.ink)
+                        }.font(.body).foregroundStyle(Color(hex: 0xDAD6CD))
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                     .onTapGesture(count: 2, perform: editCurrentSong)
@@ -113,9 +114,12 @@ struct PerformanceView: View {
                     Button { showingNotes = true } label: { Text("Notes").font(.footnote).padding(.horizontal, 8).frame(minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: panel, radius: 8)).accessibilityIdentifier("view-song-notes")
                 }
+            }.padding(.horizontal, 22)
+        }.padding(.top, 8).padding(.bottom, 14).foregroundStyle(panel.ink)
+            .background {
+                LinearGradient(colors: [Color(hex: 0x2A2928), Color(hex: 0x20201F)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .overlay { MaterialGrain().opacity(0.055).blendMode(.overlay) }
             }
-        }.padding(.horizontal, 22).padding(.vertical, 14).foregroundStyle(panel.ink)
-            .background { InstrumentBody(p: panel) }
     }
 
     private var songNavigation: some View {
@@ -149,6 +153,20 @@ struct PerformanceView: View {
                 ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }.scrollDismissesKeyboard(.immediately)
             }.padding(22).frame(maxWidth: 550).background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
         }.accessibilityElement(children: .contain)
+    }
+}
+
+/// The key face is compact, while the whole 44-point target responds to a press.
+private struct LiveBackKeyStyle: ButtonStyle {
+    let palette: InstrumentPalette
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(palette.ink)
+            .background { HardwareKeySurface(p: palette, radius: 6, pressed: configuration.isPressed) }
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
     }
 }
 
