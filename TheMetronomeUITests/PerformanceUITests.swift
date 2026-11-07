@@ -108,19 +108,14 @@ final class PerformanceUITests: XCTestCase {
     }
     func testBuild23WholeRowReorderAndEmptyList() {
         launch("en"); tap("settings"); tap("settings-setlists"); tap("setlist-Saturday")
-        let from = app.images["drag-song-Gossip"]
-        let to = app.images["drag-song-男孩别哭"]
-        from.press(forDuration: 0.7, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
-        settleDrop()
-        XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "02")
-        XCTAssertEqual(app.staticTexts["song-position-男孩别哭"].label, "01")
-        shot("23-10-reordered")
+        XCTAssertFalse(app.images["drag-song-Gossip"].exists)
+        shot("24-browse")
         tap("edit-setlist")
         app.images["drag-song-Gossip"].press(forDuration: 0.7, thenDragTo: app.images["drag-song-夜来香"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "03")
         tap("cancel-setlist")
-        XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "02")
+        XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "01")
         tap("choose-setlist"); tap("new-setlist")
         app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Empty"); tap("hide-keyboard"); tap("save-setlist")
         XCTAssertTrue(app.staticTexts["0 songs"].exists); XCTAssertFalse(b("add-song").exists)

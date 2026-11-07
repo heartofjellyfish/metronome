@@ -176,7 +176,7 @@ struct SetlistPanel: View {
                                         Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
                                     }
                                     Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption)
-                                }.frame(maxWidth: .infinity, minHeight: 74).contentShape(Rectangle())
+                                }.frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
                             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
                         }.padding(.horizontal, 12).padding(.vertical, 5)
                             .modifier(WholeSongDrag(enabled: true, id: list.id, dragging: $dragging, session: $dragSession) { id, target in
@@ -195,9 +195,13 @@ struct SetlistPanel: View {
     private var divider: some View { Rectangle().fill(p.edge.opacity(0.4)).frame(height: 0.5).padding(.horizontal, 14) }
     private func listDetail(_ list: SongSetlist) -> some View {
         VStack(alignment: .leading, spacing: 22) {
-            Text(list.name).font(.system(size: 28, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("setlist-title")
-            songRows(list.songs, editing: false)
+            let title = Text(list.name).font(.system(size: 28, weight: .semibold)).accessibilityIdentifier("setlist-title")
+            let count = Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) { title; count }.fixedSize()
+                VStack(alignment: .leading, spacing: 4) { title; count }
+            }
+            if !list.songs.isEmpty { songRows(list.songs, editing: false) }
         }
     }
     private var draftSongs: [SavedPreset] {
@@ -221,10 +225,9 @@ struct SetlistPanel: View {
     }
     private func songRows(_ songs: [SavedPreset], editing: Bool) -> some View {
         VStack(spacing: 0) {
-            if !editing { Text(songCount(songs.count)).font(.subheadline).foregroundStyle(p.muted).frame(maxWidth: .infinity, alignment: .leading).padding(16); divider }
             ForEach(Array(songs.enumerated()), id: \.element.id) { index, value in
-                HStack(spacing: 6) {
-                    grip("drag-song-\(value.name)")
+                HStack(alignment: editing ? .center : .firstTextBaseline, spacing: editing ? 6 : 10) {
+                    if editing { grip("drag-song-\(value.name)") }
                     Text(String(format: "%02d", index + 1)).monospacedDigit().font(.system(size: 13)).foregroundStyle(p.muted).frame(minWidth: 20)
                         .accessibilityIdentifier("song-position-\(value.name)")
                     if editing {
@@ -236,12 +239,12 @@ struct SetlistPanel: View {
                     } else {
                         Button { model.loadSong(value, from: browsingSetlistID); performing = true } label: {
                             HStack { songInfo(value); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
-                                .frame(maxWidth: .infinity, minHeight: 74).contentShape(Rectangle())
+                                .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
                         }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
                             .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
                     }
-                }.padding(.horizontal, 10).padding(.vertical, 12).id(value.id)
-                    .modifier(WholeSongDrag(enabled: true, id: value.id, dragging: $dragging, session: $dragSession) { id, target in
+                }.padding(.horizontal, editing ? 10 : 16).padding(.vertical, 10).id(value.id)
+                    .modifier(WholeSongDrag(enabled: editing, id: value.id, dragging: $dragging, session: $dragSession) { id, target in
                         guard let destination = songs.firstIndex(where: { $0.id == target }) else { return }
                         reorder {
                             if editing {
