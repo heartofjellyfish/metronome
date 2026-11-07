@@ -289,9 +289,13 @@ struct KeyboardGestures: UIViewRepresentable {
                 gesture.isEnabled = false
                 window.addGestureRecognizer(gesture)
             }
+            for event in [UITextField.textDidBeginEditingNotification, UITextView.textDidBeginEditingNotification] {
+                NotificationCenter.default.addObserver(self, selector: #selector(beganEditing(_:)), name: event, object: nil)
+            }
             NotificationCenter.default.addObserver(self, selector: #selector(toggle(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(toggle(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         }
+        private weak var focusedInput: UIView?
         private weak var adjustedScroll: UIScrollView?
         private var originalInset: CGFloat = 0
         private func restoreInset() {
@@ -299,15 +303,7 @@ struct KeyboardGestures: UIViewRepresentable {
             adjustedScroll = nil
         }
         private func revealInput(over keyboard: CGRect) {
-            guard let window = attached else { return }
-            func responder(in view: UIView) -> UIView? {
-                if view.isFirstResponder { return view }
-                for child in view.subviews {
-                    if let input = responder(in: child) { return input }
-                }
-                return nil
-            }
-            guard let input = responder(in: window) else { return }
+            guard let window = attached, let input = focusedInput, input.isFirstResponder else { return }
             var ancestor = input.superview
             while let view = ancestor {
                 if let scroll = view as? UIScrollView, !(scroll is UITextView) {
@@ -326,12 +322,19 @@ struct KeyboardGestures: UIViewRepresentable {
                 ancestor = view.superview
             }
         }
+        @objc private func beganEditing(_ note: Notification) {
+            guard let field = note.object as? UIView, field.window === attached else { return }
+            focusedInput = field
+            if let keyboardFrame { revealInput(over: keyboardFrame) }
+        }
+        private var keyboardFrame: CGRect?
         @objc private func toggle(_ note: Notification) {
             tap.isEnabled = note.name == UIResponder.keyboardWillShowNotification
             swipe.isEnabled = tap.isEnabled
             if tap.isEnabled, let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardFrame = frame
                 revealInput(over: frame)
-            } else { restoreInset() }
+            } else { keyboardFrame = nil; restoreInset() }
         }
         @objc private func hide() { attached?.endEditing(true) }
         func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {

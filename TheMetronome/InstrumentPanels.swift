@@ -48,8 +48,6 @@ struct InstrumentPanel: View {
     let close: () -> Void
     let initialSetlistID: UUID?
     @State private var kind: InstrumentPanelKind
-    @State private var digits: String
-    @State private var replaceDigits = true
     @State private var selected: Int
     @State private var customMeter = false
     @State private var polyrhythmSoundLane: Int?
@@ -67,7 +65,6 @@ struct InstrumentPanel: View {
     init(model: MetronomeModel, kind: InstrumentPanelKind, initialSetlistID: UUID? = nil, close: @escaping () -> Void) {
         self.model = model; self.close = close; self.initialSetlistID = initialSetlistID
         _kind = State(initialValue: kind)
-        _digits = State(initialValue: String(kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm))
         let value: Int
         switch kind {
         case .meter: value = model.rhythm.beats
@@ -134,7 +131,16 @@ struct InstrumentPanel: View {
     }
     @ViewBuilder private var content: some View {
         switch kind {
-        case .tempo, .start, .end: numberPad
+        case .tempo, .start, .end:
+            TempoKeypad(initial: kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm,
+                        title: kind == .tempo ? "SET TEMPO" : "SET VALUE", p: p, feedback: model.tickFeedback) { value in
+                switch kind {
+                case .start: model.rhythm.start = value
+                case .end: model.rhythm.end = value
+                default: model.setBPM(value)
+                }
+                dismiss()
+            }.id(kind)
         case .meter: meterPicker
         case .division: DivisionPanel(rhythm: $model.rhythm, editing: $divisionEditing, playing: model.playing, p: p, stopPreview: model.endSoundPreview)
         case .countIn, .every, .increment: quantityPicker
@@ -152,47 +158,6 @@ struct InstrumentPanel: View {
                 commitButton("OK") { model.error = nil; dismiss() }
             }
         }
-    }
-    private var validNumber: Bool { Int(digits).map { TempoScale.range.contains($0) } ?? false }
-    private var numberPad: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(digits.isEmpty ? "—" : digits).font(InstrumentType.display(76)).lineLimit(1).minimumScaleFactor(0.5)
-                    .foregroundStyle(replaceDigits ? InstrumentPalette.orange : p.ink)
-                    .accessibilityLabel(L10n.format("Entered tempo, %@", digits.isEmpty ? L10n.text("empty") : digits))
-                Spacer(); Text("BPM").technical(12, spacing: 3).foregroundStyle(p.muted)
-            }.padding(.horizontal, 22).frame(height: 100).insetPanel(p, radius: 14)
-            HStack {
-                Text("20 — 300 BPM").technical(9, spacing: 1.5)
-                Spacer()
-                Text(L10n.text(validNumber ? (replaceDigits ? "TYPE TO REPLACE" : "READY") : "ENTER 20–300")).technical(9, spacing: 1).foregroundStyle(validNumber ? p.muted : InstrumentPalette.orange)
-            }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 11), count: 3), spacing: 11) {
-                ForEach(["1", "2", "3", "4", "5", "6", "7", "8", "9", "CLR", "0", "⌫"], id: \.self) { key in
-                    Button { typeDigit(key) } label: {
-                        Group {
-                            if key == "⌫" { Image(systemName: "delete.left").font(.system(size: 22, weight: .light)) }
-                            else if key == "CLR" { Text(L10n.text(key)).technical(11, spacing: 1) }
-                            else { Text(key).font(InstrumentType.value(29)) }
-                        }.frame(maxWidth: .infinity).frame(height: 54)
-                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
-                        .accessibilityLabel(L10n.text(key == "⌫" ? "Delete digit" : key == "CLR" ? "Clear tempo" : key))
-                        .accessibilityIdentifier("key-\(key)")
-                }
-            }
-            commitButton(kind == .tempo ? "SET TEMPO" : "SET VALUE", enabled: validNumber) {
-                guard let value = Int(digits), validNumber else { return }
-                if kind == .tempo { model.setBPM(value); dismiss() }
-                else { if kind == .start { model.rhythm.start = value } else { model.rhythm.end = value }; dismiss() }
-            }
-        }
-    }
-    private func typeDigit(_ key: String) {
-        model.tickFeedback()
-        if key == "CLR" { digits = ""; replaceDigits = false; return }
-        if key == "⌫" { if !digits.isEmpty { digits.removeLast() }; replaceDigits = false; return }
-        if replaceDigits { digits = key; replaceDigits = false }
-        else if digits.count < 3 { digits = digits == "0" ? key : digits + key }
     }
     private var meterPicker: some View {
         MeterPicker(rhythm: $model.rhythm, customMeter: $customMeter, p: p,
@@ -250,9 +215,9 @@ struct InstrumentPanel: View {
         VStack(alignment: .leading, spacing: 24) {
             switchRow("RAMP", value: $model.rhythm.ramp)
             HStack(spacing: 13) {
-                numberWell("START", value: model.rhythm.start) { openNumber(.start, value: model.rhythm.start) }
+                numberWell("START", value: model.rhythm.start) { navigate(.start) }
                 Image(systemName: "arrow.right").font(.system(size: 13))
-                numberWell("END", value: model.rhythm.end) { openNumber(.end, value: model.rhythm.end) }
+                numberWell("END", value: model.rhythm.end) { navigate(.end) }
             }
             HStack(spacing: 13) {
                 practiceChoice("EVERY", value: L10n.bars(model.rhythm.every), route: .every, selection: model.rhythm.every)
@@ -351,7 +316,6 @@ struct InstrumentPanel: View {
         guard !presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         model.addPreset(presetName); presetName = ""; naming = false
     }
-    private func openNumber(_ target: InstrumentPanelKind, value: Int) { digits = String(value); replaceDigits = true; navigate(target) }
     private func practiceChoice(_ title: String, value: String, route: InstrumentPanelKind, selection: Int) -> some View {
         Button { selected = selection; navigate(route) } label: {
             HStack(spacing: 9) {
@@ -368,11 +332,7 @@ struct InstrumentPanel: View {
     private func finishLiveSelection() { if !model.playing { dismiss() } }
     private func dismiss() { model.endSoundPreview(); if divisionEditing { divisionEditing = false; return }; if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack { Text(L10n.text(title)).technical(12, spacing: 2); Spacer(); Image(systemName: "arrow.right").font(.system(size: 17, weight: .light)) }
-                .padding(.horizontal, 19).frame(height: 52).frame(maxWidth: .infinity)
-        }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 10)).disabled(!enabled).opacity(enabled ? 1 : 0.45)
-            .accessibilityIdentifier("panelApply")
+        PanelCommitButton(title: title, enabled: enabled, p: p, action: action)
     }
     private func choice(_ label: String, selected: Bool, height: CGFloat = 51, action: @escaping () -> Void) -> some View {
         Button { action(); model.tickFeedback() } label: {

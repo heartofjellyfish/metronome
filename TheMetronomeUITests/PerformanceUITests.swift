@@ -25,10 +25,16 @@ final class PerformanceUITests: XCTestCase {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.23))
         start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.42)))
     }
+    private func enterTempo(_ value: String) {
+        for digit in value { tap("key-\(digit)") }
+        tap("panelApply")
+    }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
-    func testSongNameTypingWhileLive() throws {
+    func testSongNameTypingWhileLive() throws { try measureSongName(playing: true) }
+    func testSongNameTypingWhileStopped() throws { try measureSongName(playing: false) }
+    private func measureSongName(playing: Bool) throws {
         guard #available(iOS 26, *) else { throw XCTSkip("Hitch measurements require iOS 26.") }
-        launch("en"); openList("Saturday"); tap("song-Gossip"); tap("performance-play"); tap("performance-edit")
+        launch("en"); openList("Saturday"); tap("song-Gossip"); if playing { tap("performance-play") }; tap("performance-edit")
         let name = app.textFields["song-name"]
         name.tap()
         let options = XCTMeasureOptions()
@@ -37,6 +43,27 @@ final class PerformanceUITests: XCTestCase {
             name.typeText("Crisis" + String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
         }
         XCTAssertEqual(name.value as? String, "Gossip")
+    }
+    func testTypingInExistingPhoneLibraryWithoutSaving() throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("This journey measures the physical device.")
+        #else
+        guard #available(iOS 26, *) else { throw XCTSkip("Requires iOS 26.") }
+        app = XCUIApplication()
+        app.launch()
+        tap("settings"); tap("settings-songLibrary")
+        let pencil = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "library-edit-")).firstMatch
+        if pencil.exists { pencil.tap() } else { tap("library-new-song") }
+        let name = app.textFields["song-name"]
+        name.tap()
+        let options = XCTMeasureOptions()
+        options.iterationCount = 3
+        measure(metrics: [XCTHitchMetric(application: app), XCTCPUMetric(application: app)], options: options) {
+            name.typeText("Crisis" + String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6))
+        }
+        swipeKeyboardAway()
+        tap("cancel-song")
+        #endif
     }
     func testSongMeterAndCategorizedSounds() {
         launch("en"); openList("Saturday"); tap("song-Gossip"); tap("performance-edit")
@@ -243,9 +270,7 @@ final class PerformanceUITests: XCTestCase {
         name.tap(); name.typeText("A new song with a longer title"); swipeKeyboardAway()
         XCTAssertEqual(name.value as? String, "A new song with a longer title")
         shot("22-uniform-song-editor")
-        tap("song-tempo"); app.textFields["BPM"].tap(); app.textFields["BPM"].typeText("123")
-        swipeKeyboardAway(); XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
-        tap("song-picker-back"); XCTAssertTrue(b("song-tempo").label.contains("123"))
+        tap("song-tempo"); enterTempo("123"); XCTAssertTrue(b("song-tempo").label.contains("123"))
         tap("song-sound"); XCTAssertEqual(app.buttons.matching(identifier: "song-picker-back").count, 1)
         XCTAssertFalse(b("choose-setlist").exists); shot("23-single-sound-back")
         tap("song-picker-back"); XCTAssertEqual(name.value as? String, "A new song with a longer title")
@@ -310,7 +335,7 @@ final class PerformanceUITests: XCTestCase {
         tap("performance-previous"); XCTAssertEqual(app.staticTexts["performance-song"].label, "Gossip"); XCTAssertFalse(b("performance-previous").isEnabled)
         tap("performance-next")
         tap("performance-edit"); shot("03-live-editor")
-        tap("song-tempo"); let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("87"); tap("song-picker-back"); tap("save-song")
+        tap("song-tempo"); enterTempo("87"); tap("save-song")
         XCTAssertEqual(app.staticTexts["performance-tempo"].label, "87 BPM")
         XCTAssertEqual(b("performance-play").label, "停止播放")
         tap("performance-edit"); tap("cancel-song")
@@ -375,7 +400,7 @@ final class PerformanceUITests: XCTestCase {
         let field = app.textFields["setlist-name"]; field.tap(); field.typeText("Sunday"); swipeKeyboardAway()
         tap("add-song"); tap("import-song-Gossip")
         tap("edit-song-Gossip"); tap("song-tempo")
-        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("141"); swipeKeyboardAway(); tap("song-picker-back"); tap("save-song")
+        enterTempo("141"); tap("save-song")
         tap("save-setlist"); tap("choose-setlist"); tap("setlist-Saturday")
         XCTAssertTrue(b("song-Gossip").label.contains("141"))
         tap("choose-setlist"); tap("setlist-Sunday"); tap("edit-setlist")
@@ -403,7 +428,7 @@ final class PerformanceUITests: XCTestCase {
         let search = app.textFields["song-search"]; search.tap(); search.typeText("Encore"); swipeKeyboardAway()
         XCTAssertFalse(app.otherElements["library-row-Gossip"].exists)
         tap("library-edit-Encore"); tap("song-tempo")
-        let tempo = app.textFields["BPM"]; tempo.tap(); tempo.typeText("127"); swipeKeyboardAway(); tap("song-picker-back")
+        enterTempo("127")
         tap("editor-add-to-setlist"); tap("share-to-Saturday")
         XCTAssertTrue(b("song-tempo").label.contains("127")); tap("save-song")
         tap("library-edit-Encore"); tap("editor-delete-song"); shot("15-library-delete-confirmation")
