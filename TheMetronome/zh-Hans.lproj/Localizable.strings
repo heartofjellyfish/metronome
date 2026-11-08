@@ -458,3 +458,4 @@
 "Ready to resume" = "可以继续了";
 "Resume" = "继续";
 "Remove from library and all linked setlists (%d)." = "这首歌将从歌曲库和所有引用它的歌单（%d 个）中删除。";
+"Add first song" = "添加第一首";

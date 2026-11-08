@@ -78,11 +78,20 @@ struct SetlistPanel: View {
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
                         if atRoot { viewportHeight = $0 + (needsSearch ? 44 : 0) }
                     }
-                    if browsingDetail {
-                        Button { beginEdit(new: false) } label: {
-                            Label("Edit setlist", systemImage: "pencil").frame(maxWidth: .infinity, minHeight: 50)
-                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("edit-setlist")
-                            .padding(.horizontal, 20).padding(.bottom, 18).padding(.top, 8)
+                    if browsingDetail, let list = browsedList {
+                        VStack(spacing: 8) {
+                            Divider()
+                            HStack {
+                                Text(songCount(list.songs.count))
+                                    .font(.subheadline).foregroundStyle(p.muted)
+                                    .accessibilityIdentifier("setlist-count")
+                                Spacer()
+                                Button { beginEdit(new: false) } label: {
+                                    Label("Edit setlist", systemImage: "pencil")
+                                        .padding(.horizontal, 14).frame(minHeight: 44)
+                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("edit-setlist")
+                            }
+                        }.padding(.horizontal, 20).padding(.bottom, 16)
                     }
                 }.frame(maxWidth: 560).frame(height: geo.size.height - 12)
                     .accessibilityHidden(performing || deletingSong || deletingList)
@@ -198,6 +207,12 @@ struct SetlistPanel: View {
         } else if song != nil { song = nil }
         else if adding { adding = false }
     }
+    private func showSongPicker() {
+        dismissTextInput()
+        bookmarks.clear("add-song")
+        search = ""
+        adding = true
+    }
     private func beginEdit(new: Bool) {
         if !new, let list = browsedList, list.id == model.activeSetlistID, let id = model.selectedSongID {
             bookmarks.prefer(id, on: list.id.uuidString)
@@ -285,11 +300,19 @@ struct SetlistPanel: View {
                     onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
             browseSong(index, value)
         }, above: {
-            let title = Text(list.name).font(.system(size: 28, weight: .semibold)).accessibilityIdentifier("setlist-title")
-            let count = Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) { title; count }.fixedSize()
-                VStack(alignment: .leading, spacing: 4) { title; count }
+            VStack(alignment: .leading, spacing: 16) {
+                Text(list.name).font(.system(size: 28, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("setlist-title")
+                if list.songs.isEmpty {
+                    Button {
+                        beginEdit(new: false)
+                        showSongPicker()
+                    } label: {
+                        Label("Add first song", systemImage: "plus").frame(maxWidth: .infinity, minHeight: 48)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("add-first-song")
+                }
             }
         }, below: { EmptyView() }).id(list.id)
     }
@@ -321,7 +344,7 @@ struct SetlistPanel: View {
             }
         }, below: {
             VStack(spacing: 16) {
-                Button { dismissTextInput(); bookmarks.clear("add-song"); adding = true; search = "" } label: { Label("Add song", systemImage: "plus").frame(maxWidth: .infinity, minHeight: 48) }
+                Button(action: showSongPicker) { Label("Add song", systemImage: "plus").frame(maxWidth: .infinity, minHeight: 48) }
                     .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("add-song")
                 if !creatingList {
                     Button { deletingList = true } label: { Text("Delete setlist").foregroundStyle(.red.opacity(0.8)).frame(maxWidth: .infinity, minHeight: 44) }
