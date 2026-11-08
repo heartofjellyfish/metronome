@@ -529,6 +529,36 @@ final class PerformanceUITests: XCTestCase {
         tap("practice-transport"); tap("close-panel"); tap("close-panel")
         tap("general-haptics-off"); tap("general-haptics-on"); shot("08-general-haptics")
     }
+    func testDeleteSongNamesAllAffectedSetlists() {
+        launch("zh-Hans")
+        tap("settings"); tap("settings-setlists"); tap("new-setlist")
+        let name = "2026 秋季巡演 · 西雅图不插电加演场"
+        app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText(name); swipeKeyboardAway()
+        tap("add-song"); tap("import-song-Gossip"); tap("save-setlist"); tap("close-panel")
+        tap("settings-songLibrary"); tap("library-edit-Gossip")
+        app.scrollViews.firstMatch.swipeUp(); tap("editor-delete-song")
+        XCTAssertEqual(app.staticTexts["affected-setlist-周六演出"].label, "周六演出")
+        XCTAssertEqual(app.staticTexts["affected-setlist-" + name].label, name)
+        shot("38-two-affected-setlists")
+        tap("取消"); tap("cancel-song")
+        XCTAssertTrue(b("library-open-Gossip").exists)
+
+        launch("en", manyLists: true)
+        tap("settings"); tap("settings-songLibrary"); tap("library-edit-Gossip")
+        app.scrollViews.firstMatch.swipeUp(); tap("editor-delete-song")
+        let scroll = app.scrollViews["delete-impact-scroll"]
+        XCTAssertTrue(scroll.isHittable)
+        let confirm = b("confirm-delete-library-song")
+        let y = confirm.frame.midY
+        let last = app.staticTexts["affected-setlist-Tour 24"]
+        for _ in 0..<8 {
+            if last.isHittable { break }
+            scroll.swipeUp()
+        }
+        XCTAssertTrue(last.isHittable)
+        XCTAssertEqual(confirm.frame.midY, y, accuracy: 1)
+        tap("Cancel")
+    }
     func testLibraryCreateSearchEditDeleteAndAddNavigation() {
         launch("en"); tap("settings"); tap("settings-songLibrary"); tap("library-new-song")
         app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Encore"); swipeKeyboardAway()

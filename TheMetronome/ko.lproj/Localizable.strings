@@ -462,3 +462,5 @@
 "Search songs" = "곡 검색";
 "Songs" = "곡";
 "Choose setlists" = "세트리스트 선택";
+"Delete this song from your library?" = "곡 보관함에서 이 곡을 삭제할까요?";
+"This song will be removed from your library and these setlists." = "곡 보관함과 다음 세트리스트에서 이 곡이 삭제됩니다.";

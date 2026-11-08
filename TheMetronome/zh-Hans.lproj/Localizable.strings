@@ -462,3 +462,5 @@
 "Search songs" = "搜索歌曲";
 "Songs" = "歌曲";
 "Choose setlists" = "选择所属歌单";
+"Delete this song from your library?" = "从歌曲库删除这首歌？";
+"This song will be removed from your library and these setlists." = "这首歌将从歌曲库和以下歌单中删除。";

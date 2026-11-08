@@ -164,7 +164,7 @@ struct SongEditor: View {
                         Label("Choose setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-add-to-setlist")
                 }
-                if model.listsContainingSong(initial.id) > 0 {
+                if !model.listsContainingSong(initial.id).isEmpty {
                     Text("Saving updates this song in every setlist that includes it.").font(.footnote).foregroundStyle(p.muted)
                 }
             }

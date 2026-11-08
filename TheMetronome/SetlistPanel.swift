@@ -118,8 +118,10 @@ struct SetlistPanel: View {
         }
         .overlay {
             if deletingSong, let song {
+                let affected = model.listsContainingSong(song.id)
                 deleteConfirmation(name: song.name,
-                    detail: L10n.format("Remove from library and all linked setlists (%d).", model.listsContainingSong(song.id)),
+                    detail: L10n.text(affected.isEmpty ? "Delete this song from your library?" : "This song will be removed from your library and these setlists."),
+                    affectedSetlists: affected,
                     action: "Delete song", identifier: "confirm-delete-library-song",
                     cancel: { deletingSong = false }) {
                         deletingSong = false
@@ -139,13 +141,32 @@ struct SetlistPanel: View {
         }
     }
 
-    private func deleteConfirmation(name: String, detail: String, action: String, identifier: String,
+    private func deleteConfirmation(name: String, detail: String, affectedSetlists: [SongSetlist] = [],
+                                    action: String, identifier: String,
                                     cancel: @escaping () -> Void, confirm: @escaping () -> Void) -> some View {
-        ZStack {
+        let message = VStack(alignment: .leading, spacing: 10) {
+            Text(name).font(.title2.bold()).accessibilityAddTraits(.isHeader)
+            Text(detail)
+            if !affectedSetlists.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(affectedSetlists) { list in
+                        if list.id != affectedSetlists.first?.id { Divider() }
+                        Text(verbatim: list.name)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .accessibilityIdentifier("affected-setlist-" + list.name)
+                    }
+                }.insetPanel(p, radius: 9)
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(p.ink)
+        return ZStack {
             Color.black.opacity(0.35).ignoresSafeArea().accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 12) {
-                Text(name).font(.title2.bold()).foregroundStyle(p.ink)
-                Text(detail).font(.body).foregroundStyle(p.ink)
+                ViewThatFits(in: .vertical) {
+                    message.fixedSize(horizontal: false, vertical: true)
+                    ScrollView { message }.accessibilityIdentifier("delete-impact-scroll")
+                }
                 HStack(spacing: 12) {
                     Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 46) }
                         .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))

@@ -337,7 +337,9 @@ final class MetronomeModel: ObservableObject {
               !setlists[list].songs.contains(where: { $0.id == id }) else { return }
         setlists[list].songs.append(song)
     }
-    func listsContainingSong(_ id: UUID) -> Int { setlists.filter { $0.songs.contains { $0.id == id } }.count }
+    func listsContainingSong(_ id: UUID) -> [SongSetlist] {
+        setlists.filter { list in list.songs.contains { $0.id == id } }
+    }
     func adjustCurrentSongTempo(_ bpm: Int) {
         setBPM(bpm, live: true)
     }

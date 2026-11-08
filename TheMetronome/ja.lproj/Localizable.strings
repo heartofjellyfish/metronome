@@ -462,3 +462,5 @@
 "Search songs" = "曲を検索";
 "Songs" = "曲";
 "Choose setlists" = "セットリストを選ぶ";
+"Delete this song from your library?" = "ライブラリからこの曲を削除しますか？";
+"This song will be removed from your library and these setlists." = "ライブラリと以下のセットリストからこの曲が削除されます。";
