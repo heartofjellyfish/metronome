@@ -7,8 +7,6 @@ struct PerformanceView: View {
     var fromSongLibrary = false
     let back: () -> Void
     @State private var editing = false
-    @State private var songPicker: String?
-    @State private var songDivisionEditing = false
     @State private var showingNotes = false
     private var notes: String { model.currentSong?.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
     private var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
@@ -54,16 +52,27 @@ struct PerformanceView: View {
                 .background { InstrumentBody(p: p).ignoresSafeArea() }
                 .overlay {
                     if showingNotes {
-                        overlayPanel("Notes", close: { showingNotes = false }) { Text(notes).font(.title3).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled) }
+                        overlayPanel {
+                            VStack(spacing: 18) {
+                                HStack {
+                                    Text("Notes").font(.title3)
+                                    Spacer()
+                                    Button { showingNotes = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                                        .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Close")
+                                        .accessibilityIdentifier("close-performance-overlay")
+                                }
+                                ScrollView { Text(notes).font(.title3).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled) }
+                            }.padding(22)
+                        }
                     } else if editing, let current = model.currentSong {
-                        overlayPanel(songPicker.map { SongEditor.title(for: songDivisionEditing ? "custom" : $0) } ?? "Edit song", close: { if songPicker != nil { model.endSoundPreview(); if songDivisionEditing { songDivisionEditing = false } else { songPicker = nil } } else { editing = false } }) {
-                            SongEditor(model: model, initial: current, p: p, picker: $songPicker, divisionEditing: $songDivisionEditing, cancel: { editing = false }) { value in
+                        overlayPanel {
+                            SongEditor(model: model, initial: current, p: p, cancel: { editing = false }) { value in
                                 model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes); editing = false
                             }.id(current.id)
                         }
                     }
                 }
-        }.onChange(of: editing) { _, _ in songPicker = nil; songDivisionEditing = false }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
+        }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
 
     }
     private func editCurrentSong() {
@@ -149,24 +158,11 @@ struct PerformanceView: View {
                 .accessibilityIdentifier("performance-next")
         }
     }
-    private func overlayPanel<Content: View>(_ title: String, close: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
+    private func overlayPanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.3).ignoresSafeArea()
-            VStack(spacing: 18) {
-                HStack {
-                    let nested = editing && songPicker != nil
-                    let key = Button(action: close) {
-                        Image(systemName: nested ? "chevron.left" : "xmark").frame(width: 44, height: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p))
-                        .accessibilityLabel(L10n.text(nested ? "Back" : "Close"))
-                        .accessibilityIdentifier(nested ? "song-picker-back" : "close-performance-overlay")
-                    if nested { key }
-                    Text(L10n.text(title)).font(.title3)
-                    Spacer()
-                    if !nested { key }
-                }
-                ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }.scrollDismissesKeyboard(.immediately)
-            }.padding(22).frame(maxWidth: 550).background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
+            content().frame(maxWidth: 550).background { InstrumentBody(p: p) }
+                .clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
         }.accessibilityElement(children: .contain)
     }
 }

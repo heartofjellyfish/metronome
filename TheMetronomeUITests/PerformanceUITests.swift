@@ -539,7 +539,20 @@ final class PerformanceUITests: XCTestCase {
         enterTempo("127")
         tap("editor-add-to-setlist"); tap("share-to-Saturday"); tap("membership-done")
         XCTAssertTrue(b("song-tempo").label.contains("127")); tap("save-song")
-        tap("library-edit-Encore"); tap("editor-delete-song"); shot("15-library-delete-confirmation")
+        tap("library-edit-Encore")
+        let save = b("save-song")
+        let cancel = b("cancel-song")
+        XCTAssertGreaterThan(save.frame.midX, cancel.frame.midX)
+        XCTAssertEqual(save.frame.midY, cancel.frame.midY, accuracy: 1)
+        XCTAssertLessThan(save.frame.maxY, app.textFields["song-name"].frame.minY)
+        XCTAssertEqual(b("editor-add-to-setlist").label, "Choose setlists")
+        XCTAssertFalse(app.buttons["editor-delete-song"].isHittable)
+        shot("37-editor-top")
+        app.scrollViews.firstMatch.swipeUp()
+        XCTAssertTrue(b("editor-delete-song").isHittable)
+        XCTAssertTrue(save.isHittable)
+        shot("37-editor-end")
+        tap("editor-delete-song"); shot("15-library-delete-confirmation")
         let dismissRegion = app.otherElements["PopoverDismissRegion"]
         if dismissRegion.exists { dismissRegion.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.1)).tap() }
         else { tap("Cancel") }

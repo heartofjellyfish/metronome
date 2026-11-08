@@ -27,8 +27,6 @@ struct SetlistPanel: View {
     @State private var adding = false
     @State private var search = ""
     @State private var song: SavedPreset?
-    @State private var songPicker: String?
-    @State private var songDivisionEditing = false
     @State private var sharing: SavedPreset?
     @State private var membershipChanges: [UUID: Bool] = [:]
     @State private var deletingSong = false
@@ -46,8 +44,6 @@ struct SetlistPanel: View {
     private var libraryRoot: Bool { startInSongLibrary && song == nil }
     private var browsingDetail: Bool { browsedList != nil && !editing && song == nil && !adding }
     private var title: String {
-        if song != nil, let songPicker { return SongEditor.title(for: songDivisionEditing ? "custom" : songPicker) }
-        if let song { return L10n.text(model.songLibrary.contains { $0.id == song.id } ? "Edit song" : "New song") }
         if adding { return L10n.text("Add song") }
         if editing { return L10n.text(creatingList ? "New setlist" : "Edit setlist") }
         return L10n.text(startInSongLibrary ? "Song library" : "Setlists")
@@ -57,13 +53,13 @@ struct SetlistPanel: View {
             ZStack(alignment: .bottom) {
                 Color.black.opacity(p.dark ? 0.55 : 0.3).ignoresSafeArea().accessibilityHidden(true)
                 VStack(spacing: 0) {
-                    header
+                    if song == nil { header }
                     if (atRoot && needsSearch) || libraryRoot {
                         catalogSearch(library: libraryRoot).padding(.horizontal, 20)
                     }
                     Group {
                         if let song {
-                            ScrollView { songEditor(song).padding(20) }.id(song.id)
+                            songEditor(song).id(song.id)
                         } else if adding {
                             GeometryReader { space in
                                 VStack(spacing: 0) {
@@ -111,12 +107,12 @@ struct SetlistPanel: View {
             }.foregroundStyle(p.ink)
         }
         .onAppear { useCounts = UserDefaults.standard.dictionary(forKey: "performedSetlists") as? [String: Int] ?? [:] }
-        .onChange(of: song?.id) { _, _ in songPicker = nil; songDivisionEditing = false; membershipChanges = [:] }
+        .onChange(of: song?.id) { _, _ in membershipChanges = [:] }
         .overlay { if performing { PerformanceView(model: model, fromSongLibrary: startInSongLibrary, back: { performing = false }) } }
         .sheet(item: $sharing) { value in
             NavigationStack {
                 ScrollView { targets(value).padding(20) }.background(p.body)
-                    .navigationTitle(L10n.text("Setlists")).navigationBarTitleDisplayMode(.inline)
+                    .navigationTitle(L10n.text("Choose setlists")).navigationBarTitleDisplayMode(.inline)
                     .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sharing = nil }.accessibilityIdentifier("membership-done") } }
             }.presentationDetents([.medium, .large])
         }
@@ -180,10 +176,10 @@ struct SetlistPanel: View {
                         Label("All setlists", systemImage: "chevron.left").font(.system(size: 15)).padding(.horizontal, 12).frame(minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("choose-setlist")
                 } else {
-                    if song != nil || adding {
-                        Button { back() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
+                    if adding {
+                        Button { dismissTextInput(); adding = false } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
                             .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Back")
-                            .accessibilityIdentifier(songPicker == nil ? "choose-setlist" : "song-picker-back")
+                            .accessibilityIdentifier("choose-setlist")
                     }
                     Text(title).font(.system(size: 22, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 }
@@ -208,13 +204,6 @@ struct SetlistPanel: View {
                 }
             }
         }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
-    }
-    private func back() {
-        dismissTextInput(); model.endSoundPreview()
-        if song != nil, songPicker != nil {
-            if songDivisionEditing { songDivisionEditing = false } else { songPicker = nil }
-        } else if song != nil { song = nil }
-        else if adding { adding = false }
     }
     private func showSongPicker() {
         dismissTextInput()
@@ -461,7 +450,7 @@ struct SetlistPanel: View {
     private func songEditor(_ initial: SavedPreset) -> some View {
         let exists = model.songLibrary.contains { $0.id == initial.id }
         return VStack(spacing: 16) {
-            SongEditor(model: model, initial: initial, p: p, picker: $songPicker, divisionEditing: $songDivisionEditing,
+            SongEditor(model: model, initial: initial, p: p, isNew: !exists,
                        addToSetlist: exists && startInSongLibrary ? { sharing = initial } : nil,
                        delete: exists && startInSongLibrary ? { deletingSong = true } : nil,
                        cancel: { song = nil }) { value in

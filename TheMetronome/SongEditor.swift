@@ -47,26 +47,10 @@ private struct SongNameInput: UIViewRepresentable {
     }
 }
 
-private struct SongSaveBar: View {
-    let text: SongTextDraft
-    let p: InstrumentPalette
-    let cancel: () -> Void
-    let commit: () -> Void
-    var body: some View {
-        let valid = text.hasName
-        HStack(spacing: 12) {
-            Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 48) }
-                .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
-            Button(action: commit) { Text("Save").frame(maxWidth: .infinity, minHeight: 48) }
-                .buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).disabled(!valid).opacity(valid ? 1 : 0.45)
-                .accessibilityIdentifier("save-song")
-        }
-    }
-}
-
 struct SongEditor: View {
     let model: MetronomeModel
     let initial: SavedPreset
+    let isNew: Bool
     let p: InstrumentPalette
     let addToSetlist: (() -> Void)?
     let delete: (() -> Void)?
@@ -75,22 +59,68 @@ struct SongEditor: View {
     @State private var text: SongTextDraft
     @State private var customMeter = false
     @State private var draft = Rhythm()
-    @Binding var picker: String?
-    @Binding var divisionEditing: Bool
+    @State private var picker: String?
+    @State private var divisionEditing = false
     private enum Input: Hashable { case notes }
     @FocusState private var typing: Input?
     static func title(for route: String) -> String {
         L10n.text(["tempo": "BPM", "meter": "METER", "division": "DIVISION", "sound": "SOUND LIBRARY", "custom": "Customize rhythm"][route] ?? "Edit song")
     }
-    init(model: MetronomeModel, initial: SavedPreset, p: InstrumentPalette, picker: Binding<String?>, divisionEditing: Binding<Bool>, addToSetlist: (() -> Void)? = nil, delete: (() -> Void)? = nil, cancel: @escaping () -> Void, save: @escaping (SavedPreset) -> Void) {
+    init(model: MetronomeModel, initial: SavedPreset, p: InstrumentPalette, isNew: Bool = false, addToSetlist: (() -> Void)? = nil, delete: (() -> Void)? = nil, cancel: @escaping () -> Void, save: @escaping (SavedPreset) -> Void) {
         self.model = model; self.initial = initial; self.p = p
         _text = State(initialValue: SongTextDraft(initial))
         _draft = State(initialValue: initial.rhythm.performanceCopy)
-        self._picker = picker; self._divisionEditing = divisionEditing
+        self.isNew = isNew
         self.addToSetlist = addToSetlist; self.delete = delete
         self.cancel = cancel; self.save = save
     }
     var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                if let picker {
+                    Button {
+                        model.endSoundPreview()
+                        if divisionEditing { divisionEditing = false } else { self.picker = nil }
+                    } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
+                        .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Back")
+                        .accessibilityIdentifier("song-picker-back")
+                    Text(Self.title(for: divisionEditing ? "custom" : picker)).font(.headline)
+                    Spacer()
+                } else {
+                    Button(action: cancel) { Text("Cancel").padding(.horizontal, 12).frame(minHeight: 44) }
+                        .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
+                    Text(L10n.text(isNew ? "New song" : "Edit song")).font(.headline)
+                        .frame(maxWidth: .infinity)
+                    Button {
+                        dismissTextInput()
+                        save(SavedPreset(id: initial.id, name: text.name, rhythm: draft.performanceCopy, notes: text.notes))
+                    } label: { Text("Save").padding(.horizontal, 12).frame(minHeight: 44) }
+                        .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                        .disabled(!text.hasName).opacity(text.hasName ? 1 : 0.45)
+                        .accessibilityIdentifier("save-song")
+                }
+            }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
+            GeometryReader { space in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        fields.fixedSize(horizontal: false, vertical: picker == nil)
+                            .frame(minHeight: picker == nil && delete != nil ? max(0, space.size.height - 20) : nil, alignment: .topLeading)
+                        if picker == nil, let delete {
+                            Divider()
+                            Button(action: delete) {
+                                Label("Delete song", systemImage: "trash")
+                                    .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
+                                    .padding(.horizontal, 14).frame(minHeight: 44)
+                            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-delete-song")
+                        }
+                    }.padding(20)
+                }.scrollDismissesKeyboard(.interactively)
+                    .id(picker)
+            }
+        }.onChange(of: picker) { _, _ in typing = nil; dismissTextInput() }
+            .onDisappear { model.endSoundPreview() }
+    }
+    private var fields: some View {
         @Bindable var fields = text
         return VStack(alignment: .leading, spacing: 20) {
             if let picker {
@@ -113,14 +143,7 @@ struct SongEditor: View {
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Song name").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
-                    HStack(spacing: 10) {
-                        SongNameInput(text: text, p: p).frame(minHeight: 22).padding(15).insetPanel(p, radius: 10)
-                        if let delete {
-                            Button(action: delete) { Image(systemName: "trash").foregroundStyle(.red).frame(width: 46, height: 46) }
-                                .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Delete song")
-                                .accessibilityIdentifier("editor-delete-song")
-                        }
-                    }
+                    SongNameInput(text: text, p: p).frame(minHeight: 22).padding(15).insetPanel(p, radius: 10)
                 }
 
                 VStack(spacing: 0) {
@@ -138,19 +161,14 @@ struct SongEditor: View {
                 TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
                 if let addToSetlist {
                     Button(action: addToSetlist) {
-                        Label("Setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
+                        Label("Choose setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-add-to-setlist")
-                }
-                SongSaveBar(text: text, p: p, cancel: cancel) {
-                    save(SavedPreset(id: initial.id, name: text.name, rhythm: draft.performanceCopy, notes: text.notes))
                 }
                 if model.listsContainingSong(initial.id) > 0 {
                     Text("Saving updates this song in every setlist that includes it.").font(.footnote).foregroundStyle(p.muted)
                 }
             }
-        }.onChange(of: picker) { _, _ in typing = nil; dismissTextInput() }
-
-            .onDisappear { model.endSoundPreview() }
+        }
     }
     private func field(_ title: String, value: String, route: String) -> some View {
         settingRow(title, route: route) { Text(value).font(.system(size: 17, weight: .medium)) }
