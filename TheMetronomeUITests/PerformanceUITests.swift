@@ -99,6 +99,64 @@ final class PerformanceUITests: XCTestCase {
         liveSongTitle.doubleTap(); tap("song-meter"); tap("meter-3-4"); tap("song-picker-back"); tap("save-song")
         XCTAssertEqual(app.staticTexts["performance-meter"].label, "3/4")
     }
+    private func launchLongCatalog() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--long-list-test", "-AppleLanguages", "(en)"]
+        app.launch()
+    }
+    func testLongListsPreserveContext() {
+        launchLongCatalog()
+        tap("settings"); tap("settings-setlists")
+        revealCatalogRow("setlist-Set 30")
+        tap("setlist-Set 30")
+        revealCatalogRow("song-Track 42")
+        XCTAssertEqual(app.staticTexts["compact-setlist-title"].label, "Set 30")
+        shot("33-long-browse")
+        tap("song-Track 42"); tap("performance-play"); tap("close-performance")
+        XCTAssertTrue(b("song-Track 42").isHittable)
+        for finish in ["cancel-setlist", "save-setlist"] {
+            tap("edit-setlist")
+            revealCatalogRow("edit-song-Track 42")
+            XCTAssertTrue(b("add-song").exists)
+            shot("33-long-edit")
+            tap(finish)
+            XCTAssertTrue(b("song-Track 42").isHittable)
+        }
+        tap("choose-setlist")
+        XCTAssertTrue(b("setlist-Set 30").isHittable)
+        tap("close-panel"); tap("settings-songLibrary")
+        revealCatalogRow("library-open-Track 42")
+        XCTAssertTrue(app.textFields["song-search"].isHittable)
+        XCTAssertTrue(b("library-new-song").isHittable)
+        shot("33-long-library")
+        tap("library-edit-Track 42"); tap("cancel-song")
+        XCTAssertTrue(b("library-open-Track 42").isHittable)
+    }
+    func testDragToEdgeAdvancesThroughLongSetlist() {
+        launchLongCatalog()
+        tap("settings"); tap("settings-setlists")
+        let search = app.textFields["setlist-search"]
+        search.tap(); search.typeText("Set 30")
+        tap("setlist-Set 30"); tap("edit-setlist")
+        let list = app.collectionViews.firstMatch
+        let grip = app.images["drag-song-Track 01"].coordinate(withNormalizedOffset: .init(dx: 0.5, dy: 0.5))
+        let edge = list.coordinate(withNormalizedOffset: .init(dx: 0.28, dy: 0.985))
+        grip.press(forDuration: 0.4, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 2)
+        settleDrop()
+        let number = app.staticTexts["song-position-Track 01"]
+        XCTAssertTrue(number.exists)
+        XCTAssertGreaterThan(Int(number.label) ?? 0, 9)
+        tap("cancel-setlist")
+        XCTAssertEqual(app.staticTexts["song-position-Track 01"].label, "01")
+    }
+    private func revealCatalogRow(_ id: String) {
+        let row = app.buttons[id].firstMatch
+        for _ in 0..<22 {
+            if row.exists && row.isHittable { return }
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(row.isHittable, "Could not scroll to \(id)")
+    }
     func testOverflowSearchAndFrequentSetlists() {
         launch("en", manyLists: true)
         tap("settings"); tap("settings-setlists")
@@ -106,8 +164,13 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 3))
         search.tap()
         XCTAssertTrue(app.staticTexts["Frequently used"].exists)
-        search.typeText("Tour 24")
-        XCTAssertFalse(b("setlist-Saturday").exists)
+        for term in ["Tour 14", "Tour 21", "Tour 24"] {
+            search.typeText(term)
+            XCTAssertEqual(search.value as? String, term)
+            XCTAssertTrue(app.buttons["setlist-\(term)"].waitForExistence(timeout: 2))
+            XCTAssertTrue(app.buttons["setlist-Saturday"].waitForNonExistence(timeout: 2))
+            if term != "Tour 24" { search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: term.count)) }
+        }
         tap("setlist-Tour 24"); tap("song-Gossip")
         XCTAssertEqual(app.staticTexts["performance-setlist"].label, "Tour 24")
         shot("25-live")
@@ -232,7 +295,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("song-Long song title — a whole verse to test wrapping").exists)
         shot("23-12-long-song")
         tap("song-Long song title — a whole verse to test wrapping")
-        XCTAssertTrue(app.staticTexts["Long song title — a whole verse to test wrapping"].exists)
+        XCTAssertEqual(liveSongTitle.label, "Long song title — a whole verse to test wrapping")
         tap("close-performance")
         tap("choose-setlist")
         app.images["drag-setlist-Empty"].press(forDuration: 0.7, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)

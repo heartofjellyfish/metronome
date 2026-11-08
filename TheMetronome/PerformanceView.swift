@@ -149,7 +149,18 @@ struct PerformanceView: View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 18) {
-                HStack { Text(L10n.text(title)).font(.title3); Spacer(); Button(action: close) { Image(systemName: editing && songPicker != nil ? "chevron.left" : "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing && songPicker != nil ? "song-picker-back" : "close-performance-overlay") }
+                HStack {
+                    let nested = editing && songPicker != nil
+                    let key = Button(action: close) {
+                        Image(systemName: nested ? "chevron.left" : "xmark").frame(width: 44, height: 44)
+                    }.buttonStyle(HardwareButtonStyle(p: p))
+                        .accessibilityLabel(L10n.text(nested ? "Back" : "Close"))
+                        .accessibilityIdentifier(nested ? "song-picker-back" : "close-performance-overlay")
+                    if nested { key }
+                    Text(L10n.text(title)).font(.title3)
+                    Spacer()
+                    if !nested { key }
+                }
                 ScrollView { VStack(spacing: 18, content: content).padding(.bottom, 10) }.scrollDismissesKeyboard(.immediately)
             }.padding(22).frame(maxWidth: 550).background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 22)).padding(10)
         }.accessibilityElement(children: .contain)

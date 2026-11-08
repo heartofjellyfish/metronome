@@ -84,6 +84,16 @@ struct InstrumentPanel: View {
             else { standardPanel }
         }
     }
+    private var showsBack: Bool { returnsToPractice || polyrhythmSoundLane != nil || divisionEditing }
+    private var navigationKey: some View {
+        let destination = divisionEditing ? "Back to subdivisions" : polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice"
+        return Button(action: dismiss) {
+            Image(systemName: showsBack ? "chevron.left" : "xmark")
+                .font(.system(size: 18, weight: .light)).frame(width: 44, height: 44)
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9))
+            .accessibilityLabel(showsBack ? L10n.text(destination) : L10n.format("Close %@", kind.title.lowercased()))
+            .accessibilityIdentifier("close-panel")
+    }
     private var standardPanel: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
@@ -91,13 +101,12 @@ struct InstrumentPanel: View {
                     .accessibilityHidden(true)
                 VStack(spacing: 0) {
                     HStack(alignment: .center) {
+                        if showsBack { navigationKey }
                         VStack(alignment: .leading, spacing: 7) {
                             Text(divisionEditing ? L10n.text("Customize rhythm") : polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : "Second instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 5)
-                        Button { dismiss() } label: {
-                            Image(systemName: (returnsToPractice || polyrhythmSoundLane != nil || divisionEditing) ? "chevron.left" : "xmark").font(.system(size: 18, weight: .light)).frame(width: 43, height: 43)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel((returnsToPractice || polyrhythmSoundLane != nil || divisionEditing) ? L10n.text(divisionEditing ? "Back to subdivisions" : polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice") : L10n.format("Close %@", kind.title.lowercased())).accessibilityIdentifier("close-panel")
+                        if !showsBack { navigationKey }
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     ScrollViewReader { proxy in

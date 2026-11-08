@@ -444,6 +444,12 @@ final class MetronomeModel: ObservableObject {
                 setlists += (1...24).map { SongSetlist(name: "Tour \($0)", songs: songLibrary) }
                 defaults.set([setlists[0].id.uuidString: 3], forKey: "performedSetlists")
             }
+            if ProcessInfo.processInfo.arguments.contains("--long-list-test") {
+                songLibrary = (1...42).map { SavedPreset(name: String(format: "Track %02d", $0), rhythm: fast) }
+                setlists = (1...30).map { index in
+                    SongSetlist(name: String(format: "Set %02d", index), songs: index == 30 ? songLibrary : [songLibrary[index - 1]])
+                }
+            }
             activeSetlistID = nil; selectedSongID = nil; selectedPresetID = nil
         }
         #endif
