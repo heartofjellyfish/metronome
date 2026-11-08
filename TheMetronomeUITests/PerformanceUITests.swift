@@ -104,6 +104,29 @@ final class PerformanceUITests: XCTestCase {
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--long-list-test", "-AppleLanguages", "(en)"]
         app.launch()
     }
+    func testAddSongSearchFollowsLibrarySize() {
+        launch("zh-Hans")
+        tap("settings"); tap("settings-setlists"); tap("new-setlist"); tap("add-song")
+        XCTAssertTrue(b("import-song-Gossip").isHittable)
+        XCTAssertFalse(app.textFields["song-search"].exists)
+        shot("36-add-short")
+        tap("import-song-Gossip"); tap("add-song")
+        XCTAssertFalse(b("import-song-Gossip").isEnabled)
+        XCTAssertFalse(app.textFields["song-search"].exists)
+        tap("import-song-夜来香")
+        XCTAssertTrue(b("edit-song-夜来香").exists)
+
+        launchLongCatalog()
+        tap("settings"); tap("settings-setlists"); tap("new-setlist"); tap("add-song")
+        let field = app.textFields["song-search"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        field.tap(); field.typeText("Track 42"); swipeKeyboardAway()
+        XCTAssertTrue(field.exists)
+        shot("36-add-search")
+        tap("import-song-Track 42"); tap("add-song")
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        XCTAssertTrue(b("import-song-Track 01").isHittable)
+    }
     func testLongListsPreserveContext() {
         launchLongCatalog()
         tap("settings"); tap("settings-setlists")
@@ -119,8 +142,8 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("song-Track 42").isHittable)
         for finish in ["cancel-setlist", "save-setlist"] {
             tap("edit-setlist")
+            XCTAssertTrue(b("add-song").isHittable)
             revealCatalogRow("edit-song-Track 42")
-            XCTAssertTrue(b("add-song").exists)
             shot("33-long-edit")
             tap(finish)
             XCTAssertTrue(b("song-Track 42").isHittable)
@@ -256,7 +279,7 @@ final class PerformanceUITests: XCTestCase {
         tap("add-song"); shot("28-add-song"); tap("import-song-Gossip")
         XCTAssertTrue(b("edit-song-Gossip").exists)
         tap("save-setlist"); XCTAssertTrue(b("song-Gossip").exists)
-        tap("edit-setlist"); tap("delete-setlist")
+        tap("edit-setlist"); revealCatalogRow("delete-setlist"); tap("delete-setlist")
         let delete = app.buttons["confirm-delete-setlist"].firstMatch
         XCTAssertTrue(delete.waitForExistence(timeout: 3)); delete.tap()
         XCTAssertTrue(b("setlist-周六演出").exists == false) // renamed earlier
@@ -531,7 +554,12 @@ final class PerformanceUITests: XCTestCase {
         let name = app.textFields["setlist-name"]; name.tap()
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "Friday"); swipeKeyboardAway()
         tap("save-setlist"); XCTAssertEqual(app.staticTexts["setlist-title"].label, "Friday")
-        tap("edit-setlist"); tap("delete-setlist"); tap("Cancel")
+        tap("edit-setlist")
+        XCTAssertTrue(b("add-song").isHittable)
+        XCTAssertFalse(app.buttons["delete-setlist"].isHittable)
+        shot("36-edit-top")
+        revealCatalogRow("delete-setlist"); shot("36-edit-end")
+        tap("delete-setlist"); tap("Cancel")
         XCTAssertTrue(b("edit-song-Gossip").exists)
         tap("delete-setlist"); tap("confirm-delete-setlist")
         XCTAssertFalse(b("setlist-Friday").exists)
