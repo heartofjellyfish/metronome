@@ -28,6 +28,7 @@ struct SetlistPanel: View {
     @State private var songPicker: String?
     @State private var songDivisionEditing = false
     @State private var sharing: SavedPreset?
+    @State private var membershipChanges: [UUID: Bool] = [:]
     @State private var deletingSong = false
     @State private var deletingList = false
     @State private var performing = false
@@ -84,37 +85,66 @@ struct SetlistPanel: View {
                             .padding(.horizontal, 20).padding(.bottom, 18).padding(.top, 8)
                     }
                 }.frame(maxWidth: 560).frame(height: geo.size.height - 12)
-                    .accessibilityHidden(performing)
-                    .allowsHitTesting(!performing)
+                    .accessibilityHidden(performing || deletingSong || deletingList)
+                    .allowsHitTesting(!performing && !deletingSong && !deletingList)
                     .background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 23))
                     .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
                     .padding(.horizontal, 10).padding(.bottom, 7)
             }.foregroundStyle(p.ink)
         }
         .onAppear { useCounts = UserDefaults.standard.dictionary(forKey: "performedSetlists") as? [String: Int] ?? [:] }
-        .onChange(of: song?.id) { _, _ in songPicker = nil; songDivisionEditing = false }
+        .onChange(of: song?.id) { _, _ in songPicker = nil; songDivisionEditing = false; membershipChanges = [:] }
         .overlay { if performing { PerformanceView(model: model, fromSongLibrary: startInSongLibrary, back: { performing = false }) } }
         .sheet(item: $sharing) { value in
             NavigationStack {
                 ScrollView { targets(value).padding(20) }.background(p.body)
-                    .navigationTitle(L10n.text("Add to setlist")).navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { sharing = nil } } }
+                    .navigationTitle(L10n.text("Setlists")).navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sharing = nil }.accessibilityIdentifier("membership-done") } }
             }.presentationDetents([.medium, .large])
         }
-        .confirmationDialog("Delete this song from your library and all setlists?", isPresented: $deletingSong, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                if let song { model.deleteLibrarySong(song.id); draftSongIDs.removeAll { $0 == song.id } }
-                song = nil
-            }.accessibilityIdentifier("confirm-delete-library-song")
-            Button("Cancel", role: .cancel) { }
+        .overlay {
+            if deletingSong, let song {
+                deleteConfirmation(name: song.name,
+                    detail: L10n.format("Remove from library and all linked setlists (%d).", model.listsContainingSong(song.id)),
+                    action: "Delete song", identifier: "confirm-delete-library-song",
+                    cancel: { deletingSong = false }) {
+                        deletingSong = false
+                        model.deleteLibrarySong(song.id)
+                        draftSongIDs.removeAll { $0 == song.id }
+                        self.song = nil
+                    }
+            } else if deletingList, let list = browsedList {
+                deleteConfirmation(name: list.name, detail: L10n.text("Songs stay in your library."),
+                    action: "Delete setlist", identifier: "confirm-delete-setlist",
+                    cancel: { deletingList = false }) {
+                        deletingList = false
+                        model.deleteSetlist(list.id)
+                        cancelList(); browsingSetlistID = nil
+                    }
+            }
         }
-        .confirmationDialog("Delete this setlist? Songs stay in your library.", isPresented: $deletingList, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                if let id = browsingSetlistID { model.deleteSetlist(id) }
-                cancelList(); browsingSetlistID = nil
-            }.accessibilityIdentifier("confirm-delete-setlist")
-            Button("Cancel", role: .cancel) { }
-        }
+    }
+
+    private func deleteConfirmation(name: String, detail: String, action: String, identifier: String,
+                                    cancel: @escaping () -> Void, confirm: @escaping () -> Void) -> some View {
+        ZStack {
+            Color.black.opacity(0.35).ignoresSafeArea().accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(name).font(.title2.bold()).foregroundStyle(p.ink)
+                Text(detail).font(.body).foregroundStyle(p.ink)
+                HStack(spacing: 12) {
+                    Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 46) }
+                        .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+                    Button(action: confirm) {
+                        Text(L10n.text(action)).foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
+                            .frame(maxWidth: .infinity, minHeight: 46)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(identifier)
+                }.padding(.top, 8)
+            }.padding(20).frame(maxWidth: 370).background { InstrumentBody(p: p) }
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.25), radius: 14, y: 7).padding(24)
+        }.accessibilityElement(children: .contain).accessibilityAddTraits(.isModal)
+            .accessibilityAction(.escape, cancel)
     }
     private var header: some View {
         HStack(spacing: 10) {
@@ -368,7 +398,7 @@ struct SetlistPanel: View {
             if search.isEmpty { grip("library-drag-\(value.name)") }
             Button { dismissTextInput(); model.loadStandaloneSong(value.id); performing = true } label: {
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack { songInfo(value); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted) }
+                    HStack { songInfo(value); Spacer(minLength: 0) }
                     if !memberships.isEmpty {
                         SongLabelFlow(spacing: 5) {
                             ForEach(Array(memberships.enumerated()), id: \.offset) { _, name in
@@ -391,7 +421,7 @@ struct SetlistPanel: View {
                        addToSetlist: exists && startInSongLibrary ? { sharing = initial } : nil,
                        delete: exists && startInSongLibrary ? { deletingSong = true } : nil,
                        cancel: { song = nil }) { value in
-                if exists { model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes) }
+                if exists { model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes, membershipChanges: membershipChanges) }
                 else if let id = model.createLibrarySong(value.name, rhythm: value.rhythm, notes: value.notes), editing { draftSongIDs.append(id) }
                 song = nil; adding = false
             }.id(initial.id)
@@ -402,10 +432,14 @@ struct SetlistPanel: View {
             Text(value.name).font(.headline)
             if model.setlists.isEmpty { Text("No setlists yet.").foregroundStyle(p.muted) }
             ForEach(model.setlists) { list in
-                let exists = list.songs.contains { $0.id == value.id }
-                Button { model.addExistingSong(value.id, to: list.id); sharing = nil } label: {
+                let original = list.songs.contains { $0.id == value.id }
+                let exists = membershipChanges[list.id] ?? original
+                Button {
+                    let selected = !exists
+                    membershipChanges[list.id] = selected == original ? nil : selected
+                } label: {
                     HStack { Text(list.name); Spacer(); Image(systemName: exists ? "checkmark" : "plus") }.padding(18).frame(minHeight: 60)
-                }.buttonStyle(HardwareButtonStyle(p: p)).disabled(exists).accessibilityIdentifier("share-to-\(list.name)")
+                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityAddTraits(exists ? .isSelected : []).accessibilityIdentifier("share-to-\(list.name)")
             }
         }
     }

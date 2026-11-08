@@ -510,7 +510,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(app.otherElements["library-row-Gossip"].exists)
         tap("library-edit-Encore"); tap("song-tempo")
         enterTempo("127")
-        tap("editor-add-to-setlist"); tap("share-to-Saturday")
+        tap("editor-add-to-setlist"); tap("share-to-Saturday"); tap("membership-done")
         XCTAssertTrue(b("song-tempo").label.contains("127")); tap("save-song")
         tap("library-edit-Encore"); tap("editor-delete-song"); shot("15-library-delete-confirmation")
         let dismissRegion = app.otherElements["PopoverDismissRegion"]

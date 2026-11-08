@@ -37,7 +37,6 @@ final class MetronomeAudio {
         }
         stop(deactivate: false, discardTimeline: false)
     }
-    func discardSuspension() { suspended = nil }
 
     func start(_ rhythm: Rhythm, previewBars: Int? = nil, resuming: Bool = false, exclusive: Bool = false, audible: Bool = true) throws {
         let saved = resuming ? suspended : nil
@@ -189,7 +188,7 @@ struct SongLibraryStore: Codable {
 
 @MainActor
 final class MetronomeModel: ObservableObject {
-    @Published var rhythm: Rhythm { didSet { audio.mailbox.set(rhythm); save(); if playing { updateNowPlaying() } } }
+    @Published var rhythm: Rhythm { didSet { audio.mailbox.set(playbackRhythm); save(); if playing { updateNowPlaying() } } }
     @Published var dark: Bool { didSet { UserDefaults.standard.set(dark, forKey: "dark") } }
     @Published var haptics = true { didSet { UserDefaults.standard.set(haptics, forKey: "haptics") } }
     @Published var soundEnabled = true { didSet { audio.setAudible(soundEnabled) } }
@@ -197,6 +196,16 @@ final class MetronomeModel: ObservableObject {
     @Published private(set) var interrupted = false
     let pedal = PedalControl()
     private var resumeAfterInterruption = false
+    @Published private(set) var needsManualResume = false
+    private var liveTempoSongID: UUID?
+    private var divisionAudition: Rhythm?
+    private var playbackRhythm: Rhythm {
+        divisionAudition.map { rhythm.withDivision(from: $0) } ?? rhythm
+    }
+    func auditionDivision(_ value: Rhythm?) {
+        divisionAudition = value
+        if playing { audio.mailbox.set(playbackRhythm) }
+    }
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
     private let displayState = BeatDisplayState()
     private(set) var event: ClockEvent? {
@@ -296,16 +305,31 @@ final class MetronomeModel: ObservableObject {
         editSong(id, name: name, rhythm: song.rhythm)
     }
     /// Songs are shared objects. Lists only store their order and membership.
-    func editSong(_ id: UUID, name: String, rhythm value: Rhythm, notes: String? = nil) {
+    func editSong(_ id: UUID, name: String, rhythm value: Rhythm, notes: String? = nil, membershipChanges: [UUID: Bool] = [:]) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, let index = songLibrary.firstIndex(where: { $0.id == id }) else { return }
         let updated = SavedPreset(id: id, name: clean, rhythm: value.performanceCopy, notes: notes ?? songLibrary[index].notes)
+        let preserveLiveTempo = liveTempoSongID == id && updated.rhythm.bpm == songLibrary[index].rhythm.bpm
         songLibrary[index] = updated
         setlists = setlists.map { list in
-            var copy = list; copy.songs = list.songs.map { $0.id == id ? updated : $0 }; return copy
+            var copy = list
+            if membershipChanges[list.id] == false {
+                copy.songs.removeAll { $0.id == id }
+            } else if let index = copy.songs.firstIndex(where: { $0.id == id }) {
+                copy.songs[index] = updated
+            } else if membershipChanges[list.id] == true {
+                copy.songs.append(updated)
+            }
+            return copy
         }
         // Parameter changes keep the audio clock running; selecting a new song starts its bar.
-        if selectedSongID == id { rhythm = updated.rhythm; updateNowPlaying() }
+        if selectedSongID == id {
+            if let listID = activeSetlistID, membershipChanges[listID] == false { activeSetlistID = nil }
+            var active = updated.rhythm
+            if preserveLiveTempo { active.bpm = rhythm.bpm } else { liveTempoSongID = nil }
+            rhythm = active
+            updateNowPlaying()
+        }
     }
     func addExistingSong(_ id: UUID, to target: UUID? = nil) {
         guard let song = songLibrary.first(where: { $0.id == id }),
@@ -315,8 +339,7 @@ final class MetronomeModel: ObservableObject {
     }
     func listsContainingSong(_ id: UUID) -> Int { setlists.filter { $0.songs.contains { $0.id == id } }.count }
     func adjustCurrentSongTempo(_ bpm: Int) {
-        guard let song = currentSong else { return }
-        editSong(song.id, name: song.name, bpm: bpm)
+        setBPM(bpm, live: true)
     }
     func moveSong(_ id: UUID, by offset: Int, in target: UUID? = nil) {
         guard let list = setlists.first(where: { $0.id == (target ?? activeSetlistID) }),
@@ -372,7 +395,10 @@ final class MetronomeModel: ObservableObject {
             guard setlists.contains(where: { $0.id == target && $0.songs.contains(where: { $0.id == song.id }) }) else { return }
             activeSetlistID = target
         }
+        liveTempoSongID = nil
         if selectedSongID == song.id, rhythm == song.rhythm.performanceCopy { return }
+        tapTempo = TapTempo()
+        tapCount = 0
         let resume = playing; stop()
         let value = song.rhythm.performanceCopy
         selectedPresetID = nil; selectedSongID = song.id; rhythm = value
@@ -531,11 +557,11 @@ final class MetronomeModel: ObservableObject {
         switch action {
         case .toggle: toggle()
         case .tap:
-            tap(); if currentSong != nil { adjustCurrentSongTempo(bpm) }
+            tap(live: true)
         case .faster:
-            if currentSong != nil { adjustCurrentSongTempo(bpm + 1) } else { setBPM(bpm + 1) }
+            adjustCurrentSongTempo(bpm + 1)
         case .slower:
-            if currentSong != nil { adjustCurrentSongTempo(bpm - 1) } else { setBPM(bpm - 1) }
+            adjustCurrentSongTempo(bpm - 1)
         case .next, .previous:
             if let list = activeSetlist {
                 let index = list.songs.firstIndex { $0.id == selectedSongID }
@@ -561,9 +587,11 @@ final class MetronomeModel: ObservableObject {
         } else if type == AVAudioSession.InterruptionType.ended.rawValue {
             guard interrupted else { return }
             interrupted = false
+            needsManualResume = needsManualResume || resumeAfterInterruption
             let resume = resumeAfterInterruption && AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume)
             resumeAfterInterruption = false
-            if resume { start(resuming: true) } else { audio.discardSuspension(); updateNowPlaying() }
+            if resume { start(resuming: true) }
+            else { updateNowPlaying() }
         }
     }
 
@@ -571,8 +599,9 @@ final class MetronomeModel: ObservableObject {
     var marking: String {
         switch bpm { case ..<40: return "GRAVE"; case ..<60: return "LARGO"; case ..<76: return "ADAGIO"; case ..<108: return "ANDANTE"; case ..<120: return "MODERATO"; case ..<168: return "ALLEGRO"; case ..<200: return "VIVACE"; default: return "PRESTO" }
     }
-    func setBPM(_ bpm: Int, rotary: Bool = false) {
+    func setBPM(_ bpm: Int, rotary: Bool = false, live: Bool = false) {
         let value = min(300, max(20, bpm))
+        if value != rhythm.bpm { liveTempoSongID = live ? selectedSongID : nil }
         // A manual tempo change takes over from automation, so display and sound agree.
         if rhythm.ramp { rhythm.ramp = false }
         guard value != rhythm.bpm else { return }
@@ -592,12 +621,17 @@ final class MetronomeModel: ObservableObject {
     }
     func tickFeedback() { if haptics { feedback.selectionChanged() } }
     var transportActive: Bool { playing || resumeAfterInterruption }
+    var transportLabel: String {
+        if interrupted && transportActive { return L10n.text("Cancel automatic resume") }
+        if needsManualResume && !interrupted { return L10n.text("Resume") }
+        return L10n.text(transportActive ? "Stop metronome" : "Start metronome")
+    }
     func toggle() { (playing || resumeAfterInterruption) ? stop() : start() }
     func start(resuming: Bool = false) {
         guard !playing, !interrupted else { return }
         previewTimer?.invalidate()
         do {
-            try audio.start(rhythm, resuming: resuming, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; lastSerial = 0; event = nil
+            try audio.start(playbackRhythm, resuming: resuming || needsManualResume, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; needsManualResume = false; lastSerial = 0; event = nil
             UIApplication.shared.isIdleTimerDisabled = true
             displayTimer = Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshBeat() }
@@ -607,6 +641,7 @@ final class MetronomeModel: ObservableObject {
         } catch { audio.stop(); self.error = error.localizedDescription }
     }
     func stop() {
+        needsManualResume = false
         resumeAfterInterruption = false
         playing = false; displayTimer?.invalidate(); displayTimer = nil
         previewTimer?.invalidate(); audio.stop(); event = nil
@@ -621,8 +656,8 @@ final class MetronomeModel: ObservableObject {
         lastSerial = serial; event = e
         if playing && tempoChanged { updateNowPlaying() }
     }
-    func tap() {
-        if let bpm = tapTempo.record(at: ProcessInfo.processInfo.systemUptime) { setBPM(bpm) }
+    func tap(live: Bool = false, at time: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        if let bpm = tapTempo.record(at: time) { setBPM(bpm, live: live) }
         tapCount = tapTempo.count
         tickFeedback()
     }
@@ -630,9 +665,10 @@ final class MetronomeModel: ObservableObject {
     func endSoundPreview() {
         previewTimer?.invalidate()
         audio.mailbox.preview(nil)
-        if !playing { audio.stop() }
+        if !playing && !interrupted && !needsManualResume { audio.stop() }
     }
     func previewRhythm(_ value: Rhythm) {
+        guard !interrupted, !needsManualResume else { return }
         previewTimer?.invalidate()
         if playing { audio.mailbox.preview(value); return }
         var preview = value
@@ -650,7 +686,7 @@ final class MetronomeModel: ObservableObject {
     }
     func selectSound(_ sound: Int) {
         rhythm.sound = sound; tickFeedback()
-        guard !playing else { return }
+        guard !playing, !interrupted, !needsManualResume else { return }
         previewTimer?.invalidate()
         var preview = rhythm; preview.bpm = min(160, max(80, rhythm.bpm))
         preview.countIn = 0; preview.ramp = false; preview.gap = false
@@ -678,7 +714,9 @@ final class MetronomeModel: ObservableObject {
         if resume { start() }
     }
     private func save() {
-        if let data = try? JSONEncoder().encode(rhythm) { UserDefaults.standard.set(data, forKey: "rhythm") }
+        var stored = rhythm
+        if let id = liveTempoSongID, selectedSongID == id, let song = currentSong { stored.bpm = song.rhythm.bpm }
+        if let data = try? JSONEncoder().encode(stored) { UserDefaults.standard.set(data, forKey: "rhythm") }
         if let data = try? JSONEncoder().encode(presets) { UserDefaults.standard.set(data, forKey: "presets") }
     }
     private func updateNowPlaying() {

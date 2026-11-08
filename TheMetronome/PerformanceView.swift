@@ -26,20 +26,24 @@ struct PerformanceView: View {
                         PerformanceBeatCue(model: model, p: p)
                             .frame(height: max(260, min(580, geometry.size.height - (model.activeSetlist == nil ? 300 : 410))))
                             .frame(maxWidth: .infinity).insetPanel(p, radius: 18).padding(.horizontal, 22)
-                        if model.interrupted { Text("AUDIO INTERRUPTED").font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                     }
                 }.scrollBounceBehavior(.basedOnSize).scrollClipDisabled()
                 if model.activeSetlist != nil { songNavigation.padding(.horizontal, 22) }
                 GeometryReader { controls in
                   HStack(spacing: 14) {
-                    Button { model.tap(); model.adjustCurrentSongTempo(model.bpm) } label: {
+                    Button { model.tap(live: true) } label: {
                         Text("TAP").font(.system(size: 16, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
                             .frame(maxWidth: .infinity, minHeight: 64)
                     }.buttonStyle(HardwareButtonStyle(p: p)).frame(width: (controls.size.width - 14) * 0.4).accessibilityIdentifier("performance-tap")
                     Button { model.toggle() } label: {
-                        TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 64).contentShape(Rectangle())
+                        Group {
+                            if model.needsManualResume && !model.interrupted {
+                                Label("Resume", systemImage: "play.fill")
+                            } else { TransportGlyph(playing: model.transportActive) }
+                        }.frame(maxWidth: .infinity).frame(height: 64).contentShape(Rectangle())
                     }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                        .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
+                        .disabled(model.interrupted && !model.transportActive)
+                        .accessibilityLabel(model.transportLabel)
                         .accessibilityIdentifier("performance-play")
                         .layoutPriority(1)
                   }
@@ -187,6 +191,8 @@ struct PerformanceBeatCue: View {
     var body: some View {
         let count = model.rhythm.pulseCount
         let current = model.playing ? model.event?.beat : nil
+        let idleLabel = L10n.text(model.interrupted ? "Audio interrupted" : model.needsManualResume ? "Ready to resume" : "Ready?")
+        let recovery = model.interrupted || model.needsManualResume
         let strength = current.map { model.rhythm.beatStrength($0, counting: model.event?.countIn == true) } ?? 0
         GeometryReader { geometry in
             VStack(spacing: 6) {
@@ -195,8 +201,8 @@ struct PerformanceBeatCue: View {
                     .opacity(strength == 2 ? 1 : strength == 4 ? 0.45 : 0)
                     .frame(height: 36)
                     .accessibilityHidden(true)
-                Text(current.map { String($0 + 1) } ?? L10n.text("Ready?"))
-                    .font(InstrumentType.display(current == nil ? min(86, geometry.size.width * 0.25) : min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
+                Text(current.map { String($0 + 1) } ?? idleLabel)
+                    .font(InstrumentType.display(recovery ? 40 : current == nil ? min(86, geometry.size.width * 0.25) : min(geometry.size.height * 0.72, geometry.size.width * 0.72)))
                     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .foregroundStyle(current != nil && strength == 0 ? p.muted : p.ink)
@@ -215,7 +221,7 @@ struct PerformanceBeatCue: View {
         }.foregroundStyle(p.ink)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Beat indicator")
-            .accessibilityValue(current.map { String($0 + 1) } ?? L10n.text("Stopped"))
+            .accessibilityValue(current.map { String($0 + 1) } ?? (recovery ? idleLabel : L10n.text("Stopped")))
             .accessibilityIdentifier("performance-beat")
     }
 }

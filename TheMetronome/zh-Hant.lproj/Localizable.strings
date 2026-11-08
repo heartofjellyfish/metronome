@@ -454,3 +454,7 @@
 "Saving updates this song in every setlist that includes it." = "儲存後，所有收錄這首歌的歌單都會同步更新。";
 "Frequently used" = "常用";
 "Clear search" = "清除搜尋";
+"Audio interrupted" = "聲音已中斷";
+"Ready to resume" = "可以繼續了";
+"Resume" = "繼續";
+"Remove from library and all linked setlists (%d)." = "這首歌將從歌曲庫和所有使用它的歌單（%d 個）中刪除。";

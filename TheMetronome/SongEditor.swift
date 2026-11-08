@@ -113,7 +113,14 @@ struct SongEditor: View {
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Song name").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
-                    SongNameInput(text: text, p: p).frame(minHeight: 22).padding(15).insetPanel(p, radius: 10)
+                    HStack(spacing: 10) {
+                        SongNameInput(text: text, p: p).frame(minHeight: 22).padding(15).insetPanel(p, radius: 10)
+                        if let delete {
+                            Button(action: delete) { Image(systemName: "trash").foregroundStyle(.red).frame(width: 46, height: 46) }
+                                .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Delete song")
+                                .accessibilityIdentifier("editor-delete-song")
+                        }
+                    }
                 }
 
                 VStack(spacing: 0) {
@@ -129,11 +136,10 @@ struct SongEditor: View {
                 }.insetPanel(p, radius: 12)
                 Text("Notes").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
                 TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
-                if addToSetlist != nil || delete != nil {
-                    HStack(spacing: 12) {
-                        if let addToSetlist { Button(action: addToSetlist) { Label("Add to setlist", systemImage: "text.badge.plus").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("editor-add-to-setlist") }
-                        if let delete { Button(action: delete) { Label("Delete", systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44) }.foregroundStyle(.red.opacity(0.8)).accessibilityIdentifier("editor-delete-song") }
-                    }.buttonStyle(HardwareButtonStyle(p: p))
+                if let addToSetlist {
+                    Button(action: addToSetlist) {
+                        Label("Setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-add-to-setlist")
                 }
                 SongSaveBar(text: text, p: p, cancel: cancel) {
                     save(SavedPreset(id: initial.id, name: text.name, rhythm: draft.performanceCopy, notes: text.notes))

@@ -84,6 +84,10 @@ final class RedesignUITests: XCTestCase {
         tap("pattern-3-5"); XCTAssertTrue(b("pattern-3-5").isSelected)
         tap("pattern-3-6"); XCTAssertTrue(b("pattern-3-6").isSelected)
         shot("02-triplets-live")
+        tap("edit-rhythm"); tap("editor-grid-4")
+        if b("Change").exists { b("Change").tap() }
+        tap("close-panel")
+        XCTAssertTrue(b("pattern-3-6").isSelected)
         tap("pattern-family-2"); tap("edit-rhythm")
         tap("editor-grid-4"); if b("Change").exists { b("Change").tap() }
         tap("division-pulse-1"); tap("division-pulse-3")

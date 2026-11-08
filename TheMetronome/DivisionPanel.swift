@@ -5,6 +5,7 @@ struct DivisionPanel: View {
     @Binding var editing: Bool
     let playing: Bool
     let p: InstrumentPalette
+    let audition: (Rhythm?) -> Void
     let stopPreview: () -> Void
     @State private var patternTab: Bool
     @State private var family: Int
@@ -16,8 +17,8 @@ struct DivisionPanel: View {
     }
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
-    init(rhythm: Binding<Rhythm>, editing: Binding<Bool>, playing: Bool, p: InstrumentPalette, stopPreview: @escaping () -> Void) {
-        _rhythm = rhythm; _editing = editing; self.playing = playing; self.p = p; self.stopPreview = stopPreview
+    init(rhythm: Binding<Rhythm>, editing: Binding<Bool>, playing: Bool, p: InstrumentPalette, audition: @escaping (Rhythm?) -> Void = { _ in }, stopPreview: @escaping () -> Void) {
+        _rhythm = rhythm; _editing = editing; self.playing = playing; self.p = p; self.audition = audition; self.stopPreview = stopPreview
         let value = rhythm.wrappedValue
         _patternTab = State(initialValue: value.divisionMask != nil || value.swingRatio > 0.5)
         _family = State(initialValue: [2,3,4].contains(value.subdivision) ? value.subdivision : 4)
@@ -45,8 +46,9 @@ struct DivisionPanel: View {
                         .padding(.horizontal, 16).frame(height: 48)
                 }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("edit-rhythm").accessibilityAddTraits(customSelected ? .isSelected : [])
             }
-        }.onDisappear { stopPreview() }
-            .onChange(of: playing) { _, value in if editing && value { rhythm = draft } }
+        }.onDisappear { audition(nil); stopPreview() }
+            .onChange(of: editing) { _, active in if !active { audition(nil) } }
+            .onChange(of: playing) { _, value in if editing { audition(value ? draft : nil) } }
     }
     private func modeKey(_ title: String, selected: Bool, id: String, action: @escaping () -> Void) -> some View {
         Button { stopPreview(); action() } label: {
@@ -151,11 +153,11 @@ struct DivisionPanel: View {
                     if draft.swingRatio > 0.5 { Text(L10n.format("Swing %d%%", Int((draft.swingRatio*100).rounded()))).font(.caption).foregroundStyle(p.muted) }
                 }.padding(.horizontal, 10).frame(height: 76).insetPanel(p, radius: 12)
                 Button {
-                    stopPreview(); rhythm = draft
+                    audition(nil); stopPreview(); rhythm = rhythm.withDivision(from: draft)
                     patternTab = draft.divisionMask != nil || draft.swingRatio > 0.5
                     family = [2,3,4].contains(draft.subdivision) ? draft.subdivision : family
                     editing = false
-                } label: { Text("Use").font(.system(size: 16, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8).frame(width: 100, height: 76) }
+                } label: { Text("Save").font(.system(size: 16, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8).frame(width: 100, height: 76) }
                     .buttonStyle(HardwareButtonStyle(p: p, charcoal: true, radius: 10)).accessibilityIdentifier("use-rhythm")
             }
 
@@ -187,7 +189,7 @@ struct DivisionPanel: View {
     }
     private func withDivision(_ count: Int) -> Rhythm { var value = rhythm; value.setDivision(count); return value }
     private func changeGrid(_ count: Int) { draft.setDivision(count); message = nil; changedDraft() }
-    private func changedDraft() { stopPreview(); if playing { rhythm = draft } }
+    private func changedDraft() { if playing { audition(draft) } }
     private func apply(_ value: Rhythm) { stopPreview(); rhythm = value }
 }
 

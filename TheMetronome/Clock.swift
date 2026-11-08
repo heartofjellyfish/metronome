@@ -91,6 +91,13 @@ struct Rhythm: Codable, Equatable {
     }
     func displayStrength(_ beat: Int) -> Int { metricalStrength(beat) }
 
+    func withDivision(from other: Rhythm) -> Rhythm {
+        var copy = self
+        copy.subdivision = other.subdivision
+        copy.divisionMask = other.divisionMask
+        copy.swing = other.swing
+        return copy
+    }
     var subdivision = 1
     // Optional additions keep previously saved rhythms decodable.
     var divisionMask: Int?

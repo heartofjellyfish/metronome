@@ -59,6 +59,8 @@ struct MetronomeView: View {
                         Text("\(model.rhythm.beats)/\(model.rhythm.denominator)  \(model.marking)").technical(12, spacing: 1).lineLimit(1).minimumScaleFactor(0.65)
                         if model.interrupted {
                             Text("AUDIO INTERRUPTED").technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
+                        } else if model.needsManualResume {
+                            Text("Ready to resume").font(.caption)
                         } else if model.event?.countIn == true || model.event?.silent == true {
                             Text(L10n.text(model.event?.countIn == true ? "COUNT IN" : "SILENT BAR")).technical(8, spacing: 1).foregroundStyle(InstrumentPalette.orange)
                         }
@@ -97,9 +99,13 @@ struct MetronomeView: View {
                 .accessibilityLabel("Subdivision").accessibilityIdentifier("home-division")
 
             Button { model.toggle(); model.tickFeedback() } label: {
-                TransportGlyph(playing: model.transportActive).frame(width: 223, height: 100)
+                Group {
+                    if model.needsManualResume && !model.interrupted { Label("Resume", systemImage: "play.fill") }
+                    else { TransportGlyph(playing: model.transportActive) }
+                }.frame(width: 223, height: 100)
             }.buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: !model.dark, radius: 13)).position(x: 138.5, y: 677)
-                .accessibilityLabel(L10n.text(model.interrupted && model.transportActive ? "Cancel automatic resume" : model.playing ? "Stop metronome" : "Start metronome")).accessibilityIdentifier("transport")
+                .disabled(model.interrupted && !model.transportActive)
+                .accessibilityLabel(model.transportLabel).accessibilityIdentifier("transport")
             Button { model.tap() } label: {
                 VStack(spacing: 19) {
                     LED(on: true, color: InstrumentPalette.amber, size: 13)

@@ -259,6 +259,7 @@ final class LiveModeTests: XCTestCase {
         XCTAssertFalse(model.playing)
         model.start(); model.handleInterruption(type: began, options: 0)
         model.handleInterruption(type: ended, options: 0)
+        XCTAssertTrue(model.needsManualResume)
         XCTAssertFalse(model.playing)
         model.start(); model.handleInterruption(type: began, options: 0)
         NotificationCenter.default.post(name: AVAudioSession.routeChangeNotification, object: nil,

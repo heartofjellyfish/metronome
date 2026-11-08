@@ -171,7 +171,8 @@ struct SettingsPlaybackBar: View {
                 Button { model.endSoundPreview(); model.toggle() } label: {
                     TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity).frame(height: 48)
                 }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                    .accessibilityLabel(L10n.text(model.transportActive ? "Stop metronome" : "Start metronome"))
+                    .disabled(model.interrupted && !model.transportActive)
+                    .accessibilityLabel(model.transportLabel)
                     .accessibilityIdentifier(identifier)
             }
         }

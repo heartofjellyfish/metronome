@@ -377,3 +377,7 @@ Ready?|准备好了？|準備好了？|準備はいい？|준비됐나요?|Prêt
 Saving updates this song in every setlist that includes it.|保存后，所有收录这首歌的歌单都会同步更新。|儲存後，所有收錄這首歌的歌單都會同步更新。|保存すると、この曲を含むすべてのセットリストに反映されます。|저장하면 이 곡이 포함된 모든 세트리스트에 반영됩니다.|Les modifications seront appliquées à toutes les setlists contenant ce morceau.|Beim Speichern wird der Song in allen zugehörigen Setlists aktualisiert.|Al guardar, se actualizará esta canción en todos los repertorios que la incluyan.|Ao salvar, a música será atualizada em todos os repertórios que a incluem.
 Frequently used|常用|常用|よく使う|자주 사용|Fréquentes|Häufig verwendet|Frecuentes|Frequentes
 Clear search|清除搜索|清除搜尋|検索をクリア|검색 지우기|Effacer la recherche|Suche löschen|Borrar búsqueda|Limpar busca
+Resume|继续|繼續|再開|재개|Reprendre|Fortsetzen|Reanudar|Retomar
+Ready to resume|可以继续了|可以繼續了|再開できます|재개 가능|Prêt à reprendre|Bereit zum Fortsetzen|Listo para reanudar|Pronto para retomar
+Audio interrupted|声音已中断|聲音已中斷|音声が中断されました|오디오 중단됨|Audio interrompu|Audio unterbrochen|Audio interrumpido|Áudio interrompido
+Remove from library and all linked setlists (%d).|这首歌将从歌曲库和所有引用它的歌单（%d 个）中删除。|這首歌將從歌曲庫和所有使用它的歌單（%d 個）中刪除。|曲ライブラリと、この曲を含むセットリスト（%d 件）から削除します。|곡 보관함과 이 곡이 담긴 세트리스트(%d개)에서 삭제합니다.|Supprimer de la bibliothèque et de toutes les setlists associées (%d).|Aus der Bibliothek und allen zugehörigen Setlists (%d) löschen.|Se eliminará de la biblioteca y de todos los repertorios que la incluyen (%d).|A música será excluída da biblioteca e dos repertórios vinculados (%d).

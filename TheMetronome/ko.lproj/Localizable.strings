@@ -454,3 +454,7 @@
 "Saving updates this song in every setlist that includes it." = "저장하면 이 곡이 포함된 모든 세트리스트에 반영됩니다.";
 "Frequently used" = "자주 사용";
 "Clear search" = "검색 지우기";
+"Audio interrupted" = "오디오 중단됨";
+"Ready to resume" = "재개 가능";
+"Resume" = "재개";
+"Remove from library and all linked setlists (%d)." = "곡 보관함과 이 곡이 담긴 세트리스트(%d개)에서 삭제합니다.";

@@ -454,3 +454,7 @@
 "Saving updates this song in every setlist that includes it." = "Les modifications seront appliquées à toutes les setlists contenant ce morceau.";
 "Frequently used" = "Fréquentes";
 "Clear search" = "Effacer la recherche";
+"Audio interrupted" = "Audio interrompu";
+"Ready to resume" = "Prêt à reprendre";
+"Resume" = "Reprendre";
+"Remove from library and all linked setlists (%d)." = "Supprimer de la bibliothèque et de toutes les setlists associées (%d).";
