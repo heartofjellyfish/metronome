@@ -26,9 +26,9 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     let p: InstrumentPalette
     let bookmarks: ListBookmarks
     let page: String
+    var compactMargins = false
     var move: ((UUID, Int) -> Void)? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
-    var onRowsHeight: ((CGFloat) -> Void)? = nil
     var onHeaderScrolled: ((Bool) -> Void)? = nil
     @ViewBuilder var row: (Int, Item) -> Row
     @ViewBuilder var above: () -> Above
@@ -46,7 +46,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         view.backgroundColor = .clear
         view.contentInsetAdjustmentBehavior = .never
         view.keyboardDismissMode = .interactive
-        view.contentInset = .init(top: 12, left: 0, bottom: 20, right: 0)
+        view.contentInset = .init(top: compactMargins ? 8 : 12, left: 0, bottom: compactMargins ? 8 : 20, right: 0)
         view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "item")
         view.dataSource = context.coordinator
         view.delegate = context.coordinator
@@ -88,7 +88,6 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         private var restored = false
         private var touching = false
         private var compact: Bool?
-        private var rowsHeight: CGFloat = -1
         init(_ parent: CatalogList) { self.parent = parent; items = parent.items }
 
         func numberOfSections(in view: UICollectionView) -> Int { 3 }
@@ -106,11 +105,11 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             case 0:
                 cell.contentConfiguration = UIHostingConfiguration {
                     VStack(alignment: .leading, spacing: 0) { parent.above() }.frame(maxWidth: .infinity, alignment: .leading)
-                        .foregroundStyle(p.ink).padding(.horizontal, 14).padding(.bottom, 10)
+                        .foregroundStyle(p.ink).padding(.horizontal, 14).padding(.bottom, parent.compactMargins ? 4 : 10)
                 }.margins(.all, 0)
             case 2:
                 cell.contentConfiguration = UIHostingConfiguration {
-                    VStack(spacing: 0) { parent.below() }.foregroundStyle(p.ink).padding(.horizontal, 14).padding(.top, 16)
+                    VStack(spacing: 0) { parent.below() }.foregroundStyle(p.ink).padding(.horizontal, 14).padding(.top, parent.compactMargins ? 4 : 16)
                 }.margins(.all, 0)
             default:
                 guard items.indices.contains(path.item) else { return }
@@ -142,11 +141,6 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                         view.contentOffset.y = min(end, max(top, frame.minY - a.inset))
                     }
                 }
-            }
-            if let footer = view.layoutAttributesForItem(at: IndexPath(item: 0, section: 2)),
-               let head = view.layoutAttributesForItem(at: IndexPath(item: 0, section: 0)) {
-                let height = footer.frame.minY - head.frame.maxY
-                if abs(height - rowsHeight) > 1 { rowsHeight = height; parent.onRowsHeight?(height) }
             }
             parent.onContentHeight?(view.contentSize.height + view.adjustedContentInset.top + view.adjustedContentInset.bottom)
             captureVisibleRows(view)

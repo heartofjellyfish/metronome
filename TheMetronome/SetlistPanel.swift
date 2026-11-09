@@ -16,14 +16,10 @@ struct SetlistPanel: View {
     @State private var compactTitle = false
     @State private var bookmarks = ListBookmarks()
     @State private var shelfHeight: CGFloat = 0
-    @State private var viewportHeight: CGFloat = 0
     @State private var listQuery = ""
     @FocusState private var searchingLists: Bool
     @State private var useCounts: [String: Int] = [:]
     private var atRoot: Bool { !startInSongLibrary && browsingSetlistID == nil && !editing && song == nil }
-    private var needsSearch: Bool {
-        !model.setlists.isEmpty && viewportHeight > 0 && (shelfHeight + 48 > viewportHeight || !listQuery.isEmpty || searchingLists)
-    }
     @State private var songCatalogHeight: CGFloat = 0
     @State private var adding = false
     @State private var pendingSongIDs: [UUID] = []
@@ -57,7 +53,7 @@ struct SetlistPanel: View {
                 Color.black.opacity(p.dark ? 0.55 : 0.3).ignoresSafeArea().accessibilityHidden(true)
                 VStack(spacing: 0) {
                     if song == nil { header }
-                    if (atRoot && needsSearch) || libraryRoot {
+                    if libraryRoot {
                         catalogSearch(library: libraryRoot).padding(.horizontal, 20)
                     }
                     Group {
@@ -101,21 +97,10 @@ struct SetlistPanel: View {
                         } else if browsedList != nil || creatingList {
                             listDetail(browsedList)
                         } else {
-                            listLibrary
+                            setlistBrowser
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                        if atRoot { viewportHeight = $0 + (needsSearch ? 44 : 0) }
-                    }
-                    if atRoot {
-                        Button { beginEdit(new: true) } label: {
-                            Label("New setlist", systemImage: "plus")
-                                .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
-                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-setlist")
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal, 20).padding(.bottom, 16)
-                    }
                     if browsingDetail || editingListRoot {
                         VStack(spacing: 8) {
                             Divider()
@@ -375,13 +360,38 @@ struct SetlistPanel: View {
         compactTitle = false
         browsingSetlistID = list.id
     }
+    private var setlistBrowser: some View {
+        GeometryReader { space in
+            let gap: CGFloat = 12
+            let footerHeight: CGFloat = 44
+            let available = max(0, space.size.height - 8 - 16 - footerHeight - gap)
+            let contentHeight = shelfHeight > 0 ? shelfHeight : CGFloat(model.setlists.count) * 68 + 16
+            let showsSearch = !model.setlists.isEmpty && (contentHeight > available || searchingLists || !listQuery.isEmpty)
+            VStack(alignment: .trailing, spacing: 0) {
+                if showsSearch {
+                    catalogSearch(library: false).padding(.bottom, 8)
+                }
+                if !model.setlists.isEmpty {
+                    listLibrary
+                        .frame(maxHeight: showsSearch ? .infinity : contentHeight)
+                        .padding(.bottom, gap)
+                }
+                Button { beginEdit(new: true) } label: {
+                    Label("New setlist", systemImage: "plus")
+                        .padding(.horizontal, 14).frame(minWidth: 146, minHeight: footerHeight)
+                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-setlist")
+                    .fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
+        }
+    }
     private var listLibrary: some View {
         let query = listQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         let lists = model.setlists.filter { query.isEmpty || $0.name.localizedStandardContains(query) }
+        let showFrequent = searchingLists && query.isEmpty && model.setlists.count >= 20
         let move: ((UUID, Int) -> Void)? = query.isEmpty ? { id, index in model.moveSetlist(id, to: index) } : nil
-        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists",
-                           move: move,
-                           onRowsHeight: { if query.isEmpty { shelfHeight = $0 } }, row: { _, list in
+        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move,
+                           onContentHeight: { if query.isEmpty && !searchingLists && abs(shelfHeight - $0) > 0.5 { shelfHeight = $0 } }, row: { _, list in
             HStack(spacing: 6) {
                 if query.isEmpty { grip("drag-setlist-\(list.name)") }
                 Button { openList(list) } label: {
@@ -395,7 +405,7 @@ struct SetlistPanel: View {
                 }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
             }.padding(.horizontal, 12).padding(.vertical, 5)
         }, above: {
-            if searchingLists && query.isEmpty && model.setlists.count >= 20 {
+            if showFrequent {
                 let frequent = lists.filter { useCounts[$0.id.uuidString, default: 0] >= 3 }
                     .sorted { useCounts[$0.id.uuidString, default: 0] > useCounts[$1.id.uuidString, default: 0] }.prefix(3)
                 if !frequent.isEmpty {
@@ -410,7 +420,7 @@ struct SetlistPanel: View {
                 }
             }
             if lists.isEmpty && !query.isEmpty { Text("No matches.").foregroundStyle(p.muted) }
-        }, below: { EmptyView() }).screen().padding(.horizontal, 20).padding(.vertical, 8)
+        }, below: { EmptyView() }).screen()
     }
     private func songCount(_ count: Int) -> String { L10n.format(count == 1 ? "%d song" : "%d songs", count) }
     private var draftSongs: [SavedPreset] {

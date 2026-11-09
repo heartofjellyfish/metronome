@@ -243,15 +243,28 @@ final class PerformanceUITests: XCTestCase {
         }
         XCTAssertTrue(row.isHittable, "Could not scroll to \(id)")
     }
+    func testShortSetlistBrowserFitsRows() {
+        launch("en"); tap("settings"); tap("settings-setlists")
+        let list = app.collectionViews.firstMatch
+        let button = b("new-setlist")
+        XCTAssertEqual(button.frame.minY - list.frame.maxY, 12, accuracy: 1)
+        XCTAssertLessThan(button.frame.maxY, app.frame.midY)
+        XCTAssertFalse(app.textFields["setlist-search"].exists)
+        shot("58-short-setlists")
+        tap("new-setlist"); tap("cancel-setlist")
+        XCTAssertEqual(button.frame.minY - list.frame.maxY, 12, accuracy: 1)
+    }
     func testOverflowSearchAndFrequentSetlists() {
         launch("en", manyLists: true)
         tap("settings"); tap("settings-setlists")
         let search = app.textFields["setlist-search"]
         XCTAssertTrue(search.waitForExistence(timeout: 3))
+        let footer = b("new-setlist").frame
         search.tap()
-        XCTAssertTrue(app.staticTexts["Frequently used"].exists)
+        XCTAssertTrue(app.staticTexts["Frequently used"].waitForExistence(timeout: 3))
         for term in ["Tour 14", "Tour 21", "Tour 24"] {
             search.typeText(term)
+            XCTAssertEqual(b("new-setlist").frame.midY, footer.midY, accuracy: 1)
             XCTAssertEqual(search.value as? String, term)
             XCTAssertTrue(app.buttons["setlist-\(term)"].waitForExistence(timeout: 2))
             XCTAssertTrue(app.buttons["setlist-Saturday"].waitForNonExistence(timeout: 2))
