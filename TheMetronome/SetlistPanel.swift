@@ -153,11 +153,9 @@ struct SetlistPanel: View {
         .onChange(of: song?.id) { _, _ in membershipChanges = [:] }
         .overlay { if performing { PerformanceView(model: model, fromSongLibrary: startInSongLibrary, back: { performing = false }) } }
         .sheet(item: $sharing) { value in
-            NavigationStack {
-                ScrollView { targets(value).padding(20) }.background(p.body)
-                    .navigationTitle(L10n.text("Choose setlists")).navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sharing = nil }.accessibilityIdentifier("membership-done") } }
-            }.presentationDetents([.medium, .large])
+            targets(value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .overlay {
             if deletingSong, let song {
@@ -508,23 +506,36 @@ struct SetlistPanel: View {
     private func libraryRow(_ value: SavedPreset, memberships: [String]) -> some View {
         HStack(spacing: 10) {
             if search.isEmpty { grip("library-drag-\(value.name)") }
-            Button { dismissTextInput(); model.loadStandaloneSong(value.id); performing = true } label: {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack { songInfo(value); Spacer(minLength: 0) }
-                    if let first = memberships.first {
+            VStack(alignment: .leading, spacing: 0) {
+                Button {
+                    dismissTextInput()
+                    model.loadStandaloneSong(value.id)
+                    performing = true
+                } label: {
+                    songInfo(value).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-open-\(value.name)")
+                if let first = memberships.first {
+                    Button {
+                        dismissTextInput()
+                        membershipChanges = [:]
+                        sharing = value
+                    } label: {
                         HStack(spacing: 5) {
-                            Text(verbatim: first).lineLimit(1)
+                            Text(verbatim: first).lineLimit(1).truncationMode(.middle)
                                 .accessibilityIdentifier("membership-\(value.name)-\(first)")
                             if memberships.count > 1 {
                                 Text(verbatim: "+\(memberships.count - 1)").fixedSize()
                                     .accessibilityLabel(memberships.dropFirst().joined(separator: ", "))
                                     .accessibilityIdentifier("membership-overflow-\(value.name)")
                             }
+                            Image(systemName: "chevron.right").font(.caption2).accessibilityHidden(true)
                         }.font(.caption2).padding(.horizontal, 7).padding(.vertical, 4)
                             .background(p.body.opacity(0.8), in: RoundedRectangle(cornerRadius: 5))
-                    }
-                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
-            }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-open-\(value.name)")
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                    }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-setlists-\(value.name)")
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
             Button { bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
                 .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("Edit song").accessibilityIdentifier("library-edit-\(value.name)")
         }.padding(14).accessibilityElement(children: .contain).accessibilityIdentifier("library-row-\(value.name)")
@@ -546,20 +557,49 @@ struct SetlistPanel: View {
         }
     }
     private func targets(_ value: SavedPreset) -> some View {
-        VStack(spacing: 14) {
-            Text(value.name).font(.headline)
-            if model.setlists.isEmpty { Text("No setlists yet.").foregroundStyle(p.muted) }
-            ForEach(model.setlists) { list in
-                let original = list.songs.contains { $0.id == value.id }
-                let exists = membershipChanges[list.id] ?? original
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Setlists").font(.title2.bold())
+                Spacer()
                 Button {
-                    let selected = !exists
-                    membershipChanges[list.id] = selected == original ? nil : selected
+                    if song == nil, !membershipChanges.isEmpty,
+                       let current = model.songLibrary.first(where: { $0.id == value.id }) {
+                        model.editSong(current.id, name: current.name, rhythm: current.rhythm, membershipChanges: membershipChanges)
+                        membershipChanges = [:]
+                    }
+                    sharing = nil
                 } label: {
-                    HStack { Text(list.name); Spacer(); Image(systemName: exists ? "checkmark" : "plus") }.padding(18).frame(minHeight: 60)
-                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityAddTraits(exists ? .isSelected : []).accessibilityIdentifier("share-to-\(list.name)")
+                    Label(song == nil ? "Save" : "Done", systemImage: "checkmark")
+                        .padding(.horizontal, 12).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("membership-done")
             }
-        }
+            Text(verbatim: value.name).font(.headline).lineLimit(2)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if model.setlists.isEmpty { Text("No setlists yet.").foregroundStyle(p.muted).padding() }
+                    ForEach(model.setlists) { list in
+                        let original = list.songs.contains { $0.id == value.id }
+                        let selected = membershipChanges[list.id] ?? original
+                        Button {
+                            let next = !selected
+                            membershipChanges[list.id] = next == original ? nil : next
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text(verbatim: list.name).multilineTextAlignment(.leading)
+                                Spacer()
+                                Image(systemName: selected ? "checkmark" : "plus")
+                                    .foregroundStyle(selected ? p.ink : p.muted).accessibilityHidden(true)
+                            }.padding(.horizontal, 14).padding(.vertical, 8)
+                                .frame(minHeight: 50).contentShape(Rectangle())
+                        }.buttonStyle(InsetRowButtonStyle(p: p))
+                            .accessibilityAddTraits(selected ? .isSelected : [])
+                            .accessibilityIdentifier("share-to-\(list.name)")
+                        if list.id != model.setlists.last?.id { Divider().padding(.horizontal, 14) }
+                    }
+                }
+            }.clipShape(RoundedRectangle(cornerRadius: 14)).insetPanel(p, radius: 14)
+        }.padding(20).padding(.top, 8).foregroundStyle(p.ink)
+            .background { InstrumentBody(p: p).ignoresSafeArea() }
     }
 }
 

@@ -161,7 +161,7 @@ struct SongEditor: View {
                 TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
                 if let addToSetlist {
                     Button(action: addToSetlist) {
-                        Label("Choose setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
+                        Label("Manage setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-add-to-setlist")
                 }
                 if !model.listsContainingSong(initial.id).isEmpty {

@@ -461,7 +461,7 @@
 "Add first song" = "最初の曲を追加";
 "Search songs" = "曲を検索";
 "Songs" = "曲";
-"Choose setlists" = "セットリストを選ぶ";
+"Manage setlists" = "所属セットリストを管理";
 "Delete this song from your library?" = "ライブラリからこの曲を削除しますか？";
 "This song will be removed from your library and these setlists." = "ライブラリと以下のセットリストからこの曲が削除されます。";
 "Add songs" = "曲を追加";
