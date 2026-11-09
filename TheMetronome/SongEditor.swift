@@ -87,14 +87,14 @@ struct SongEditor: View {
                     Text(Self.title(for: divisionEditing ? "custom" : picker)).font(.headline)
                     Spacer()
                 } else {
-                    Button(action: cancel) { Text("Cancel").padding(.horizontal, 12).frame(minHeight: 44) }
+                    Button(action: cancel) { Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-song")
                     Text(L10n.text(isNew ? "New song" : "Edit song")).font(.headline)
                         .frame(maxWidth: .infinity)
                     Button {
                         dismissTextInput()
                         save(SavedPreset(id: initial.id, name: text.name, rhythm: draft.performanceCopy, notes: text.notes))
-                    } label: { Text("Save").padding(.horizontal, 12).frame(minHeight: 44) }
+                    } label: { Label("Save", systemImage: "checkmark").padding(.horizontal, 10).frame(minHeight: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
                         .disabled(!text.hasName).opacity(text.hasName ? 1 : 0.45)
                         .accessibilityIdentifier("save-song")

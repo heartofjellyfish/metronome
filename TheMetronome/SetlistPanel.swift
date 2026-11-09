@@ -102,7 +102,10 @@ struct SetlistPanel: View {
                                         dismissTextInput()
                                         deletingList = true
                                     } label: {
-                                        Text("Delete setlist")
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "trash").accessibilityHidden(true)
+                                            Text("Delete setlist")
+                                        }.font(.subheadline)
                                             .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
                                             .padding(.horizontal, 12).frame(minHeight: 44)
                                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("delete-setlist")
@@ -116,7 +119,7 @@ struct SetlistPanel: View {
                                     if editing { showSongPicker() } else { beginEdit(new: false) }
                                 } label: {
                                     Label(editing ? "Add songs" : "Edit setlist", systemImage: editing ? "plus" : "pencil")
-                                        .padding(.horizontal, 14).frame(minWidth: editing ? 128 : nil, minHeight: 44)
+                                        .padding(.horizontal, 14).frame(minWidth: editing ? 146 : nil, minHeight: 44)
                                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing ? "add-song" : "edit-setlist")
                             }
                         }.padding(.horizontal, 20).padding(.bottom, 16)
@@ -191,10 +194,10 @@ struct SetlistPanel: View {
                     ScrollView { message }.accessibilityIdentifier("delete-impact-scroll")
                 }
                 HStack(spacing: 12) {
-                    Button(action: cancel) { Text("Cancel").frame(maxWidth: .infinity, minHeight: 46) }
+                    Button(action: cancel) { Label("Cancel", systemImage: "xmark").frame(maxWidth: .infinity, minHeight: 46) }
                         .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
                     Button(action: confirm) {
-                        Text(L10n.text(action)).foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
+                        Label(L10n.text(action), systemImage: "trash").foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
                             .frame(maxWidth: .infinity, minHeight: 46)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(identifier)
                 }.padding(.top, 8)
@@ -209,7 +212,7 @@ struct SetlistPanel: View {
             if editingListRoot || choosingSong {
                 Button {
                     if choosingSong { finishPickingSongs() } else { cancelList() }
-                } label: { Text("Cancel").padding(.horizontal, 12).frame(minHeight: 44) }
+                } label: { Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44) }
                     .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(choosingSong ? "cancel-picking-songs" : "cancel-setlist")
                 Text(editingListRoot && compactTitle && !creatingList ? listName : title)
                     .font(.system(size: 19, weight: .semibold)).lineLimit(1).frame(maxWidth: .infinity)
@@ -225,7 +228,7 @@ struct SetlistPanel: View {
                     saveList()
                 } label: {
                     HStack(spacing: 5) {
-                        Text(choosingSong && needsListName ? "Next" : "Save")
+                        Label(choosingSong && needsListName ? "Next" : "Save", systemImage: choosingSong && needsListName ? "arrow.right" : "checkmark")
                         if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
                     }.padding(.horizontal, 12).frame(minHeight: 44)
                 }
