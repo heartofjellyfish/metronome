@@ -281,7 +281,7 @@ final class PerformanceUITests: XCTestCase {
         tap("edit-setlist")
         tap("rename-setlist")
         let name = app.textFields["setlist-name"]
-        name.tap(); name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "2026 湾区巡演 — Friday night with our friends")
+        name.typeText("2026 湾区巡演 — Friday night with our friends")
         swipeKeyboardAway()
         tap("delete-song-Gossip"); tap("save-setlist")
         XCTAssertFalse(b("song-Gossip").exists)
@@ -618,12 +618,46 @@ final class PerformanceUITests: XCTestCase {
         tap("close-panel"); tap("settings-setlists"); tap("setlist-Saturday")
         XCTAssertFalse(b("song-Encore").exists)
     }
+    func testRenameOnConnectedPhoneWithoutSaving() throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Checks the actual pencil hit target on the phone.")
+        #else
+        app = XCUIApplication()
+        app.launch()
+        tap("settings"); tap("settings-setlists")
+        let first = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "setlist-")).allElementsBoundByIndex.first { $0.isHittable }
+        let row = try XCTUnwrap(first)
+        row.tap()
+        let original = app.staticTexts["setlist-title"].label
+        tap("edit-setlist")
+        b("rename-setlist").coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        let field = app.textFields["setlist-name"]
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 4))
+        field.typeText("Soundcheck")
+        XCTAssertEqual(field.value as? String, "Soundcheck")
+        tap("cancel-setlist")
+        XCTAssertEqual(app.staticTexts["setlist-title"].label, original)
+        tap("close-panel"); tap("close-settings")
+        #endif
+    }
     func testSetlistRenameReorderAndDeleteKeepsLibrary() {
         launch("en"); openList("Saturday"); tap("edit-setlist")
-        tap("rename-setlist")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2))
+        let title = b("rename-setlist")
+        title.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
         let name = app.textFields["setlist-name"]
-        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "Friday"); swipeKeyboardAway()
+        shot("43-renaming-active")
+        name.typeText("Rehearsal\n")
+        XCTAssertEqual(b("rename-setlist").value as? String, "Rehearsal")
+        tap("cancel-setlist")
+        XCTAssertEqual(app.staticTexts["setlist-title"].label, "Saturday")
+        tap("edit-setlist")
+        b("rename-setlist").coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
+        name.typeText(XCUIKeyboardKey.delete.rawValue)
+        XCTAssertFalse(b("save-setlist").isEnabled)
+        name.typeText("Friday")
+        XCTAssertEqual(name.value as? String, "Friday")
+        swipeKeyboardAway()
         tap("save-setlist"); XCTAssertEqual(app.staticTexts["setlist-title"].label, "Friday")
         tap("edit-setlist")
         XCTAssertTrue(b("add-song").isHittable)

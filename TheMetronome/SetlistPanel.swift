@@ -547,25 +547,86 @@ struct SetlistPanel: View {
 private struct EditableSetlistTitle: View {
     @Binding var name: String
     let p: InstrumentPalette
-    @FocusState private var focused: Bool
+    @State private var renaming = false
+
     var body: some View {
-        HStack(spacing: 10) {
-            Text(verbatim: name.isEmpty ? L10n.text("Setlist name") : name)
-                .font(.system(size: 28, weight: .semibold))
-                .fixedSize(horizontal: false, vertical: true)
-                .opacity(focused ? 0 : 1).accessibilityHidden(true)
-                .frame(maxWidth: focused ? .infinity : nil, minHeight: 44, alignment: .leading)
-                .overlay {
-                    TextField("Setlist name", text: $name)
-                        .font(.system(size: 28, weight: .semibold))
-                        .focused($focused).submitLabel(.done).onSubmit { focused = false }
-                        .foregroundStyle(focused ? p.ink : Color.clear)
-                        .accessibilityIdentifier("setlist-name")
-                }
-            Button { focused = true } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 8))
-                .accessibilityLabel("Setlist name").accessibilityIdentifier("rename-setlist")
+        Group {
+            if renaming {
+                SetlistNameField(name: $name, p: p, finish: { renaming = false })
+                    .frame(height: 48)
+                    .padding(.horizontal, 12)
+                    .insetPanel(p, radius: 9)
+            } else {
+                Button { renaming = true } label: {
+                    HStack(spacing: 10) {
+                        Text(verbatim: name.isEmpty ? L10n.text("Setlist name") : name)
+                            .font(.system(size: 28, weight: .semibold))
+                            .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                        Image(systemName: "pencil").foregroundStyle(p.muted)
+                    }.padding(.horizontal, 12).frame(minHeight: 48).contentShape(Rectangle())
+                }.buttonStyle(InsetRowButtonStyle(p: p)).insetPanel(p, radius: 9)
+                    .accessibilityLabel("Setlist name").accessibilityValue(name)
+                    .accessibilityIdentifier("rename-setlist")
+            }
         }
+    }
+}
+
+/// Focus the actual input once it belongs to the window, including inside a reused catalog cell.
+private struct SetlistNameField: UIViewRepresentable {
+    @Binding var name: String
+    let p: InstrumentPalette
+    let finish: () -> Void
+
+    final class Input: UITextField, UITextFieldDelegate {
+        var onChange: ((String) -> Void)?
+        var onFinish: (() -> Void)?
+        private var requestedFocus = false
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            guard window != nil, !requestedFocus else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, window != nil, !requestedFocus, becomeFirstResponder() else { return }
+                requestedFocus = true
+                selectAll(nil)
+            }
+        }
+
+        @objc func changed() { onChange?(text ?? "") }
+
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            resignFirstResponder()
+            return true
+        }
+
+        func textFieldDidEndEditing(_ textField: UITextField) {
+            changed()
+            onFinish?()
+        }
+    }
+
+    func makeUIView(context: Context) -> Input {
+        let field = Input()
+        field.text = name
+        field.placeholder = L10n.text("Setlist name")
+        field.accessibilityLabel = field.placeholder
+        field.accessibilityIdentifier = "setlist-name"
+        field.font = .systemFont(ofSize: 28, weight: .semibold)
+        field.returnKeyType = .done
+        field.clearButtonMode = .whileEditing
+        field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        field.delegate = field
+        field.addTarget(field, action: #selector(Input.changed), for: .editingChanged)
+        return field
+    }
+
+    func updateUIView(_ field: Input, context: Context) {
+        field.textColor = UIColor(p.ink)
+        field.tintColor = UIColor(p.ink)
+        field.onChange = { name = $0 }
+        field.onFinish = finish
     }
 }
 
