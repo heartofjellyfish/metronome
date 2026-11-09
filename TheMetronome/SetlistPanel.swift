@@ -63,21 +63,24 @@ struct SetlistPanel: View {
                         if let song {
                             songEditor(song).id(song.id)
                         } else if adding {
-                            GeometryReader { space in
-                                VStack(spacing: 0) {
-                                    HStack(spacing: 10) {
-                                        if !search.isEmpty || searchingLists || songCatalogHeight > space.size.height - 44 {
-                                            catalogSearch(library: true)
-                                        } else { Spacer() }
-                                        Button {
-                                            dismissTextInput()
-                                            song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
-                                        } label: {
-                                            Label("New song", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
-                                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-song")
-                                    }.padding(.horizontal, 20)
-                                    savedSongPicker
+                            VStack(spacing: 0) {
+                                GeometryReader { space in
+                                    VStack(spacing: 0) {
+                                        if !search.isEmpty || searchingLists || songCatalogHeight > space.size.height {
+                                            catalogSearch(library: true).padding(.horizontal, 20)
+                                        }
+                                        savedSongPicker
+                                    }
                                 }
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Divider()
+                                    Button {
+                                        dismissTextInput()
+                                        song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
+                                    } label: {
+                                        Label("New song", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
+                                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-song")
+                                }.padding(.horizontal, 20).padding(.bottom, 10)
                             }
                         } else if editing {
                             listEditor
@@ -285,6 +288,7 @@ struct SetlistPanel: View {
     private func catalogSearch(library: Bool) -> some View {
         let query = library ? $search : $listQuery
         return HStack {
+            if choosingSong { Image(systemName: "magnifyingglass").foregroundStyle(p.muted).accessibilityHidden(true) }
             TextField(choosingSong ? LocalizedStringKey("Search songs") : LocalizedStringKey("Search"), text: query).focused($searchingLists).submitLabel(.done)
                 .onSubmit { searchingLists = false }
                 .accessibilityIdentifier(library ? "song-search" : "setlist-search")
@@ -429,9 +433,10 @@ struct SetlistPanel: View {
                 .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
         }.padding(.horizontal, 16).padding(.vertical, 10)
     }
-    private func songInfo(_ value: SavedPreset) -> some View {
+    private func songInfo(_ value: SavedPreset, maxTitleLines: Int? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(value.name).font(.system(size: 17, weight: .semibold)).multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+            Text(value.name).font(.system(size: 17, weight: .semibold)).multilineTextAlignment(.leading)
+                .lineLimit(maxTitleLines).fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 5) { Text("\(value.rhythm.bpm) BPM · \(value.rhythm.beats)/\(value.rhythm.denominator)"); score(value) }
                 VStack(alignment: .leading, spacing: 3) { Text("\(value.rhythm.bpm) BPM · \(value.rhythm.beats)/\(value.rhythm.denominator)"); score(value) }
@@ -453,10 +458,12 @@ struct SetlistPanel: View {
                 else { pendingSongIDs.append(value.id) }
             } label: {
                 HStack {
-                    songInfo(value)
-                    Spacer()
-                    Image(systemName: exists ? "checkmark" : (picked ? "checkmark.circle.fill" : "circle"))
-                        .font(.title3).foregroundStyle(picked ? p.ink : p.muted)
+                    songInfo(value, maxTitleLines: 2)
+                    Spacer(minLength: 8)
+                    Image(systemName: exists || picked ? "checkmark" : "plus")
+                        .font(.system(size: 19, weight: picked ? .semibold : .regular))
+                        .foregroundStyle(picked ? p.ink : p.muted)
+                        .frame(width: 24).accessibilityHidden(true)
                 }.padding(14).frame(minHeight: 60).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).disabled(exists)
                 .accessibilityAddTraits(exists || picked ? .isSelected : [])

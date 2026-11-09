@@ -114,7 +114,7 @@ final class PerformanceUITests: XCTestCase {
         tap("import-song-夜来香"); tap("import-song-Gossip"); tap("import-song-男孩别哭"); tap("import-song-男孩别哭")
         XCTAssertTrue(b("import-song-Gossip").isSelected)
         XCTAssertFalse(b("import-song-男孩别哭").isSelected)
-        shot("39-multi-song")
+        shot("40-picker-short")
         tap("save-setlist")
         XCTAssertEqual(app.staticTexts["song-position-夜来香"].label, "01")
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "02")
@@ -127,14 +127,26 @@ final class PerformanceUITests: XCTestCase {
         tap("settings"); tap("settings-setlists"); tap("new-setlist")
         tap("add-song")
         let field = app.textFields["song-search"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        let searchY = field.frame.midY
+        let newSongY = b("new-song").frame.midY
+        let saveY = b("save-setlist").frame.midY
+        tap("import-song-Track 01")
+        revealCatalogRow("import-song-Track 42")
+        XCTAssertEqual(field.frame.midY, searchY, accuracy: 1)
+        XCTAssertEqual(b("new-song").frame.midY, newSongY, accuracy: 1)
+        XCTAssertEqual(b("save-setlist").frame.midY, saveY, accuracy: 1)
+        XCTAssertGreaterThan(newSongY, b("import-song-Track 42").frame.midY)
+        shot("40-picker-scrolled")
+        tap("new-song"); tap("cancel-song")
         field.tap(); field.typeText("Track 42"); swipeKeyboardAway()
         tap("import-song-Track 42")
-        tap("Clear search"); tap("import-song-Track 01"); tap("save-setlist")
+        tap("Clear search"); tap("save-setlist")
         XCTAssertTrue(b("edit-song-Track 42").exists)
         app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Tour"); swipeKeyboardAway()
         tap("save-setlist")
-        XCTAssertEqual(app.staticTexts["song-position-Track 42"].label, "01")
-        XCTAssertEqual(app.staticTexts["song-position-Track 01"].label, "02")
+        XCTAssertEqual(app.staticTexts["song-position-Track 01"].label, "01")
+        XCTAssertEqual(app.staticTexts["song-position-Track 42"].label, "02")
     }
     func testLongListsPreserveContext() {
         launchLongCatalog()
