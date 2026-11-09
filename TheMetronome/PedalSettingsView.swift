@@ -59,40 +59,39 @@ struct PedalSettingsView: View {
             .onDisappear { pedal.setupVisible = false; pedal.cancelLearning() }
             .sheet(isPresented: $midiPicker) {
                 NavigationStack {
-                    VStack(spacing: 0) {
-                        BluetoothMIDIPicker()
-                        Text("Page-turning pedals: pair in iPhone Settings > Bluetooth, then return here.")
-                            .font(.subheadline).padding()
-                    }.navigationTitle(Text("Connect Bluetooth pedal"))
+                    BluetoothMIDIPicker()
+                        .navigationTitle(Text("Connect MIDI pedal"))
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { midiPicker = false } } }
                 }
             }
     }
-    private var inputStatus: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(pedal.midiInputNames.enumerated()), id: \.offset) { _, name in
-                let text = name == "MIDI" ? L10n.text("MIDI input detected") : L10n.format("MIDI connected · %@", name)
-                statusLine(text, icon: "pianokeys")
-            }
-            if pedal.keyboardDetected {
-                statusLine(L10n.text("Keyboard input detected"), icon: "keyboard")
-            } else if pedal.lastDirectInput == .keyboard {
-                statusLine(L10n.text("Keyboard input received"), icon: "keyboard")
-            }
-            if pedal.lastDirectInput == .media {
-                statusLine(L10n.text("Media button received"), icon: "playpause")
-            }
-            if !pedal.inputAvailable {
+    @ViewBuilder private var inputStatus: some View {
+        if !pedal.inputAvailable && pedal.learning == nil {
+            VStack(alignment: .leading, spacing: 6) {
                 statusLine(L10n.text("No input detected"), icon: "cable.connector")
-                Text("Pair a page-turning pedal in Settings → Bluetooth.")
+                Text("Turn on your pedal, then select it in Settings → Bluetooth.")
                     .font(.subheadline).foregroundStyle(p.muted)
-                midiButton
-            }
-            Text(hint).font(.subheadline).foregroundStyle(p.muted)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(minHeight: 38, alignment: .topLeading)
-                .accessibilityIdentifier("pedal-hint")
-        }.padding(12).frame(maxWidth: .infinity, alignment: .leading).insetPanel(p, radius: 12)
+                disclosure("Not listed in Bluetooth?", .connection, id: "pedal-help")
+                if detail == .connection { midiHelp }
+            }.padding(12).frame(maxWidth: .infinity, alignment: .leading).insetPanel(p, radius: 12)
+        } else {
+            VStack(alignment: .leading, spacing: 4) {
+                if !pedal.midiInputNames.isEmpty && (pedal.isMIDIProfile || (!pedal.keyboardDetected && pedal.lastDirectInput == nil)) {
+                    ForEach(Array(pedal.midiInputNames.enumerated()), id: \.offset) { _, name in
+                        let text = name == "MIDI" ? L10n.text("MIDI input detected") : L10n.format("MIDI connected · %@", name)
+                        statusLine(text, icon: "pianokeys")
+                    }
+                } else if pedal.lastDirectInput == .media {
+                    statusLine(L10n.text("Media button received"), icon: "playpause")
+                } else if pedal.inputAvailable {
+                    statusLine(L10n.text("Input device detected"), icon: "switch.2")
+                }
+                Text(hint).font(.subheadline).foregroundStyle(p.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minHeight: 38, alignment: .topLeading)
+                    .accessibilityIdentifier("pedal-hint")
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func statusLine(_ title: String, icon: String) -> some View {
@@ -168,12 +167,21 @@ struct PedalSettingsView: View {
 
     private var connectionHelp: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Page-turning pedals: pair in iPhone Settings > Bluetooth, then return here.")
-            midiButton
+            Text("Turn on your pedal, then select it in Settings → Bluetooth.")
+            Divider()
+            midiHelp
             if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
                 Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.")
             }
         }.font(.subheadline).foregroundStyle(p.muted)
+    }
+
+    private var midiHelp: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Some pedals connect inside the app. Search below, then select your pedal by name.")
+                .font(.subheadline).foregroundStyle(p.muted)
+            midiButton
+        }
     }
 
     private var midiButton: some View {
@@ -184,7 +192,7 @@ struct PedalSettingsView: View {
             pedal.enableMIDI()
             midiPicker = true
         } label: {
-            Label("Connect MIDI pedal", systemImage: "plus").font(.subheadline)
+            Label("Find a MIDI pedal", systemImage: "magnifyingglass").font(.subheadline)
                 .padding(.horizontal, 12).frame(minHeight: 44)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).foregroundStyle(p.ink)
             .accessibilityIdentifier("pedal-midi")
@@ -229,7 +237,8 @@ struct PedalSettingsView: View {
     }
     private var hint: String {
         if let action = pedal.learning { return L10n.format("Press your pedal now to assign %@. Tap again to cancel.", action.title) }
-        return L10n.text(pedal.bindings.isEmpty ? "Tap Learn, then press your pedal." : "Press a bound key to try it.")
+        if pedal.unassignedPress { return L10n.text("This switch is unassigned. Tap Learn beside an action, then press it again.") }
+        return L10n.text(pedal.hasBindingForDetectedInput ? "Bindings saved. Press your pedal to try them." : "Tap Learn beside an action, then press the pedal switch you want to use.")
     }
 }
 

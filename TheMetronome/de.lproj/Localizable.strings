@@ -478,3 +478,11 @@
 "MIDI connected · %@" = "MIDI verbunden · %@";
 "Pair a page-turning pedal in Settings → Bluetooth." = "Kopple dein Blätterpedal unter Einstellungen → Bluetooth.";
 "Press a bound key to try it." = "Drücke zum Testen eine zugewiesene Taste.";
+"Turn on your pedal, then select it in Settings → Bluetooth." = "Schalte dein Pedal ein und wähle es unter Einstellungen → Bluetooth aus.";
+"Not listed in Bluetooth?" = "Unter Bluetooth nicht zu sehen?";
+"Some pedals connect inside the app. Search below, then select your pedal by name." = "Manche Pedale verbindest du in der App. Suche unten und wähle dein Pedal aus.";
+"Find a MIDI pedal" = "MIDI-Pedal suchen";
+"Input device detected" = "Eingabegerät erkannt";
+"Bindings saved. Press your pedal to try them." = "Belegung gespeichert. Tritt zum Testen auf dein Pedal.";
+"Tap Learn beside an action, then press the pedal switch you want to use." = "Tippe bei der gewünschten Aktion auf Zuweisen und tritt auf den gewünschten Schalter.";
+"This switch is unassigned. Tap Learn beside an action, then press it again." = "Dieser Schalter ist frei. Tippe bei einer Aktion auf Zuweisen und tritt erneut darauf.";

@@ -119,6 +119,31 @@ final class LiveModeTests: XCTestCase {
         pedal.resetInputSession()
         XCTAssertFalse(pedal.inputAvailable)
     }
+    @MainActor func testSavedKeyboardShortcutAndUnassignedSwitchGuidance() {
+        let suite = "PedalSetupGuidanceTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let pedal = PedalControl(defaults: defaults)
+        let enter = PedalBinding(kind: .keyboard, code: 40, label: "Return")
+        let arrow = PedalBinding(kind: .keyboard, code: 79, label: "Right")
+        pedal.setupVisible = true
+        pedal.learn(.toggle)
+        pedal.receive(enter, down: true, at: 0)
+        pedal.resetInputSession()
+        pedal.updateKeyboardPresence(false)
+        XCTAssertFalse(pedal.hasBindingForDetectedInput)
+        pedal.updateKeyboardPresence(true)
+        XCTAssertTrue(pedal.hasBindingForDetectedInput)
+        pedal.receive(arrow, down: true, at: 1)
+        XCTAssertTrue(pedal.unassignedPress)
+        pedal.receive(enter, down: true, at: 2)
+        XCTAssertFalse(pedal.unassignedPress)
+        pedal.receive(arrow, down: false, at: 3)
+        pedal.receive(arrow, down: true, at: 4)
+        pedal.learn(.next)
+        XCTAssertFalse(pedal.unassignedPress)
+    }
     @MainActor func testConflictConfirmationPreservesPhysicalKeyState() {
         let suite = "PedalConflictPressTests"
         let defaults = UserDefaults(suiteName: suite)!

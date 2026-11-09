@@ -105,14 +105,29 @@ final class LiveModeUITests: XCTestCase {
     }
     func testPedalSetupShowsDetectedInputBeforeFirstPress() {
         continueAfterFailure = false
-        for (fixture, status) in [("offline", "尚未检测到输入设备"), ("keyboard", "已检测到键盘输入设备"), ("bluetooth", "MIDI 已连接 · Stage pedal")] {
+        for (fixture, status) in [("offline", "尚未检测到输入设备"), ("keyboard", "已检测到输入设备"), ("keyboard-bound", "已检测到输入设备"), ("bluetooth", "MIDI 已连接 · Stage pedal")] {
             let app = XCUIApplication()
-            app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-" + fixture]
+            app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-" + (fixture == "keyboard-bound" ? "keyboard" : fixture)]
+            if fixture == "keyboard-bound" { app.launchArguments.append("--pedal-fixture-bound") }
             app.launch()
             XCTAssertTrue(app.staticTexts[status].firstMatch.waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["pedal-toggle"].isEnabled)
-            if fixture == "offline" { XCTAssertTrue(app.buttons["pedal-midi"].isHittable) }
             capture(app, "Pedal input " + fixture)
+            if fixture == "offline" {
+                XCTAssertFalse(app.buttons["pedal-midi"].exists)
+                XCTAssertFalse(app.staticTexts["pedal-hint"].exists)
+                app.buttons["pedal-help"].tap()
+                XCTAssertTrue(app.buttons["pedal-midi"].isHittable)
+                app.buttons["pedal-help"].tap()
+                XCTAssertFalse(app.buttons["pedal-midi"].exists)
+            } else if fixture == "keyboard-bound" {
+                XCTAssertEqual(app.staticTexts["pedal-hint"].label, "已有绑定，踩一下踏板试试。")
+                XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "回车键")
+            } else if fixture == "keyboard" {
+                app.buttons["pedal-toggle"].tap()
+                XCTAssertTrue(app.staticTexts["pedal-hint"].label.contains("开始"))
+                app.buttons["pedal-toggle"].tap()
+            }
             app.terminate()
         }
     }

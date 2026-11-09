@@ -478,3 +478,11 @@
 "MIDI connected · %@" = "MIDI connected · %@";
 "Pair a page-turning pedal in Settings → Bluetooth." = "Pair a page-turning pedal in Settings → Bluetooth.";
 "Press a bound key to try it." = "Press a bound key to try it.";
+"Turn on your pedal, then select it in Settings → Bluetooth." = "Turn on your pedal, then select it in Settings → Bluetooth.";
+"Not listed in Bluetooth?" = "Not listed in Bluetooth?";
+"Some pedals connect inside the app. Search below, then select your pedal by name." = "Some pedals connect inside the app. Search below, then select your pedal by name.";
+"Find a MIDI pedal" = "Find a MIDI pedal";
+"Input device detected" = "Input device detected";
+"Bindings saved. Press your pedal to try them." = "Bindings saved. Press your pedal to try them.";
+"Tap Learn beside an action, then press the pedal switch you want to use." = "Tap Learn beside an action, then press the pedal switch you want to use.";
+"This switch is unassigned. Tap Learn beside an action, then press it again." = "This switch is unassigned. Tap Learn beside an action, then press it again.";

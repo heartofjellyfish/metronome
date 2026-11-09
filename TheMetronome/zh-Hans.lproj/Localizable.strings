@@ -478,3 +478,11 @@
 "MIDI connected · %@" = "MIDI 已连接 · %@";
 "Pair a page-turning pedal in Settings → Bluetooth." = "翻页踏板请在「设置 → 蓝牙」中配对。";
 "Press a bound key to try it." = "踩一下已绑定的键，对应的灯会亮一下。";
+"Turn on your pedal, then select it in Settings → Bluetooth." = "打开踏板，在 iPhone「设置 → 蓝牙」里点它的名字。";
+"Not listed in Bluetooth?" = "蓝牙里找不到？";
+"Some pedals connect inside the app. Search below, then select your pedal by name." = "有些踏板要在 App 里连接。在下方搜索，找到你的踏板后点它的名字。";
+"Find a MIDI pedal" = "查找 MIDI 踏板";
+"Input device detected" = "已检测到输入设备";
+"Bindings saved. Press your pedal to try them." = "已有绑定，踩一下踏板试试。";
+"Tap Learn beside an action, then press the pedal switch you want to use." = "点想控制的动作旁的「绑定」，再踩你想用的那一边。";
+"This switch is unassigned. Tap Learn beside an action, then press it again." = "刚踩的键还没绑定。选一个动作，点「绑定」，再踩一次。";

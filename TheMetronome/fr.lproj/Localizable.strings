@@ -478,3 +478,11 @@
 "MIDI connected · %@" = "MIDI connecté · %@";
 "Pair a page-turning pedal in Settings → Bluetooth." = "Jumelez votre pédale tourne-page dans Réglages → Bluetooth.";
 "Press a bound key to try it." = "Appuyez sur une touche assignée pour la tester.";
+"Turn on your pedal, then select it in Settings → Bluetooth." = "Allumez votre pédale et sélectionnez-la dans Réglages → Bluetooth.";
+"Not listed in Bluetooth?" = "Introuvable en Bluetooth ?";
+"Some pedals connect inside the app. Search below, then select your pedal by name." = "Certaines pédales se connectent dans l’app. Lancez la recherche et sélectionnez votre pédale.";
+"Find a MIDI pedal" = "Rechercher une pédale MIDI";
+"Input device detected" = "Périphérique d’entrée détecté";
+"Bindings saved. Press your pedal to try them." = "Affectations enregistrées. Appuyez sur la pédale pour essayer.";
+"Tap Learn beside an action, then press the pedal switch you want to use." = "Touchez le bouton d’affectation à côté de l’action, puis appuyez sur le contacteur souhaité.";
+"This switch is unassigned. Tap Learn beside an action, then press it again." = "Ce contacteur est libre. Touchez le bouton d’affectation de l’action voulue et appuyez de nouveau sur le contacteur.";

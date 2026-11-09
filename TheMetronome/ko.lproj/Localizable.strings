@@ -478,3 +478,11 @@
 "MIDI connected · %@" = "MIDI 연결됨 · %@";
 "Pair a page-turning pedal in Settings → Bluetooth." = "악보 넘김 페달은 설정 → Bluetooth에서 페어링하세요.";
 "Press a bound key to try it." = "지정한 버튼을 밟아 확인하세요.";
+"Turn on your pedal, then select it in Settings → Bluetooth." = "페달을 켜고 설정 → Bluetooth에서 페달 이름을 선택하세요.";
+"Not listed in Bluetooth?" = "Bluetooth에 표시되지 않나요?";
+"Some pedals connect inside the app. Search below, then select your pedal by name." = "일부 페달은 앱에서 연결합니다. 아래에서 검색한 후 페달 이름을 선택하세요.";
+"Find a MIDI pedal" = "MIDI 페달 찾기";
+"Input device detected" = "입력 장치 감지됨";
+"Bindings saved. Press your pedal to try them." = "저장된 설정이 있습니다. 페달을 밟아 보세요.";
+"Tap Learn beside an action, then press the pedal switch you want to use." = "원하는 동작 옆의 지정 버튼을 누르고 사용할 페달 스위치를 밟으세요.";
+"This switch is unassigned. Tap Learn beside an action, then press it again." = "아직 지정되지 않은 스위치입니다. 동작 옆의 지정 버튼을 누르고 다시 밟으세요.";

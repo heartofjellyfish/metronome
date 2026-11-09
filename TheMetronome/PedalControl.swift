@@ -106,7 +106,22 @@ final class PedalControl: ObservableObject {
     @Published private(set) var lastDirectInput: PedalBinding.Kind?
     @Published private(set) var midiInputNames: [String] = []
     var inputAvailable: Bool { keyboardDetected || lastDirectInput != nil || !midiInputNames.isEmpty }
-    var setupVisible = false
+    var hasBindingForDetectedInput: Bool {
+        bindings.values.contains { binding in
+            switch binding.kind {
+            case .keyboard: return keyboardDetected || lastDirectInput == .keyboard
+            case .media: return lastDirectInput == .media
+            case .midiNote, .midiCC, .midiProgram: return activeMIDISourceIDs.contains(binding.source)
+            }
+        }
+    }
+    @Published private(set) var unassignedPress = false
+    var setupVisible = false {
+        didSet { if !setupVisible { clearUnassignedPress() } }
+    }
+    private func clearUnassignedPress() {
+        if unassignedPress { unassignedPress = false }
+    }
     @Published private(set) var bluetoothConnected = false
     @Published private(set) var pressRevision = 0
     private var bluetoothMIDISourceIDs = Set<Int32>()
@@ -214,7 +229,7 @@ final class PedalControl: ObservableObject {
         parsers.removeAll()
     }
     func learn(_ action: PedalAction) { cancelLearning(); gate.clearHeld(); gate.learning = action; learning = action }
-    func cancelLearning() { gate.learning = nil; learning = nil; conflict = nil; pendingBinding = nil }
+    func cancelLearning() { clearUnassignedPress(); gate.learning = nil; learning = nil; conflict = nil; pendingBinding = nil }
     func resolveConflict(replace: Bool) {
         guard let input = pendingBinding, let action = learning else { cancelLearning(); return }
         conflict = nil; pendingBinding = nil
@@ -280,10 +295,16 @@ final class PedalControl: ObservableObject {
             conflict = other; pendingBinding = input; return true
         }
         switch gate.receive(input, down: down, at: time) {
-        case .ignored: return false
+        case .ignored:
+            if down && setupVisible && learning == nil && !unassignedPress &&
+                !bindings.values.contains(where: { $0.matches(input) }) {
+                unassignedPress = true
+            }
+            return false
         case .learned:
             learning = nil; persist(); noteBluetoothPress(input); return true
         case .perform(let action):
+            clearUnassignedPress()
             noteBluetoothPress(input)
             perform?(action)
             actionPresses.send(action)
