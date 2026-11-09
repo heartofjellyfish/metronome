@@ -461,7 +461,7 @@ struct SetlistPanel: View {
             VStack(alignment: .leading, spacing: 16) {
                 if creatingList {
                     TextField("Setlist name", text: $listName)
-                        .font(.body)
+                        .font(.system(size: 28, weight: .semibold))
                         .focused($namingList).submitLabel(.done)
                         .onSubmit { namingList = false }
                         .padding(.horizontal, 10).frame(minHeight: 44)
