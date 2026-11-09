@@ -1,5 +1,7 @@
+import Combine
 import XCTest
 import AVFoundation
+import SwiftUI
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
@@ -35,6 +37,65 @@ final class LiveModeTests: XCTestCase {
         let restored = PedalControl(defaults: defaults)
         XCTAssertEqual(restored.bindings, pedal.bindings)
         XCTAssertFalse(restored.bluetoothConnected)
+    }
+    @MainActor func testPressFeedbackOnlyForFreshMappedActionsInActiveProfile() {
+        let suite = "PedalPressFeedbackTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let pedal = PedalControl(defaults: defaults)
+        let key = PedalBinding(kind: .keyboard, code: 40, label: "Return")
+        var flashes: [PedalAction] = []
+        let observer = pedal.actionPresses.sink { flashes.append($0) }
+        defer { observer.cancel() }
+        pedal.learn(.toggle)
+        pedal.receive(key, down: true, at: 0)
+        pedal.receive(key, down: false, at: 0.1)
+        XCTAssertTrue(flashes.isEmpty)
+        pedal.receive(key, down: true, at: 1)
+        pedal.receive(key, down: true, at: 2)
+        pedal.receive(key, down: false, at: 3)
+        XCTAssertEqual(flashes, [.toggle])
+        pedal.addProfile("Rehearsal")
+        pedal.receive(key, down: true, at: 4)
+        XCTAssertEqual(flashes, [.toggle])
+        pedal.selectProfile("keyboard")
+        pedal.receive(key, down: true, at: 5)
+        XCTAssertEqual(flashes, [.toggle, .toggle])
+    }
+    @MainActor func testAssignedLampFlashesThenReturnsToGreen() async throws {
+        let presses = PassthroughSubject<PedalAction, Never>()
+        let lamp = BindingLamp(listening: false, assigned: true, reduceMotion: false,
+                               action: .toggle, presses: presses)
+        let host = UIHostingController(rootView: lamp.frame(width: 48, height: 48))
+        host.safeAreaRegions = []
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 48, height: 48)
+        window.rootViewController = host
+        window.isHidden = false
+        defer { window.isHidden = true }
+        func snapshot() -> UIImage {
+            UIGraphicsImageRenderer(bounds: host.view.bounds).image { _ in
+                host.view.drawHierarchy(in: host.view.bounds, afterScreenUpdates: true)
+            }
+        }
+        try await Task.sleep(for: .milliseconds(100))
+        let idle = snapshot()
+        presses.send(.next)
+        XCTAssertEqual(snapshot().pngData(), idle.pngData())
+        presses.send(.toggle)
+        try await Task.sleep(for: .milliseconds(40))
+        let flash = snapshot()
+        XCTAssertNotEqual(flash.pngData(), idle.pngData())
+        try await Task.sleep(for: .milliseconds(220))
+        XCTAssertEqual(snapshot().pngData(), idle.pngData())
+        for (name, image) in [("Bound key", idle), ("Pedal press", flash)] {
+            let attachment = XCTAttachment(image: image)
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
     }
     @MainActor func testConflictConfirmationPreservesPhysicalKeyState() {
         let suite = "PedalConflictPressTests"

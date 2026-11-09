@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 struct PedalSettingsView: View {
@@ -180,7 +181,8 @@ struct PedalSettingsView: View {
             if listening { pedal.cancelLearning() } else { dismissTextInput(); detail = nil; model.beginPedalLearning(action) }
         } label: {
             HStack(spacing: 8) {
-                BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion)
+                BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion,
+                            action: action, presses: pedal.actionPresses)
                 Text(caption).font(.subheadline.weight(.medium)).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.horizontal, 10).padding(.vertical, 12)
@@ -214,17 +216,36 @@ struct PerformancePreparation: View {
     }
 }
 
-private struct BindingLamp: View {
+struct BindingLamp: View {
     let listening: Bool
     let assigned: Bool
     let reduceMotion: Bool
+    let action: PedalAction
+    let presses: PassthroughSubject<PedalAction, Never>
+    @State private var lastPress: ContinuousClock.Instant?
+
     var body: some View {
+        lamp
+            .onReceive(presses) { if $0 == action { lastPress = .now } }
+            .task(id: lastPress) {
+                guard lastPress != nil else { return }
+                do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+                lastPress = nil
+            }
+    }
+
+    @ViewBuilder private var lamp: some View {
         if listening && !reduceMotion {
             TimelineView(.periodic(from: .now, by: 0.65)) { time in
                 LED(on: Int(time.date.timeIntervalSinceReferenceDate / 0.65).isMultiple(of: 2), color: .red, size: 7)
             }.accessibilityHidden(true)
-        } else if listening || assigned {
-            LED(on: true, color: listening ? .red : Color(red: 0.22, green: 0.67, blue: 0.31), size: 7)
+        } else if listening {
+            LED(on: true, color: .red, size: 7)
+        } else if assigned {
+            let lit = lastPress != nil
+            LED(on: true, color: lit ? Color(hex: 0x7EE991) : Color(hex: 0x38A850),
+                size: 7, intensity: lit ? 1 : 0.35)
+                .overlay { if lit { Circle().stroke(Color(hex: 0x54BA68), lineWidth: 1).frame(width: 11, height: 11) } }
         } else {
             Circle().fill(Color.gray.gradient).frame(width: 7, height: 7).overlay(Circle().stroke(.black.opacity(0.25), lineWidth: 0.5)).accessibilityHidden(true)
         }

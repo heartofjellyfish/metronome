@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import GameController
 import CoreMIDI
@@ -117,6 +118,7 @@ final class PedalControl: ObservableObject {
     private var sourceNames: [Int32: String] = [:]
     var profileName: String { profiles.first { $0.id == profileID }?.displayName ?? L10n.text("Default profile") }
     var isMIDIProfile: Bool { profileID.hasPrefix("midi:") }
+    let actionPresses = PassthroughSubject<PedalAction, Never>()
     var perform: ((PedalAction) -> Void)?
     private var gate = PedalGate()
     private var observers: [NSObjectProtocol] = []
@@ -283,7 +285,10 @@ final class PedalControl: ObservableObject {
         case .learned:
             learning = nil; persist(); noteBluetoothPress(input); return true
         case .perform(let action):
-            noteBluetoothPress(input); perform?(action); return true
+            noteBluetoothPress(input)
+            perform?(action)
+            actionPresses.send(action)
+            return true
         }
     }
     /// Media presses have no release callback. Keep their debounce window, but release the latch.
