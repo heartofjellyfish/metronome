@@ -191,13 +191,18 @@ final class PerformanceUITests: XCTestCase {
         let list = app.collectionViews.firstMatch
         let grip = app.images["drag-song-Track 01"].coordinate(withNormalizedOffset: .init(dx: 0.5, dy: 0.5))
         let edge = list.coordinate(withNormalizedOffset: .init(dx: 0.28, dy: 0.985))
-        grip.press(forDuration: 0.4, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 2)
+        grip.press(forDuration: 0, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 2)
         settleDrop()
         let number = app.staticTexts["song-position-Track 01"]
         XCTAssertTrue(number.exists)
         XCTAssertGreaterThan(Int(number.label) ?? 0, 9)
         tap("cancel-setlist")
-        XCTAssertEqual(app.staticTexts["song-position-Track 01"].label, "01")
+        // In-place editing keeps the list scrolled to the drop, even when the move is cancelled.
+        for _ in 0..<12 {
+            if number.exists && number.isHittable { break }
+            list.swipeDown()
+        }
+        XCTAssertEqual(number.label, "01")
     }
     private func revealCatalogRow(_ id: String) {
         let row = app.buttons[id].firstMatch
@@ -229,7 +234,7 @@ final class PerformanceUITests: XCTestCase {
     func testLibraryRepeatedDragBothDirections() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
         for iteration in 0..<6 {
-            app.images["library-drag-Gossip"].press(forDuration: 0.8, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
+            app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
             settleDrop()
             let first = app.otherElements["library-row-Gossip"].frame.minY
             let second = app.otherElements["library-row-男孩别哭"].frame.minY
@@ -317,10 +322,12 @@ final class PerformanceUITests: XCTestCase {
         launch("en"); openList("Saturday"); tap("edit-setlist")
         let first = app.images["drag-song-Gossip"]
         let last = app.images["drag-song-夜来香"]
-        first.press(forDuration: 0.4, thenDragTo: last, withVelocity: .slow, thenHoldForDuration: 0.6)
+        first.tap()
+        XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "01")
+        first.press(forDuration: 0, thenDragTo: last, withVelocity: .slow, thenHoldForDuration: 0.6)
         settleDrop()
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "03")
-        first.press(forDuration: 0.4, thenDragTo: last, withVelocity: .slow, thenHoldForDuration: 0.4)
+        first.press(forDuration: 0, thenDragTo: last, withVelocity: .slow, thenHoldForDuration: 0.4)
         settleDrop()
         tap("save-setlist"); tap("choose-setlist"); tap("setlist-Saturday")
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "02")
@@ -332,7 +339,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(app.textFields["setlist-search"].exists)
         shot("24-browse")
         tap("edit-setlist")
-        app.images["drag-song-Gossip"].press(forDuration: 0.7, thenDragTo: app.images["drag-song-夜来香"], withVelocity: .slow, thenHoldForDuration: 0.2)
+        app.images["drag-song-Gossip"].press(forDuration: 0, thenDragTo: app.images["drag-song-夜来香"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "03")
         tap("cancel-setlist")
@@ -351,11 +358,11 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(liveSongTitle.label, "Long song title — a whole verse to test wrapping")
         tap("close-performance")
         tap("choose-setlist")
-        app.images["drag-setlist-Empty"].press(forDuration: 0.7, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)
+        app.images["drag-setlist-Empty"].press(forDuration: 0, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertLessThan(b("setlist-Empty").frame.minY, b("setlist-Saturday").frame.minY)
         tap("close-panel"); tap("settings-songLibrary")
-        app.images["library-drag-Gossip"].press(forDuration: 0.7, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
+        app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertGreaterThan(app.otherElements["library-row-Gossip"].frame.minY, app.otherElements["library-row-男孩别哭"].frame.minY)
         shot("23-13-library-reordered")
@@ -433,7 +440,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["membership-Gossip-周六演出"].exists)
         XCTAssertTrue(app.staticTexts["membership-Gossip-Sunday"].exists)
         shot("08-library-memberships")
-        app.images["library-drag-Gossip"].press(forDuration: 0.8, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
+        app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertGreaterThan(app.otherElements["library-row-Gossip"].frame.minY, app.otherElements["library-row-男孩别哭"].frame.minY)
         shot("09-library-reorder")
@@ -617,6 +624,36 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(app.otherElements["library-row-Encore"].exists)
         tap("close-panel"); tap("settings-setlists"); tap("setlist-Saturday")
         XCTAssertFalse(b("song-Encore").exists)
+    }
+    func testImmediateReorderOnConnectedPhoneWithoutSaving() throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Checks the physical drag handle.")
+        #else
+        app = XCUIApplication()
+        app.launch()
+        tap("settings"); tap("settings-setlists")
+        let lists = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "setlist-"))
+        for list in lists.allElementsBoundByIndex where list.isHittable {
+            list.tap()
+            tap("edit-setlist")
+            let handles = app.images.matching(NSPredicate(format: "identifier BEGINSWITH %@", "drag-song-"))
+                .allElementsBoundByIndex.filter { $0.isHittable }
+            if handles.count >= 2 {
+                let position = "song-position-" + handles[0].identifier.dropFirst("drag-song-".count)
+                let number = app.staticTexts[position]
+                let original = number.label
+                handles[0].press(forDuration: 0, thenDragTo: handles[1], withVelocity: .default, thenHoldForDuration: 0)
+                settleDrop()
+                XCTAssertNotEqual(number.label, original)
+                tap("cancel-setlist")
+                XCTAssertEqual(number.label, original)
+                tap("close-panel"); tap("close-settings")
+                return
+            }
+            tap("cancel-setlist"); tap("choose-setlist")
+        }
+        throw XCTSkip("Needs two songs in a setlist.")
+        #endif
     }
     func testRenameOnConnectedPhoneWithoutSaving() throws {
         #if targetEnvironment(simulator)

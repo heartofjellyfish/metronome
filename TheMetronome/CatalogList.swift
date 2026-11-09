@@ -78,9 +78,10 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         view.dataSource = context.coordinator
         view.delegate = context.coordinator
         let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.drag(_:)))
-        gesture.minimumPressDuration = 0.18
+        gesture.minimumPressDuration = 0
         gesture.delegate = context.coordinator
         view.addGestureRecognizer(gesture)
+        view.panGestureRecognizer.require(toFail: gesture)
         return view
     }
     func updateUIView(_ view: UICollectionView, context: Context) {
@@ -218,9 +219,9 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             items.insert(item, at: dest.item)
             parent.move?(item.id, dest.item)
         }
-        func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+        func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
             guard parent.move != nil, items.count > 1, let view = recognizer.view as? UICollectionView else { return false }
-            let point = recognizer.location(in: view)
+            let point = touch.location(in: view)
             guard let path = view.indexPathForItem(at: point), path.section == 1,
                   let frame = view.layoutAttributesForItem(at: path)?.frame else { return false }
             return point.x - frame.minX <= 48
