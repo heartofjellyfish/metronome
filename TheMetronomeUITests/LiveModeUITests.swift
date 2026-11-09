@@ -135,8 +135,8 @@ final class StageFeatureUITests: XCTestCase {
         let name = app.textFields["setlist-name"]
         XCTAssertTrue(name.waitForExistence(timeout: 8)); name.tap(); name.typeText("Friday show")
         app.textFields["setlist-name"].typeText("\n")
+        reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
         for (song, bpm) in [("Opening", "95"), ("Night drive", "140"), ("Encore", "85")] {
-            reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
             app.buttons["new-song"].tap()
             let title = app.textFields["song-name"]; reveal(title, app); title.tap(); title.typeText(song)
             reveal(app.buttons["song-tempo"], app); app.buttons["song-tempo"].tap()

@@ -25,6 +25,7 @@ struct SetlistPanel: View {
     }
     @State private var songCatalogHeight: CGFloat = 0
     @State private var adding = false
+    @State private var pendingSongIDs: [UUID] = []
     @State private var search = ""
     @State private var song: SavedPreset?
     @State private var sharing: SavedPreset?
@@ -40,11 +41,12 @@ struct SetlistPanel: View {
     }
     private var browsedList: SongSetlist? { model.setlists.first { $0.id == browsingSetlistID } }
     private var editingListRoot: Bool { editing && song == nil && !adding }
+    private var needsListName: Bool { listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     private var choosingSong: Bool { adding && song == nil }
     private var libraryRoot: Bool { startInSongLibrary && song == nil }
     private var browsingDetail: Bool { browsedList != nil && !editing && song == nil && !adding }
     private var title: String {
-        if adding { return L10n.text("Add song") }
+        if adding { return L10n.text("Add songs") }
         if editing { return L10n.text(creatingList ? "New setlist" : "Edit setlist") }
         return L10n.text(startInSongLibrary ? "Song library" : "Setlists")
     }
@@ -63,9 +65,17 @@ struct SetlistPanel: View {
                         } else if adding {
                             GeometryReader { space in
                                 VStack(spacing: 0) {
-                                    if !search.isEmpty || searchingLists || songCatalogHeight > space.size.height {
-                                        catalogSearch(library: true).padding(.horizontal, 20)
-                                    }
+                                    HStack(spacing: 10) {
+                                        if !search.isEmpty || searchingLists || songCatalogHeight > space.size.height - 44 {
+                                            catalogSearch(library: true)
+                                        } else { Spacer() }
+                                        Button {
+                                            dismissTextInput()
+                                            song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
+                                        } label: {
+                                            Label("New song", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
+                                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-song")
+                                    }.padding(.horizontal, 20)
                                     savedSongPicker
                                 }
                             }
@@ -183,13 +193,30 @@ struct SetlistPanel: View {
     }
     private var header: some View {
         HStack(spacing: 10) {
-            if editingListRoot {
-                Button { cancelList() } label: { Text("Cancel").padding(.horizontal, 12).frame(minHeight: 44) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-setlist")
+            if editingListRoot || choosingSong {
+                Button {
+                    if choosingSong { finishPickingSongs() } else { cancelList() }
+                } label: { Text("Cancel").padding(.horizontal, 12).frame(minHeight: 44) }
+                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(choosingSong ? "cancel-picking-songs" : "cancel-setlist")
                 Text(title).font(.system(size: 19, weight: .semibold)).frame(maxWidth: .infinity)
-                Button { saveList() } label: { Text("Save").padding(.horizontal, 12).frame(minHeight: 44) }
+                Button {
+                    if choosingSong {
+                        draftSongIDs.append(contentsOf: pendingSongIDs)
+                        finishPickingSongs()
+                        if needsListName {
+                            namingList = true
+                            return
+                        }
+                    }
+                    saveList()
+                } label: {
+                    HStack(spacing: 5) {
+                        Text(choosingSong && needsListName ? "Next" : "Save")
+                        if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
+                    }.padding(.horizontal, 12).frame(minHeight: 44)
+                }
                     .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                    .disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(choosingSong ? pendingSongIDs.isEmpty : needsListName)
                     .accessibilityIdentifier("save-setlist")
             } else {
                 if browsingDetail {
@@ -197,11 +224,6 @@ struct SetlistPanel: View {
                         Label("All setlists", systemImage: "chevron.left").font(.system(size: 15)).padding(.horizontal, 12).frame(minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("choose-setlist")
                 } else {
-                    if adding {
-                        Button { dismissTextInput(); adding = false } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Back")
-                            .accessibilityIdentifier("choose-setlist")
-                    }
                     Text(title).font(.system(size: 22, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 }
                 if browsingDetail && compactTitle, let list = browsedList {
@@ -209,10 +231,10 @@ struct SetlistPanel: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("compact-setlist-title")
                 } else { Spacer(minLength: 0) }
-                if libraryRoot || choosingSong {
+                if libraryRoot {
                     Button { dismissTextInput(); song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy) } label: {
                         Image(systemName: "plus").frame(width: 44, height: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("New song").accessibilityIdentifier(choosingSong ? "new-song" : "library-new-song")
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("New song").accessibilityIdentifier("library-new-song")
                 }
                 if atRoot && needsSearch {
                     Button { beginEdit(new: true) } label: { Image(systemName: "plus").frame(width: 44, height: 44) }
@@ -225,6 +247,12 @@ struct SetlistPanel: View {
                 }
             }
         }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
+    }
+    private func finishPickingSongs() {
+        dismissTextInput()
+        adding = false
+        pendingSongIDs = []
+        search = ""
     }
     private func showSongPicker() {
         dismissTextInput()
@@ -367,7 +395,7 @@ struct SetlistPanel: View {
                     Text("Songs").font(.headline)
                     Spacer()
                     Button(action: showSongPicker) {
-                        Label("Add song", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
+                        Label("Add songs", systemImage: "plus").padding(.horizontal, 12).frame(minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("add-song")
                 }.padding(.top, 4)
             }
@@ -413,19 +441,26 @@ struct SetlistPanel: View {
     private func score(_ value: SavedPreset) -> some View { RhythmScore(rhythm: value.rhythm, color: p.muted).frame(width: 48, height: 24) }
     private var savedSongPicker: some View {
         let entries = model.songLibrary.filter { search.isEmpty || $0.name.localizedStandardContains(search) }
+        let existing = Set(draftSongIDs)
+        let selected = Set(pendingSongIDs)
         return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "add-song", onContentHeight: { height in
             if search.isEmpty { songCatalogHeight = height }
         }, row: { _, value in
-            let exists = draftSongIDs.contains(value.id)
+            let exists = existing.contains(value.id)
+            let picked = selected.contains(value.id)
             Button {
-                dismissTextInput()
-                draftSongIDs.append(value.id)
-                adding = false
-                search = ""
+                if pendingSongIDs.contains(value.id) { pendingSongIDs.removeAll { $0 == value.id } }
+                else { pendingSongIDs.append(value.id) }
             } label: {
-                HStack { songInfo(value); Spacer(); Image(systemName: exists ? "checkmark" : "plus") }
-                    .padding(14).frame(minHeight: 60).contentShape(Rectangle())
-            }.buttonStyle(InsetRowButtonStyle(p: p)).disabled(exists).accessibilityIdentifier("import-song-\(value.name)")
+                HStack {
+                    songInfo(value)
+                    Spacer()
+                    Image(systemName: exists ? "checkmark" : (picked ? "checkmark.circle.fill" : "circle"))
+                        .font(.title3).foregroundStyle(picked ? p.ink : p.muted)
+                }.padding(14).frame(minHeight: 60).contentShape(Rectangle())
+            }.buttonStyle(InsetRowButtonStyle(p: p)).disabled(exists)
+                .accessibilityAddTraits(exists || picked ? .isSelected : [])
+                .accessibilityIdentifier("import-song-\(value.name)")
         }, above: {
             if entries.isEmpty {
                 Text(L10n.text(search.isEmpty ? "No songs yet." : "No matches.")).foregroundStyle(p.muted)
@@ -476,8 +511,11 @@ struct SetlistPanel: View {
                        delete: exists && startInSongLibrary ? { deletingSong = true } : nil,
                        cancel: { song = nil }) { value in
                 if exists { model.editSong(value.id, name: value.name, rhythm: value.rhythm, notes: value.notes, membershipChanges: membershipChanges) }
-                else if let id = model.createLibrarySong(value.name, rhythm: value.rhythm, notes: value.notes), editing { draftSongIDs.append(id) }
-                song = nil; adding = false
+                else if let id = model.createLibrarySong(value.name, rhythm: value.rhythm, notes: value.notes), adding {
+                    pendingSongIDs.append(id)
+                    search = ""
+                }
+                song = nil
             }.id(initial.id)
         }
     }
