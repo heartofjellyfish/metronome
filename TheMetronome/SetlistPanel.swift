@@ -96,22 +96,22 @@ struct SetlistPanel: View {
                     if browsingDetail || editingListRoot {
                         VStack(spacing: 8) {
                             Divider()
-                            HStack {
+                            HStack(spacing: 0) {
                                 if editing && !creatingList {
                                     Button {
                                         dismissTextInput()
                                         deletingList = true
                                     } label: {
-                                        Text("Delete setlist").font(.subheadline)
+                                        Text("Delete setlist")
                                             .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
-                                            .padding(.horizontal, 10).frame(minHeight: 34)
-                                    }.buttonStyle(CompactDeleteKeyStyle(p: p)).accessibilityIdentifier("delete-setlist")
+                                            .padding(.horizontal, 12).frame(minHeight: 44)
+                                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("delete-setlist")
                                 } else {
                                     Text(songCount(editing ? draftSongIDs.count : browsedList?.songs.count ?? 0))
                                         .font(.subheadline).foregroundStyle(p.muted)
                                         .accessibilityIdentifier("setlist-count")
                                 }
-                                Spacer(minLength: 8)
+                                Spacer(minLength: 16)
                                 Button {
                                     if editing { showSongPicker() } else { beginEdit(new: false) }
                                 } label: {
@@ -542,16 +542,6 @@ struct SetlistPanel: View {
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityAddTraits(exists ? .isSelected : []).accessibilityIdentifier("share-to-\(list.name)")
             }
         }
-    }
-}
-
-/// Keep the smaller key face easy to hit, aligned with the full-height Add songs key.
-private struct CompactDeleteKeyStyle: ButtonStyle {
-    let p: InstrumentPalette
-
-    func makeBody(configuration: Configuration) -> some View {
-        HardwareButtonStyle(p: p, radius: 7).makeBody(configuration: configuration)
-            .frame(minHeight: 44).contentShape(Rectangle())
     }
 }
 

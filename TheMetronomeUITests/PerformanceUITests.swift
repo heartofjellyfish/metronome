@@ -705,7 +705,12 @@ final class PerformanceUITests: XCTestCase {
         tap("edit-setlist")
         XCTAssertTrue(b("add-song").isHittable)
         XCTAssertTrue(b("delete-setlist").isHittable)
-        XCTAssertLessThan(b("delete-setlist").frame.maxX, b("add-song").frame.minX)
+        let deleteFrame = b("delete-setlist").frame
+        let addFrame = b("add-song").frame
+        XCTAssertEqual(deleteFrame.height, addFrame.height, accuracy: 1)
+        XCTAssertEqual(deleteFrame.midY, addFrame.midY, accuracy: 1)
+        XCTAssertGreaterThanOrEqual(addFrame.minX - deleteFrame.maxX, 16)
+        XCTAssertGreaterThan(addFrame.width, deleteFrame.width)
         shot("42-sticky-short-edit")
         tap("delete-setlist"); tap("Cancel")
         XCTAssertTrue(b("edit-song-Gossip").exists)
