@@ -680,7 +680,10 @@ final class PerformanceUITests: XCTestCase {
         #endif
     }
     func testSetlistRenameReorderAndDeleteKeepsLibrary() {
-        launch("en"); openList("Saturday"); tap("edit-setlist")
+        launch("en"); openList("Saturday")
+        let browseButton = b("edit-setlist").frame
+        tap("edit-setlist")
+        XCTAssertEqual(b("add-song").frame, browseButton)
         let title = b("rename-setlist")
         title.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))

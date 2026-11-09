@@ -118,9 +118,15 @@ struct SetlistPanel: View {
                                 Button {
                                     if editing { showSongPicker() } else { beginEdit(new: false) }
                                 } label: {
-                                    Label(editing ? "Add songs" : "Edit setlist", systemImage: editing ? "plus" : "pencil")
-                                        .padding(.horizontal, 14).frame(minWidth: editing ? 146 : nil, minHeight: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing ? "add-song" : "edit-setlist")
+                                    ZStack {
+                                        Label("Edit setlist", systemImage: "pencil").opacity(editing ? 0 : 1)
+                                        Label("Add songs", systemImage: "plus").opacity(editing ? 1 : 0)
+                                    }
+                                    .transaction { $0.animation = nil }
+                                    .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
+                                }.buttonStyle(HardwareButtonStyle(p: p))
+                                    .accessibilityLabel(editing ? Text("Add songs") : Text("Edit setlist"))
+                                    .accessibilityIdentifier(editing ? "add-song" : "edit-setlist")
                             }
                         }.padding(.horizontal, 20).padding(.bottom, 16)
                     }
