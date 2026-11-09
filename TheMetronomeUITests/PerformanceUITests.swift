@@ -175,7 +175,12 @@ final class PerformanceUITests: XCTestCase {
         tap("choose-setlist")
         XCTAssertTrue(b("setlist-Set 30").isHittable)
         tap("close-panel"); tap("settings-songLibrary")
+        let newSongFrame = b("library-new-song").frame
+        let libraryWindow = app.collectionViews.firstMatch.frame
+        XCTAssertGreaterThan(newSongFrame.minY, libraryWindow.maxY)
         revealCatalogRow("library-open-Track 42")
+        XCTAssertEqual(app.collectionViews.firstMatch.frame, libraryWindow)
+        XCTAssertEqual(b("library-new-song").frame, newSongFrame)
         XCTAssertTrue(app.textFields["song-search"].isHittable)
         XCTAssertTrue(b("library-new-song").isHittable)
         shot("33-long-library")
@@ -438,7 +443,7 @@ final class PerformanceUITests: XCTestCase {
         tap("add-song"); tap("import-song-Gossip"); tap("save-setlist")
         tap("close-panel"); tap("settings-songLibrary")
         XCTAssertTrue(app.staticTexts["membership-Gossip-周六演出"].exists)
-        XCTAssertTrue(app.staticTexts["membership-Gossip-Sunday"].exists)
+        XCTAssertEqual(app.staticTexts["membership-overflow-Gossip"].label, "Sunday")
         shot("08-library-memberships")
         app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()

@@ -82,7 +82,18 @@ struct SetlistPanel: View {
                                 }.padding(.horizontal, 20).padding(.bottom, 10)
                             }
                         } else if startInSongLibrary {
-                            managedLibrary
+                            VStack(alignment: .trailing, spacing: 12) {
+                                managedLibrary
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .insetPanel(p, radius: 16)
+                                Button {
+                                    dismissTextInput()
+                                    song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
+                                } label: {
+                                    Label("New song", systemImage: "plus")
+                                        .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
+                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("library-new-song")
+                            }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
                         } else if browsedList != nil || creatingList {
                             listDetail(browsedList)
                         } else {
@@ -254,11 +265,6 @@ struct SetlistPanel: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("compact-setlist-title")
                 } else { Spacer(minLength: 0) }
-                if libraryRoot {
-                    Button { dismissTextInput(); song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy) } label: {
-                        Image(systemName: "plus").frame(width: 44, height: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("New song").accessibilityIdentifier("library-new-song")
-                }
                 if atRoot && needsSearch {
                     Button { beginEdit(new: true) } label: { Image(systemName: "plus").frame(width: 44, height: 44) }
                         .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("New setlist").accessibilityIdentifier("new-setlist")
@@ -490,7 +496,7 @@ struct SetlistPanel: View {
         for list in model.setlists { for song in list.songs { membership[song.id, default: []].append(list.name) } }
         let entries = model.songLibrary.filter { search.isEmpty || $0.name.localizedStandardContains(search) || (membership[$0.id] ?? []).contains { $0.localizedStandardContains(search) } }
         let move: ((UUID, Int) -> Void)? = search.isEmpty ? { id, index in model.moveLibrarySong(id, to: index) } : nil
-        return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library",
+        return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library", fixedWell: true,
                            move: move, row: { _, value in
             libraryRow(value, memberships: membership[value.id] ?? [])
         }, above: {
@@ -505,14 +511,17 @@ struct SetlistPanel: View {
             Button { dismissTextInput(); model.loadStandaloneSong(value.id); performing = true } label: {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack { songInfo(value); Spacer(minLength: 0) }
-                    if !memberships.isEmpty {
-                        SongLabelFlow(spacing: 5) {
-                            ForEach(Array(memberships.enumerated()), id: \.offset) { _, name in
-                                Text(name).font(.system(size: 11)).lineLimit(2).padding(.horizontal, 7).padding(.vertical, 4)
-                                    .background(p.body.opacity(0.8), in: RoundedRectangle(cornerRadius: 5))
-                                    .accessibilityIdentifier("membership-\(value.name)-\(name)")
+                    if let first = memberships.first {
+                        HStack(spacing: 5) {
+                            Text(verbatim: first).lineLimit(1)
+                                .accessibilityIdentifier("membership-\(value.name)-\(first)")
+                            if memberships.count > 1 {
+                                Text(verbatim: "+\(memberships.count - 1)").fixedSize()
+                                    .accessibilityLabel(memberships.dropFirst().joined(separator: ", "))
+                                    .accessibilityIdentifier("membership-overflow-\(value.name)")
                             }
-                        }
+                        }.font(.caption2).padding(.horizontal, 7).padding(.vertical, 4)
+                            .background(p.body.opacity(0.8), in: RoundedRectangle(cornerRadius: 5))
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-open-\(value.name)")
@@ -644,27 +653,5 @@ private struct SetlistNameField: UIViewRepresentable {
         field.tintColor = UIColor(p.ink)
         field.onChange = { name = $0 }
         field.onFinish = finish
-    }
-}
-
-private struct SongLabelFlow: Layout {
-    var spacing: CGFloat = 5
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        arrange(subviews, width: proposal.width ?? 300).size
-    }
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let layout = arrange(subviews, width: bounds.width)
-        for (view, point) in zip(subviews, layout.points) {
-            view.place(at: CGPoint(x: bounds.minX + point.x, y: bounds.minY + point.y), anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: nil))
-        }
-    }
-    private func arrange(_ views: Subviews, width: CGFloat) -> (size: CGSize, points: [CGPoint]) {
-        var x: CGFloat = 0, y: CGFloat = 0, line: CGFloat = 0, points: [CGPoint] = []
-        for view in views {
-            let size = view.sizeThatFits(ProposedViewSize(width: width, height: nil))
-            if x > 0 && x + size.width > width { x = 0; y += line + spacing; line = 0 }
-            points.append(CGPoint(x: x, y: y)); x += size.width + spacing; line = max(line, size.height)
-        }
-        return (CGSize(width: width, height: y + line), points)
     }
 }

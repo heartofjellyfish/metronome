@@ -46,6 +46,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     let p: InstrumentPalette
     let bookmarks: ListBookmarks
     let page: String
+    var fixedWell = false
     var move: ((UUID, Int) -> Void)? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
     var onRowsHeight: ((CGFloat) -> Void)? = nil
@@ -56,12 +57,14 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeUIView(context: Context) -> UICollectionView {
+        let fixedWell = self.fixedWell
         let layout = UICollectionViewCompositionalLayout { section, _ in
             let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(section == 1 ? 76 : 24))
             let group = NSCollectionLayoutGroup.vertical(layoutSize: size, subitems: [NSCollectionLayoutItem(layoutSize: size)])
             let part = NSCollectionLayoutSection(group: group)
-            part.contentInsets = .init(top: 0, leading: 20, bottom: 0, trailing: 20)
-            if section == 1 {
+            let margin: CGFloat = fixedWell ? 0 : 20
+            part.contentInsets = .init(top: 0, leading: margin, bottom: 0, trailing: margin)
+            if section == 1 && !fixedWell {
                 let well = NSCollectionLayoutDecorationItem.background(elementKind: "well")
                 well.contentInsets = part.contentInsets
                 part.decorationItems = [well]
