@@ -252,6 +252,22 @@ final class PerformanceUITests: XCTestCase {
         shot("25-live")
         liveSongTitle.doubleTap(); shot("25-editor")
     }
+    func testLibraryCancelOnlyDiscardsOrder() {
+        launch("en"); tap("settings"); tap("settings-songLibrary")
+        let newSong = b("library-new-song").frame
+        tap("library-start-editing")
+        XCTAssertEqual(b("library-new-song").frame, newSong)
+        app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
+        settleDrop()
+        tap("library-edit-Gossip"); tap("song-tempo"); enterTempo("127"); tap("save-song")
+        tap("library-new-song")
+        app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Encore\n")
+        tap("save-song"); tap("cancel-library")
+        XCTAssertLessThan(b("library-open-Gossip").frame.minY, b("library-open-男孩别哭").frame.minY)
+        XCTAssertTrue(b("library-open-Encore").exists)
+        tap("library-start-editing"); tap("library-edit-Gossip")
+        XCTAssertTrue(b("song-tempo").label.contains("127"))
+    }
     func testLibraryRepeatedDragBothDirections() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
         tap("library-start-editing")
@@ -275,7 +291,7 @@ final class PerformanceUITests: XCTestCase {
         tap("editor-add-to-setlist")
         tap("membership-done")
         tap("cancel-song")
-        tap("library-finish-editing")
+        tap("cancel-library")
         XCTAssertEqual(second.frame.minY, oldY, accuracy: 2)
         let search = app.textFields["song-search"]
         search.tap(); swipeKeyboardAway(); XCTAssertFalse(app.keyboards.firstMatch.exists)
@@ -454,7 +470,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(b("library-options-Gossip").exists); shot("07-library-actions")
         tap("library-edit-Gossip"); tap("cancel-song")
         XCTAssertTrue(app.otherElements["library-row-Gossip"].exists)
-        tap("close-panel"); tap("settings-setlists")
+        tap("cancel-library"); tap("close-panel"); tap("settings-setlists")
         XCTAssertTrue(b("setlist-周六演出").exists)
     }
     func testLibraryMembershipLabelsAndIndependentReorder() {
@@ -475,7 +491,7 @@ final class PerformanceUITests: XCTestCase {
         app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertGreaterThan(app.otherElements["library-row-Gossip"].frame.minY, app.otherElements["library-row-男孩别哭"].frame.minY)
-        shot("09-library-reorder")
+        shot("09-library-reorder"); tap("save-library")
         tap("close-panel"); tap("settings-setlists"); tap("setlist-周六演出")
         XCTAssertLessThan(b("song-Gossip").frame.minY, b("song-男孩别哭").frame.minY)
         tap("close-panel"); tap("settings-songLibrary")
@@ -651,7 +667,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("editor-delete-song").exists)
         tap("editor-delete-song"); tap("confirm-delete-library-song")
         XCTAssertFalse(app.otherElements["library-row-Encore"].exists)
-        tap("close-panel"); tap("settings-setlists"); tap("setlist-Saturday")
+        tap("cancel-library"); tap("close-panel"); tap("settings-setlists"); tap("setlist-Saturday")
         XCTAssertFalse(b("song-Encore").exists)
     }
     func testImmediateReorderOnConnectedPhoneWithoutSaving() throws {

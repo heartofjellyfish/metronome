@@ -9,6 +9,7 @@ struct SetlistPanel: View {
     @State private var browsingSetlistID: UUID?
     @State private var editing = false
     @State private var editingLibrary = false
+    @State private var libraryOrder: [UUID] = []
     @State private var creatingList = false
     @State private var listName = ""
     @State private var draftSongIDs: [UUID] = []
@@ -88,15 +89,17 @@ struct SetlistPanel: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                     .insetPanel(p, radius: 16)
                                 HStack {
-                                    if !model.songLibrary.isEmpty {
+                                    if !editingLibrary && !model.songLibrary.isEmpty {
                                         Button {
                                             dismissTextInput()
-                                            editingLibrary.toggle()
+                                            libraryOrder = model.songLibrary.map(\.id)
+                                            editingLibrary = true
                                         } label: {
-                                            Label(editingLibrary ? "Done" : "Edit", systemImage: editingLibrary ? "checkmark" : "pencil")
+                                            Label("Edit", systemImage: "pencil")
                                                 .padding(.horizontal, 12).frame(minWidth: 88, minHeight: 44)
-                                        }.buttonStyle(HardwareButtonStyle(p: p))
-                                            .accessibilityIdentifier(editingLibrary ? "library-finish-editing" : "library-start-editing")
+                                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("library-start-editing")
+                                    } else {
+                                        Text(songCount(model.songLibrary.count)).font(.subheadline).foregroundStyle(p.muted)
                                     }
                                     Spacer(minLength: 16)
                                     Button {
@@ -239,7 +242,7 @@ struct SetlistPanel: View {
     }
     private var header: some View {
         HStack(spacing: 10) {
-            if editingListRoot || choosingSong {
+            if editingListRoot || choosingSong || editingLibrary {
                 draftHeader
             } else {
                 if browsingDetail {
@@ -268,10 +271,12 @@ struct SetlistPanel: View {
     }
     private var draftHeader: some View {
         let cancelButton = Button {
-            if choosingSong { finishPickingSongs() } else { cancelList() }
+            if editingLibrary { finishLibraryEditing(save: false) }
+            else if choosingSong { finishPickingSongs() } else { cancelList() }
         } label: { Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44) }
-            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(choosingSong ? "cancel-picking-songs" : "cancel-setlist").fixedSize(horizontal: true, vertical: false)
+            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editingLibrary ? "cancel-library" : choosingSong ? "cancel-picking-songs" : "cancel-setlist").fixedSize(horizontal: true, vertical: false)
         let saveButton = Button {
+            if editingLibrary { finishLibraryEditing(save: true); return }
             if choosingSong {
                 draftSongIDs.append(contentsOf: pendingSongIDs)
                 finishPickingSongs()
@@ -288,8 +293,8 @@ struct SetlistPanel: View {
             }.padding(.horizontal, 12).frame(minHeight: 44)
         }
             .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-            .disabled(choosingSong ? pendingSongIDs.isEmpty : needsListName)
-            .accessibilityIdentifier("save-setlist").fixedSize(horizontal: true, vertical: false)
+            .disabled(!editingLibrary && (choosingSong ? pendingSongIDs.isEmpty : needsListName))
+            .accessibilityIdentifier(editingLibrary ? "save-library" : "save-setlist").fixedSize(horizontal: true, vertical: false)
         let heading = Text(editingListRoot && compactTitle && !creatingList ? listName : title)
             .font(.system(size: 19, weight: .semibold)).lineLimit(1)
         return ViewThatFits(in: .horizontal) {
@@ -303,6 +308,12 @@ struct SetlistPanel: View {
                 heading
             }
         }
+    }
+    private func finishLibraryEditing(save: Bool) {
+        dismissTextInput()
+        if save { model.saveLibraryOrder(libraryOrder) }
+        editingLibrary = false
+        libraryOrder = []
     }
     private func finishPickingSongs() {
         dismissTextInput()
@@ -521,8 +532,15 @@ struct SetlistPanel: View {
         // Build memberships once per render, not once per song and search predicate.
         var membership: [UUID: [String]] = [:]
         for list in model.setlists { for song in list.songs { membership[song.id, default: []].append(list.name) } }
-        let entries = model.songLibrary.filter { search.isEmpty || $0.name.localizedStandardContains(search) || (membership[$0.id] ?? []).contains { $0.localizedStandardContains(search) } }
-        let move: ((UUID, Int) -> Void)? = editingLibrary && search.isEmpty ? { id, index in model.moveLibrarySong(id, to: index) } : nil
+        let songs = editingLibrary ? model.librarySongs(inOrder: libraryOrder) : model.songLibrary
+        let entries = songs.filter { search.isEmpty || $0.name.localizedStandardContains(search) || (membership[$0.id] ?? []).contains { $0.localizedStandardContains(search) } }
+        let move: ((UUID, Int) -> Void)? = editingLibrary && search.isEmpty ? { id, index in
+            var ids = songs.map(\.id)
+            guard let source = ids.firstIndex(of: id), ids.indices.contains(index) else { return }
+            ids.remove(at: source)
+            ids.insert(id, at: index)
+            libraryOrder = ids
+        } : nil
         return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library", fixedWell: true,
                            move: move, row: { _, value in
             libraryRow(value, memberships: membership[value.id] ?? [])

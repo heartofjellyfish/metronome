@@ -284,6 +284,18 @@ final class MetronomeModel: ObservableObject {
         songLibrary = ordered
         persistSetlists()
     }
+    /// Apply an order draft to current songs, preserving edits, additions and deletions.
+    func librarySongs(inOrder ids: [UUID]) -> [SavedPreset] {
+        var remaining = Dictionary(uniqueKeysWithValues: songLibrary.map { ($0.id, $0) })
+        return ids.compactMap { remaining.removeValue(forKey: $0) }
+            + songLibrary.filter { remaining[$0.id] != nil }
+    }
+    func saveLibraryOrder(_ ids: [UUID]) {
+        let ordered = librarySongs(inOrder: ids)
+        guard !ordered.elementsEqual(songLibrary, by: { $0.id == $1.id }) else { return }
+        songLibrary = ordered
+        persistSetlists()
+    }
     /// Permanent deletion removes every membership. UI must confirm this explicitly.
     func deleteLibrarySong(_ id: UUID) {
         guard songLibrary.contains(where: { $0.id == id }) else { return }
