@@ -8,6 +8,7 @@ struct SetlistPanel: View {
     let startInSongLibrary: Bool
     @State private var browsingSetlistID: UUID?
     @State private var editing = false
+    @State private var editingLibrary = false
     @State private var creatingList = false
     @State private var listName = ""
     @State private var draftSongIDs: [UUID] = []
@@ -86,13 +87,26 @@ struct SetlistPanel: View {
                                 managedLibrary
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                     .insetPanel(p, radius: 16)
-                                Button {
-                                    dismissTextInput()
-                                    song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
-                                } label: {
-                                    Label("New song", systemImage: "plus")
-                                        .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("library-new-song")
+                                HStack {
+                                    if !model.songLibrary.isEmpty {
+                                        Button {
+                                            dismissTextInput()
+                                            editingLibrary.toggle()
+                                        } label: {
+                                            Label(editingLibrary ? "Done" : "Edit", systemImage: editingLibrary ? "checkmark" : "pencil")
+                                                .padding(.horizontal, 12).frame(minWidth: 88, minHeight: 44)
+                                        }.buttonStyle(HardwareButtonStyle(p: p))
+                                            .accessibilityIdentifier(editingLibrary ? "library-finish-editing" : "library-start-editing")
+                                    }
+                                    Spacer(minLength: 16)
+                                    Button {
+                                        dismissTextInput()
+                                        song = SavedPreset(name: "", rhythm: model.rhythm.performanceCopy)
+                                    } label: {
+                                        Label("New song", systemImage: "plus")
+                                            .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
+                                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("library-new-song")
+                                }
                             }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
                         } else if browsedList != nil || creatingList {
                             listDetail(browsedList)
@@ -167,6 +181,7 @@ struct SetlistPanel: View {
                     cancel: { deletingSong = false }) {
                         deletingSong = false
                         model.deleteLibrarySong(song.id)
+                        if model.songLibrary.isEmpty { editingLibrary = false }
                         draftSongIDs.removeAll { $0 == song.id }
                         self.song = nil
                     }
@@ -493,7 +508,7 @@ struct SetlistPanel: View {
         var membership: [UUID: [String]] = [:]
         for list in model.setlists { for song in list.songs { membership[song.id, default: []].append(list.name) } }
         let entries = model.songLibrary.filter { search.isEmpty || $0.name.localizedStandardContains(search) || (membership[$0.id] ?? []).contains { $0.localizedStandardContains(search) } }
-        let move: ((UUID, Int) -> Void)? = search.isEmpty ? { id, index in model.moveLibrarySong(id, to: index) } : nil
+        let move: ((UUID, Int) -> Void)? = editingLibrary && search.isEmpty ? { id, index in model.moveLibrarySong(id, to: index) } : nil
         return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library", fixedWell: true,
                            move: move, row: { _, value in
             libraryRow(value, memberships: membership[value.id] ?? [])
@@ -505,7 +520,7 @@ struct SetlistPanel: View {
     }
     private func libraryRow(_ value: SavedPreset, memberships: [String]) -> some View {
         HStack(spacing: 10) {
-            if search.isEmpty { grip("library-drag-\(value.name)") }
+            if editingLibrary && search.isEmpty { grip("library-drag-\(value.name)") }
             VStack(alignment: .leading, spacing: 0) {
                 Button {
                     dismissTextInput()
@@ -536,8 +551,10 @@ struct SetlistPanel: View {
                     }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-setlists-\(value.name)")
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
-            Button { bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("Edit song").accessibilityIdentifier("library-edit-\(value.name)")
+            if editingLibrary {
+                Button { bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
+                    .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("Edit song").accessibilityIdentifier("library-edit-\(value.name)")
+            }
         }.padding(14).accessibilityElement(children: .contain).accessibilityIdentifier("library-row-\(value.name)")
     }
     private func songEditor(_ initial: SavedPreset) -> some View {

@@ -58,6 +58,7 @@ final class PerformanceUITests: XCTestCase {
         app = XCUIApplication()
         app.launch()
         tap("settings"); tap("settings-songLibrary")
+        if b("library-start-editing").exists { tap("library-start-editing") }
         let pencil = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "library-edit-")).firstMatch
         if pencil.exists { pencil.tap() } else { tap("library-new-song") }
         let name = app.textFields["song-name"]
@@ -184,7 +185,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(app.textFields["song-search"].isHittable)
         XCTAssertTrue(b("library-new-song").isHittable)
         shot("33-long-library")
-        tap("library-edit-Track 42"); tap("cancel-song")
+        tap("library-start-editing"); tap("library-edit-Track 42"); tap("cancel-song")
         XCTAssertTrue(b("library-open-Track 42").isHittable)
     }
     func testDragToEdgeAdvancesThroughLongSetlist() {
@@ -238,6 +239,7 @@ final class PerformanceUITests: XCTestCase {
     }
     func testLibraryRepeatedDragBothDirections() {
         launch("en"); tap("settings"); tap("settings-songLibrary")
+        tap("library-start-editing")
         for iteration in 0..<6 {
             app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
             settleDrop()
@@ -254,11 +256,11 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(first.exists); let oldY = second.frame.minY
         XCTAssertFalse(b("library-options-Gossip").exists)
         shot("23-01-library-A")
-        tap("library-edit-Gossip"); shot("23-02-song-editor")
+        tap("library-start-editing"); tap("library-edit-Gossip"); shot("23-02-song-editor")
         tap("editor-add-to-setlist")
-        XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 2))
-        app.navigationBars.buttons.firstMatch.tap()
+        tap("membership-done")
         tap("cancel-song")
+        tap("library-finish-editing")
         XCTAssertEqual(second.frame.minY, oldY, accuracy: 2)
         let search = app.textFields["song-search"]
         search.tap(); swipeKeyboardAway(); XCTAssertFalse(app.keyboards.firstMatch.exists)
@@ -366,7 +368,7 @@ final class PerformanceUITests: XCTestCase {
         app.images["drag-setlist-Empty"].press(forDuration: 0, thenDragTo: app.images["drag-setlist-Saturday"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertLessThan(b("setlist-Empty").frame.minY, b("setlist-Saturday").frame.minY)
-        tap("close-panel"); tap("settings-songLibrary")
+        tap("close-panel"); tap("settings-songLibrary"); tap("library-start-editing")
         app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertGreaterThan(app.otherElements["library-row-Gossip"].frame.minY, app.otherElements["library-row-男孩别哭"].frame.minY)
@@ -430,6 +432,9 @@ final class PerformanceUITests: XCTestCase {
         launch(); tap("settings"); shot("05-settings-live-entries")
         tap("settings-songLibrary"); XCTAssertTrue(app.otherElements["library-row-Gossip"].exists)
         XCTAssertFalse(b("choose-setlist").exists); shot("06-song-library")
+        XCTAssertFalse(b("library-edit-Gossip").exists)
+        XCTAssertFalse(app.images["library-drag-Gossip"].exists)
+        tap("library-start-editing")
         XCTAssertTrue(b("library-edit-Gossip").exists)
         XCTAssertFalse(b("library-options-Gossip").exists); shot("07-library-actions")
         tap("library-edit-Gossip"); tap("cancel-song")
@@ -451,7 +456,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["membership-overflow-Gossip"].exists)
         tap("library-setlists-Gossip"); XCTAssertFalse(b("share-to-Sunday").isSelected)
         tap("share-to-Sunday"); tap("membership-done")
-        shot("08-library-memberships")
+        shot("08-library-memberships"); tap("library-start-editing")
         app.images["library-drag-Gossip"].press(forDuration: 0, thenDragTo: app.images["library-drag-男孩别哭"], withVelocity: .slow, thenHoldForDuration: 0.2)
         settleDrop()
         XCTAssertGreaterThan(app.otherElements["library-row-Gossip"].frame.minY, app.otherElements["library-row-男孩别哭"].frame.minY)
@@ -580,7 +585,7 @@ final class PerformanceUITests: XCTestCase {
         let name = "2026 秋季巡演 · 西雅图不插电加演场"
         app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText(name); swipeKeyboardAway()
         tap("add-song"); tap("import-song-Gossip"); tap("save-setlist"); tap("close-panel")
-        tap("settings-songLibrary"); tap("library-edit-Gossip")
+        tap("settings-songLibrary"); tap("library-start-editing"); tap("library-edit-Gossip")
         tap("editor-delete-song")
         XCTAssertEqual(app.staticTexts["affected-setlist-周六演出"].label, "周六演出")
         XCTAssertEqual(app.staticTexts["affected-setlist-" + name].label, name)
@@ -589,7 +594,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertTrue(b("library-open-Gossip").exists)
 
         launch("en", manyLists: true)
-        tap("settings"); tap("settings-songLibrary"); tap("library-edit-Gossip")
+        tap("settings"); tap("settings-songLibrary"); tap("library-start-editing"); tap("library-edit-Gossip")
         tap("editor-delete-song")
         let scroll = app.scrollViews["delete-impact-scroll"]
         XCTAssertTrue(scroll.isHittable)
@@ -610,7 +615,7 @@ final class PerformanceUITests: XCTestCase {
         tap("save-song"); XCTAssertTrue(app.otherElements["library-row-Encore"].exists)
         let search = app.textFields["song-search"]; search.tap(); search.typeText("Encore"); swipeKeyboardAway()
         XCTAssertFalse(app.otherElements["library-row-Gossip"].exists)
-        tap("library-edit-Encore"); tap("song-tempo")
+        tap("library-start-editing"); tap("library-edit-Encore"); tap("song-tempo")
         enterTempo("127")
         tap("editor-add-to-setlist"); tap("share-to-Saturday"); tap("membership-done")
         XCTAssertTrue(b("song-tempo").label.contains("127")); tap("save-song")
