@@ -466,3 +466,7 @@
 "This song will be removed from your library and these setlists." = "ライブラリと以下のセットリストからこの曲が削除されます。";
 "Add songs" = "曲を追加";
 "Next" = "次へ";
+"Playback" = "再生";
+"Pedal profiles" = "ペダル設定の切り替え";
+"Default profile" = "標準設定";
+"Add profile" = "設定を追加";

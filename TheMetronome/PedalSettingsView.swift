@@ -6,13 +6,12 @@ struct PedalSettingsView: View {
     let p: InstrumentPalette
     let close: () -> Void
     @State private var midiPicker = false
-    @State private var help = false
-    @State private var choosingProfile = false
+    private enum Detail { case profiles, connection }
+    @State private var detail: Detail?
     @State private var profileName = ""
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var keyWidth: CGFloat = 138
-    private let groups: [[PedalAction]] = [[.toggle, .tap], [.previous, .next], [.slower, .faster]]
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 16) {
@@ -22,75 +21,43 @@ struct PedalSettingsView: View {
                 Text("Pedal setup").font(.system(size: 25, weight: .semibold))
                 Spacer()
             }.padding(.horizontal, 12).padding(.vertical, 12)
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text(pedal.connectedName ?? pedal.profileName).font(.system(size: 18, weight: .semibold))
-                                Spacer()
-                                Button { choosingProfile.toggle(); pedal.cancelLearning() } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.accessibilityLabel("Saved controls")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if let device = pedal.connectedName {
+                        Text(verbatim: device + " · " + L10n.text("Connected"))
+                            .font(.subheadline).foregroundStyle(p.muted)
+                    } else if pedal.isMIDIProfile && !pedal.bindings.isEmpty {
+                        Text("Not connected. Assignments saved.").font(.subheadline).foregroundStyle(p.muted)
+                    }
+                    bindingGroup("Playback", actions: [.toggle])
+                    bindingGroup("Songs", actions: [.previous, .next])
+                    bindingGroup("Tempo", actions: [.tap, .slower, .faster])
+                    if let conflict = pedal.conflict {
+                        VStack(spacing: 14) {
+                            Text(L10n.format("This key is assigned to %@. Move it?", conflict.title)).font(.subheadline)
+                            HStack(spacing: 12) {
+                                Button { pedal.resolveConflict(replace: false) } label: { Text("Cancel").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p))
+                                Button { pedal.resolveConflict(replace: true) } label: { Text("Move").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
                             }
-                            if pedal.connectedName != nil {
-                                Text("Connected").font(.subheadline).foregroundStyle(p.muted)
-                            } else if !pedal.bindings.isEmpty {
-                                Text(pedal.isMIDIProfile ? L10n.text("Not connected. Assignments saved.") : L10n.text("Assignments saved on this iPhone."))
-                                    .font(.subheadline).foregroundStyle(p.muted)
-                            }
-                        }
-                        if choosingProfile {
-                            VStack(spacing: 12) {
-                                ForEach(pedal.profiles) { profile in
-                                    Button { pedal.selectProfile(profile.id); choosingProfile = false } label: {
-                                        HStack { Text(profile.name); Spacer(); if pedal.profileID == profile.id { Image(systemName: "checkmark") } }.padding(12).frame(minHeight: 44)
-                                    }.buttonStyle(HardwareButtonStyle(p: p))
-                                }
-                                HStack {
-                                    TextField("Name a new pedal", text: $profileName).padding(12).insetPanel(p, radius: 8)
-                                    Button { pedal.addProfile(profileName); profileName = ""; choosingProfile = false } label: { Image(systemName: "plus").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).disabled(profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                }
-                                Text("iOS does not identify page-turning pedals. Choose saved controls when switching pedals.").font(.subheadline).foregroundStyle(p.muted)
-                            }
-                        }
-                        bindingList.id("bindings")
-                        if let conflict = pedal.conflict {
-                            VStack(spacing: 14) {
-                                Text(L10n.format("This key is assigned to %@. Move it?", conflict.title)).font(.subheadline)
-                                HStack(spacing: 12) {
-                                    Button { pedal.resolveConflict(replace: false) } label: { Text("Cancel").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p))
-                                    Button { pedal.resolveConflict(replace: true) } label: { Text("Move").frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                                }
-                            }.padding(16).insetPanel(p, radius: 12)
-                        }
-                        Text(hint).font(.subheadline).foregroundStyle(p.muted)
-                            .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
-                            .accessibilityIdentifier("pedal-hint")
-                        Button { help.toggle() } label: {
-                            HStack { Text("Connection help"); Spacer(); Image(systemName: help ? "chevron.up" : "chevron.down") }.font(.subheadline).frame(minHeight: 44).contentShape(Rectangle())
-                        }.buttonStyle(.plain).accessibilityIdentifier("pedal-help")
-                        if help {
-                        Text("Page-turning pedals: pair in iPhone Settings > Bluetooth, then return here.").font(.subheadline).foregroundStyle(p.muted)
-                        Button {
-                            pedal.cancelLearning()
-                            pedal.problem = nil
-                            model.preparePedalInput()
-                            pedal.enableMIDI()
-                            midiPicker = true
-                        } label: {
-                            Text("Connect MIDI pedal").font(.subheadline.weight(.medium))
-                                .padding(.horizontal, 16).frame(height: 44)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10))
-                            .accessibilityIdentifier("pedal-midi")
-                        if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
-                            Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.")
-                                .font(.subheadline).foregroundStyle(p.muted)
-                        }
-                        }
-                        if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
-                    }.padding(.horizontal, 28).padding(.top, 12).padding(.bottom, 32)
-                        .frame(maxWidth: 520).frame(maxWidth: .infinity)
-                }.scrollBounceBehavior(.basedOnSize)
-            }
+                        }.padding(16).insetPanel(p, radius: 12)
+                    }
+                    Text(hint).font(.subheadline).foregroundStyle(p.muted)
+                        .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
+                        .accessibilityIdentifier("pedal-hint")
+                    VStack(spacing: 0) {
+                        Divider()
+                        disclosure("Pedal profiles", .profiles, id: "pedal-profiles",
+                                   value: pedal.profiles.count > 1 ? pedal.profileName : nil)
+                        if detail == .profiles { profilePicker }
+                        Divider()
+                        disclosure("Connection help", .connection, id: "pedal-help")
+                        if detail == .connection { connectionHelp }
+                    }
+                    if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
+                }.padding(.horizontal, 24).padding(.top, 4).padding(.bottom, 24)
+                    .frame(maxWidth: 520).frame(maxWidth: .infinity)
+            }.scrollBounceBehavior(.basedOnSize)
+             .scrollDismissesKeyboard(.interactively)
         }.foregroundStyle(p.ink).background { InstrumentBody(p: p).ignoresSafeArea() }
             .preferredColorScheme(model.dark ? .dark : .light).accessibilityAddTraits(.isModal)
             .onAppear { pedal.setupVisible = true; model.preparePedalInput(); pedal.enableMIDI() }
@@ -106,13 +73,91 @@ struct PedalSettingsView: View {
                 }
             }
     }
-    private var bindingList: some View {
-        VStack(spacing: 20) {
-            ForEach(groups.indices, id: \.self) { index in
-                VStack(spacing: 12) { ForEach(groups[index]) { bindingRow($0) } }
+    private func bindingGroup(_ title: LocalizedStringKey, actions: [PedalAction]) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 10) {
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(p.muted)
+                    .layoutPriority(1)
+                    .accessibilityAddTraits(.isHeader)
+                Rectangle().fill(p.edge.opacity(0.55)).frame(height: 1)
             }
+            ForEach(actions) { bindingRow($0) }
         }
     }
+
+    private func disclosure(_ title: LocalizedStringKey, _ section: Detail, id: String, value: String? = nil) -> some View {
+        Button {
+            pedal.cancelLearning()
+            dismissTextInput()
+            detail = detail == section ? nil : section
+        } label: {
+            HStack(spacing: 10) {
+                Text(title).font(.subheadline.weight(.medium))
+                Spacer()
+                if let value { Text(verbatim: value).font(.subheadline).foregroundStyle(p.muted).lineLimit(1) }
+                Image(systemName: detail == section ? "chevron.up" : "chevron.down").font(.caption)
+            }.frame(minHeight: 44).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier(id)
+    }
+
+    private var profilePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("iOS does not identify page-turning pedals. Choose saved controls when switching pedals.")
+                .font(.subheadline).foregroundStyle(p.muted)
+            ForEach(pedal.profiles) { profile in
+                Button {
+                    pedal.selectProfile(profile.id)
+                    dismissTextInput()
+                    detail = nil
+                } label: {
+                    HStack {
+                        Text(verbatim: profile.displayName)
+                        Spacer()
+                        if pedal.profileID == profile.id { Image(systemName: "checkmark") }
+                    }.padding(.horizontal, 12).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p))
+                    .accessibilityAddTraits(pedal.profileID == profile.id ? .isSelected : [])
+                    .accessibilityIdentifier("pedal-profile-" + profile.id)
+            }
+            HStack {
+                TextField("Name a new pedal", text: $profileName).padding(12).insetPanel(p, radius: 8)
+                    .accessibilityIdentifier("pedal-profile-name").submitLabel(.done)
+                    .onSubmit { addProfile() }
+                Button(action: addProfile) { Image(systemName: "plus").frame(width: 44, height: 44) }
+                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Add profile")
+                    .accessibilityIdentifier("pedal-add-profile")
+                    .disabled(profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }.padding(.bottom, 14)
+    }
+
+    private func addProfile() {
+        guard !profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        pedal.addProfile(profileName)
+        dismissTextInput()
+        profileName = ""
+        detail = nil
+    }
+
+    private var connectionHelp: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Page-turning pedals: pair in iPhone Settings > Bluetooth, then return here.")
+            Button {
+                pedal.cancelLearning()
+                pedal.problem = nil
+                model.preparePedalInput()
+                pedal.enableMIDI()
+                midiPicker = true
+            } label: {
+                Text("Connect MIDI pedal").padding(.horizontal, 16).frame(height: 44)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).foregroundStyle(p.ink)
+                .accessibilityIdentifier("pedal-midi")
+            if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
+                Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.")
+            }
+        }.font(.subheadline).foregroundStyle(p.muted)
+    }
+
     @ViewBuilder private func bindingRow(_ action: PedalAction) -> some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: 10) {
@@ -124,7 +169,7 @@ struct PedalSettingsView: View {
                 Text(action.title).font(.body.weight(.medium)).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 bindingButton(action)
-            }.padding(.trailing, 12)
+            }
         }
     }
     private func bindingButton(_ action: PedalAction) -> some View {
@@ -132,7 +177,7 @@ struct PedalSettingsView: View {
         let binding = pedal.bindings[action]
         let caption = listening ? L10n.text("Learning") : (binding?.displayLabel ?? L10n.text("Learn"))
         return Button {
-            if listening { pedal.cancelLearning() } else { model.beginPedalLearning(action) }
+            if listening { pedal.cancelLearning() } else { dismissTextInput(); detail = nil; model.beginPedalLearning(action) }
         } label: {
             HStack(spacing: 8) {
                 BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion)

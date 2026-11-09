@@ -102,7 +102,13 @@ final class RedesignTests: XCTestCase {
         p.updateMIDISources([]); XCTAssertNil(p.connectedName); XCTAssertFalse(p.bluetoothConnected)
         p.updateMIDISources([12],bluetooth:[12],names:[12:"My pedal"])
         XCTAssertNotNil(p.bindings[.tap]); XCTAssertTrue(p.bluetoothConnected)
+        p.updateMIDISources([12], bluetooth: [12], names: [12: "Stage pedal"])
+        p.updateMIDISources([12], bluetooth: [12])
+        XCTAssertEqual(p.connectedName, "Stage pedal")
+        p.updateMIDISources([])
         let restored = PedalControl(defaults:d)
+        XCTAssertEqual(restored.profileName, "Stage pedal")
+        XCTAssertNil(restored.connectedName)
         XCTAssertNotNil(restored.bindings[.tap]); XCTAssertFalse(restored.bluetoothConnected)
     }
     @MainActor func testGenericProfilesNeverClaimDeviceIdentityAndPreserveLegacyBindings() throws {
