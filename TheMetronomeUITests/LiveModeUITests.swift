@@ -112,6 +112,7 @@ final class LiveModeUITests: XCTestCase {
             app.launch()
             XCTAssertTrue(app.staticTexts[status].firstMatch.waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["pedal-toggle"].isEnabled)
+            XCTAssertFalse(app.buttons["pedal-profiles"].exists)
             capture(app, "Pedal input " + fixture)
             if fixture == "offline" {
                 XCTAssertFalse(app.buttons["pedal-midi"].exists)
@@ -130,28 +131,6 @@ final class LiveModeUITests: XCTestCase {
             }
             app.terminate()
         }
-    }
-    func testSwitchPedalProfilesRestoresSavedKey() {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound"]
-        app.launch()
-        let play = app.buttons["pedal-toggle"]
-        XCTAssertTrue(play.waitForExistence(timeout: 5))
-        let assigned = play.value as? String
-        let profiles = app.buttons["pedal-profiles"]
-        let field = app.textFields["pedal-profile-name"]
-        XCTAssertFalse(field.exists)
-        profiles.tap()
-        field.tap(); field.typeText("Stage pedal\n")
-        XCTAssertEqual(play.value as? String, "Learn")
-        XCTAssertFalse(field.exists)
-        profiles.tap()
-        let original = app.buttons["pedal-profile-keyboard"]
-        if !original.isHittable { app.swipeUp() }
-        original.tap()
-        XCTAssertEqual(play.value as? String, assigned)
-        XCTAssertFalse(field.exists)
     }
     func testLocalizedStatesAndRebindCancellationPreserveAssignment() {
         for language in ["zh-Hans", "de", "en"] {

@@ -118,10 +118,11 @@ final class RedesignTests: XCTestCase {
         d.set(try JSONEncoder().encode([PedalAction.toggle:key]),forKey:"pedalBindings")
         let p = PedalControl(defaults:d)
         XCTAssertEqual(p.bindings[.toggle],key)
-        p.addProfile("Backup pedal"); XCTAssertTrue(p.bindings.isEmpty)
         p.learn(.tap); p.receive(key,down:true,at:0); p.receive(key,down:false,at:1)
+        p.resolveConflict(replace: false)
         XCTAssertNil(p.connectedName); XCTAssertFalse(p.bluetoothConnected)
-        p.selectProfile("keyboard"); XCTAssertEqual(p.bindings[.toggle],key); XCTAssertNil(p.bindings[.tap])
+        let restored = PedalControl(defaults: d)
+        XCTAssertEqual(restored.bindings[.toggle],key); XCTAssertNil(restored.bindings[.tap])
     }
     @MainActor func testSongDraftAndTargetedImportDoNotSwitchPerformanceOrModifyPreset() throws {
         let d = UserDefaults.standard

@@ -38,7 +38,7 @@ final class LiveModeTests: XCTestCase {
         XCTAssertEqual(restored.bindings, pedal.bindings)
         XCTAssertFalse(restored.bluetoothConnected)
     }
-    @MainActor func testPressFeedbackOnlyForFreshMappedActionsInActiveProfile() {
+    @MainActor func testPressFeedbackOnlyForFreshMappedActions() {
         let suite = "PedalPressFeedbackTests"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
@@ -56,10 +56,10 @@ final class LiveModeTests: XCTestCase {
         pedal.receive(key, down: true, at: 2)
         pedal.receive(key, down: false, at: 3)
         XCTAssertEqual(flashes, [.toggle])
-        pedal.addProfile("Rehearsal")
-        pedal.receive(key, down: true, at: 4)
+        let unbound = PedalBinding(kind: .keyboard, code: 79, label: "Right")
+        pedal.receive(unbound, down: true, at: 4)
         XCTAssertEqual(flashes, [.toggle])
-        pedal.selectProfile("keyboard")
+        pedal.resetInputSession()
         pedal.receive(key, down: true, at: 5)
         XCTAssertEqual(flashes, [.toggle, .toggle])
     }

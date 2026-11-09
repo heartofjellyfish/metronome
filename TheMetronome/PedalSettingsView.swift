@@ -7,9 +7,7 @@ struct PedalSettingsView: View {
     let p: InstrumentPalette
     let close: () -> Void
     @State private var midiPicker = false
-    private enum Detail { case profiles, connection }
-    @State private var detail: Detail?
-    @State private var profileName = ""
+    @State private var help = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var keyWidth: CGFloat = 138
@@ -37,16 +35,10 @@ struct PedalSettingsView: View {
                             }
                         }.padding(16).insetPanel(p, radius: 12)
                     }
-                    VStack(spacing: 0) {
+                    if pedal.inputAvailable {
                         Divider()
-                        disclosure("Pedal profiles", .profiles, id: "pedal-profiles",
-                                   value: pedal.profiles.count > 1 ? pedal.profileName : nil)
-                        if detail == .profiles { profilePicker }
-                        if pedal.inputAvailable {
-                            Divider()
-                            disclosure("Connection help", .connection, id: "pedal-help")
-                            if detail == .connection { connectionHelp }
-                        }
+                        disclosure("Connection help")
+                        if help { connectionHelp }
                     }
                     if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                 }.padding(.horizontal, 24).padding(.top, 4).padding(.bottom, 24)
@@ -71,8 +63,8 @@ struct PedalSettingsView: View {
                 statusLine(L10n.text("No input detected"), icon: "cable.connector")
                 Text("Turn on your pedal, then select it in Settings → Bluetooth.")
                     .font(.subheadline).foregroundStyle(p.muted)
-                disclosure("Not listed in Bluetooth?", .connection, id: "pedal-help")
-                if detail == .connection { midiHelp }
+                disclosure("Not listed in Bluetooth?")
+                if help { midiHelp }
             }.padding(12).frame(maxWidth: .infinity, alignment: .leading).insetPanel(p, radius: 12)
         } else {
             VStack(alignment: .leading, spacing: 4) {
@@ -111,58 +103,18 @@ struct PedalSettingsView: View {
         }
     }
 
-    private func disclosure(_ title: LocalizedStringKey, _ section: Detail, id: String, value: String? = nil) -> some View {
+    private func disclosure(_ title: LocalizedStringKey) -> some View {
         Button {
             pedal.cancelLearning()
             dismissTextInput()
-            detail = detail == section ? nil : section
+            help.toggle()
         } label: {
             HStack(spacing: 10) {
                 Text(title).font(.subheadline.weight(.medium))
                 Spacer()
-                if let value { Text(verbatim: value).font(.subheadline).foregroundStyle(p.muted).lineLimit(1) }
-                Image(systemName: detail == section ? "chevron.up" : "chevron.down").font(.caption)
+                Image(systemName: help ? "chevron.up" : "chevron.down").font(.caption)
             }.frame(minHeight: 44).contentShape(Rectangle())
-        }.buttonStyle(.plain).accessibilityIdentifier(id)
-    }
-
-    private var profilePicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("iOS does not identify page-turning pedals. Choose saved controls when switching pedals.")
-                .font(.subheadline).foregroundStyle(p.muted)
-            ForEach(pedal.profiles) { profile in
-                Button {
-                    pedal.selectProfile(profile.id)
-                    dismissTextInput()
-                    detail = nil
-                } label: {
-                    HStack {
-                        Text(verbatim: profile.displayName)
-                        Spacer()
-                        if pedal.profileID == profile.id { Image(systemName: "checkmark") }
-                    }.padding(.horizontal, 12).frame(minHeight: 44)
-                }.buttonStyle(HardwareButtonStyle(p: p))
-                    .accessibilityAddTraits(pedal.profileID == profile.id ? .isSelected : [])
-                    .accessibilityIdentifier("pedal-profile-" + profile.id)
-            }
-            HStack {
-                TextField("Name a new pedal", text: $profileName).padding(12).insetPanel(p, radius: 8)
-                    .accessibilityIdentifier("pedal-profile-name").submitLabel(.done)
-                    .onSubmit { addProfile() }
-                Button(action: addProfile) { Image(systemName: "plus").frame(width: 44, height: 44) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityLabel("Add profile")
-                    .accessibilityIdentifier("pedal-add-profile")
-                    .disabled(profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-        }.padding(.bottom, 14)
-    }
-
-    private func addProfile() {
-        guard !profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        pedal.addProfile(profileName)
-        dismissTextInput()
-        profileName = ""
-        detail = nil
+        }.buttonStyle(.plain).accessibilityIdentifier("pedal-help")
     }
 
     private var connectionHelp: some View {
@@ -217,7 +169,7 @@ struct PedalSettingsView: View {
         let binding = pedal.bindings[action]
         let caption = listening ? L10n.text("Learning") : (binding?.displayLabel ?? L10n.text("Learn"))
         return Button {
-            if listening { pedal.cancelLearning() } else { dismissTextInput(); detail = nil; model.beginPedalLearning(action) }
+            if listening { pedal.cancelLearning() } else { dismissTextInput(); help = false; model.beginPedalLearning(action) }
         } label: {
             HStack(spacing: 8) {
                 BindingLamp(listening: listening, assigned: binding != nil, reduceMotion: reduceMotion,

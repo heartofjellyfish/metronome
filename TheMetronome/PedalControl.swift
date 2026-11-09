@@ -244,12 +244,6 @@ final class PedalControl: ObservableObject {
         gate.bindings = profiles.first { $0.id == id }!.bindings
         persist(); updateConnectedName()
     }
-    func addProfile(_ name: String) {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        let id = "keyboard:\(UUID().uuidString)"
-        profiles.append(PedalProfile(id: id, name: name, bindings: [:])); selectProfile(id)
-    }
     private func selectInputProfile(_ input: PedalBinding) {
         let target = [.keyboard, .media].contains(input.kind) ? (isMIDIProfile ? "keyboard" : profileID) : "midi:\(input.source)"
         guard target != profileID else { return }
