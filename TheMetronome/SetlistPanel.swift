@@ -102,10 +102,10 @@ struct SetlistPanel: View {
                                         dismissTextInput()
                                         deletingList = true
                                     } label: {
-                                        Label("Delete setlist", systemImage: "trash")
+                                        Text("Delete setlist").font(.subheadline)
                                             .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
-                                            .padding(.horizontal, 10).frame(minHeight: 44)
-                                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("delete-setlist")
+                                            .padding(.horizontal, 10).frame(minHeight: 34)
+                                    }.buttonStyle(CompactDeleteKeyStyle(p: p)).accessibilityIdentifier("delete-setlist")
                                 } else {
                                     Text(songCount(editing ? draftSongIDs.count : browsedList?.songs.count ?? 0))
                                         .font(.subheadline).foregroundStyle(p.muted)
@@ -116,7 +116,7 @@ struct SetlistPanel: View {
                                     if editing { showSongPicker() } else { beginEdit(new: false) }
                                 } label: {
                                     Label(editing ? "Add songs" : "Edit setlist", systemImage: editing ? "plus" : "pencil")
-                                        .padding(.horizontal, 14).frame(minHeight: 44)
+                                        .padding(.horizontal, 14).frame(minWidth: editing ? 128 : nil, minHeight: 44)
                                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editing ? "add-song" : "edit-setlist")
                             }
                         }.padding(.horizontal, 20).padding(.bottom, 16)
@@ -285,6 +285,7 @@ struct SetlistPanel: View {
         dismissTextInput(); editing = false; creatingList = false; draftSongIDs = []; listName = ""
     }
     private func saveList() {
+        dismissTextInput()
         guard let id = model.saveSetlist(id: creatingList ? nil : browsingSetlistID, name: listName, songIDs: draftSongIDs) else { return }
         browsingSetlistID = id; cancelList()
     }
@@ -544,6 +545,16 @@ struct SetlistPanel: View {
     }
 }
 
+/// Keep the smaller key face easy to hit, aligned with the full-height Add songs key.
+private struct CompactDeleteKeyStyle: ButtonStyle {
+    let p: InstrumentPalette
+
+    func makeBody(configuration: Configuration) -> some View {
+        HardwareButtonStyle(p: p, radius: 7).makeBody(configuration: configuration)
+            .frame(minHeight: 44).contentShape(Rectangle())
+    }
+}
+
 private struct EditableSetlistTitle: View {
     @Binding var name: String
     let p: InstrumentPalette
@@ -552,10 +563,16 @@ private struct EditableSetlistTitle: View {
     var body: some View {
         Group {
             if renaming {
-                SetlistNameField(name: $name, p: p, finish: { renaming = false })
-                    .frame(height: 48)
-                    .padding(.horizontal, 12)
-                    .insetPanel(p, radius: 9)
+                HStack(spacing: 0) {
+                    SetlistNameField(name: $name, p: p, finish: {
+                        if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { renaming = false }
+                    })
+                    Button { dismissTextInput(); renaming = false } label: {
+                        Image(systemName: "checkmark").frame(width: 44, height: 48).contentShape(Rectangle())
+                    }.buttonStyle(InsetRowButtonStyle(p: p))
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityLabel("Done").accessibilityIdentifier("finish-rename-setlist")
+                }.padding(.leading, 12).insetPanel(p, radius: 9)
             } else {
                 Button { renaming = true } label: {
                     HStack(spacing: 10) {
@@ -563,8 +580,8 @@ private struct EditableSetlistTitle: View {
                             .font(.system(size: 28, weight: .semibold))
                             .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
-                        Image(systemName: "pencil").foregroundStyle(p.muted)
-                    }.padding(.horizontal, 12).frame(minHeight: 48).contentShape(Rectangle())
+                        Image(systemName: "pencil").foregroundStyle(p.muted).frame(width: 44, height: 48)
+                    }.padding(.leading, 12).frame(minHeight: 48).contentShape(Rectangle())
                 }.buttonStyle(InsetRowButtonStyle(p: p)).insetPanel(p, radius: 9)
                     .accessibilityLabel("Setlist name").accessibilityValue(name)
                     .accessibilityIdentifier("rename-setlist")
@@ -590,13 +607,14 @@ private struct SetlistNameField: UIViewRepresentable {
             DispatchQueue.main.async { [weak self] in
                 guard let self, window != nil, !requestedFocus, becomeFirstResponder() else { return }
                 requestedFocus = true
-                selectAll(nil)
+                selectedTextRange = textRange(from: endOfDocument, to: endOfDocument)
             }
         }
 
         @objc func changed() { onChange?(text ?? "") }
 
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            guard !(text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
             resignFirstResponder()
             return true
         }
@@ -615,7 +633,7 @@ private struct SetlistNameField: UIViewRepresentable {
         field.accessibilityIdentifier = "setlist-name"
         field.font = .systemFont(ofSize: 28, weight: .semibold)
         field.returnKeyType = .done
-        field.clearButtonMode = .whileEditing
+        field.enablesReturnKeyAutomatically = true
         field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         field.delegate = field
         field.addTarget(field, action: #selector(Input.changed), for: .editingChanged)
