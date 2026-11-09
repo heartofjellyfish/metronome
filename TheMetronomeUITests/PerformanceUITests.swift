@@ -581,7 +581,7 @@ final class PerformanceUITests: XCTestCase {
         app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText(name); swipeKeyboardAway()
         tap("add-song"); tap("import-song-Gossip"); tap("save-setlist"); tap("close-panel")
         tap("settings-songLibrary"); tap("library-edit-Gossip")
-        app.scrollViews.firstMatch.swipeUp(); tap("editor-delete-song")
+        tap("editor-delete-song")
         XCTAssertEqual(app.staticTexts["affected-setlist-周六演出"].label, "周六演出")
         XCTAssertEqual(app.staticTexts["affected-setlist-" + name].label, name)
         shot("38-two-affected-setlists")
@@ -590,7 +590,7 @@ final class PerformanceUITests: XCTestCase {
 
         launch("en", manyLists: true)
         tap("settings"); tap("settings-songLibrary"); tap("library-edit-Gossip")
-        app.scrollViews.firstMatch.swipeUp(); tap("editor-delete-song")
+        tap("editor-delete-song")
         let scroll = app.scrollViews["delete-impact-scroll"]
         XCTAssertTrue(scroll.isHittable)
         let confirm = b("confirm-delete-library-song")
@@ -621,12 +621,9 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(save.frame.midY, cancel.frame.midY, accuracy: 1)
         XCTAssertLessThan(save.frame.maxY, app.textFields["song-name"].frame.minY)
         XCTAssertEqual(b("editor-add-to-setlist").label, "Manage setlists")
-        XCTAssertFalse(app.buttons["editor-delete-song"].isHittable)
-        shot("37-editor-top")
-        app.scrollViews.firstMatch.swipeUp()
         XCTAssertTrue(b("editor-delete-song").isHittable)
-        XCTAssertTrue(save.isHittable)
-        shot("37-editor-end")
+        XCTAssertGreaterThan(b("editor-delete-song").frame.minY, b("editor-add-to-setlist").frame.maxY)
+        shot("51-editor-single-screen")
         tap("editor-delete-song"); shot("15-library-delete-confirmation")
         let dismissRegion = app.otherElements["PopoverDismissRegion"]
         if dismissRegion.exists { dismissRegion.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.1)).tap() }

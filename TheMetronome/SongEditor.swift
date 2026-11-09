@@ -104,9 +104,8 @@ struct SongEditor: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         fields.fixedSize(horizontal: false, vertical: picker == nil)
-                            .frame(minHeight: picker == nil && delete != nil ? max(0, space.size.height - 20) : nil, alignment: .topLeading)
                         if picker == nil, let delete {
-                            Divider()
+                            Spacer(minLength: 0)
                             Button(action: delete) {
                                 Label("Delete song", systemImage: "trash")
                                     .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
@@ -114,7 +113,9 @@ struct SongEditor: View {
                             }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("editor-delete-song")
                         }
                     }.padding(20)
-                }.scrollDismissesKeyboard(.interactively)
+                        .frame(minHeight: picker == nil ? space.size.height : nil, alignment: .topLeading)
+                }.scrollBounceBehavior(.basedOnSize, axes: .vertical)
+                    .scrollDismissesKeyboard(.interactively)
                     .id(picker)
             }
         }.onChange(of: picker) { _, _ in typing = nil; dismissTextInput() }
@@ -157,8 +158,10 @@ struct SongEditor: View {
                     Divider()
                     field("SOUND", value: InstrumentSound(rawValue: draft.sound)?.title ?? "", route: "sound")
                 }.insetPanel(p, radius: 12)
-                Text("Notes").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
-                TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Notes").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
+                    TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
+                }
                 if let addToSetlist {
                     Button(action: addToSetlist) {
                         Label("Manage setlists", systemImage: "music.note.list").frame(maxWidth: .infinity, minHeight: 44)
