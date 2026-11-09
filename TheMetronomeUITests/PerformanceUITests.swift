@@ -36,6 +36,66 @@ final class PerformanceUITests: XCTestCase {
         if b("close-settings").isHittable { tap("close-settings") }
     }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testCircularSwipeActionsEditCancelRemoveAndDelete() {
+        launch("en")
+        tap("transport")
+        tap("settings"); tap("settings-songLibrary")
+        let beforeSwipe = b("library-open-Gossip").frame
+        b("library-open-Gossip").swipeLeft()
+        XCTAssertTrue(b("swipe-library-edit-Gossip").waitForExistence(timeout: 3))
+        XCTAssertLessThan(b("library-open-Gossip").frame.maxX, beforeSwipe.maxX - 60)
+        shot("71-library-swipe")
+        tap("swipe-library-edit-Gossip")
+        XCTAssertTrue(app.textFields["song-name"].exists)
+        tap("cancel-song")
+        b("library-open-Gossip").swipeLeft()
+        tap("swipe-library-delete-Gossip")
+        XCTAssertTrue(b("confirm-delete-library-song").exists)
+        tap("Cancel")
+        XCTAssertTrue(b("library-open-Gossip").exists)
+        tap("close-panel"); tap("settings-setlists")
+        b("setlist-Saturday").swipeLeft()
+        shot("71-setlist-swipe")
+        tap("swipe-edit-setlist-Saturday")
+        tap("cancel-setlist")
+        b("song-Gossip").swipeLeft()
+        shot("71-song-swipe")
+        tap("swipe-remove-song-Gossip")
+        tap("confirm-remove-setlist-song")
+        XCTAssertFalse(b("song-Gossip").exists)
+        tap("choose-setlist"); tap("close-panel"); tap("settings-songLibrary")
+        XCTAssertTrue(b("library-open-Gossip").exists)
+        b("library-open-Gossip").swipeLeft()
+        tap("swipe-library-delete-Gossip")
+        tap("confirm-delete-library-song")
+        XCTAssertFalse(b("library-open-Gossip").exists)
+        tap("close-panel"); tap("close-settings")
+        XCTAssertEqual(b("transport").label, "Stop metronome")
+        tap("transport")
+    }
+
+    func testSwipeClosesOnScrollAndOnlyOneRowOpensInDarkMode() {
+        launch("en", dark: true)
+        tap("settings"); tap("settings-songLibrary")
+        let first = b("library-open-Gossip")
+        let y = first.frame.midY
+        first.swipeLeft()
+        XCTAssertTrue(b("swipe-library-delete-Gossip").isHittable)
+        shot("71-dark-swipe")
+        b("library-open-男孩别哭").swipeLeft()
+        XCTAssertFalse(b("swipe-library-delete-Gossip").exists)
+        XCTAssertTrue(b("swipe-library-delete-男孩别哭").isHittable)
+        app.collectionViews.firstMatch.swipeUp()
+        XCTAssertFalse(b("swipe-library-delete-男孩别哭").exists)
+        XCTAssertEqual(first.frame.midY, y, accuracy: 4)
+        tap("close-panel"); tap("settings-setlists")
+        b("setlist-Saturday").swipeLeft()
+        tap("swipe-delete-setlist-Saturday")
+        XCTAssertTrue(b("confirm-delete-setlist").isHittable)
+        tap("Cancel")
+        XCTAssertTrue(b("setlist-Saturday").exists)
+    }
+
     func testSongNameTypingWhileLive() throws { try measureSongName(playing: true) }
     func testSongNameTypingWhileStopped() throws { try measureSongName(playing: false) }
     private func measureSongName(playing: Bool) throws {

@@ -29,7 +29,9 @@ struct SetlistPanel: View {
     @State private var sharing: SavedPreset?
     @State private var membershipChanges: [UUID: Bool] = [:]
     @State private var deletingSong = false
-    @State private var deletingList = false
+    @State private var swipeDeletingSong: SavedPreset?
+    @State private var deletingList: SongSetlist?
+    @State private var removingSong: SavedPreset?
     @State private var performing = false
     @FocusState private var namingList: Bool
 
@@ -131,7 +133,7 @@ struct SetlistPanel: View {
                                 if editing && !creatingList {
                                     Button {
                                         dismissTextInput()
-                                        deletingList = true
+                                        deletingList = browsedList
                                     } label: {
                                         HStack(spacing: 6) {
                                             Image(systemName: "trash").accessibilityHidden(true)
@@ -171,8 +173,8 @@ struct SetlistPanel: View {
                         }.padding(.horizontal, 20).padding(.bottom, 16)
                     }
                 }.frame(maxWidth: 560).frame(height: geo.size.height - 12)
-                    .accessibilityHidden(performing || deletingSong || deletingList)
-                    .allowsHitTesting(!performing && !deletingSong && !deletingList)
+                    .accessibilityHidden(performing || deletingSong || deletingList != nil || removingSong != nil)
+                    .allowsHitTesting(!performing && !deletingSong && deletingList == nil && removingSong == nil)
                     .background { InstrumentBody(p: p) }.clipShape(RoundedRectangle(cornerRadius: 23))
                     .overlay(RoundedRectangle(cornerRadius: 23).stroke(p.light, lineWidth: 0.8))
                     .padding(.horizontal, 10).padding(.bottom, 7)
@@ -187,24 +189,33 @@ struct SetlistPanel: View {
                 .presentationDragIndicator(.visible)
         }
         .overlay {
-            if deletingSong, let song {
+            if deletingSong, let song = swipeDeletingSong ?? song {
                 let affected = model.listsContainingSong(song.id)
                 deleteConfirmation(name: song.name,
                     detail: L10n.text(affected.isEmpty ? "Delete this song from your library?" : "This song will be removed from your library and these setlists."),
                     affectedSetlists: affected,
                     action: "Delete song", identifier: "confirm-delete-library-song",
-                    cancel: { deletingSong = false }) {
+                    cancel: { deletingSong = false; swipeDeletingSong = nil }) {
                         deletingSong = false
+                        swipeDeletingSong = nil
                         model.deleteLibrarySong(song.id)
                         if model.songLibrary.isEmpty { editingLibrary = false }
                         draftSongIDs.removeAll { $0 == song.id }
                         self.song = nil
                     }
-            } else if deletingList, let list = browsedList {
+            } else if let value = removingSong, let list = browsedList {
+                deleteConfirmation(name: value.name, detail: L10n.text("Songs stay in your library."),
+                    action: "Remove from setlist", identifier: "confirm-remove-setlist-song",
+                    cancel: { removingSong = nil }) {
+                        removingSong = nil
+                        model.saveSetlist(id: list.id, name: list.name,
+                                          songIDs: list.songs.filter { $0.id != value.id }.map(\.id))
+                    }
+            } else if let list = deletingList {
                 deleteConfirmation(name: list.name, detail: L10n.text("Songs stay in your library."),
                     action: "Delete setlist", identifier: "confirm-delete-setlist",
-                    cancel: { deletingList = false }) {
-                        deletingList = false
+                    cancel: { deletingList = nil }) {
+                        deletingList = nil
                         model.deleteSetlist(list.id)
                         cancelList(); browsingSetlistID = nil
                     }
@@ -429,8 +440,16 @@ struct SetlistPanel: View {
         let lists = model.setlists.filter { query.isEmpty || $0.name.localizedStandardContains(query) }
         let showFrequent = searchingLists && query.isEmpty && model.setlists.count >= 20
         let move: ((UUID, Int) -> Void)? = query.isEmpty ? { id, index in model.moveSetlist(id, to: index) } : nil
-        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move,
-                           onContentHeight: { if query.isEmpty && !searchingLists && abs(shelfHeight - $0) > 0.5 { shelfHeight = $0 } }, row: { _, list in
+        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move, swipeActions: { list in
+            [
+                CatalogSwipeAction(id: "swipe-edit-setlist-" + list.name, title: "Edit", icon: "pencil") {
+                    openList(list); beginEdit(new: false)
+                },
+                CatalogSwipeAction(id: "swipe-delete-setlist-" + list.name, title: "Delete", icon: "trash", destructive: true) {
+                    deletingList = list
+                }
+            ]
+        }, onContentHeight: { if query.isEmpty && !searchingLists && abs(shelfHeight - $0) > 0.5 { shelfHeight = $0 } }, row: { _, list in
             HStack(spacing: 6) {
                 if query.isEmpty { grip("drag-setlist-\(list.name)") }
                 Button { openList(list) } label: {
@@ -482,7 +501,16 @@ struct SetlistPanel: View {
             draftSongIDs.insert(id, at: index)
         } : nil
         return CatalogList(items: editing ? draftSongs : list?.songs ?? [], p: p, bookmarks: bookmarks, page: page,
-                           move: move, onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
+                           move: move, swipeActions: editing ? nil : { value in
+            [
+                CatalogSwipeAction(id: "swipe-edit-song-" + value.name, title: "Edit", icon: "pencil") {
+                    bookmarks.prefer(value.id, on: page); song = value
+                },
+                CatalogSwipeAction(id: "swipe-remove-song-" + value.name, title: "Remove", icon: "minus", destructive: true) {
+                    removingSong = value
+                }
+            ]
+        }, onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
             if editing {
                 editableSong(index, value, page: page)
             } else {
@@ -595,7 +623,16 @@ struct SetlistPanel: View {
             libraryOrder = ids
         } : nil
         return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library",
-                           move: move, row: { _, value in
+                           move: move, swipeActions: editingLibrary ? nil : { value in
+            [
+                CatalogSwipeAction(id: "swipe-library-edit-" + value.name, title: "Edit", icon: "pencil") {
+                    bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value
+                },
+                CatalogSwipeAction(id: "swipe-library-delete-" + value.name, title: "Delete", icon: "trash", destructive: true) {
+                    swipeDeletingSong = value; deletingSong = true
+                }
+            ]
+        }, row: { _, value in
             libraryRow(value, memberships: membership[value.id] ?? [])
         }, above: {
             if entries.isEmpty {

@@ -22,6 +22,75 @@ final class ListBookmarks {
 
 private final class CatalogCell: UICollectionViewCell {
     var configuredRevision = -1
+    var swipeID: UUID?
+    var actionsView: UIView?
+    private(set) var rowView: (UIView & UIContentView)?
+
+    func setRow(_ configuration: UIContentConfiguration) {
+        if let rowView, rowView.supports(configuration) {
+            rowView.configuration = configuration
+        } else {
+            rowView?.removeFromSuperview()
+            let row = configuration.makeContentView()
+            row.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(row)
+            NSLayoutConstraint.activate([
+                row.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                row.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+                row.topAnchor.constraint(equalTo: contentView.topAnchor),
+                row.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            ])
+            rowView = row
+        }
+    }
+
+    func closeSwipe() {
+        rowView?.layer.removeAllAnimations()
+        rowView?.backgroundColor = .clear
+        rowView?.transform = .identity
+        rowView?.isUserInteractionEnabled = true
+        actionsView?.removeFromSuperview()
+        actionsView = nil
+        swipeID = nil
+    }
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        closeSwipe()
+    }
+}
+
+struct CatalogSwipeAction: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    var destructive = false
+    let perform: () -> Void
+}
+
+private struct CatalogSwipeKey: View {
+    let action: CatalogSwipeAction
+    let p: InstrumentPalette
+    var body: some View {
+        Button(action: action.perform) {
+            VStack(spacing: 3) {
+                Image(systemName: action.icon).font(.system(size: 18)).frame(width: 44, height: 44)
+                Text(L10n.text(action.title)).font(.caption2).lineLimit(1)
+            }.foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
+                .frame(width: 64).frame(minHeight: 64).contentShape(Rectangle())
+        }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier(action.id)
+    }
+}
+
+private struct CatalogSwipeKeyStyle: ButtonStyle {
+    let p: InstrumentPalette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(alignment: .top) {
+                HardwareKeySurface(p: p, radius: 22, pressed: configuration.isPressed)
+                    .frame(width: 44, height: 44)
+            }
+            .offset(y: configuration.isPressed ? 1 : 0)
+    }
 }
 
 /// One native scroll surface owns the introductory controls, reorderable rows and footer.
@@ -32,6 +101,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     let page: String
     var compactMargins = false
     var move: ((UUID, Int) -> Void)? = nil
+    var swipeActions: ((Item) -> [CatalogSwipeAction])? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
     var onHeaderScrolled: ((Bool) -> Void)? = nil
     @ViewBuilder var row: (Int, Item) -> Row
@@ -47,6 +117,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             return part
         }
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.selfSizingInvalidation = .enabledIncludingConstraints
         view.backgroundColor = .clear
         view.contentInsetAdjustmentBehavior = .never
         view.keyboardDismissMode = .interactive
@@ -59,6 +130,13 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         gesture.delegate = context.coordinator
         view.addGestureRecognizer(gesture)
         view.panGestureRecognizer.require(toFail: gesture)
+        let swipe = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.swipe(_:)))
+        swipe.delegate = context.coordinator
+        view.addGestureRecognizer(swipe)
+        view.panGestureRecognizer.require(toFail: swipe)
+        let dismiss = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.dismissSwipe))
+        dismiss.delegate = context.coordinator
+        view.addGestureRecognizer(dismiss)
         return view
     }
     func updateUIView(_ view: UICollectionView, context: Context) {
@@ -75,7 +153,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             let changed = !newItems.elementsEqual(c.items, by: { $0.id == $1.id })
             c.items = newItems
             c.revision += 1
-            if changed { view.reloadData() }
+            if changed { c.dismissSwipe(); view.reloadData() }
             view.layoutIfNeeded()
             for cell in view.visibleCells {
                 if let path = view.indexPath(for: cell) { c.configure(cell, path) }
@@ -90,6 +168,10 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         var revision = 0
         var updateScheduled = false
         var moving = false
+        private weak var swipedCell: CatalogCell?
+        private var swipeOrigin: CGFloat = 0
+        private var swipeWidth: CGFloat = 0
+
         private var grabOffset: CGFloat = 0
         private var restored = false
         private var touching = false
@@ -109,31 +191,37 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             // A prefetched cell can sit off screen through a browse/edit transition.
             if (cell as? CatalogCell)?.configuredRevision != revision { configure(cell, path) }
         }
-        func configure(_ cell: UICollectionViewCell, _ path: IndexPath) {
-            (cell as? CatalogCell)?.configuredRevision = revision
+        func configure(_ candidate: UICollectionViewCell, _ path: IndexPath) {
+            guard let cell = candidate as? CatalogCell else { return }
+            cell.configuredRevision = revision
+            if cell.swipeID != nil {
+                if path.section == 1, items.indices.contains(path.item),
+                   let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty { return }
+                dismissSwipe()
+            }
             let p = parent.p
             switch path.section {
             case 0:
-                cell.contentConfiguration = UIHostingConfiguration {
+                cell.setRow(UIHostingConfiguration {
                     VStack(alignment: .leading, spacing: 0) { parent.above() }.frame(maxWidth: .infinity, alignment: .leading)
                         .foregroundStyle(p.ink).padding(.horizontal, 14).padding(.bottom, parent.compactMargins ? 4 : 10)
-                }.margins(.all, 0)
+                }.margins(.all, 0))
             case 2:
-                cell.contentConfiguration = UIHostingConfiguration {
+                cell.setRow(UIHostingConfiguration {
                     VStack(spacing: 0) { parent.below() }.foregroundStyle(p.ink).padding(.horizontal, 14).padding(.top, parent.compactMargins ? 4 : 16)
-                }.margins(.all, 0)
+                }.margins(.all, 0))
             default:
                 guard items.indices.contains(path.item) else { return }
                 let last = path.item == items.count - 1
                 let item = items[path.item]
                 let row = parent.row(path.item, item).id(item.id)
-                cell.contentConfiguration = UIHostingConfiguration {
+                cell.setRow(UIHostingConfiguration {
                     row.foregroundStyle(p.ink)
                         .frame(maxWidth: .infinity)
                         .overlay(alignment: .bottom) {
                             if !last { Rectangle().fill(p.edge.opacity(0.4)).frame(height: 0.5).padding(.horizontal, 14) }
                         }
-                }.margins(.all, 0)
+                }.margins(.all, 0))
             }
         }
         func finishLayout(_ view: UICollectionView) {
@@ -173,7 +261,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             let hidden = view.contentOffset.y >= header.frame.maxY
             if compact != hidden { compact = hidden; callback(hidden) }
         }
-        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { touching = true }
+        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { dismissSwipe(); touching = true }
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             guard restored, let view = scrollView as? UICollectionView else { return }
             updateTitle(view)
@@ -197,8 +285,85 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             items.insert(item, at: dest.item)
             parent.move?(item.id, dest.item)
         }
+        @objc func dismissSwipe() {
+            swipedCell?.closeSwipe()
+            swipedCell = nil
+        }
+
+        func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = recognizer as? UIPanGestureRecognizer,
+                  let view = recognizer.view as? UICollectionView,
+                  pan !== view.panGestureRecognizer else { return true }
+            let speed = pan.velocity(in: view)
+            guard abs(speed.x) > abs(speed.y), abs(speed.x) > 0,
+                  let path = view.indexPathForItem(at: pan.location(in: view)),
+                  path.section == 1, items.indices.contains(path.item),
+                  let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty else { return false }
+            return speed.x < 0 || view.cellForItem(at: path) === swipedCell
+        }
+
+        @objc func swipe(_ gesture: UIPanGestureRecognizer) {
+            guard let view = gesture.view as? UICollectionView else { return }
+            switch gesture.state {
+            case .began:
+                guard let path = view.indexPathForItem(at: gesture.location(in: view)),
+                      items.indices.contains(path.item),
+                      let cell = view.cellForItem(at: path) as? CatalogCell,
+                      let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty else { return }
+                if swipedCell !== cell { dismissSwipe() }
+                swipedCell = cell
+                swipeWidth = CGFloat(actions.count) * 64 + 12
+                swipeOrigin = cell.rowView?.transform.tx ?? 0
+                if cell.actionsView == nil {
+                    let config = UIHostingConfiguration {
+                        HStack(spacing: 0) {
+                            ForEach(actions) { action in
+                                CatalogSwipeKey(action: CatalogSwipeAction(id: action.id, title: action.title,
+                                    icon: action.icon, destructive: action.destructive, perform: { [weak self] in
+                                        self?.dismissSwipe()
+                                        action.perform()
+                                    }), p: self.parent.p)
+                            }
+                        }.padding(.trailing, 12)
+                    }.margins(.all, 0)
+                    let buttons = config.makeContentView()
+                    buttons.backgroundColor = .clear
+                    cell.contentView.insertSubview(buttons, at: 0)
+                    cell.actionsView = buttons
+                    cell.swipeID = items[path.item].id
+                    cell.clipsToBounds = true
+                    buttons.frame = CGRect(x: cell.bounds.width - swipeWidth, y: (cell.bounds.height - 64) / 2,
+                                           width: swipeWidth, height: 64)
+                }
+                cell.rowView?.backgroundColor = UIColor(parent.p.well)
+                cell.rowView?.isUserInteractionEnabled = false
+            case .changed:
+                guard let cell = swipedCell else { return }
+                let offset = max(-swipeWidth, min(0, swipeOrigin + gesture.translation(in: view).x))
+                cell.rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
+            case .ended, .cancelled, .failed:
+                guard let cell = swipedCell else { return }
+                let velocity = gesture.velocity(in: view).x
+                let open = gesture.state == .ended &&
+                    (velocity < -350 || (velocity < 350 && (cell.rowView?.transform.tx ?? 0) < -swipeWidth * 0.45))
+                let duration = UIAccessibility.isReduceMotionEnabled ? 0 : 0.18
+                UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+                    cell.rowView?.transform = open ? CGAffineTransform(translationX: -self.swipeWidth, y: 0) : .identity
+                } completion: { _ in
+                    if !open && self.swipedCell === cell { self.dismissSwipe() }
+                }
+            default: break
+            }
+        }
+
         func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            guard parent.move != nil, items.count > 1, let view = recognizer.view as? UICollectionView else { return false }
+            guard let view = recognizer.view as? UICollectionView else { return false }
+            if recognizer is UITapGestureRecognizer {
+                guard let cell = swipedCell else { return false }
+                return cell.actionsView?.point(inside: touch.location(in: cell.actionsView), with: nil) != true
+            }
+            if recognizer is UIPanGestureRecognizer { return parent.swipeActions != nil }
+            guard parent.move != nil, items.count > 1 else { return false }
             let point = touch.location(in: view)
             guard let path = view.indexPathForItem(at: point), path.section == 1,
                   let frame = view.layoutAttributesForItem(at: path)?.frame else { return false }
