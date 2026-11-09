@@ -21,7 +21,7 @@ final class ModelTests: XCTestCase {
         model.load(model.presets[1]); XCTAssertEqual(model.bpm, 120)
         XCTAssertEqual(model.presetCaption, "SECOND")
         model.presets.removeFirst(); XCTAssertEqual(model.presetCaption, "SECOND")
-        model.presets = []; XCTAssertEqual(model.presetCaption, "PRESETS / SAVE A RHYTHM")
+        model.presets = []; XCTAssertEqual(model.presetCaption, L10n.text("PRESETS / SAVE A RHYTHM"))
         model.addPreset("  \n "); XCTAssertTrue(model.presets.isEmpty)
 
         // A 1/4 ramp makes runtime and lock-screen metadata diverge quickly if stale.

@@ -240,31 +240,7 @@ struct SetlistPanel: View {
     private var header: some View {
         HStack(spacing: 10) {
             if editingListRoot || choosingSong {
-                Button {
-                    if choosingSong { finishPickingSongs() } else { cancelList() }
-                } label: { Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44) }
-                    .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(choosingSong ? "cancel-picking-songs" : "cancel-setlist")
-                Text(editingListRoot && compactTitle && !creatingList ? listName : title)
-                    .font(.system(size: 19, weight: .semibold)).lineLimit(1).frame(maxWidth: .infinity)
-                Button {
-                    if choosingSong {
-                        draftSongIDs.append(contentsOf: pendingSongIDs)
-                        finishPickingSongs()
-                        if needsListName {
-                            namingList = true
-                            return
-                        }
-                    }
-                    saveList()
-                } label: {
-                    HStack(spacing: 5) {
-                        Label(choosingSong && needsListName ? "Next" : "Save", systemImage: choosingSong && needsListName ? "arrow.right" : "checkmark")
-                        if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
-                    }.padding(.horizontal, 12).frame(minHeight: 44)
-                }
-                    .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-                    .disabled(choosingSong ? pendingSongIDs.isEmpty : needsListName)
-                    .accessibilityIdentifier("save-setlist")
+                draftHeader
             } else {
                 if browsingDetail {
                     Button { browsingSetlistID = nil } label: {
@@ -289,6 +265,44 @@ struct SetlistPanel: View {
                 }
             }
         }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
+    }
+    private var draftHeader: some View {
+        let cancelButton = Button {
+            if choosingSong { finishPickingSongs() } else { cancelList() }
+        } label: { Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44) }
+            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(choosingSong ? "cancel-picking-songs" : "cancel-setlist").fixedSize(horizontal: true, vertical: false)
+        let saveButton = Button {
+            if choosingSong {
+                draftSongIDs.append(contentsOf: pendingSongIDs)
+                finishPickingSongs()
+                if needsListName {
+                    namingList = true
+                    return
+                }
+            }
+            saveList()
+        } label: {
+            HStack(spacing: 5) {
+                Label(choosingSong && needsListName ? "Next" : "Save", systemImage: choosingSong && needsListName ? "arrow.right" : "checkmark")
+                if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
+            }.padding(.horizontal, 12).frame(minHeight: 44)
+        }
+            .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
+            .disabled(choosingSong ? pendingSongIDs.isEmpty : needsListName)
+            .accessibilityIdentifier("save-setlist").fixedSize(horizontal: true, vertical: false)
+        let heading = Text(editingListRoot && compactTitle && !creatingList ? listName : title)
+            .font(.system(size: 19, weight: .semibold)).lineLimit(1)
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                cancelButton
+                heading.fixedSize().frame(maxWidth: .infinity)
+                saveButton
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack { cancelButton; Spacer(minLength: 4); saveButton }
+                heading
+            }
+        }
     }
     private func finishPickingSongs() {
         dismissTextInput()
@@ -515,6 +529,7 @@ struct SetlistPanel: View {
         }, above: {
             if entries.isEmpty {
                 Text(L10n.text(search.isEmpty ? "No songs yet." : "No matches.")).foregroundStyle(p.muted)
+                    .padding(.horizontal, 14)
             }
         }, below: { EmptyView() })
     }

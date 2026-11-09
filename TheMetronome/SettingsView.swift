@@ -123,7 +123,7 @@ struct SettingsView: View {
         Button { model.endSoundPreview(); present(route) } label: {
             HStack(spacing: 7) {
                 SettingsIllustration(kind: icon).frame(width: 44, height: 44)
-                Text(L10n.text(title).uppercased()).technical(12, spacing: 0.4)
+                Text(L10n.text(title)).technical(12, spacing: 0.4)
                     .lineLimit(1).minimumScaleFactor(0.85).multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
             }.padding(.horizontal, 10).frame(maxWidth: .infinity).frame(minHeight: 66)

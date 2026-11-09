@@ -105,6 +105,21 @@ final class PerformanceUITests: XCTestCase {
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--long-list-test", "-AppleLanguages", "(en)"]
         app.launch()
     }
+    func testSaveNamedSetlistWithFiveSelections() {
+        launchLongCatalog()
+        tap("settings"); tap("settings-setlists"); tap("new-setlist")
+        XCTAssertFalse(b("save-setlist").isEnabled)
+        let name = app.textFields["setlist-name"]
+        name.tap(); name.typeText("November show\n")
+        XCTAssertTrue(b("save-setlist").isEnabled)
+        tap("add-song")
+        for index in 1...5 { tap(String(format: "import-song-Track %02d", index)) }
+        XCTAssertEqual(b("save-setlist").frame.height, b("cancel-picking-songs").frame.height, accuracy: 1)
+        shot("53-save-five")
+        tap("save-setlist")
+        XCTAssertEqual(app.staticTexts["setlist-title"].label, "November show")
+        XCTAssertEqual(app.staticTexts["setlist-count"].label, "5 songs")
+    }
     func testAddSongSearchFollowsLibrarySize() {
         launch("zh-Hans")
         tap("settings"); tap("settings-setlists"); tap("new-setlist")
