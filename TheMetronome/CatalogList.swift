@@ -48,7 +48,6 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     let page: String
     var move: ((UUID, Int) -> Void)? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
-    var onSpaceBeforeFold: ((CGFloat) -> Void)? = nil
     var onRowsHeight: ((CGFloat) -> Void)? = nil
     var onHeaderScrolled: ((Bool) -> Void)? = nil
     @ViewBuilder var row: (Int, Item) -> Row
@@ -172,7 +171,6 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             }
             if let footer = view.layoutAttributesForItem(at: IndexPath(item: 0, section: 2)),
                let head = view.layoutAttributesForItem(at: IndexPath(item: 0, section: 0)) {
-                parent.onSpaceBeforeFold?(max(0, view.bounds.height - view.adjustedContentInset.top - footer.frame.minY))
                 let height = footer.frame.minY - head.frame.maxY
                 if abs(height - rowsHeight) > 1 { rowsHeight = height; parent.onRowsHeight?(height) }
             }

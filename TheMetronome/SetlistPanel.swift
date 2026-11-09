@@ -10,7 +10,6 @@ struct SetlistPanel: View {
     @State private var editing = false
     @State private var creatingList = false
     @State private var listName = ""
-    @State private var spaceBelowEditorRows: CGFloat = 0
     @State private var draftSongIDs: [UUID] = []
     @State private var compactTitle = false
     @State private var bookmarks = ListBookmarks()
@@ -98,10 +97,21 @@ struct SetlistPanel: View {
                         VStack(spacing: 8) {
                             Divider()
                             HStack {
-                                Text(songCount(editing ? draftSongIDs.count : browsedList?.songs.count ?? 0))
-                                    .font(.subheadline).foregroundStyle(p.muted)
-                                    .accessibilityIdentifier("setlist-count")
-                                Spacer()
+                                if editing && !creatingList {
+                                    Button {
+                                        dismissTextInput()
+                                        deletingList = true
+                                    } label: {
+                                        Label("Delete setlist", systemImage: "trash")
+                                            .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
+                                            .padding(.horizontal, 10).frame(minHeight: 44)
+                                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("delete-setlist")
+                                } else {
+                                    Text(songCount(editing ? draftSongIDs.count : browsedList?.songs.count ?? 0))
+                                        .font(.subheadline).foregroundStyle(p.muted)
+                                        .accessibilityIdentifier("setlist-count")
+                                }
+                                Spacer(minLength: 8)
                                 Button {
                                     if editing { showSongPicker() } else { beginEdit(new: false) }
                                 } label: {
@@ -357,9 +367,7 @@ struct SetlistPanel: View {
             draftSongIDs.insert(id, at: index)
         } : nil
         return CatalogList(items: editing ? draftSongs : list?.songs ?? [], p: p, bookmarks: bookmarks, page: page,
-                           move: move, onSpaceBeforeFold: { space in
-            if !creatingList && abs(spaceBelowEditorRows - space) > 1 { spaceBelowEditorRows = space }
-        }, onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
+                           move: move, onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
             if editing {
                 editableSong(index, value, page: page)
             } else {
@@ -393,19 +401,7 @@ struct SetlistPanel: View {
                     }
                 }
             }
-        }, below: {
-            if editing && !creatingList {
-                VStack(spacing: 12) {
-                    Divider()
-                    Button { deletingList = true } label: {
-                        Label("Delete setlist", systemImage: "trash")
-                            .foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C))
-                            .padding(.horizontal, 14).frame(minHeight: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("delete-setlist")
-                    Text("Songs stay in your library.").font(.subheadline).foregroundStyle(p.muted)
-                }.frame(maxWidth: .infinity).padding(.top, spaceBelowEditorRows)
-            }
-        }).id(page)
+        }, below: { EmptyView() }).id(page)
     }
     private func editableSong(_ index: Int, _ value: SavedPreset, page: String) -> some View {
         HStack(spacing: 6) {
