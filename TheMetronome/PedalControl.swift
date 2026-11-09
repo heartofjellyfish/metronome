@@ -102,9 +102,10 @@ final class PedalControl: ObservableObject {
     @Published private(set) var learning: PedalAction?
     // GCKeyboard merges physical and virtual keyboards. MIDI endpoints can be
     // virtual or wired. Neither is evidence that a Bluetooth pedal is connected.
-    @Published private(set) var inputAvailable = false
-    private var verifiedDirectInput = false
-    private var physicalMIDISourceIDs = Set<Int32>()
+    @Published private(set) var keyboardDetected = false
+    @Published private(set) var lastDirectInput: PedalBinding.Kind?
+    @Published private(set) var midiInputNames: [String] = []
+    var inputAvailable: Bool { keyboardDetected || lastDirectInput != nil || !midiInputNames.isEmpty }
     var setupVisible = false
     @Published private(set) var bluetoothConnected = false
     @Published private(set) var pressRevision = 0
@@ -185,7 +186,7 @@ final class PedalControl: ObservableObject {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--pedal-ui-test"),
            ProcessInfo.processInfo.arguments.contains("--pedal-fixture-bluetooth") {
-            updateMIDISources([120], bluetooth: [120])
+            updateMIDISources([120], bluetooth: [120], names: [120: "Stage pedal"])
             learn(.toggle)
             receiveMIDI([0x90, 60, 100, 0x80, 60, 0], source: 120)
             return
@@ -208,8 +209,7 @@ final class PedalControl: ObservableObject {
     /// Invalidate transient input on device/lifecycle changes, preserving saved mappings.
     func resetInputSession() {
         cancelLearning()
-        verifiedDirectInput = false
-        refreshInputAvailability()
+        lastDirectInput = nil
         gate.clearHeld()
         parsers.removeAll()
     }
@@ -270,8 +270,7 @@ final class PedalControl: ObservableObject {
         }
         if down { selectInputProfile(input) }
         if down && (input.kind == .keyboard || input.kind == .media) {
-            verifiedDirectInput = true
-            refreshInputAvailability()
+            if lastDirectInput != input.kind { lastDirectInput = input.kind }
         }
         if down, let action = learning, let other = bindings.first(where: {
             $0.key != action && $0.value.matches(input)
@@ -298,9 +297,24 @@ final class PedalControl: ObservableObject {
         receive(input, down: true); receive(input, down: false)
         return assigned
     }
+    func updateKeyboardPresence(_ detected: Bool) {
+        if keyboardDetected != detected { keyboardDetected = detected }
+        if !detected && lastDirectInput == .keyboard {
+            lastDirectInput = nil
+        }
+    }
     private func attachKeyboard() {
         attachedKeyboard?.keyboardInput?.keyChangedHandler = nil
         attachedKeyboard = GCKeyboard.coalesced
+        var detected = attachedKeyboard != nil
+        #if DEBUG
+        let flags = ProcessInfo.processInfo.arguments
+        if flags.contains("--pedal-ui-test") {
+            if flags.contains("--pedal-fixture-keyboard") { detected = true }
+            if flags.contains("--pedal-fixture-offline") { detected = false }
+        }
+        #endif
+        updateKeyboardPresence(detected)
         attachedKeyboard?.keyboardInput?.keyChangedHandler = { [weak self] _, _, key, down in
             Task { @MainActor in
                 guard let self, UIApplication.shared.applicationState == .active, !self.editing else { return }
@@ -317,7 +331,8 @@ final class PedalControl: ObservableObject {
         // A simulator discovery callback must not replace the injected test topology.
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--pedal-ui-test") &&
-            (arguments.contains("--pedal-fixture-bluetooth") || arguments.contains("--pedal-fixture-input")) { return }
+            !Set(arguments).isDisjoint(with: ["--pedal-fixture-bluetooth", "--pedal-fixture-input",
+                                             "--pedal-fixture-keyboard", "--pedal-fixture-offline"]) { return }
         #endif
         guard client == 0 else { refreshSources(); return }
         var result = MIDIClientCreateWithBlock("Metronome Pedal" as CFString, &client) { [weak self] _ in
@@ -351,7 +366,7 @@ final class PedalControl: ObservableObject {
         if identifiers != activeMIDISourceIDs { resetInputSession() }
         activeMIDISourceIDs = identifiers
         bluetoothMIDISourceIDs = bluetooth.intersection(identifiers)
-        physicalMIDISourceIDs = physical.union(bluetooth).intersection(identifiers)
+        let physicalMIDISourceIDs = physical.union(bluetooth).intersection(identifiers)
         sourceNames = names
         var namesChanged = false
         for index in profiles.indices {
@@ -362,15 +377,15 @@ final class PedalControl: ObservableObject {
             namesChanged = true
         }
         if namesChanged { saveProfiles() }
+        let onlineNames = identifiers.sorted().map { id in
+            names[id] ?? profiles.first { $0.id == "midi:\(id)" }?.name ?? "MIDI"
+        }
+        if midiInputNames != onlineNames { midiInputNames = onlineNames }
         if physicalMIDISourceIDs.count == 1, let source = physicalMIDISourceIDs.first {
             selectInputProfile(PedalBinding(kind: .midiNote, source: source, label: ""))
         }
         updateConnectedName()
-        refreshInputAvailability()
         refreshBluetoothStatus()
-    }
-    private func refreshInputAvailability() {
-        inputAvailable = verifiedDirectInput || !physicalMIDISourceIDs.isEmpty
     }
     private func refreshBluetoothStatus() {
         // A live Bluetooth transport AND an assignment to that source are required.

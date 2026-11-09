@@ -14,7 +14,7 @@ final class LiveModeTests: XCTestCase {
         var actions: [PedalAction] = []
         pedal.perform = { actions.append($0) }
         pedal.setupVisible = true
-        XCTAssertFalse(pedal.inputAvailable)
+        XCTAssertNil(pedal.lastDirectInput)
         pedal.learn(.toggle)
         XCTAssertTrue(pedal.receive(key, down: true, at: 0))
         XCTAssertEqual(pedal.bindings[.toggle], key)
@@ -22,7 +22,7 @@ final class LiveModeTests: XCTestCase {
         XCTAssertFalse(pedal.receive(key, down: true, at: 1))
         pedal.receive(key, down: false, at: 2)
         pedal.resetInputSession()
-        XCTAssertFalse(pedal.inputAvailable)
+        XCTAssertNil(pedal.lastDirectInput)
         XCTAssertTrue(pedal.receive(key, down: true, at: 3))
         XCTAssertEqual(actions, [.toggle])
         pedal.receive(key, down: false, at: 4)
@@ -96,6 +96,28 @@ final class LiveModeTests: XCTestCase {
             attachment.lifetime = .keepAlways
             add(attachment)
         }
+    }
+    @MainActor func testInputStatusTracksKeyboardAndAllOnlineMIDISourcesIndependently() {
+        let suite = "PedalInputStatusTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let pedal = PedalControl(defaults: defaults)
+        pedal.updateKeyboardPresence(true)
+        XCTAssertTrue(pedal.keyboardDetected)
+        XCTAssertTrue(pedal.inputAvailable)
+        XCTAssertFalse(pedal.bluetoothConnected)
+        pedal.updateMIDISources([8, 9], physical: [8, 9], names: [8: "Stage"])
+        XCTAssertEqual(pedal.midiInputNames, ["Stage", "MIDI"])
+        pedal.updateKeyboardPresence(false)
+        XCTAssertTrue(pedal.inputAvailable)
+        pedal.updateMIDISources([])
+        XCTAssertFalse(pedal.inputAvailable)
+        pedal.media(0, label: "Play")
+        XCTAssertEqual(pedal.lastDirectInput, .media)
+        XCTAssertFalse(pedal.keyboardDetected)
+        pedal.resetInputSession()
+        XCTAssertFalse(pedal.inputAvailable)
     }
     @MainActor func testConflictConfirmationPreservesPhysicalKeyState() {
         let suite = "PedalConflictPressTests"

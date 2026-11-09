@@ -470,3 +470,11 @@
 "Pedal profiles" = "페달 프로필";
 "Default profile" = "기본 프로필";
 "Add profile" = "프로필 추가";
+"No input detected" = "감지된 입력 장치 없음";
+"Keyboard input detected" = "키보드 입력 장치 감지됨";
+"Keyboard input received" = "키 입력 수신됨";
+"Media button received" = "미디어 버튼 입력 수신됨";
+"MIDI input detected" = "MIDI 입력 감지됨";
+"MIDI connected · %@" = "MIDI 연결됨 · %@";
+"Pair a page-turning pedal in Settings → Bluetooth." = "악보 넘김 페달은 설정 → Bluetooth에서 페어링하세요.";
+"Press a bound key to try it." = "지정한 버튼을 밟아 확인하세요.";

@@ -470,3 +470,11 @@
 "Pedal profiles" = "ペダル設定の切り替え";
 "Default profile" = "標準設定";
 "Add profile" = "設定を追加";
+"No input detected" = "入力機器が見つかりません";
+"Keyboard input detected" = "キーボード入力を検出";
+"Keyboard input received" = "キー入力を受信";
+"Media button received" = "メディアボタンの入力を受信";
+"MIDI input detected" = "MIDI 入力を検出";
+"MIDI connected · %@" = "MIDI 接続中 · %@";
+"Pair a page-turning pedal in Settings → Bluetooth." = "譜めくりペダルは「設定 → Bluetooth」でペアリングします。";
+"Press a bound key to try it." = "割り当てたボタンを踏んで確認できます。";

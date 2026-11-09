@@ -24,12 +24,7 @@ struct PedalSettingsView: View {
             }.padding(.horizontal, 12).padding(.vertical, 12)
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    if let device = pedal.connectedName {
-                        Text(verbatim: device + " · " + L10n.text("Connected"))
-                            .font(.subheadline).foregroundStyle(p.muted)
-                    } else if pedal.isMIDIProfile && !pedal.bindings.isEmpty {
-                        Text("Not connected. Assignments saved.").font(.subheadline).foregroundStyle(p.muted)
-                    }
+                    inputStatus
                     bindingGroup("Playback", actions: [.toggle])
                     bindingGroup("Songs", actions: [.previous, .next])
                     bindingGroup("Tempo", actions: [.tap, .slower, .faster])
@@ -42,17 +37,16 @@ struct PedalSettingsView: View {
                             }
                         }.padding(16).insetPanel(p, radius: 12)
                     }
-                    Text(hint).font(.subheadline).foregroundStyle(p.muted)
-                        .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44, alignment: .top)
-                        .accessibilityIdentifier("pedal-hint")
                     VStack(spacing: 0) {
                         Divider()
                         disclosure("Pedal profiles", .profiles, id: "pedal-profiles",
                                    value: pedal.profiles.count > 1 ? pedal.profileName : nil)
                         if detail == .profiles { profilePicker }
-                        Divider()
-                        disclosure("Connection help", .connection, id: "pedal-help")
-                        if detail == .connection { connectionHelp }
+                        if pedal.inputAvailable {
+                            Divider()
+                            disclosure("Connection help", .connection, id: "pedal-help")
+                            if detail == .connection { connectionHelp }
+                        }
                     }
                     if let problem = pedal.problem { Text(problem).font(.subheadline).foregroundStyle(InstrumentPalette.orange) }
                 }.padding(.horizontal, 24).padding(.top, 4).padding(.bottom, 24)
@@ -74,6 +68,38 @@ struct PedalSettingsView: View {
                 }
             }
     }
+    private var inputStatus: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(pedal.midiInputNames.enumerated()), id: \.offset) { _, name in
+                let text = name == "MIDI" ? L10n.text("MIDI input detected") : L10n.format("MIDI connected · %@", name)
+                statusLine(text, icon: "pianokeys")
+            }
+            if pedal.keyboardDetected {
+                statusLine(L10n.text("Keyboard input detected"), icon: "keyboard")
+            } else if pedal.lastDirectInput == .keyboard {
+                statusLine(L10n.text("Keyboard input received"), icon: "keyboard")
+            }
+            if pedal.lastDirectInput == .media {
+                statusLine(L10n.text("Media button received"), icon: "playpause")
+            }
+            if !pedal.inputAvailable {
+                statusLine(L10n.text("No input detected"), icon: "cable.connector")
+                Text("Pair a page-turning pedal in Settings → Bluetooth.")
+                    .font(.subheadline).foregroundStyle(p.muted)
+                midiButton
+            }
+            Text(hint).font(.subheadline).foregroundStyle(p.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 38, alignment: .topLeading)
+                .accessibilityIdentifier("pedal-hint")
+        }.padding(12).frame(maxWidth: .infinity, alignment: .leading).insetPanel(p, radius: 12)
+    }
+
+    private func statusLine(_ title: String, icon: String) -> some View {
+        Label { Text(verbatim: title) } icon: { Image(systemName: icon) }
+            .font(.subheadline.weight(.semibold))
+    }
+
     private func bindingGroup(_ title: LocalizedStringKey, actions: [PedalAction]) -> some View {
         VStack(spacing: 4) {
             HStack(spacing: 10) {
@@ -143,20 +169,25 @@ struct PedalSettingsView: View {
     private var connectionHelp: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Page-turning pedals: pair in iPhone Settings > Bluetooth, then return here.")
-            Button {
-                pedal.cancelLearning()
-                pedal.problem = nil
-                model.preparePedalInput()
-                pedal.enableMIDI()
-                midiPicker = true
-            } label: {
-                Text("Connect MIDI pedal").padding(.horizontal, 16).frame(height: 44)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).foregroundStyle(p.ink)
-                .accessibilityIdentifier("pedal-midi")
+            midiButton
             if pedal.bindings.values.contains(where: { $0.kind == .keyboard }) {
                 Text("Keyboard pedals work while this app is on screen. For lock-screen control, use a media or MIDI mode.")
             }
         }.font(.subheadline).foregroundStyle(p.muted)
+    }
+
+    private var midiButton: some View {
+        Button {
+            pedal.cancelLearning()
+            pedal.problem = nil
+            model.preparePedalInput()
+            pedal.enableMIDI()
+            midiPicker = true
+        } label: {
+            Label("Connect MIDI pedal", systemImage: "plus").font(.subheadline)
+                .padding(.horizontal, 12).frame(minHeight: 44)
+        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).foregroundStyle(p.ink)
+            .accessibilityIdentifier("pedal-midi")
     }
 
     @ViewBuilder private func bindingRow(_ action: PedalAction) -> some View {
@@ -198,7 +229,7 @@ struct PedalSettingsView: View {
     }
     private var hint: String {
         if let action = pedal.learning { return L10n.format("Press your pedal now to assign %@. Tap again to cancel.", action.title) }
-        return L10n.text(pedal.bindings.isEmpty ? "Tap Learn, then press your pedal." : "Assigned. Tap the key name to reassign.")
+        return L10n.text(pedal.bindings.isEmpty ? "Tap Learn, then press your pedal." : "Press a bound key to try it.")
     }
 }
 

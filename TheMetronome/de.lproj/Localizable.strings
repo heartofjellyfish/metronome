@@ -470,3 +470,11 @@
 "Pedal profiles" = "Pedalprofile";
 "Default profile" = "Standardprofil";
 "Add profile" = "Profil hinzufügen";
+"No input detected" = "Kein Eingang erkannt";
+"Keyboard input detected" = "Tastatureingang erkannt";
+"Keyboard input received" = "Tastendruck empfangen";
+"Media button received" = "Medientaste empfangen";
+"MIDI input detected" = "MIDI-Eingang erkannt";
+"MIDI connected · %@" = "MIDI verbunden · %@";
+"Pair a page-turning pedal in Settings → Bluetooth." = "Kopple dein Blätterpedal unter Einstellungen → Bluetooth.";
+"Press a bound key to try it." = "Drücke zum Testen eine zugewiesene Taste.";

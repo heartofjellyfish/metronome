@@ -470,3 +470,11 @@
 "Pedal profiles" = "踏板方案";
 "Default profile" = "默认方案";
 "Add profile" = "添加方案";
+"No input detected" = "尚未检测到输入设备";
+"Keyboard input detected" = "已检测到键盘输入设备";
+"Keyboard input received" = "已收到键盘按键";
+"Media button received" = "已收到媒体按键";
+"MIDI input detected" = "已检测到 MIDI 输入";
+"MIDI connected · %@" = "MIDI 已连接 · %@";
+"Pair a page-turning pedal in Settings → Bluetooth." = "翻页踏板请在「设置 → 蓝牙」中配对。";
+"Press a bound key to try it." = "踩一下已绑定的键，对应的灯会亮一下。";

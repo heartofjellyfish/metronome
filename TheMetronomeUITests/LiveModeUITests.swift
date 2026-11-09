@@ -103,6 +103,19 @@ final class LiveModeUITests: XCTestCase {
         app.buttons["close-panel"].tap(); app.buttons["close-settings"].tap()
         XCTAssertEqual(transport.label, "Start metronome")
     }
+    func testPedalSetupShowsDetectedInputBeforeFirstPress() {
+        continueAfterFailure = false
+        for (fixture, status) in [("offline", "尚未检测到输入设备"), ("keyboard", "已检测到键盘输入设备"), ("bluetooth", "MIDI 已连接 · Stage pedal")] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-" + fixture]
+            app.launch()
+            XCTAssertTrue(app.staticTexts[status].firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["pedal-toggle"].isEnabled)
+            if fixture == "offline" { XCTAssertTrue(app.buttons["pedal-midi"].isHittable) }
+            capture(app, "Pedal input " + fixture)
+            app.terminate()
+        }
+    }
     func testSwitchPedalProfilesRestoresSavedKey() {
         continueAfterFailure = false
         let app = XCUIApplication()
