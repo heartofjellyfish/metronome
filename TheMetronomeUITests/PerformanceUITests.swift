@@ -164,7 +164,7 @@ final class PerformanceUITests: XCTestCase {
         for finish in ["cancel-setlist", "save-setlist"] {
             tap("edit-setlist")
             XCTAssertTrue(b("add-song").isHittable)
-            revealCatalogRow("edit-song-Track 42")
+            XCTAssertTrue(b("edit-song-Track 42").isHittable)
             shot("33-long-edit")
             tap(finish)
             XCTAssertTrue(b("song-Track 42").isHittable)
@@ -276,6 +276,7 @@ final class PerformanceUITests: XCTestCase {
         tap("delete-song-Gossip"); XCTAssertFalse(b("edit-song-Gossip").exists)
         tap("cancel-setlist"); XCTAssertTrue(b("song-Gossip").exists)
         tap("edit-setlist")
+        tap("rename-setlist")
         let name = app.textFields["setlist-name"]
         name.tap(); name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "2026 湾区巡演 — Friday night with our friends")
         swipeKeyboardAway()
@@ -615,7 +616,9 @@ final class PerformanceUITests: XCTestCase {
     }
     func testSetlistRenameReorderAndDeleteKeepsLibrary() {
         launch("en"); openList("Saturday"); tap("edit-setlist")
-        let name = app.textFields["setlist-name"]; name.tap()
+        tap("rename-setlist")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2))
+        let name = app.textFields["setlist-name"]
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "Friday"); swipeKeyboardAway()
         tap("save-setlist"); XCTAssertEqual(app.staticTexts["setlist-title"].label, "Friday")
         tap("edit-setlist")
