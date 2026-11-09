@@ -110,7 +110,13 @@ final class PerformanceUITests: XCTestCase {
         tap("settings"); tap("settings-setlists"); tap("new-setlist")
         XCTAssertFalse(b("save-setlist").isEnabled)
         let name = app.textFields["setlist-name"]
-        name.tap(); name.typeText("November show\n")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["setlist-empty-message"].exists)
+        XCTAssertFalse(app.collectionViews.firstMatch.exists)
+        shot("61-name-entry")
+        name.typeText("November show\n")
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        shot("61-named-draft")
         XCTAssertTrue(b("save-setlist").isEnabled)
         tap("add-song")
         for index in 1...5 { tap(String(format: "import-song-Track %02d", index)) }
@@ -143,7 +149,7 @@ final class PerformanceUITests: XCTestCase {
 
         launchLongCatalog()
         tap("settings"); tap("settings-setlists"); tap("new-setlist")
-        tap("add-song")
+        app.textFields["setlist-name"].typeText("\n"); tap("add-song")
         let field = app.textFields["song-search"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         let pickerWindow = app.collectionViews.firstMatch.frame
@@ -407,7 +413,7 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["song-position-Gossip"].label, "01")
         tap("choose-setlist"); tap("new-setlist")
         app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Empty"); swipeKeyboardAway(); tap("save-setlist")
-        XCTAssertTrue(app.staticTexts["setlist-empty-message"].exists)
+        XCTAssertEqual(app.staticTexts["setlist-empty-message"].label, "0 songs")
         XCTAssertGreaterThan(b("add-song").frame.minY, app.collectionViews.firstMatch.frame.maxY)
         shot("23-11-empty-list")
         tap("add-song"); tap("cancel-picking-songs")

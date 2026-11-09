@@ -97,6 +97,12 @@ struct SetlistPanel: View {
                                     newLibrarySongButton("library-new-song")
                                 }
                             }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
+                        } else if creatingList && draftSongIDs.isEmpty {
+                            ScrollView {
+                                setlistNameInput.padding(.horizontal, 20).padding(.top, 10)
+                            }
+                            .scrollDismissesKeyboard(.immediately)
+                            .onAppear { namingList = needsListName }
                         } else if browsedList != nil || creatingList {
                             listDetail(browsedList)
                         } else {
@@ -106,7 +112,7 @@ struct SetlistPanel: View {
                     .scrollDismissesKeyboard(.interactively)
                     if browsingDetail || editingListRoot {
                         VStack(spacing: 8) {
-                            Divider()
+                            if !creatingList { Divider() }
                             HStack(spacing: 0) {
                                 if editing && !creatingList {
                                     Button {
@@ -125,7 +131,7 @@ struct SetlistPanel: View {
                                         Label("Edit setlist", systemImage: "pencil")
                                             .padding(.horizontal, 12).frame(minHeight: 44)
                                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("edit-setlist")
-                                } else {
+                                } else if !creatingList || !draftSongIDs.isEmpty {
                                     Text(songCount(editing ? draftSongIDs.count : browsedList?.songs.count ?? 0))
                                         .font(.subheadline).foregroundStyle(p.muted)
                                         .accessibilityIdentifier("setlist-count")
@@ -268,6 +274,7 @@ struct SetlistPanel: View {
         }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(identifier)
     }
     private var draftHeader: some View {
+        let canSave = editingLibrary || (choosingSong ? !pendingSongIDs.isEmpty : !needsListName)
         let cancelButton = Button {
             if editingLibrary { finishLibraryEditing(save: false) }
             else if choosingSong {
@@ -299,8 +306,8 @@ struct SetlistPanel: View {
                 if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
             }.padding(.horizontal, 12).frame(minHeight: 44)
         }
-            .buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
-            .disabled(!editingLibrary && (choosingSong ? pendingSongIDs.isEmpty : needsListName))
+            .buttonStyle(HardwareButtonStyle(p: p, charcoal: canSave))
+            .disabled(!canSave).opacity(canSave ? 1 : 0.5)
             .accessibilityIdentifier(editingLibrary ? "save-library" : "save-setlist").fixedSize(horizontal: true, vertical: false)
         let heading = Text(editingListRoot && compactTitle && !creatingList ? listName : title)
             .font(.system(size: 19, weight: .semibold)).lineLimit(1)
@@ -439,6 +446,14 @@ struct SetlistPanel: View {
         }, below: { EmptyView() }).screen()
     }
     private func songCount(_ count: Int) -> String { L10n.format(count == 1 ? "%d song" : "%d songs", count) }
+    private var setlistNameInput: some View {
+        TextField("Setlist name", text: $listName)
+            .font(.system(size: 28, weight: .semibold))
+            .focused($namingList).submitLabel(.done)
+            .onSubmit { namingList = false }
+            .padding(.horizontal, 10).frame(minHeight: 44)
+            .insetPanel(p, radius: 8).accessibilityIdentifier("setlist-name")
+    }
     private var draftSongs: [SavedPreset] {
         let catalog = Dictionary(model.songLibrary.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         return draftSongIDs.compactMap { catalog[$0] }
@@ -460,12 +475,7 @@ struct SetlistPanel: View {
         }, above: {
             VStack(alignment: .leading, spacing: 16) {
                 if creatingList {
-                    TextField("Setlist name", text: $listName)
-                        .font(.system(size: 28, weight: .semibold))
-                        .focused($namingList).submitLabel(.done)
-                        .onSubmit { namingList = false }
-                        .padding(.horizontal, 10).frame(minHeight: 44)
-                        .insetPanel(p, radius: 8).accessibilityIdentifier("setlist-name")
+                    setlistNameInput
                 } else if let list {
                     if editing {
                         EditableSetlistTitle(name: $listName, p: p)
@@ -478,7 +488,7 @@ struct SetlistPanel: View {
 
                 }
                 if editing ? draftSongIDs.isEmpty : list?.songs.isEmpty == true {
-                    Text("No songs yet.").font(.subheadline).foregroundStyle(p.muted)
+                    Text(songCount(0)).font(.subheadline).foregroundStyle(p.muted)
                         .accessibilityIdentifier("setlist-empty-message")
                 }
             }
