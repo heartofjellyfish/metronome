@@ -114,7 +114,7 @@ struct SettingsView: View {
     private func liveKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
         Button { model.endSoundPreview(); present(route) } label: {
             VStack(spacing: 5) {
-                SettingsIllustration(kind: icon).offset(y: icon == .setlists ? 4 : 0).frame(width: 55, height: 44)
+                SettingsIllustration(kind: icon).frame(width: 55, height: 44)
                 Text(L10n.text(title)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.center).frame(height: 30)
             }.padding(.vertical, 10).frame(maxWidth: .infinity).contentShape(Rectangle())
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("settings-\(route.rawValue)")

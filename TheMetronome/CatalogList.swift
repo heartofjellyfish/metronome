@@ -20,6 +20,10 @@ final class ListBookmarks {
     }
 }
 
+private final class CatalogCell: UICollectionViewCell {
+    var configuredRevision = -1
+}
+
 /// One native scroll surface owns the introductory controls, reorderable rows and footer.
 struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIViewRepresentable where Item.ID == UUID {
     let items: [Item]
@@ -47,7 +51,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         view.contentInsetAdjustmentBehavior = .never
         view.keyboardDismissMode = .interactive
         view.contentInset = .init(top: compactMargins ? 8 : 12, left: 0, bottom: compactMargins ? 8 : 20, right: 0)
-        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "item")
+        view.register(CatalogCell.self, forCellWithReuseIdentifier: "item")
         view.dataSource = context.coordinator
         view.delegate = context.coordinator
         let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.drag(_:)))
@@ -70,6 +74,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             let newItems = c.parent.items
             let changed = !newItems.elementsEqual(c.items, by: { $0.id == $1.id })
             c.items = newItems
+            c.revision += 1
             if changed { view.reloadData() }
             view.layoutIfNeeded()
             for cell in view.visibleCells {
@@ -82,6 +87,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     final class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegate, UIGestureRecognizerDelegate {
         var parent: CatalogList
         var items: [Item]
+        var revision = 0
         var updateScheduled = false
         var moving = false
         private var grabOffset: CGFloat = 0
@@ -99,7 +105,12 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             configure(cell, path)
             return cell
         }
+        func collectionView(_ view: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt path: IndexPath) {
+            // A prefetched cell can sit off screen through a browse/edit transition.
+            if (cell as? CatalogCell)?.configuredRevision != revision { configure(cell, path) }
+        }
         func configure(_ cell: UICollectionViewCell, _ path: IndexPath) {
+            (cell as? CatalogCell)?.configuredRevision = revision
             let p = parent.p
             switch path.section {
             case 0:

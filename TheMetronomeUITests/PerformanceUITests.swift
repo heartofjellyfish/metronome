@@ -219,6 +219,29 @@ final class PerformanceUITests: XCTestCase {
         tap("library-start-editing"); tap("library-edit-Track 42"); tap("cancel-song")
         XCTAssertTrue(b("library-open-Track 42").isHittable)
     }
+    func testScrollingIntoEditModeKeepsEverySongDraggable() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "-AppleLanguages", "(en)"]
+        app.launch()
+        openList("载歌在谷歌手赛 2026")
+        tap("edit-setlist")
+        app.collectionViews.firstMatch.swipeUp()
+        shot("65-edit-rows-08-09")
+        for name in ["Track 08", "Track 09"] {
+            XCTAssertTrue(app.images["drag-song-" + name].isHittable)
+            XCTAssertTrue(b("delete-song-" + name).isHittable)
+            XCTAssertFalse(b("song-" + name).isHittable)
+        }
+        let eighth = app.images["drag-song-Track 08"]
+        let ninth = app.images["drag-song-Track 09"]
+        ninth.press(forDuration: 0, thenDragTo: eighth, withVelocity: .slow, thenHoldForDuration: 0.2)
+        settleDrop()
+        tap("save-setlist")
+        XCTAssertEqual(app.staticTexts["song-position-Track 09"].label, "08")
+        XCTAssertEqual(app.staticTexts["song-position-Track 08"].label, "09")
+        XCTAssertTrue(b("song-Track 09").isHittable)
+        XCTAssertFalse(ninth.isHittable)
+    }
     func testDragToEdgeAdvancesThroughLongSetlist() {
         launchLongCatalog()
         tap("settings"); tap("settings-setlists")

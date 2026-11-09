@@ -490,6 +490,12 @@ final class MetronomeModel: ObservableObject {
                     SongSetlist(name: String(format: "Set %02d", index), songs: index == 30 ? songLibrary : [songLibrary[index - 1]])
                 }
             }
+            if ProcessInfo.processInfo.arguments.contains("--nine-song-setlist-test") {
+                var tracks = (1...9).map { SavedPreset(name: String(format: "Track %02d", $0), rhythm: fast) }
+                tracks[5].name = "昨天我给你打了电话但你没有接，提示你看到了但是我并没有收到什么信息"
+                songLibrary = tracks
+                setlists = [SongSetlist(name: "载歌在谷歌手赛 2026", songs: tracks)]
+            }
             activeSetlistID = nil; selectedSongID = nil; selectedPresetID = nil
         }
         #endif

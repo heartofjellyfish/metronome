@@ -55,7 +55,21 @@ struct SetlistPanel: View {
             ZStack(alignment: .bottom) {
                 Color.black.opacity(p.dark ? 0.55 : 0.3).ignoresSafeArea().accessibilityHidden(true)
                 VStack(spacing: 0) {
-                    if song == nil { header }
+                    if song == nil {
+                        header
+                        if compactTitle, let list = browsedList, browsingDetail || editingListRoot {
+                            Text(verbatim: editing ? listName : list.name)
+                                .font(.title2.weight(.semibold))
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                .padding(.bottom, 5)
+                                .accessibilityAddTraits(.isHeader)
+                                .accessibilityIdentifier("compact-setlist-title")
+                        }
+                    }
                     if libraryRoot {
                         catalogSearch(library: libraryRoot).padding(.horizontal, 20)
                     }
@@ -251,11 +265,7 @@ struct SetlistPanel: View {
                 } else {
                     Text(title).font(.system(size: 22, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 }
-                if browsingDetail && compactTitle, let list = browsedList {
-                    Text(list.name).font(.headline).lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityIdentifier("compact-setlist-title")
-                } else { Spacer(minLength: 0) }
+                Spacer(minLength: 0)
                 // Nested drafts return via Back/Cancel, never bypass the setlist's Save/Cancel.
                 if !editing && song == nil {
                     Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
@@ -309,17 +319,23 @@ struct SetlistPanel: View {
             .buttonStyle(HardwareButtonStyle(p: p, charcoal: canSave))
             .disabled(!canSave).opacity(canSave ? 1 : 0.5)
             .accessibilityIdentifier(editingLibrary ? "save-library" : "save-setlist").fixedSize(horizontal: true, vertical: false)
-        let heading = Text(editingListRoot && compactTitle && !creatingList ? listName : title)
+        let heading = Text(title)
             .font(.system(size: 19, weight: .semibold)).lineLimit(1)
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: choosingSong ? 14 : 8) {
-                cancelButton
-                heading.fixedSize().frame(maxWidth: .infinity, alignment: choosingSong ? .leading : .center)
-                saveButton
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack { cancelButton; Spacer(minLength: 4); saveButton }
-                heading
+        return Group {
+            if editingListRoot && compactTitle && !creatingList {
+                HStack { cancelButton; Spacer(); saveButton }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: choosingSong ? 14 : 8) {
+                        cancelButton
+                        heading.fixedSize().frame(maxWidth: .infinity, alignment: choosingSong ? .leading : .center)
+                        saveButton
+                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack { cancelButton; Spacer(minLength: 4); saveButton }
+                        heading
+                    }
+                }
             }
         }
     }
