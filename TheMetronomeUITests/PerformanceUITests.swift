@@ -115,7 +115,9 @@ final class PerformanceUITests: XCTestCase {
         tap("add-song")
         for index in 1...5 { tap(String(format: "import-song-Track %02d", index)) }
         XCTAssertEqual(b("save-setlist").frame.height, b("cancel-picking-songs").frame.height, accuracy: 1)
-        shot("53-save-five")
+        XCTAssertEqual(b("cancel-picking-songs").frame.width, 44, accuracy: 1)
+        XCTAssertEqual(b("new-song").frame.maxX, b("save-setlist").frame.maxX, accuracy: 1)
+        shot("55-save-five")
         tap("save-setlist")
         XCTAssertEqual(app.staticTexts["setlist-title"].label, "November show")
         XCTAssertEqual(app.staticTexts["setlist-count"].label, "5 songs")
@@ -144,11 +146,15 @@ final class PerformanceUITests: XCTestCase {
         tap("add-song")
         let field = app.textFields["song-search"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))
+        let pickerWindow = app.collectionViews.firstMatch.frame
         let searchY = field.frame.midY
         let newSongY = b("new-song").frame.midY
         let saveY = b("save-setlist").frame.midY
         tap("import-song-Track 01")
         revealCatalogRow("import-song-Track 42")
+        let scrolledWindow = app.collectionViews.firstMatch.frame
+        XCTAssertEqual(scrolledWindow.minY, pickerWindow.minY, accuracy: 0.33)
+        XCTAssertEqual(scrolledWindow.maxY, pickerWindow.maxY, accuracy: 0.33)
         XCTAssertEqual(field.frame.midY, searchY, accuracy: 1)
         XCTAssertEqual(b("new-song").frame.midY, newSongY, accuracy: 1)
         XCTAssertEqual(b("save-setlist").frame.midY, saveY, accuracy: 1)
@@ -167,7 +173,11 @@ final class PerformanceUITests: XCTestCase {
     func testLongListsPreserveContext() {
         launchLongCatalog()
         tap("settings"); tap("settings-setlists")
+        let newSetlist = b("new-setlist").frame
+        XCTAssertGreaterThan(newSetlist.minY, app.collectionViews.firstMatch.frame.maxY)
         revealCatalogRow("setlist-Set 30")
+        XCTAssertEqual(b("new-setlist").frame, newSetlist)
+        shot("57-setlists-scrolled")
         tap("setlist-Set 30")
         let toolbarY = b("edit-setlist").frame.midY
         revealCatalogRow("song-Track 42")

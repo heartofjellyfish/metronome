@@ -20,33 +20,12 @@ final class ListBookmarks {
     }
 }
 
-private struct CatalogWellSurface: View {
-    @Environment(\.colorScheme) private var scheme
-    var body: some View {
-        Color.clear.insetPanel(InstrumentPalette(dark: scheme == .dark), radius: 16)
-    }
-}
-
-private final class CatalogWell: UICollectionReusableView {
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        let surface = UIHostingConfiguration { CatalogWellSurface() }.margins(.all, 0).makeContentView()
-        surface.frame = bounds
-        surface.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        addSubview(surface)
-        isUserInteractionEnabled = false
-        accessibilityElementsHidden = true
-    }
-    required init?(coder: NSCoder) { fatalError("CatalogWell requires programmatic initialization") }
-}
-
 /// One native scroll surface owns the introductory controls, reorderable rows and footer.
 struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIViewRepresentable where Item.ID == UUID {
     let items: [Item]
     let p: InstrumentPalette
     let bookmarks: ListBookmarks
     let page: String
-    var fixedWell = false
     var move: ((UUID, Int) -> Void)? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
     var onRowsHeight: ((CGFloat) -> Void)? = nil
@@ -57,21 +36,12 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeUIView(context: Context) -> UICollectionView {
-        let fixedWell = self.fixedWell
         let layout = UICollectionViewCompositionalLayout { section, _ in
             let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(section == 1 ? 76 : 24))
             let group = NSCollectionLayoutGroup.vertical(layoutSize: size, subitems: [NSCollectionLayoutItem(layoutSize: size)])
             let part = NSCollectionLayoutSection(group: group)
-            let margin: CGFloat = fixedWell ? 0 : 20
-            part.contentInsets = .init(top: 0, leading: margin, bottom: 0, trailing: margin)
-            if section == 1 && !fixedWell {
-                let well = NSCollectionLayoutDecorationItem.background(elementKind: "well")
-                well.contentInsets = part.contentInsets
-                part.decorationItems = [well]
-            }
             return part
         }
-        layout.register(CatalogWell.self, forDecorationViewOfKind: "well")
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .clear
         view.contentInsetAdjustmentBehavior = .never
@@ -136,11 +106,11 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             case 0:
                 cell.contentConfiguration = UIHostingConfiguration {
                     VStack(alignment: .leading, spacing: 0) { parent.above() }.frame(maxWidth: .infinity, alignment: .leading)
-                        .foregroundStyle(p.ink).padding(.bottom, 10)
+                        .foregroundStyle(p.ink).padding(.horizontal, 14).padding(.bottom, 10)
                 }.margins(.all, 0)
             case 2:
                 cell.contentConfiguration = UIHostingConfiguration {
-                    VStack(spacing: 0) { parent.below() }.foregroundStyle(p.ink).padding(.top, 16)
+                    VStack(spacing: 0) { parent.below() }.foregroundStyle(p.ink).padding(.horizontal, 14).padding(.top, 16)
                 }.margins(.all, 0)
             default:
                 guard items.indices.contains(path.item) else { return }
@@ -244,5 +214,12 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             default: break
             }
         }
+    }
+}
+
+extension CatalogList {
+    /// The bezel belongs to the viewport. Scrolling moves its contents only.
+    func screen() -> some View {
+        clipShape(RoundedRectangle(cornerRadius: 16)).insetPanel(p, radius: 16)
     }
 }
