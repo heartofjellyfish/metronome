@@ -10,6 +10,9 @@ struct PedalBinding: Codable, Equatable {
     var channel: Int = 0
     var source: Int32 = 0
     var label: String
+    func matches(_ other: Self) -> Bool {
+        kind == other.kind && code == other.code && channel == other.channel && source == other.source
+    }
     var displayLabel: String {
         guard kind == .keyboard else { return label }
         let names = [40: "Return key", 44: "Space key", 79: "Right arrow", 80: "Left arrow", 81: "Down arrow", 82: "Up arrow", 75: "Page up", 78: "Page down"]
@@ -39,20 +42,21 @@ struct PedalGate {
     private var lastPress: [String: Double] = [:]
     enum Result: Equatable { case ignored, learned, perform(PedalAction) }
     mutating func clearHeld() { held.removeAll(); lastPress.removeAll() }
+    mutating func assign(_ input: PedalBinding, to action: PedalAction) {
+        bindings = bindings.filter { !$0.value.matches(input) }
+        bindings[action] = input
+    }
     mutating func receive(_ input: PedalBinding, down: Bool, at time: Double) -> Result {
         let id = "\(input.kind.rawValue):\(input.source):\(input.channel):\(input.code)"
         if !down { held.remove(id); return .ignored }
         guard held.insert(id).inserted else { return .ignored }
         guard time - (lastPress[id] ?? -.infinity) > 0.08 else { return .ignored }
-        func matches(_ binding: PedalBinding) -> Bool {
-            binding.kind == input.kind && binding.code == input.code && binding.channel == input.channel && binding.source == input.source
-        }
         if let action = learning {
-            bindings = bindings.filter { !matches($0.value) }
-            bindings[action] = input; learning = nil; lastPress[id] = time
+            assign(input, to: action)
+            learning = nil; lastPress[id] = time
             return .learned
         }
-        guard let action = PedalAction.allCases.first(where: { bindings[$0].map(matches) ?? false }) else { return .ignored }
+        guard let action = PedalAction.allCases.first(where: { bindings[$0]?.matches(input) == true }) else { return .ignored }
         lastPress[id] = time
         return .perform(action)
     }
@@ -212,8 +216,7 @@ final class PedalControl: ObservableObject {
         guard let input = pendingBinding, let action = learning else { cancelLearning(); return }
         conflict = nil; pendingBinding = nil
         if replace {
-            gate.clearHeld(); gate.learning = action
-            _ = gate.receive(input, down: true, at: ProcessInfo.processInfo.systemUptime)
+            gate.assign(input, to: action)
             learning = nil; persist()
         } else { cancelLearning() }
     }
@@ -254,15 +257,21 @@ final class PedalControl: ObservableObject {
         if let data = try? JSONEncoder().encode(bindings) { defaults.set(data, forKey: "pedalBindings") }
     }
     @discardableResult func receive(_ input: PedalBinding, down: Bool, at time: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
-        if conflict != nil { return true }
+        if conflict != nil {
+            // Keep the latch in sync while the user considers the move. Suppress actions.
+            _ = gate.receive(input, down: down, at: time)
+            return true
+        }
         if down { selectInputProfile(input) }
         if down && (input.kind == .keyboard || input.kind == .media) {
             verifiedDirectInput = true
             refreshInputAvailability()
         }
         if down, let action = learning, let other = bindings.first(where: {
-            $0.key != action && $0.value.kind == input.kind && $0.value.source == input.source && $0.value.code == input.code && $0.value.channel == input.channel
+            $0.key != action && $0.value.matches(input)
         })?.key {
+            gate.learning = nil
+            _ = gate.receive(input, down: true, at: time)
             conflict = other; pendingBinding = input; return true
         }
         switch gate.receive(input, down: down, at: time) {
@@ -295,6 +304,12 @@ final class PedalControl: ObservableObject {
         }
     }
     func enableMIDI() {
+        #if DEBUG
+        // A simulator discovery callback must not replace the injected test topology.
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--pedal-ui-test") &&
+            (arguments.contains("--pedal-fixture-bluetooth") || arguments.contains("--pedal-fixture-input")) { return }
+        #endif
         guard client == 0 else { refreshSources(); return }
         var result = MIDIClientCreateWithBlock("Metronome Pedal" as CFString, &client) { [weak self] _ in
             Task { @MainActor in self?.refreshSources() }

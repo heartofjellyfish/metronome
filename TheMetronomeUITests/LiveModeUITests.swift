@@ -42,6 +42,7 @@ final class LiveModeUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["pedal-toggle"].waitForExistence(timeout: 8))
         XCTAssertFalse(app.buttons["pedal-tab-connect"].exists)
+        XCTAssertFalse(app.staticTexts["Assignments saved on this iPhone."].exists)
         for action in ["toggle", "tap", "next", "previous", "faster", "slower"] {
             XCTAssertTrue(app.buttons["pedal-\(action)"].isEnabled)
         }

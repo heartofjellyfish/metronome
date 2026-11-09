@@ -10,9 +10,9 @@ struct SettingsIllustration: View {
                 switch kind {
                 case .practice: practice
                 case .presets: disk
-                case .pedal: pedal
-                case .setlists: setlist
-                case .songLibrary: songLibrary
+                case .pedal: Image("BluetoothFootPedal")
+                case .setlists: Image("SetlistSheet")
+                case .songLibrary: Image("SongLibraryCrate")
                 }
             }.frame(width: 80, height: 64)
                 .scaleEffect(min(g.size.width / 80, g.size.height / 64) * 0.82)
@@ -57,63 +57,7 @@ struct SettingsIllustration: View {
     private func object(_ width: CGFloat, _ height: CGFloat, _ color: Color, radius: CGFloat = 3) -> some View {
         RoundedRectangle(cornerRadius: radius).fill(color).frame(width: width, height: height)
     }
-    private var songLibrary: some View {
-        // Approved L4: a small collection of tapes, in the same warm grey materials.
-        ZStack {
-            object(63, 42, Color(hex: 0xB4AF9E)).offset(y: -5)
-            object(63, 42, Color(hex: 0xF1E9D8)).offset(y: 2)
-            object(63, 42, Color(hex: 0x969A8B)).overlay {
-                VStack(spacing: 4) {
-                    object(50, 14, Color(hex: 0xF1E9D8)).overlay {
-                        HStack(spacing: 5) {
-                            Circle().stroke(Color(hex: 0x96988A), lineWidth: 2)
-                            object(15, 4, Color(hex: 0x96988A))
-                            Circle().stroke(Color(hex: 0x96988A), lineWidth: 2)
-                        }.padding(5)
-                    }
-                    object(36, 8, Color(hex: 0xD8CEB7))
-                }
-            }.offset(y: 9)
-        }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
-    }
-    private var setlist: some View {
-        // Approved S2: the paper setlist taped down on stage.
-        ZStack {
-            object(49, 58, Color(hex: 0xF1E9D8)).overlay {
-                VStack(spacing: 7) {
-                    ForEach(0..<4) { index in
-                        HStack(spacing: 5) {
-                            Circle().fill(Color(hex: 0x96988A)).frame(width: 3, height: 3)
-                            object(index == 3 ? 24 : 31, 1.5, Color(hex: 0x96988A))
-                        }
-                    }
-                }.offset(y: 2)
-            }
-            object(24, 9, Color(hex: 0xC4B695).opacity(0.9), radius: 1)
-                .rotationEffect(.degrees(-7)).offset(x: -10, y: -28)
-            object(19, 8, Color(hex: 0xC4B695).opacity(0.85), radius: 1)
-                .rotationEffect(.degrees(8)).offset(x: 14, y: 27)
-        }.shadow(color: .black.opacity(0.12), radius: 1, y: 2)
-    }
-    private var pedal: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 3).fill(graphite).frame(width: 64,height: 33)
-            ForEach([-1,1], id: \.self) { side in
-                RoundedRectangle(cornerRadius: 4).fill(Color(hex: 0x62665D)).frame(width: 27,height: 52).offset(x: CGFloat(side)*25,y: 3)
-                RoundedRectangle(cornerRadius: 4).fill(graphite)
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color(hex: 0x77786F),lineWidth: 0.7))
-                    .overlay(VStack(spacing: 3) {
-                        ForEach(0..<9) { _ in Capsule().fill(Color.black.opacity(0.23)).frame(width: 20,height: 1.5) }
-                    }).frame(width: 27,height: 50).offset(x: CGFloat(side)*25)
-            }
-            VStack(spacing: 4) {
-                Capsule().fill(Color(hex: 0x85857B)).frame(width: 8,height: 3)
-                Capsule().fill(Color(hex: 0x85857B)).frame(width: 8,height: 3)
-                BluetoothGlyph().stroke(Color(hex: 0xDED8C7),style: StrokeStyle(lineWidth: 1.2,lineCap: .round,lineJoin: .round)).frame(width: 7,height: 12)
-            }
-        }.scaleEffect(x: 0.93,y: 0.86)
-            .shadow(color: .black.opacity(0.12),radius: 1,x: 0,y: 2)
-    }
+
 }
 
 struct BluetoothGlyph: Shape {

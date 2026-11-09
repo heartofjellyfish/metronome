@@ -36,6 +36,30 @@ final class LiveModeTests: XCTestCase {
         XCTAssertEqual(restored.bindings, pedal.bindings)
         XCTAssertFalse(restored.bluetoothConnected)
     }
+    @MainActor func testConflictConfirmationPreservesPhysicalKeyState() {
+        let suite = "PedalConflictPressTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let pedal = PedalControl(defaults: defaults)
+        let key = PedalBinding(kind: .keyboard, code: 40, label: "Return")
+        var actions: [PedalAction] = []
+        pedal.perform = { actions.append($0) }
+        pedal.learn(.toggle)
+        pedal.receive(key, down: true, at: 1); pedal.receive(key, down: false, at: 2)
+        pedal.learn(.tap)
+        pedal.receive(key, down: true, at: 3); pedal.receive(key, down: false, at: 4)
+        pedal.resolveConflict(replace: true)
+        pedal.receive(key, down: true, at: 5); pedal.receive(key, down: false, at: 6)
+        XCTAssertEqual(actions, [.tap], "First fresh press after confirming must work")
+        pedal.learn(.toggle)
+        pedal.receive(key, down: true, at: 7)
+        pedal.resolveConflict(replace: true)
+        pedal.receive(key, down: true, at: 8)
+        XCTAssertEqual(actions, [.tap], "Holding during confirmation must not play")
+        pedal.receive(key, down: false, at: 9); pedal.receive(key, down: true, at: 10)
+        XCTAssertEqual(actions, [.tap, .toggle])
+    }
     @MainActor func testBluetoothIndicatorRequiresMappedOnlineBluetoothSource() {
         let defaults = UserDefaults(suiteName: "PedalBluetoothStatusTests")!
         defaults.removePersistentDomain(forName: "PedalBluetoothStatusTests")

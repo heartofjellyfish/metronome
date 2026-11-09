@@ -31,8 +31,12 @@ struct PedalSettingsView: View {
                                 Spacer()
                                 Button { choosingProfile.toggle(); pedal.cancelLearning() } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.accessibilityLabel("Saved controls")
                             }
-                            Text(pedal.connectedName != nil ? L10n.text("Connected") : pedal.isMIDIProfile ? L10n.text("Not connected. Assignments saved.") : L10n.text("Assignments saved on this iPhone."))
-                                .font(.system(size: 13)).foregroundStyle(p.muted)
+                            if pedal.connectedName != nil {
+                                Text("Connected").font(.subheadline).foregroundStyle(p.muted)
+                            } else if !pedal.bindings.isEmpty {
+                                Text(pedal.isMIDIProfile ? L10n.text("Not connected. Assignments saved.") : L10n.text("Assignments saved on this iPhone."))
+                                    .font(.subheadline).foregroundStyle(p.muted)
+                            }
                         }
                         if choosingProfile {
                             VStack(spacing: 12) {

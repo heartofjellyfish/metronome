@@ -161,6 +161,7 @@ struct SongEditor: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Notes").font(.footnote).foregroundStyle(p.muted).accessibilityHidden(true)
                     TextField("", text: $fields.notes, axis: .vertical).accessibilityLabel("Notes").lineLimit(2...5).padding(15).insetPanel(p, radius: 10).accessibilityIdentifier("song-notes").focused($typing, equals: .notes)
+                        .contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { typing = .notes })
                 }
                 if let addToSetlist {
                     Button(action: addToSetlist) {
