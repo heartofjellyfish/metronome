@@ -32,7 +32,7 @@ No free/price references in screenshot captions, subtitles or promotional text. 
 - Next-version draft only; App Store production release has not been submitted or published by this materials task.
 - See `publication-audit.json` for the verified save/upload state.
 
-Text and subtitles have been verified in all nine locales. New screenshots are **not uploaded**: the Chrome extension lacks file-URL access, and the native file picker is unavailable while the Mac is locked. The attempted Chrome extension-settings navigation was blocked by browser security policy and was not bypassed. The English Face ID large draft group was cleared in preparation for replacement; its original assets remain in the Asset Library. Other locale screenshot associations are still the prior campaign. Replace these with the finished files before submitting.
+Text and subtitles have been verified in all nine locales. All new screenshots were uploaded on 2026-11-10 using the macOS native file chooser, without changing Chrome extension permissions: 8 iPhone and 4 iPad images per locale (108 total). All eighteen saved groups were checked against the selected locale, thumbnail assets, screenshot counts and ordered filenames. See `screenshot-upload-audit.json`, `upload-proof-iphone.png`, and `upload-proof-ipad.png`. The version remains a draft and has not been submitted for review.
 
 ## Measurement
 

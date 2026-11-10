@@ -1,0 +1,340 @@
+[
+  {
+    "platform": "iphone",
+    "locale": "English (U.S.)",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/lfp8eKXtyfMorav-OjMDig/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/c9nhb_2VlEgj80PSY2CDwQ/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/w_AP-dUzK_5OGtayUHqA6A/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/pJmbva6rsHzedw7e9JmgDw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/inv-CrUGUg-uqKH21a2loQ/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Chinese (Simplified)",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/T3ZA-nCVooXUiiHXSHghRw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/CeO9DZhHjpwfKxfqC9NYdg/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/wtSMIB6XoOJr9j22q1sQvA/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/QtY_r2kBq4jDa6grHfgK5A/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Chinese (Traditional)",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/FsvMbYkGR0Cwehj6oeriGw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/5v0ExgOTIMW9ai-wSJVNOw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/x-QAca6NVxmtTKyEpVIBCQ/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "French",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/CN2pC3oTfxCCYOMBArpA3w/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/2ccbbqn_yAvB0uzkrd4f-g/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/W62XqC6kn4a8l8TFkK0FQw/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "German",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/YYwFlN6rtoVkwPMYlWetPw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/zfmeBTzNpVizl0lQv-ZnoA/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/dSf5eCTzqU-VS-joWHYEyQ/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/3FuGIdpL4x0D3tiMUoVPMg/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Japanese",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/MOHAyYFK2QHXPDvehTW4iw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/6v7JRONi5E9LKCxie8P_wQ/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/zm01l0EEaLnDZG4S6_gdaQ/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/CW5I-hHkPaER5yOVQsOEUA/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/GuqtMgt-Dn6XowFnJaW5mw/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Korean",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/w9XmSPg-tZdOCihU8CpE9Q/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Portuguese (Brazil)",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/LCk_jd3hDP0iyid0F8WXyw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/9XFDv-ALFgRTsFDGiU3q9g/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/1kQJD653IwkayaIUnvnf3w/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/q5FNtGQFgidYcpumNf3UDw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/PJ297tzhA4vfPC7JPnfWdA/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "iphone",
+    "locale": "Spanish (Spain)",
+    "count": 8,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg",
+      "Screenshot 05.jpg",
+      "Screenshot 06.jpg",
+      "Screenshot 07.jpg",
+      "Screenshot 08.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/Mg-npbCG11vEneBJfG4hJw/332x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/1t-mmPMvpvNK1R59D5J0Dg/332x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Spanish (Spain)",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/-RRZT8XkOHF5wwB0KUgtlw/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/d5Zc13iY9O6x2Okle4qxkw/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/r2YYZ8XfVcU4XRaVQZPHYg/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Portuguese (Brazil)",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/6kVMOXBOU6Y1QvEnUPHKJQ/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/S-x5xQQsROC-zkAK0HduWA/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Korean",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/kC11ayhP_hzGUlJlpxh6rA/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/hPk0Oxyf2PiYalviRJqMSg/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Japanese",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/_oyVd40QiKJrhwfpINe6Ww/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/CsvAwK8uIxMI7o8EqHaVqg/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/sdOMg_sugRnboVsQF6K6Ow/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "German",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/Rc_QBH8UHDi0M15DMRH1Gw/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/FPEZX1XI3YK49DkMThkoyA/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "French",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/cbIX3u7Tj1xwDv-dbK4qQw/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Chinese (Traditional)",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/XwAEYoOQLK68LLImDKV4uQ/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "Chinese (Simplified)",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/ZcJisUiwIU6B5QrhEY_XxQ/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/Zo3e2Eu7FerC7gUwtggjOQ/540x720bb.png"
+    ],
+    "verified": true
+  },
+  {
+    "platform": "ipad",
+    "locale": "English (U.S.)",
+    "count": 4,
+    "files": [
+      "Screenshot 01.jpg",
+      "Screenshot 02.jpg",
+      "Screenshot 03.jpg",
+      "Screenshot 04.jpg"
+    ],
+    "thumbnailURLs": [
+      "https://is1-ssl.mzstatic.com/image/thumb/euywdoaWhyYUjLDOroGKBg/540x720bb.png",
+      "https://is1-ssl.mzstatic.com/image/thumb/E2aX46LRZv_HVr6IXi6bkA/540x720bb.png"
+    ],
+    "verified": true
+  }
+]

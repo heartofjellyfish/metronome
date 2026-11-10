@@ -4,7 +4,7 @@
 
 The nine canonical locale files now lead with Live Mode, Bluetooth pedals and setlists. The prior no-ads-first subtitle strategy below describes 1.0.1 and is superseded for this release. New promotional text, descriptions, keywords, release notes and subtitles have been saved and re-read in the 1.0.2 App Store Connect draft.
 
-The versioned package is [`../Releases/1.0.2/`](../Releases/1.0.2/README.md): eight new iPhone cards and four iPad cards per locale, leading with instant, ad-free use followed by Live View, setlists, and Bluetooth pedals, using current native UI captures. Use its `render.swift` and `assemble.py`; the older renderer/capture folders below preserve the previous six-card campaign. `publication-audit.json` records the screenshot upload blocker separately from verified text saves. This materials task does not submit the production release.
+The versioned package is [`../Releases/1.0.2/`](../Releases/1.0.2/README.md): eight new iPhone cards and four iPad cards per locale, leading with instant, ad-free use followed by Live View, setlists, and Bluetooth pedals, using current native UI captures. Use its `render.swift` and `assemble.py`; the older renderer/capture folders below preserve the previous six-card campaign. `publication-audit.json` and `screenshot-upload-audit.json` record the completed 108-image upload and per-locale count/order verification. This materials task does not submit the production release.
 
 Version 1.0.1 (2). English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, Spanish and Brazilian Portuguese.
 

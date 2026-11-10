@@ -142,9 +142,9 @@
       "subtitle": "Ao vivo, Bluetooth e setlists"
     }
   ],
-  "screenshotsUploaded": false,
-  "screenshotUploadBlocker": "Chrome extension file-URL access disabled; native picker unavailable while Mac locked. No attempt to bypass browser security policy.",
-  "englishDraftScreenshotGroup": "Existing Face ID large screenshot association removed while preparing replacement; new assets not yet uploaded. Other locales retain their prior assets. Originals remain in Asset Library.",
+  "screenshotsUploaded": true,
+  "screenshotUploadBlocker": null,
+  "englishDraftScreenshotGroup": "Replaced and verified: 8 ordered iPhone screenshots; smaller device groups use these existing assets.",
   "submitted": false,
   "localAssets": {
     "iphone": 72,
@@ -171,5 +171,15 @@
       "High and Dry",
       "Hey Jude"
     ]
+  },
+  "screenshotUploadVerification": {
+    "date": "2026-11-10",
+    "method": "macOS native file chooser; UI locale selection, saved counts and filenames verified for every group",
+    "groups": 18,
+    "iphone": 72,
+    "ipad": 36,
+    "auditFile": "screenshot-upload-audit.json",
+    "submittedForReview": false,
+    "thumbnailNote": "Some Apple thumbnail previews still displayed cloud placeholders at proof capture time; saved counts and ordered filenames were verified for all 18 groups."
   }
 }
