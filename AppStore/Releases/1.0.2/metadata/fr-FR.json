@@ -5,12 +5,16 @@
   "description": "Le métronome monte sur scène.\nMode scène, pédales Bluetooth et setlists. Les mains restent à la musique.\n\nChaque temps, d’un coup d’œil.\nUn grand numéro de temps, des accents bien lisibles. Morceau, tempo, mesure et subdivision réunis.\n\nLe pied prend le relais.\nAssignez une pédale Bluetooth compatible à lecture/arrêt, morceau suivant/précédent, tap tempo ou réglage des BPM. Les commandes sont mémorisées. Les pédales de type clavier fonctionnent lorsque l’app est à l’écran ; les modes multimédia et MIDI ont des capacités différentes.\n\nVotre concert, dans l’ordre.\nCréez vos setlists depuis la bibliothèque. Gardez tempo, mesure, subdivision, son et notes pour chaque morceau. Réorganisez par glisser-déposer. Changez de morceau quand vous le décidez. Modifiez un morceau partagé une fois : toutes ses setlists sont à jour.\n\nDROIT AU RYTHME.\nPas d’écran de chargement, de pop-up au démarrage ou de demande de note. Tournez la molette, saisissez un BPM ou tapotez en rythme. De 20 à 300 BPM.\n\nDES PERCUSSIONS DE QUALITÉ STUDIO.\nDe vrais instruments. Joués par de vraies personnes. Woodblock, charley, rimshot, shaker et d’autres sons enregistrés, plus un clic électronique. Écoutez. Choisissez votre préféré.\n\nLA SIMPLICITÉ, SOIGNÉE.\nDu minimalisme dans chaque détail. Un petit instrument qu’on a plaisir à retrouver. Thème clair ou sombre, selon l’humeur.\n\nDES ACCENTS. DU GROOVE.\nChoisissez la mesure et les subdivisions, triolets compris. Rendez chaque temps plus fort, plus doux ou muet.\n\nPLUS VITE. PETIT À PETIT.\nRéglez le tempo de départ, la cible et l’intervalle de changement. La rampe fait avancer le tempo. Le décompte laisse aux mains le temps de se préparer.\n\nLE CLIC SE REPOSE. VOUS CONTINUEZ.\nChoisissez combien de mesures sonnent et combien restent muettes. Quand le clic revient, écoutez si vous êtes toujours ensemble.\n\nLA MÊME CHANSON DEMAIN ?\nGardez tempo, mesure, son et réglages de pratique dans un préréglage. Prêts pour la prochaine fois.\n\nAllez jouer quelque chose.",
   "captions": [
     [
-      "Mode scène.\nVotre setlist est prête.",
-      "Vos morceaux dans l’ordre. Chaque temps en vue."
+      "Mode scène.\nChaque temps en vue.",
+      "Grands chiffres. Accents bien lisibles."
     ],
     [
       "Pédales Bluetooth.\nLes mains libres.",
       "Lancez, arrêtez, changez de morceau au pied."
+    ],
+    [
+      "Vos setlists.\nPrêtes pour la scène.",
+      "Tempo, mesure, son et notes par morceau."
     ],
     [
       "Ouvrez. Jouez.\nSans pop-ups.",

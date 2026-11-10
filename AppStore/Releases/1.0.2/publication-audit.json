@@ -147,13 +147,20 @@
   "englishDraftScreenshotGroup": "Existing Face ID large screenshot association removed while preparing replacement; new assets not yet uploaded. Other locales retain their prior assets. Originals remain in Asset Library.",
   "submitted": false,
   "localAssets": {
-    "iphone": 63,
-    "ipad": 18,
+    "iphone": 72,
+    "ipad": 27,
     "dimensions": {
-      "2064x2752": 18,
-      "1284x2778": 63
+      "2064x2752": 27,
+      "1284x2778": 72
     },
-    "nativeCaptureJourneys": "Nine languages passed on iPhone and iPad simulators; final English/Chinese and all pedal cards recaptured with full non-charging status bars.",
-    "layout": "Card 1: combined Live View + setlist. Card 2: Bluetooth pedals. Seven iPhone cards and two iPad cards per locale."
+    "nativeCaptureJourneys": "Nine-language tour catalog capture passed on iPhone and iPad simulators; final captures use 6:27 and full non-charging status bars.",
+    "layout": "Separate cards: 1 Live View; 2 Bluetooth pedals; 3 Setlists. Eight iPhone cards and three iPad cards per locale.",
+    "artworkUpdated": "2026-11-10",
+    "sampleSetlist": "2026 North America Tour",
+    "sampleSongs": [
+      "Wish You Were Here",
+      "Creep",
+      "Come Together"
+    ]
   }
 }

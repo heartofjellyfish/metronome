@@ -26,7 +26,7 @@ for path in sorted((root / 'AppStore/Releases/1.0.2/metadata').glob('*.json')):
     assert len(item['keywords'].encode()) <= 100, (path.name, 'keyword bytes')
     assert all(t and t == t.strip() for t in terms)
     assert len(terms) == len({t.casefold() for t in terms})
-    assert len(item['captions']) == 7
+    assert len(item['captions']) == 8
     assert not any(any(phrase in (title + ' ' + detail).lower() for phrase in ['free forever', 'free for life']) for title, detail in item['captions'])
     if path.stem == 'en-US':
         indexed = set((item['name'] + ' ' + item['subtitle']).casefold().replace(',', ' ').split())

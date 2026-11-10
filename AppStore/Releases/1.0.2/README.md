@@ -2,20 +2,20 @@
 
 ## Message and order
 
-Live Mode is the lead feature for this update. First screenshot combines the setlist and large-beat Live View; the second independently covers Bluetooth pedals. The Live View is the dominant foreground screen; the ordered setlist sits behind it. Preserve the broader musician audience: students, teachers, hobbyists and performers across instruments. Practice Routine is a future version and is not promoted here.
+Live Mode is the lead feature for this update. The first three screenshots independently cover large-beat Live View, Bluetooth pedals, and setlists, in that order. Each card shows one full real app screen. Preserve the broader musician audience: students, teachers, hobbyists and performers across instruments. Practice Routine is a future version and is not promoted here.
 
 English subtitle: `Live Mode, Bluetooth, Setlists` (30 characters). No name change. No-ads messaging remains in promotional text, description and screenshot 4. Hidden keywords cover real musical features rather than slogans; no search-volume or difficulty estimates are claimed.
 
 ## Assets
 
-- `metadata/`: nine language versions of subtitle, keywords, promotional text, description, release notes and seven screenshot captions.
-- `screenshots/iphone/<language>/`: native UI captures plus seven 1284 × 2778 compositions.
-- `screenshots/ipad/<language>/`: native iPad captures plus two 2064 × 2752 Live Mode compositions.
+- `metadata/`: nine language versions of subtitle, keywords, promotional text, description, release notes and eight screenshot captions.
+- `screenshots/iphone/<language>/`: native UI captures plus eight 1284 × 2778 compositions.
+- `screenshots/ipad/<language>/`: native iPad captures plus three 2064 × 2752 Live Mode compositions.
 - `render.swift`: deterministic AppKit composition using the approved paper texture. UI captures are fitted proportionally and left intact.
 
-Finished store files are high-quality JPEGs (96% quality); native PNG captures are retained locally under `raw/` and can be reproduced with `PerformanceUITests/testLiveLaunchAssetsEnglish`, `testLiveLaunchAssetsLocalized`, and `testLiveLaunchPedalAssets`. The raw directories are excluded from Git to avoid committing a second large copy of every screen.
+Finished store files are high-quality JPEGs (96% quality); native PNG captures are retained locally under `raw/` and can be reproduced with `PerformanceUITests/testLiveLaunchAssetsEnglish`, `testLiveLaunchAssetsLocalized`, `testLiveLaunchPedalAssets`, and `testTourSetlistLaunchAssets`. The raw directories are excluded from Git to avoid committing a second large copy of every screen.
 
-Sample song names are sample content entered through the app UI. Pedal setup images use a debug fixture for a generic input device and a saved Return binding. These illustrate actual UI states, not validation of a specific physical pedal. No product brand, unsupported connection name or compatibility certification is asserted.
+The illustrative cover-band setlist is **2026 North America Tour**, with **Wish You Were Here**, **Creep**, and **Come Together**. Names and example arrangement tempos are entered through the app UI; these do not imply endorsement or provide the songs’ audio. Pedal setup images use a debug fixture for a generic input device and a saved Return binding. These illustrate actual UI states, not validation of a specific physical pedal. No product brand, unsupported connection name or compatibility certification is asserted.
 
 ## Claims and evidence
 

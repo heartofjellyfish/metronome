@@ -10,17 +10,9 @@ final class PerformanceUITests: XCTestCase {
         tap("settings"); tap("settings-setlists")
         let list = language.hasPrefix("zh") ? "周六演出" : "Saturday"
         tap("setlist-" + list)
-        // Sample song titles are user content; use short, neutral titles in every locale.
-        for (old, name) in [("Gossip", "Blue Hour"), ("男孩别哭", "Afterglow"), ("夜来香", "Home Again")] {
-            tap("song-" + old)
-            liveSongTitle.doubleTap()
-            let field = app.textFields["song-name"]
-            field.tap()
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + name + "\n")
-            tap("save-song"); tap("close-performance")
-        }
+        prepareTourSetlist(list)
         capture("03-setlists")
-        tap("song-Blue Hour"); tap("performance-play")
+        tap("song-Wish You Were Here"); tap("performance-play")
         capture("01-live")
         tap("performance-play"); tap("close-performance"); tap("close-panel")
         if app.windows.firstMatch.frame.width < 700 {
@@ -34,6 +26,45 @@ final class PerformanceUITests: XCTestCase {
         app.launchArguments = ["--reference", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound", "--pedal-fixture-keyboard", "-AppleLanguages", "(\(language))"]
         app.launch(); XCTAssertTrue(b("pedal-toggle").waitForExistence(timeout: 8))
         capture("02-pedal"); app.terminate()
+    }
+    private func prepareTourSetlist(_ original: String) {
+        tap("edit-setlist"); tap("rename-setlist")
+        let title = app.textViews["setlist-name"]
+        title.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: original.count) + "2026 North America Tour\n")
+        if b("finish-rename-setlist").exists { tap("finish-rename-setlist") }
+        tap("save-setlist")
+        // Illustrative cover-band repertoire, entered through the real editing UI.
+        // Tempos are example arrangement settings, not claims about original recordings.
+        for (old, name, bpm) in [("Gossip", "Wish You Were Here", "60"), ("男孩别哭", "Creep", "92"), ("夜来香", "Come Together", "84")] {
+            tap("song-" + old)
+            liveSongTitle.doubleTap()
+            let field = app.textFields["song-name"]
+            field.tap()
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + name + "\n")
+            tap("song-tempo"); enterTempo(bpm)
+            tap("save-song"); tap("close-performance")
+        }
+    }
+    func testTourSetlistLaunchAssets() {
+        launch("en"); openList("Saturday"); prepareTourSetlist("Saturday")
+        app.terminate()
+        captureSavedTourAssets()
+    }
+    func testTourSavedCatalogAssets() {
+        app = XCUIApplication()
+        captureSavedTourAssets()
+    }
+    private func captureSavedTourAssets() {
+        for language in ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "de", "es", "pt-BR"] {
+            // Reuse only this simulator's saved sample catalog across localized launches.
+            app.launchArguments = ["--reference", "--light", "-AppleLanguages", "(\(language))"]
+            app.launch(); XCTAssertTrue(b("settings").waitForExistence(timeout: 8))
+            openList("2026 North America Tour")
+            shot("launch__\(language)__03-setlists")
+            tap("song-Wish You Were Here"); tap("performance-play")
+            shot("launch__\(language)__01-live")
+            tap("performance-play"); app.terminate()
+        }
     }
     func testLiveLaunchAssetsEnglish() { captureLiveLaunchAssets("en") }
     func testLiveLaunchAssetsLocalized() {

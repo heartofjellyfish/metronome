@@ -10,8 +10,8 @@ let paper = NSColor(calibratedRed: 0.94, green: 0.92, blue: 0.87, alpha: 1)
 struct Card { let file: String; let source: String; let title: String; let detail: String }
 let copyURL = root.appendingPathComponent("captions.json")
 let copy = try JSONDecoder().decode([[String]].self, from: Data(contentsOf: copyURL))
-let sources = ["01-live", "02-pedal", "04-home", "05-sounds", "06-rhythms", "07-ramp", "08-silent"]
-let cards = copy.prefix(isPad ? 2 : 7).enumerated().map { i, value in Card(file: String(format: "%02d", i+1), source: sources[i]+".png", title: value[0], detail: value[1]) }
+let sources = ["01-live", "02-pedal", "03-setlists", "04-home", "05-sounds", "06-rhythms", "07-ramp", "08-silent"]
+let cards = copy.prefix(isPad ? 3 : 8).enumerated().map { i, value in Card(file: String(format: "%02d", i+1), source: sources[i]+".png", title: value[0], detail: value[1]) }
 try FileManager.default.createDirectory(at: root.appendingPathComponent("store"), withIntermediateDirectories: true)
 func canvas(_ w: Int, _ h: Int, draw: () -> Void) -> NSBitmapImageRep {
     let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
@@ -43,25 +43,6 @@ func text(_ s: String, x: CGFloat, y: CGFloat, size: CGFloat, weight: NSFont.Wei
 func drawImage(_ image: NSImage, rect: NSRect) {
     image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high])
 }
-func drawCapture(_ image: NSImage, rect: NSRect, radius: CGFloat = 55, shadow: Bool = false) {
-    let outline = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
-    if shadow {
-        NSGraphicsContext.saveGraphicsState()
-        let shade = NSShadow()
-        shade.shadowColor = NSColor.black.withAlphaComponent(0.16)
-        shade.shadowBlurRadius = 24
-        shade.shadowOffset = NSSize(width: 0, height: -10)
-        shade.set()
-        paper.setFill(); outline.fill()
-        NSGraphicsContext.restoreGraphicsState()
-    }
-    NSGraphicsContext.saveGraphicsState()
-    outline.addClip()
-    drawImage(image, rect: rect)
-    NSGraphicsContext.restoreGraphicsState()
-    NSColor(calibratedWhite: 0.22, alpha: 0.15).setStroke()
-    outline.lineWidth = 2; outline.stroke()
-}
 let textureURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Screenshots/paper-texture.png")
 let paperImage = NSImage(contentsOf: textureURL)!
 for c in cards {
@@ -72,23 +53,17 @@ for c in cards {
         drawImage(paperImage, rect: NSRect(x: 0, y: 0, width: width, height: height))
         text(c.title, x: 94, y: 138, size: isPad ? 126 : 108, weight: .bold, color: ink, line: 116)
         text(c.detail, x: 100, y: 405, size: isPad ? 54 : 48, weight: .regular, color: ink)
-        if c.file == "01" {
-            // One story: an ordered setlist behind its large-beat Live View.
-            // Both are actual full UI captures, fitted without distortion.
-            let list = NSImage(contentsOf: root.appendingPathComponent("raw/03-setlists.png"))!
-            let listWidth: CGFloat = isPad ? 1040 : 680
-            let liveWidth: CGFloat = isPad ? 1050 : 820
-            drawCapture(list, rect: NSRect(x: isPad ? 100 : 64, y: 560,
-                width: listWidth, height: listWidth * list.size.height / list.size.width), radius: 42)
-            drawCapture(image, rect: NSRect(x: isPad ? 914 : 390, y: isPad ? 1320 : 980,
-                width: liveWidth, height: liveWidth * image.size.height / image.size.width), radius: 42, shadow: true)
-        } else {
-            let availableHeight: CGFloat = CGFloat(height) - 560
-            let targetWidth = min(CGFloat(width - 260), availableHeight * image.size.width / image.size.height)
-            let rect = NSRect(x: (CGFloat(width)-targetWidth)/2, y: 540,
-                width: targetWidth, height: targetWidth * image.size.height / image.size.width)
-            drawCapture(image, rect: rect)
-        }
+        // Full UI is fitted, never stretched or re-created. Native capture includes status bar.
+        let availableHeight: CGFloat = CGFloat(height) - 560
+        let targetWidth: CGFloat = min(CGFloat(width - 260), availableHeight * image.size.width / image.size.height)
+        let targetHeight = targetWidth * image.size.height / image.size.width
+        let rect = NSRect(x: (CGFloat(width)-targetWidth)/2, y: 540, width: targetWidth, height: targetHeight)
+        NSGraphicsContext.saveGraphicsState()
+        NSBezierPath(roundedRect: rect, xRadius: 55, yRadius: 55).addClip()
+        drawImage(image, rect: rect)
+        NSGraphicsContext.restoreGraphicsState()
+        NSColor(calibratedWhite: 0.22, alpha: 0.15).setStroke()
+        let outline = NSBezierPath(roundedRect: rect, xRadius: 55, yRadius: 55); outline.lineWidth = 2; outline.stroke()
     }
     try bmp.representation(using: .jpeg, properties: [.compressionFactor: 0.96])!.write(to: root.appendingPathComponent("store/" + c.file + ".jpg"))
     }
