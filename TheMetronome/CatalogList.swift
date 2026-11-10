@@ -105,7 +105,7 @@ private struct CatalogSwipeKey: View {
                 Image(systemName: action.icon).font(.system(size: 16, weight: .regular)).frame(width: 38, height: 38)
                 Text(L10n.text(action.title)).font(.caption2).lineLimit(1).multilineTextAlignment(.center)
             }.foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
-                .frame(width: 56).frame(height: 60, alignment: .top).contentShape(Rectangle())
+                .frame(width: 56)
         }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier(action.id)
     }
 }
@@ -119,6 +119,8 @@ private struct CatalogSwipeKeyStyle: ButtonStyle {
                     .frame(width: 38, height: 38)
             }
             .offset(y: configuration.isPressed ? 1 : 0)
+            .frame(height: 60, alignment: .center)
+            .contentShape(Rectangle())
     }
 }
 
