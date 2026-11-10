@@ -57,33 +57,32 @@ struct PedalSettingsView: View {
                 }
             }
     }
-    @ViewBuilder private var inputStatus: some View {
-        if !pedal.inputAvailable && pedal.learning == nil {
-            VStack(alignment: .leading, spacing: 6) {
+    private var inputStatus: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if !pedal.inputAvailable {
                 statusLine(L10n.text("No input detected"), icon: "cable.connector")
-                Text("Turn on your pedal, then select it in Settings → Bluetooth.")
-                    .font(.subheadline).foregroundStyle(p.muted)
+            } else if !pedal.midiInputNames.isEmpty && (pedal.isMIDIProfile || (!pedal.keyboardDetected && pedal.lastDirectInput == nil)) {
+                ForEach(Array(pedal.midiInputNames.enumerated()), id: \.offset) { _, name in
+                    let text = name == "MIDI" ? L10n.text("MIDI input detected") : L10n.format("MIDI connected · %@", name)
+                    statusLine(text, icon: "pianokeys")
+                }
+            } else if pedal.lastDirectInput == .media {
+                statusLine(L10n.text("Media button received"), icon: "playpause")
+            } else {
+                statusLine(L10n.text("Input device detected"), icon: "switch.2")
+            }
+            Text(pedal.learning != nil || pedal.inputAvailable ? hint : L10n.text("Turn on your pedal, then select it in Settings → Bluetooth."))
+                .font(.subheadline).foregroundStyle(p.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, minHeight: 42, alignment: .topLeading)
+                .accessibilityIdentifier("pedal-hint")
+            if !pedal.inputAvailable {
                 disclosure("Not listed in Bluetooth?")
                 if help { midiHelp }
-            }.padding(12).frame(maxWidth: .infinity, alignment: .leading).insetPanel(p, radius: 12)
-        } else {
-            VStack(alignment: .leading, spacing: 4) {
-                if !pedal.midiInputNames.isEmpty && (pedal.isMIDIProfile || (!pedal.keyboardDetected && pedal.lastDirectInput == nil)) {
-                    ForEach(Array(pedal.midiInputNames.enumerated()), id: \.offset) { _, name in
-                        let text = name == "MIDI" ? L10n.text("MIDI input detected") : L10n.format("MIDI connected · %@", name)
-                        statusLine(text, icon: "pianokeys")
-                    }
-                } else if pedal.lastDirectInput == .media {
-                    statusLine(L10n.text("Media button received"), icon: "playpause")
-                } else if pedal.inputAvailable {
-                    statusLine(L10n.text("Input device detected"), icon: "switch.2")
-                }
-                Text(hint).font(.subheadline).foregroundStyle(p.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(minHeight: 38, alignment: .topLeading)
-                    .accessibilityIdentifier("pedal-hint")
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }
+            }
+        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .insetPanel(p, radius: 12)
+            .accessibilityElement(children: .contain).accessibilityIdentifier("pedal-status-screen")
     }
 
     private func statusLine(_ title: String, icon: String) -> some View {

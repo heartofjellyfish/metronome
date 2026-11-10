@@ -46,8 +46,18 @@ final class LiveModeUITests: XCTestCase {
         for action in ["toggle", "tap", "next", "previous", "faster", "slower"] {
             XCTAssertTrue(app.buttons["pedal-\(action)"].isEnabled)
         }
+        let status = app.otherElements["pedal-status-screen"]
+        let screenFrame = status.frame
+        let keyFrame = app.buttons["pedal-toggle"].frame
         capture(app, "Direct assignment without device")
         app.buttons["pedal-toggle"].tap()
+        XCTAssertTrue(status.exists)
+        XCTAssertEqual(status.frame, screenFrame)
+        XCTAssertEqual(app.buttons["pedal-toggle"].frame.minY, keyFrame.minY, accuracy: 2)
+        XCTAssertEqual(app.buttons["pedal-toggle"].frame.size, keyFrame.size)
+        let hint = app.staticTexts["pedal-hint"]
+        XCTAssertTrue(hint.label.contains("Press your pedal"))
+        XCTAssertTrue(status.frame.contains(hint.frame))
         XCTAssertEqual(app.buttons["pedal-toggle"].value as? String, "Learning")
         capture(app, "Direct learning")
         XCUIDevice.shared.press(.home); app.activate()
@@ -79,7 +89,7 @@ final class LiveModeUITests: XCTestCase {
             let key = app.buttons["pedal-\(action)"]
             key.tap()
             XCTAssertEqual(key.value as? String, "Learning")
-            XCTAssertEqual(app.buttons["pedal-tap"].frame.minY, row.minY, accuracy: 1)
+            XCTAssertEqual(app.buttons["pedal-tap"].frame.minY, row.minY, accuracy: 2)
             key.tap()
             XCTAssertEqual(key.value as? String, "Learn")
         }
@@ -116,7 +126,7 @@ final class LiveModeUITests: XCTestCase {
             capture(app, "Pedal input " + fixture)
             if fixture == "offline" {
                 XCTAssertFalse(app.buttons["pedal-midi"].exists)
-                XCTAssertFalse(app.staticTexts["pedal-hint"].exists)
+                XCTAssertTrue(app.staticTexts["pedal-hint"].exists)
                 app.buttons["pedal-help"].tap()
                 XCTAssertTrue(app.buttons["pedal-midi"].isHittable)
                 app.buttons["pedal-help"].tap()

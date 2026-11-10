@@ -30,6 +30,7 @@ private final class CatalogCell: UICollectionViewCell {
     func setRow(_ configuration: UIContentConfiguration) {
         if let rowView, rowView.supports(configuration) {
             rowView.configuration = configuration
+            rowView.invalidateIntrinsicContentSize()
         } else {
             rowView?.removeFromSuperview()
             let row = configuration.makeContentView()
@@ -43,6 +44,17 @@ private final class CatalogCell: UICollectionViewCell {
             ])
             rowView = row
         }
+    }
+
+    // Hosted content lives in our own subview so swipe can translate it separately.
+    // Explicit fitting keeps multiline titles from inheriting the old cell height.
+    override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
+        let result = layoutAttributes.copy() as! UICollectionViewLayoutAttributes
+        let target = CGSize(width: layoutAttributes.size.width, height: UIView.layoutFittingCompressedSize.height)
+        let fit = contentView.systemLayoutSizeFitting(target, withHorizontalFittingPriority: .required,
+                                                     verticalFittingPriority: .fittingSizeLevel)
+        result.size.height = ceil(fit.height)
+        return result
     }
 
     override func layoutSubviews() {
@@ -88,7 +100,7 @@ private final class CatalogCell: UICollectionViewCell {
     }
 }
 
-struct CatalogSwipeAction: Identifiable {
+struct CatalogRowAction: Identifiable {
     let id: String
     let title: String
     let icon: String
@@ -96,8 +108,44 @@ struct CatalogSwipeAction: Identifiable {
     let perform: () -> Void
 }
 
+/// Shared physical key for actions inside inset catalog screens.
+private struct CatalogRoundKeySurface: View {
+    let p: InstrumentPalette
+    let pressed: Bool
+    var body: some View {
+        HardwareKeySurface(p: p, radius: 19, pressed: pressed).frame(width: 38, height: 38)
+    }
+}
+
+struct CatalogIconButtonStyle: ButtonStyle {
+    let p: InstrumentPalette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .regular))
+            .frame(width: 38, height: 38)
+            .background { CatalogRoundKeySurface(p: p, pressed: configuration.isPressed) }
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+}
+
+struct CatalogRowActionButton: View {
+    let action: CatalogRowAction
+    let p: InstrumentPalette
+    var body: some View {
+        Button(action: action.perform) {
+            Image(systemName: action.icon)
+                .foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
+        }.buttonStyle(CatalogIconButtonStyle(p: p))
+            .accessibilityLabel(Text(verbatim: L10n.text(action.title)))
+            .accessibilityIdentifier(action.id)
+    }
+}
+
 private struct CatalogSwipeKey: View {
-    let action: CatalogSwipeAction
+    let action: CatalogRowAction
     let p: InstrumentPalette
     var body: some View {
         Button(action: action.perform) {
@@ -106,7 +154,7 @@ private struct CatalogSwipeKey: View {
                 Text(L10n.text(action.title)).font(.caption2).lineLimit(1).multilineTextAlignment(.center)
             }.foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
                 .frame(width: 56)
-        }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier(action.id)
+        }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier("swipe-" + action.id)
     }
 }
 
@@ -115,8 +163,7 @@ private struct CatalogSwipeKeyStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(alignment: .top) {
-                HardwareKeySurface(p: p, radius: 19, pressed: configuration.isPressed)
-                    .frame(width: 38, height: 38)
+                CatalogRoundKeySurface(p: p, pressed: configuration.isPressed)
             }
             .offset(y: configuration.isPressed ? 1 : 0)
             .frame(height: 60, alignment: .center)
@@ -132,7 +179,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
     let page: String
     var compactMargins = false
     var move: ((UUID, Int) -> Void)? = nil
-    var swipeActions: ((Item) -> [CatalogSwipeAction])? = nil
+    var swipeActions: ((Item) -> [CatalogRowAction])? = nil
     var onContentHeight: ((CGFloat) -> Void)? = nil
     var onHeaderScrolled: ((Bool) -> Void)? = nil
     @ViewBuilder var row: (Int, Item) -> Row
@@ -188,6 +235,20 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
             view.layoutIfNeeded()
             for cell in view.visibleCells {
                 if let path = view.indexPath(for: cell) { c.configure(cell, path) }
+            }
+            // A hosting view can grow while the collection still caches its old item height.
+            // Reflow only when fitting size changes; do not reload the cell or lose text focus.
+            let resized = view.visibleCells.contains { cell in
+                guard let path = view.indexPath(for: cell),
+                      let attributes = view.layoutAttributesForItem(at: path) else { return false }
+                let fit = cell.contentView.systemLayoutSizeFitting(
+                    CGSize(width: attributes.size.width, height: UIView.layoutFittingCompressedSize.height),
+                    withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+                return abs(ceil(fit.height) - attributes.size.height) > 0.5
+            }
+            if resized {
+                view.collectionViewLayout.invalidateLayout()
+                view.performBatchUpdates(nil)
             }
             if view.window != nil { c.finishLayout(view) }
         }
@@ -349,7 +410,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                     let config = UIHostingConfiguration {
                         HStack(spacing: 0) {
                             ForEach(actions) { action in
-                                CatalogSwipeKey(action: CatalogSwipeAction(id: action.id, title: action.title,
+                                CatalogSwipeKey(action: CatalogRowAction(id: action.id, title: action.title,
                                     icon: action.icon, destructive: action.destructive, perform: { [weak self] in
                                         self?.dismissSwipe()
                                         action.perform()

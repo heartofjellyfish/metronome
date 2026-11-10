@@ -488,3 +488,5 @@
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "Ce contacteur est libre. Touchez le bouton d’affectation de l’action voulue et appuyez de nouveau sur le contacteur.";
 "Keep screen awake" = "Garder l’écran allumé en concert";
 "Allow automatic screen lock" = "Autoriser le verrouillage automatique";
+
+"Add" = "Ajouter";

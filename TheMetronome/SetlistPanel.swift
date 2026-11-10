@@ -29,7 +29,7 @@ struct SetlistPanel: View {
     @State private var sharing: SavedPreset?
     @State private var membershipChanges: [UUID: Bool] = [:]
     @State private var deletingSong = false
-    @State private var swipeDeletingSong: SavedPreset?
+    @State private var songToDelete: SavedPreset?
     @State private var deletingList: SongSetlist?
     @State private var removingSong: SavedPreset?
     @State private var performing = false
@@ -90,7 +90,11 @@ struct SetlistPanel: View {
                                 }
                                 VStack(alignment: .trailing, spacing: 8) {
                                     Divider()
-                                    newLibrarySongButton("new-song")
+                                    HStack {
+                                        newLibrarySongButton("new-song")
+                                        Spacer(minLength: 16)
+                                        draftSaveButton
+                                    }
                                 }.padding(.horizontal, 20).padding(.bottom, 16)
                             }
                         } else if startInSongLibrary {
@@ -115,7 +119,10 @@ struct SetlistPanel: View {
                             }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
                         } else if creatingList && draftSongIDs.isEmpty {
                             ScrollView {
-                                setlistNameInput.padding(.horizontal, 20).padding(.top, 10)
+                                VStack(alignment: .trailing, spacing: 12) {
+                                    setlistNameInput
+                                    setlistActionButton
+                                }.padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 16)
                             }
                             .scrollDismissesKeyboard(.immediately)
                             .onAppear { namingList = needsListName }
@@ -126,7 +133,7 @@ struct SetlistPanel: View {
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
-                    if browsingDetail || editingListRoot {
+                    if (browsingDetail || editingListRoot) && !(creatingList && draftSongIDs.isEmpty) {
                         VStack(spacing: 8) {
                             if !creatingList { Divider() }
                             HStack(spacing: 0) {
@@ -153,22 +160,7 @@ struct SetlistPanel: View {
                                         .accessibilityIdentifier("setlist-count")
                                 }
                                 Spacer(minLength: 16)
-                                Button {
-                                    if footerAddsSongs {
-                                        pickerOpenedFromBrowse = !editing
-                                        if !editing { beginEdit(new: false) }
-                                        showSongPicker()
-                                    } else { beginEdit(new: false) }
-                                } label: {
-                                    ZStack {
-                                        Label("Edit setlist", systemImage: "pencil").opacity(footerAddsSongs ? 0 : 1)
-                                        Label("Add songs", systemImage: "plus").opacity(footerAddsSongs ? 1 : 0)
-                                    }
-                                    .transaction { $0.animation = nil }
-                                    .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p))
-                                    .accessibilityLabel(footerAddsSongs ? Text("Add songs") : Text("Edit setlist"))
-                                    .accessibilityIdentifier(footerAddsSongs ? "add-song" : "edit-setlist")
+                                setlistActionButton
                             }
                         }.padding(.horizontal, 20).padding(.bottom, 16)
                     }
@@ -189,15 +181,15 @@ struct SetlistPanel: View {
                 .presentationDragIndicator(.visible)
         }
         .overlay {
-            if deletingSong, let song = swipeDeletingSong ?? song {
+            if deletingSong, let song = songToDelete ?? song {
                 let affected = model.listsContainingSong(song.id)
                 deleteConfirmation(name: song.name,
                     detail: L10n.text(affected.isEmpty ? "Delete this song from your library?" : "This song will be removed from your library and these setlists."),
                     affectedSetlists: affected,
                     action: "Delete song", identifier: "confirm-delete-library-song",
-                    cancel: { deletingSong = false; swipeDeletingSong = nil }) {
+                    cancel: { deletingSong = false; songToDelete = nil }) {
                         deletingSong = false
-                        swipeDeletingSong = nil
+                        songToDelete = nil
                         model.deleteLibrarySong(song.id)
                         if model.songLibrary.isEmpty { editingLibrary = false }
                         draftSongIDs.removeAll { $0 == song.id }
@@ -264,6 +256,24 @@ struct SetlistPanel: View {
         }.accessibilityElement(children: .contain).accessibilityAddTraits(.isModal)
             .accessibilityAction(.escape, cancel)
     }
+    private var setlistActionButton: some View {
+        Button {
+            if footerAddsSongs {
+                pickerOpenedFromBrowse = !editing
+                if !editing { beginEdit(new: false) }
+                showSongPicker()
+            } else { beginEdit(new: false) }
+        } label: {
+            ZStack {
+                Label("Edit setlist", systemImage: "pencil").opacity(footerAddsSongs ? 0 : 1)
+                Label("Add songs", systemImage: "plus").opacity(footerAddsSongs ? 1 : 0)
+            }
+            .transaction { $0.animation = nil }
+            .padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
+        }.buttonStyle(HardwareButtonStyle(p: p))
+            .accessibilityLabel(footerAddsSongs ? Text("Add songs") : Text("Edit setlist"))
+            .accessibilityIdentifier(footerAddsSongs ? "add-song" : "edit-setlist")
+    }
     private var header: some View {
         HStack(spacing: 10) {
             if editingListRoot || choosingSong || editingLibrary {
@@ -295,7 +305,6 @@ struct SetlistPanel: View {
         }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(identifier)
     }
     private var draftHeader: some View {
-        let canSave = editingLibrary || (choosingSong ? !pendingSongIDs.isEmpty : !needsListName)
         let cancelButton = Button {
             if editingLibrary { finishLibraryEditing(save: false) }
             else if choosingSong {
@@ -310,7 +319,35 @@ struct SetlistPanel: View {
             }
         }.accessibilityLabel("Cancel")
             .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier(editingLibrary ? "cancel-library" : choosingSong ? "cancel-picking-songs" : "cancel-setlist").fixedSize(horizontal: true, vertical: false)
-        let saveButton = Button {
+        let heading = Text(title)
+            .font(.system(size: 19, weight: .semibold)).lineLimit(1)
+        return Group {
+            if choosingSong {
+                HStack(spacing: 14) {
+                    cancelButton
+                    heading.frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else if editingListRoot && compactTitle && !creatingList {
+                HStack { cancelButton; Spacer(); draftSaveButton }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: choosingSong ? 14 : 8) {
+                        cancelButton
+                        heading.fixedSize().frame(maxWidth: .infinity, alignment: choosingSong ? .leading : .center)
+                        draftSaveButton
+                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack { cancelButton; Spacer(minLength: 4); draftSaveButton }
+                        heading
+                    }
+                }
+            }
+        }
+    }
+    // The same commit action serves the editor header and the picker's bottom-right key.
+    private var draftSaveButton: some View {
+        let canSave = editingLibrary || (choosingSong ? !pendingSongIDs.isEmpty : !needsListName)
+        return Button {
             if editingLibrary { finishLibraryEditing(save: true); return }
             if choosingSong {
                 draftSongIDs.append(contentsOf: pendingSongIDs)
@@ -323,32 +360,13 @@ struct SetlistPanel: View {
             saveList()
         } label: {
             HStack(spacing: 5) {
-                Label(choosingSong && needsListName ? "Next" : "Save", systemImage: choosingSong && needsListName ? "arrow.right" : "checkmark")
+                Label(choosingSong ? (needsListName ? "Next" : "Add") : "Save", systemImage: choosingSong && needsListName ? "arrow.right" : "checkmark")
                 if choosingSong && !pendingSongIDs.isEmpty { Text(verbatim: "(\(pendingSongIDs.count))").monospacedDigit() }
             }.padding(.horizontal, 12).frame(minHeight: 44)
         }
             .buttonStyle(HardwareButtonStyle(p: p, charcoal: canSave))
             .disabled(!canSave).opacity(canSave ? 1 : 0.5)
             .accessibilityIdentifier(editingLibrary ? "save-library" : "save-setlist").fixedSize(horizontal: true, vertical: false)
-        let heading = Text(title)
-            .font(.system(size: 19, weight: .semibold)).lineLimit(1)
-        return Group {
-            if editingListRoot && compactTitle && !creatingList {
-                HStack { cancelButton; Spacer(); saveButton }
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: choosingSong ? 14 : 8) {
-                        cancelButton
-                        heading.fixedSize().frame(maxWidth: .infinity, alignment: choosingSong ? .leading : .center)
-                        saveButton
-                    }
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack { cancelButton; Spacer(minLength: 4); saveButton }
-                        heading
-                    }
-                }
-            }
-        }
     }
     private func finishLibraryEditing(save: Bool) {
         dismissTextInput()
@@ -442,10 +460,10 @@ struct SetlistPanel: View {
         let move: ((UUID, Int) -> Void)? = query.isEmpty ? { id, index in model.moveSetlist(id, to: index) } : nil
         return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move, swipeActions: { list in
             [
-                CatalogSwipeAction(id: "swipe-edit-setlist-" + list.name, title: "Edit", icon: "pencil") {
+                CatalogRowAction(id: "edit-setlist-" + list.name, title: "Edit", icon: "pencil") {
                     openList(list); beginEdit(new: false)
                 },
-                CatalogSwipeAction(id: "swipe-delete-setlist-" + list.name, title: "Delete", icon: "trash", destructive: true) {
+                CatalogRowAction(id: "delete-setlist-" + list.name, title: "Delete", icon: "trash", destructive: true) {
                     deletingList = list
                 }
             ]
@@ -482,12 +500,10 @@ struct SetlistPanel: View {
     }
     private func songCount(_ count: Int) -> String { L10n.format(count == 1 ? "%d song" : "%d songs", count) }
     private var setlistNameInput: some View {
-        TextField("Setlist name", text: $listName)
-            .font(.system(size: 28, weight: .semibold))
-            .focused($namingList).submitLabel(.done)
-            .onSubmit { namingList = false }
-            .padding(.horizontal, 10).frame(minHeight: 44)
-            .insetPanel(p, radius: 8).accessibilityIdentifier("setlist-name")
+        SetlistNameField(name: $listName, p: p, finish: { namingList = false })
+            .padding(.horizontal, 10).padding(.vertical, 8).frame(minHeight: 48)
+            .fixedSize(horizontal: false, vertical: true)
+            .insetPanel(p, radius: 8)
     }
     private var draftSongs: [SavedPreset] {
         let catalog = Dictionary(model.songLibrary.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -502,14 +518,7 @@ struct SetlistPanel: View {
         } : nil
         return CatalogList(items: editing ? draftSongs : list?.songs ?? [], p: p, bookmarks: bookmarks, page: page,
                            move: move, swipeActions: editing ? nil : { value in
-            [
-                CatalogSwipeAction(id: "swipe-edit-song-" + value.name, title: "Edit", icon: "pencil") {
-                    bookmarks.prefer(value.id, on: page); song = value
-                },
-                CatalogSwipeAction(id: "swipe-remove-song-" + value.name, title: "Remove", icon: "minus", destructive: true) {
-                    removingSong = value
-                }
-            ]
+            setlistSongActions(value, page: page)
         }, onHeaderScrolled: { compactTitle = $0 }, row: { index, value in
             if editing {
                 editableSong(index, value, page: page)
@@ -538,16 +547,24 @@ struct SetlistPanel: View {
             }
         }, below: { EmptyView() }).screen().padding(.horizontal, 20).padding(.vertical, 8).id(page)
     }
+    private func setlistSongActions(_ value: SavedPreset, page: String) -> [CatalogRowAction] {
+        [
+            CatalogRowAction(id: "edit-song-" + value.name, title: "Edit", icon: "pencil") {
+                bookmarks.prefer(value.id, on: page); song = value
+            },
+            CatalogRowAction(id: "remove-song-" + value.name, title: "Remove", icon: "minus", destructive: true) {
+                if editing { draftSongIDs.removeAll { $0 == value.id } }
+                else { removingSong = value }
+            }
+        ]
+    }
     private func editableSong(_ index: Int, _ value: SavedPreset, page: String) -> some View {
         HStack(spacing: 6) {
             grip("drag-song-\(value.name)")
             Text(String(format: "%02d", index + 1)).monospacedDigit().font(.caption).foregroundStyle(p.muted)
                 .accessibilityIdentifier("song-position-\(value.name)")
             songInfo(value).frame(maxWidth: .infinity, alignment: .leading)
-            Button { bookmarks.prefer(value.id, on: page); song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Edit song").accessibilityIdentifier("edit-song-\(value.name)")
-            Button { draftSongIDs.removeAll { $0 == value.id } } label: { Image(systemName: "minus").foregroundStyle(p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)).frame(width: 44, height: 44) }
-                .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel("Remove from setlist").accessibilityIdentifier("delete-song-\(value.name)")
+            ForEach(setlistSongActions(value, page: page)) { action in CatalogRowActionButton(action: action, p: p) }
         }.padding(.horizontal, 10).padding(.vertical, 10).frame(minHeight: 78)
     }
     private func browseSong(_ index: Int, _ value: SavedPreset) -> some View {
@@ -609,6 +626,17 @@ struct SetlistPanel: View {
             }
         }, below: { EmptyView() }).screen()
     }
+    /// Browse swipes and edit-mode keys execute the very same action definitions.
+    private func libraryActions(_ value: SavedPreset) -> [CatalogRowAction] {
+        [
+            CatalogRowAction(id: "library-edit-" + value.name, title: "Edit", icon: "pencil") {
+                bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value
+            },
+            CatalogRowAction(id: "library-delete-" + value.name, title: "Delete", icon: "trash", destructive: true) {
+                songToDelete = value; deletingSong = true
+            }
+        ]
+    }
     private var managedLibrary: some View {
         // Build memberships once per render, not once per song and search predicate.
         var membership: [UUID: [String]] = [:]
@@ -623,16 +651,7 @@ struct SetlistPanel: View {
             libraryOrder = ids
         } : nil
         return CatalogList(items: entries, p: p, bookmarks: bookmarks, page: "library",
-                           move: move, swipeActions: editingLibrary ? nil : { value in
-            [
-                CatalogSwipeAction(id: "swipe-library-edit-" + value.name, title: "Edit", icon: "pencil") {
-                    bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value
-                },
-                CatalogSwipeAction(id: "swipe-library-delete-" + value.name, title: "Delete", icon: "trash", destructive: true) {
-                    swipeDeletingSong = value; deletingSong = true
-                }
-            ]
-        }, row: { _, value in
+                           move: move, swipeActions: editingLibrary ? nil : libraryActions, row: { _, value in
             libraryRow(value, memberships: membership[value.id] ?? [])
         }, above: {
             if entries.isEmpty {
@@ -678,8 +697,7 @@ struct SetlistPanel: View {
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
             if editingLibrary {
-                Button { bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value } label: { Image(systemName: "pencil").frame(width: 44, height: 44) }
-                    .buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityLabel("Edit song").accessibilityIdentifier("library-edit-\(value.name)")
+                ForEach(libraryActions(value)) { action in CatalogRowActionButton(action: action, p: p) }
             }
         }.padding(.horizontal, 14).padding(.vertical, 8).accessibilityElement(children: .contain).accessibilityIdentifier("library-row-\(value.name)")
     }
@@ -752,32 +770,28 @@ private struct EditableSetlistTitle: View {
     @State private var renaming = false
 
     var body: some View {
-        Group {
+        HStack(spacing: 8) {
             if renaming {
-                HStack(spacing: 0) {
-                    SetlistNameField(name: $name, p: p, finish: {
-                        if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { renaming = false }
-                    })
-                    Button { dismissTextInput(); renaming = false } label: {
-                        Image(systemName: "checkmark").frame(width: 44, height: 48).contentShape(Rectangle())
-                    }.buttonStyle(InsetRowButtonStyle(p: p))
-                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        .accessibilityLabel("Done").accessibilityIdentifier("finish-rename-setlist")
-                }.padding(.leading, 12).insetPanel(p, radius: 9)
+                SetlistNameField(name: $name, p: p, finish: {
+                    if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { renaming = false }
+                })
+                Button { dismissTextInput(); renaming = false } label: { Image(systemName: "checkmark") }
+                    .buttonStyle(CatalogIconButtonStyle(p: p))
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Done").accessibilityIdentifier("finish-rename-setlist")
             } else {
-                Button { renaming = true } label: {
-                    HStack(spacing: 10) {
-                        Text(verbatim: name.isEmpty ? L10n.text("Setlist name") : name)
-                            .font(.system(size: 28, weight: .semibold))
-                            .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                        Image(systemName: "pencil").foregroundStyle(p.muted).frame(width: 44, height: 48)
-                    }.padding(.leading, 12).frame(minHeight: 48).contentShape(Rectangle())
-                }.buttonStyle(InsetRowButtonStyle(p: p)).insetPanel(p, radius: 9)
+                Text(verbatim: name.isEmpty ? L10n.text("Setlist name") : name)
+                    .font(.system(size: 28, weight: .semibold))
+                    .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button { renaming = true } label: { Image(systemName: "pencil") }
+                    .buttonStyle(CatalogIconButtonStyle(p: p))
                     .accessibilityLabel("Setlist name").accessibilityValue(name)
                     .accessibilityIdentifier("rename-setlist")
             }
-        }
+        }.padding(.horizontal, 12).padding(.vertical, 8).frame(minHeight: 48)
+            .fixedSize(horizontal: false, vertical: true)
+            .insetPanel(p, radius: 9).accessibilityElement(children: .contain).accessibilityIdentifier("setlist-name-well")
     }
 }
 
@@ -787,10 +801,16 @@ private struct SetlistNameField: UIViewRepresentable {
     let p: InstrumentPalette
     let finish: () -> Void
 
-    final class Input: UITextField, UITextFieldDelegate {
+    final class Input: UITextView, UITextViewDelegate {
         var onChange: ((String) -> Void)?
         var onFinish: (() -> Void)?
         private var requestedFocus = false
+        let placeholderLabel = UILabel()
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            placeholderLabel.frame = CGRect(x: 0, y: 0, width: bounds.width, height: font?.lineHeight ?? 34)
+        }
 
         override func didMoveToWindow() {
             super.didMoveToWindow()
@@ -802,16 +822,20 @@ private struct SetlistNameField: UIViewRepresentable {
             }
         }
 
-        @objc func changed() { onChange?(text ?? "") }
-
-        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-            guard !(text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-            resignFirstResponder()
-            return true
+        func textViewDidChange(_ textView: UITextView) {
+            placeholderLabel.isHidden = !text.isEmpty
+            invalidateIntrinsicContentSize()
+            onChange?(text ?? "")
         }
 
-        func textFieldDidEndEditing(_ textField: UITextField) {
-            changed()
+        func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+            guard text == "\n", markedTextRange == nil else { return true }
+            if !self.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { resignFirstResponder() }
+            return false
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            onChange?(text ?? "")
             onFinish?()
         }
     }
@@ -819,19 +843,36 @@ private struct SetlistNameField: UIViewRepresentable {
     func makeUIView(context: Context) -> Input {
         let field = Input()
         field.text = name
-        field.placeholder = L10n.text("Setlist name")
-        field.accessibilityLabel = field.placeholder
+        field.backgroundColor = .clear
+        field.isScrollEnabled = false
+        field.textContainerInset = .zero
+        field.textContainer.lineFragmentPadding = 0
+        field.accessibilityLabel = L10n.text("Setlist name")
         field.accessibilityIdentifier = "setlist-name"
         field.font = .systemFont(ofSize: 28, weight: .semibold)
+        field.placeholderLabel.font = field.font
+        field.placeholderLabel.text = L10n.text("Setlist name")
+        field.placeholderLabel.isUserInteractionEnabled = false
+        field.placeholderLabel.isAccessibilityElement = false
+        field.addSubview(field.placeholderLabel)
         field.returnKeyType = .done
         field.enablesReturnKeyAutomatically = true
         field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         field.delegate = field
-        field.addTarget(field, action: #selector(Input.changed), for: .editingChanged)
         return field
     }
 
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: Input, context: Context) -> CGSize? {
+        guard let width = proposal.width, width > 0 else { return nil }
+        let height = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
+        return CGSize(width: width, height: max(34, ceil(height)))
+    }
+
     func updateUIView(_ field: Input, context: Context) {
+        // The text view owns the live edit. Rewriting binding echoes here can roll back
+        // fast typing/deletion or disturb Chinese IME composition; initialize only once.
+        field.placeholderLabel.isHidden = !name.isEmpty
+        field.placeholderLabel.textColor = UIColor(p.muted)
         field.textColor = UIColor(p.ink)
         field.tintColor = UIColor(p.ink)
         field.onChange = { name = $0 }

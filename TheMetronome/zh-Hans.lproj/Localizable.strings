@@ -488,3 +488,5 @@
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "刚踩的键还没绑定。选一个动作，点「绑定」，再踩一次。";
 "Keep screen awake" = "演出时保持亮屏";
 "Allow automatic screen lock" = "允许自动锁屏";
+
+"Add" = "添加";

@@ -488,3 +488,5 @@
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "このスイッチは未設定です。操作の横の割り当てボタンをタップし、もう一度踏んでください。";
 "Keep screen awake" = "演奏画面を常時表示";
 "Allow automatic screen lock" = "自動ロックを許可";
+
+"Add" = "追加";
