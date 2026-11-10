@@ -101,9 +101,9 @@ private struct CatalogSwipeKey: View {
     let p: InstrumentPalette
     var body: some View {
         Button(action: action.perform) {
-            VStack(spacing: 3) {
+            VStack(alignment: .center, spacing: 3) {
                 Image(systemName: action.icon).font(.system(size: 16, weight: .regular)).frame(width: 38, height: 38)
-                Text(L10n.text(action.title)).font(.caption2).lineLimit(1)
+                Text(L10n.text(action.title)).font(.caption2).lineLimit(1).multilineTextAlignment(.center)
             }.foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
                 .frame(width: 56).frame(height: 60, alignment: .top).contentShape(Rectangle())
         }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier(action.id)
@@ -341,7 +341,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                       let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty else { return }
                 if swipedCell !== cell { dismissSwipe() }
                 swipedCell = cell
-                swipeWidth = CGFloat(actions.count) * 56 + 20
+                swipeWidth = CGFloat(actions.count) * 56 + 40
                 swipeOrigin = cell.rowView?.transform.tx ?? 0
                 if cell.actionsView == nil {
                     let config = UIHostingConfiguration {
@@ -353,7 +353,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                                         action.perform()
                                     }), p: self.parent.p)
                             }
-                        }.padding(.trailing, 20)
+                        }.padding(.horizontal, 20)
                     }.margins(.all, 0)
                     let buttons = config.makeContentView()
                     buttons.backgroundColor = .clear
