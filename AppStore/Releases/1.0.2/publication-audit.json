@@ -147,12 +147,13 @@
   "englishDraftScreenshotGroup": "Existing Face ID large screenshot association removed while preparing replacement; new assets not yet uploaded. Other locales retain their prior assets. Originals remain in Asset Library.",
   "submitted": false,
   "localAssets": {
-    "iphone": 72,
-    "ipad": 27,
+    "iphone": 63,
+    "ipad": 18,
     "dimensions": {
-      "1284x2778": 72,
-      "2064x2752": 27
+      "2064x2752": 18,
+      "1284x2778": 63
     },
-    "nativeCaptureJourneys": "Nine languages passed on iPhone and iPad simulators; final English/Chinese and all pedal cards recaptured with full non-charging status bars."
+    "nativeCaptureJourneys": "Nine languages passed on iPhone and iPad simulators; final English/Chinese and all pedal cards recaptured with full non-charging status bars.",
+    "layout": "Card 1: combined Live View + setlist. Card 2: Bluetooth pedals. Seven iPhone cards and two iPad cards per locale."
   }
 }

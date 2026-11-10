@@ -1,6 +1,6 @@
 # Product marketing context
 
-Version: v4 · Updated: 2026-11-09
+Version: v5 · Updated: 2026-11-09
 
 ## Product
 
@@ -61,9 +61,11 @@ Read `AppStore/brand-preferences.md` before drafting or revising visual assets a
 
 ## Goals
 
-For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Keep the first three screenshots focused on the visible beat cue, Bluetooth pedals and setlists. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
+For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Combine Live View and setlists in the first screenshot; keep Bluetooth pedals as a separate second screenshot. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
 
 ## Changelog
+
+- v5 (2026-11-09): Combined the setlist and Live View into a single lead screenshot at the founder’s request; Bluetooth pedals retain their own second card.
 
 - v4 (2026-11-09): Repositioned the next release around Live Mode, Bluetooth pedals and setlists; broadened musician use cases, removed fixed sound counts, and recorded measured launch evidence and hardware-test limits.
 
