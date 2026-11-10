@@ -8,6 +8,17 @@ struct PerformanceView: View {
     let back: () -> Void
     @State private var editing = false
     @State private var showingNotes = false
+    @State private var headerHeight: CGFloat = 200
+    private enum Layout {
+        static let gap: CGFloat = 18
+        static let controlHeight: CGFloat = 64
+        static let bottomInset: CGFloat = 22
+    }
+    private func beatScreenHeight(in available: CGFloat) -> CGFloat {
+        let controlRows: CGFloat = model.activeSetlist == nil ? 1 : 2
+        let controls = controlRows * Layout.controlHeight + (controlRows + 1) * Layout.gap + Layout.bottomInset
+        return max(220, min(580, available - headerHeight - controls))
+    }
     private var notes: String { model.currentSong?.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
     private var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     private var position: Int? { model.activeSetlist?.songs.firstIndex { $0.id == model.selectedSongID } }
@@ -17,36 +28,39 @@ struct PerformanceView: View {
     }
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 18) {
+            VStack(spacing: Layout.gap) {
                 ScrollView {
-                    VStack(spacing: 18) {
+                    VStack(spacing: Layout.gap) {
                         songHeader
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                                if abs(headerHeight - $0) > 0.5 { headerHeight = $0 }
+                            }
                         PerformanceBeatCue(model: model, p: p)
-                            .frame(height: max(260, min(580, geometry.size.height - (model.activeSetlist == nil ? 300 : 410))))
+                            .frame(height: beatScreenHeight(in: geometry.size.height))
                             .frame(maxWidth: .infinity).insetPanel(p, radius: 18).padding(.horizontal, 22)
                     }
-                }.scrollBounceBehavior(.basedOnSize).scrollClipDisabled()
+                }.scrollBounceBehavior(.basedOnSize)
                 if model.activeSetlist != nil { songNavigation.padding(.horizontal, 22) }
                 GeometryReader { controls in
                   HStack(spacing: 14) {
                     Button { model.tap(live: true) } label: {
                         Text("TAP").font(.system(size: 16, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
-                            .frame(maxWidth: .infinity, minHeight: 64)
+                            .frame(maxWidth: .infinity, minHeight: Layout.controlHeight)
                     }.buttonStyle(HardwareButtonStyle(p: p)).frame(width: (controls.size.width - 14) * 0.4).accessibilityIdentifier("performance-tap")
                     Button { model.toggle() } label: {
                         Group {
                             if model.needsManualResume && !model.interrupted {
                                 Label("Resume", systemImage: "play.fill")
                             } else { TransportGlyph(playing: model.transportActive) }
-                        }.frame(maxWidth: .infinity).frame(height: 64).contentShape(Rectangle())
+                        }.frame(maxWidth: .infinity).frame(height: Layout.controlHeight).contentShape(Rectangle())
                     }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true))
                         .disabled(model.interrupted && !model.transportActive)
                         .accessibilityLabel(model.transportLabel)
                         .accessibilityIdentifier("performance-play")
                         .layoutPriority(1)
                   }
-                }.frame(height: 64).padding(.horizontal, 22)
-            }.padding(.bottom, 22).frame(maxWidth: 600).frame(maxWidth: .infinity)
+                }.frame(height: Layout.controlHeight).padding(.horizontal, 22)
+            }.padding(.bottom, Layout.bottomInset).frame(maxWidth: 600).frame(maxWidth: .infinity)
                 .accessibilityHidden(editing || showingNotes)
                 .allowsHitTesting(!editing && !showingNotes)
                 .background { InstrumentBody(p: p).ignoresSafeArea() }
@@ -95,6 +109,7 @@ struct PerformanceView: View {
                 .accessibilityIdentifier("close-performance")
                 if let list = model.activeSetlist {
                     Text(list.name).font(.subheadline.weight(.medium)).foregroundStyle(Color(hex: 0xD4D0C7))
+                        .lineLimit(2).truncationMode(.middle)
                         .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("performance-setlist")
                 }
                 Spacer()
@@ -110,7 +125,7 @@ struct PerformanceView: View {
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.currentSong?.name ?? L10n.text("Song library"))
-                            .font(.system(size: 44, weight: .bold)).tracking(-1).foregroundStyle(Color(hex: 0xF6F2E9)).fixedSize(horizontal: false, vertical: true)
+                            .font(.system(size: 44, weight: .bold)).tracking(-1).foregroundStyle(Color(hex: 0xF6F2E9)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier("performance-song")
                             .accessibilityAction(named: Text("Edit song"), editCurrentSong)
                             .accessibilityAction(.default, editCurrentSong)
@@ -140,7 +155,7 @@ struct PerformanceView: View {
     private var songNavigation: some View {
         HStack(spacing: 12) {
             Button { model.performPedal(.previous) } label: {
-                Image(systemName: "backward.end.fill").frame(width: 58, height: 64)
+                Image(systemName: "backward.end.fill").frame(width: 58, height: Layout.controlHeight)
             }.buttonStyle(HardwareButtonStyle(p: p))
                 .disabled(position == nil || position == 0).opacity(position == nil || position == 0 ? 0.4 : 1)
                 .accessibilityLabel(PedalAction.previous.title).accessibilityIdentifier("performance-previous")
@@ -155,7 +170,7 @@ struct PerformanceView: View {
                         Text("\(nextSong.rhythm.bpm) BPM").font(.system(size: 13)).foregroundStyle(p.muted).fixedSize()
                         Image(systemName: "forward.end.fill").font(.system(size: 18, weight: .semibold))
                     }
-                }.padding(.horizontal, 14).frame(maxWidth: .infinity).frame(height: 64).contentShape(Rectangle())
+                }.padding(.horizontal, 14).frame(maxWidth: .infinity).frame(height: Layout.controlHeight).contentShape(Rectangle())
             }.buttonStyle(HardwareButtonStyle(p: p)).disabled(nextSong == nil).opacity(nextSong == nil ? 0.45 : 1)
                 .accessibilityIdentifier("performance-next")
         }

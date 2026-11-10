@@ -172,9 +172,9 @@ final class StageFeatureUITests: XCTestCase {
         let app = XCUIApplication(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--stage-ui-test", "--panel=setlists"]
         app.launch()
         XCTAssertTrue(app.buttons["new-setlist"].waitForExistence(timeout: 8)); app.buttons["new-setlist"].tap()
-        let name = app.textFields["setlist-name"]
+        let name = app.textViews["setlist-name"]
         XCTAssertTrue(name.waitForExistence(timeout: 8)); name.tap(); name.typeText("Friday show")
-        app.textFields["setlist-name"].typeText("\n")
+        app.textViews["setlist-name"].typeText("\n")
         reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
         for (song, bpm) in [("Opening", "95"), ("Night drive", "140"), ("Encore", "85")] {
             app.buttons["new-song"].tap()
@@ -213,7 +213,7 @@ final class StageFeatureUITests: XCTestCase {
         if app.buttons["setlist-Friday show"].exists { app.buttons["setlist-Friday show"].tap() }; XCTAssertTrue(app.buttons["song-Encore revised"].waitForExistence(timeout: 8)); capture(app, "Setlist Chinese")
         app.terminate(); app.launchArguments = ["-AppleLanguages", "(en)", "--light", "--panel=setlists"]; app.launch()
         if app.buttons["setlist-Friday show"].exists { app.buttons["setlist-Friday show"].tap() }; XCTAssertTrue(app.buttons["edit-setlist"].waitForExistence(timeout: 8)); app.buttons["edit-setlist"].tap()
-        reveal(app.buttons["delete-song-Encore revised"], app); app.buttons["delete-song-Encore revised"].tap()
+        reveal(app.buttons["remove-song-Encore revised"], app); app.buttons["remove-song-Encore revised"].tap()
         XCTAssertFalse(app.buttons["edit-song-Encore revised"].exists)
         reveal(app.buttons["add-song"], app); app.buttons["add-song"].tap()
         app.buttons["new-song"].tap(); XCTAssertTrue(app.textFields["song-name"].exists)
@@ -275,8 +275,8 @@ final class OrganizationUITests: XCTestCase {
         capture(app, "Standalone practice saved")
         app.buttons["close-panel"].tap()
         app.buttons["settings-setlists"].tap()
-        app.buttons["new-setlist"].tap(); app.textFields["setlist-name"].tap(); app.textFields["setlist-name"].typeText("Friday show")
-        app.textFields["setlist-name"].typeText("\n"); app.buttons["add-song"].tap()
+        app.buttons["new-setlist"].tap(); app.textViews["setlist-name"].tap(); app.textViews["setlist-name"].typeText("Friday show")
+        app.textViews["setlist-name"].typeText("\n"); app.buttons["add-song"].tap()
         app.buttons["new-song"].tap()
         app.textFields["song-name"].tap(); app.textFields["song-name"].typeText("Warm hands\n")
         app.buttons["save-song"].tap(); app.buttons["save-setlist"].tap()
@@ -321,6 +321,17 @@ final class OrganizationUITests: XCTestCase {
             app.terminate()
         }
     }
+    func testPortuguesePracticeNavigationFits() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(pt-BR)", "--settings", "--light", "--reference"]
+        app.launch()
+        XCTAssertTrue(app.buttons["settings-presets"].waitForExistence(timeout: 8))
+        capture(app, "Portuguese practice labels")
+        app.buttons["settings-presets"].tap()
+        XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        XCTAssertTrue(app.buttons["settings-presets"].isHittable)
+    }
     func testCompactAndLargeTextControls() {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(fr)", "--light", "--settings", "--organization-ui-test"]
@@ -348,8 +359,13 @@ final class OrganizationUITests: XCTestCase {
         app.buttons["close-panel"].tap()
     }
     private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
-        for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }
-        XCTAssertTrue(element.isHittable)
+        let surface = app.scrollViews["settings-scroll"].exists ? app.scrollViews["settings-scroll"] : app.scrollViews.firstMatch
+        for _ in 0..<12 {
+            if element.isHittable { return }
+            if element.exists && element.frame.maxY <= surface.frame.minY { surface.swipeDown() }
+            else { surface.swipeUp() }
+        }
+        XCTAssertTrue(element.isHittable, "Could not reveal \(element.identifier)")
     }
     private func capture(_ app: XCUIApplication, _ name: String) {
         let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)

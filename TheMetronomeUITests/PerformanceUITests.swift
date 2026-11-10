@@ -36,6 +36,60 @@ final class PerformanceUITests: XCTestCase {
         if b("close-settings").isHittable { tap("close-settings") }
     }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testLongLiveTitlesKeepTheBeatAndControlsVisible() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "-AppleLanguages", "(en)"]
+        app.launch()
+        openList("载歌在谷歌手赛 2026")
+        tap("edit-setlist"); tap("rename-setlist")
+        app.textViews["setlist-name"].typeText(" — 2027 worldwide tour with our friends, a very long concert title\n")
+        tap("save-setlist")
+        let longSong = "昨天我给你打了电话但你没有接，提示你看到了但是我并没有收到什么信息"
+        revealCatalogRow("song-" + longSong); tap("song-" + longSong)
+        shot("83-long-live-titles")
+        XCTAssertEqual(liveSongTitle.label, longSong)
+        XCTAssertLessThanOrEqual(liveSongTitle.frame.height, 112)
+        XCTAssertLessThanOrEqual(app.staticTexts["performance-setlist"].frame.height, 50)
+        XCTAssertTrue(b("performance-play").isHittable)
+        XCTAssertTrue(b("performance-next").isHittable)
+        let ready = app.staticTexts["Ready?"]
+        XCTAssertTrue(ready.isHittable)
+        XCTAssertLessThan(ready.frame.maxY, b("performance-next").frame.minY)
+        tap("performance-play"); tap("performance-next")
+        XCTAssertEqual(b("performance-play").label, "Stop metronome")
+        tap("performance-play"); tap("close-performance")
+    }
+
+    func testLocalizedBatchFooterFitsInsideTheScreen() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--long-list-test", "-AppleLanguages", "(de)"]
+        app.launch()
+        tap("settings"); tap("settings-setlists"); tap("new-setlist")
+        app.textViews["setlist-name"].typeText("Tour\n"); tap("add-song")
+        for index in 1...5 { tap(String(format: "import-song-Track %02d", index)) }
+        shot("83-german-add-footer")
+        let screen = app.collectionViews.firstMatch.frame
+        XCTAssertGreaterThanOrEqual(b("new-song").frame.minX, screen.minX - 1)
+        XCTAssertLessThanOrEqual(b("save-setlist").frame.maxX, screen.maxX + 1)
+        XCTAssertGreaterThanOrEqual(b("save-setlist").frame.minX - b("new-song").frame.maxX, 16)
+        XCTAssertEqual(b("new-song").frame.height, b("save-setlist").frame.height, accuracy: 1)
+    }
+
+    func testLongSongRowsRemainCompactWhenBrowsingAndEditing() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "-AppleLanguages", "(en)"]
+        app.launch(); openList("载歌在谷歌手赛 2026")
+        let title = "昨天我给你打了电话但你没有接，提示你看到了但是我并没有收到什么信息"
+        revealCatalogRow("song-" + title)
+        XCTAssertLessThanOrEqual(app.staticTexts[title].firstMatch.frame.height, 44)
+        tap("edit-setlist")
+        XCTAssertLessThanOrEqual(app.staticTexts[title].firstMatch.frame.height, 44)
+        XCTAssertTrue(b("remove-song-" + title).isHittable)
+        shot("83-long-song-compact-row")
+        tap("cancel-setlist")
+        XCTAssertTrue(b("song-" + title).isHittable)
+    }
+
     func testLongSongSwipeStaysInsideTheInsetScreen() {
         app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "-AppleLanguages", "(zh-Hans)"]

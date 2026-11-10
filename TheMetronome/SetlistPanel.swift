@@ -563,7 +563,7 @@ struct SetlistPanel: View {
             grip("drag-song-\(value.name)")
             Text(String(format: "%02d", index + 1)).monospacedDigit().font(.caption).foregroundStyle(p.muted)
                 .accessibilityIdentifier("song-position-\(value.name)")
-            songInfo(value).frame(maxWidth: .infinity, alignment: .leading)
+            songInfo(value, maxTitleLines: 2).frame(maxWidth: .infinity, alignment: .leading)
             ForEach(setlistSongActions(value, page: page)) { action in CatalogRowActionButton(action: action, p: p) }
         }.padding(.horizontal, 10).padding(.vertical, 10).frame(minHeight: 78)
     }
@@ -579,7 +579,7 @@ struct SetlistPanel: View {
                 model.loadSong(value, from: browsingSetlistID)
                 performing = true
             } label: {
-                HStack { songInfo(value); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
+                HStack { songInfo(value, maxTitleLines: 2); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
                     .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
                 .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])
