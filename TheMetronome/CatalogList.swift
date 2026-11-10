@@ -63,7 +63,7 @@ private final class CatalogCell: UICollectionViewCell {
         super.layoutSubviews()
         if swipeID != nil {
             updateSwipeMask()
-            swipeHighlight?.frame = contentView.bounds.insetBy(dx: 12, dy: 0)
+            swipeHighlight?.frame = contentView.bounds.offsetBy(dx: rowView?.transform.tx ?? 0, dy: 0)
         }
     }
 
@@ -90,10 +90,10 @@ private final class CatalogCell: UICollectionViewCell {
             contentView.insertSubview(highlight, at: 0)
             swipeHighlight = highlight
         }
-        // One subtle, stationary band connects the shifted song with its revealed actions.
-        // It stays inside the same inset mask so the screen's bezel and shadow remain intact.
+        // Tint travels with the song's content. The revealed action area keeps the screen's
+        // original color, while the shared mask preserves the bezel and inner shadow.
         swipeHighlight?.backgroundColor = swipeHighlightColor
-        swipeHighlight?.frame = contentView.bounds.insetBy(dx: 12, dy: 0)
+        swipeHighlight?.frame = contentView.bounds.offsetBy(dx: offset, dy: 0)
         swipeHighlight?.alpha = min(1, abs(offset) / max(width, 1))
         rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
         // Reveal only the trailing strip. The transparent row preserves the shared inset shadow.
