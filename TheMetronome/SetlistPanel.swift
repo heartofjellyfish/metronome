@@ -668,9 +668,10 @@ struct SetlistPanel: View {
                                     .accessibilityLabel(memberships.dropFirst().joined(separator: ", "))
                                     .accessibilityIdentifier("membership-overflow-\(value.name)")
                             }
-                            Image(systemName: "chevron.right").font(.caption2).accessibilityHidden(true)
-                        }.font(.caption2).padding(.horizontal, 7).padding(.vertical, 4)
-                            .background(p.body.opacity(0.8), in: RoundedRectangle(cornerRadius: 5))
+                            Image(systemName: "chevron.right").font(.caption2).opacity(0.65).accessibilityHidden(true)
+                        }.font(.caption2).foregroundStyle(p.ink.opacity(0.7))
+                            .padding(.horizontal, 7).padding(.vertical, 4)
+                            .background(p.body.opacity(p.dark ? 0.24 : 0.32), in: RoundedRectangle(cornerRadius: 5))
                             .frame(minHeight: 44).contentShape(Rectangle())
                     }.frame(maxWidth: editingLibrary ? nil : 116, alignment: .trailing)
                         .buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("library-setlists-\(value.name)")
