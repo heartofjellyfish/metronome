@@ -85,6 +85,8 @@ private final class CatalogCell: UICollectionViewCell {
         updateSwipeMask()
         if swipeHighlight == nil {
             let highlight = UIView()
+            highlight.layer.cornerRadius = 8
+            highlight.layer.cornerCurve = .continuous
             highlight.isUserInteractionEnabled = false
             highlight.accessibilityElementsHidden = true
             contentView.insertSubview(highlight, at: 0)
