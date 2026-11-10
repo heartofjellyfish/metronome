@@ -181,5 +181,14 @@
     "auditFile": "screenshot-upload-audit.json",
     "submittedForReview": false,
     "thumbnailNote": "Some Apple thumbnail previews still displayed cloud placeholders at proof capture time; saved counts and ordered filenames were verified for all 18 groups."
+  },
+  "selectedBuild": "1.0.2 (83)",
+  "reviewNotes": "review-notes.txt",
+  "submissionAttempt": {
+    "date": "2026-11-10",
+    "result": "Apple validation blocked: 1 or more screenshots must finish processing.",
+    "buildAndNotesSaved": true,
+    "attempts": 3,
+    "proof": "submission-processing-blocker.png"
   }
 }

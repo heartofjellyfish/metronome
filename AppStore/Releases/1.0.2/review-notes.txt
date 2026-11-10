@@ -1,0 +1,17 @@
+App: metronome, just cleaner — version 1.0.2 (83)
+
+1. Update and audience
+An offline metronome for musicians, students, teachers and performers across instruments. This update adds Live Mode with a large current-beat display, setlists, a shared song library, optional pedal controls, and expanded rhythm/practice tools. No login, purchases, advertisements or account setup. All features are included.
+
+2. Main features and review steps
+- Launch and press Play. Set tempo with the dial, +/-, numeric BPM entry or Tap. Meter, subdivisions and individual beat accents are adjustable.
+- Settings > Live Mode > Song library: create a song with name, tempo, meter, subdivision, sound and optional notes. Tap a saved song to open its independent Live View; press Play to see the large beat number and accents. Double-tap the song title/metadata to edit it. Live Tap tempo is temporary; editing and saving changes the shared song record.
+- Settings > Live Mode > Setlists: create a named setlist, choose multiple songs or create new ones, and confirm adding them. Edit to rename, reorder or remove songs. Tap a song to open Live View in that setlist. Next/previous controls move manually through its songs. Songs remain in the library when a setlist is deleted.
+- Settings > Live Mode > Pedal: optional compatible keyboard-style, media or MIDI controls can be assigned to play/stop, next/previous song, Tap tempo and BPM up/down. Select Learn and press the desired control; assignments are saved. Keyboard-style controls require the app to be on screen. Bluetooth MIDI discovery is available through Connection help. No pedal is needed for the touchscreen features. Hardware modes differ; uninterrupted phone calls/alarms and universal background pedal operation are not promised.
+- Settings > All sounds auditions instruments. Practice offers count-in, tempo ramp, silent bars and two-sound polyrhythms. Division offers even subdivisions, patterns and custom rhythms. Settings also offers light/dark appearance and vibration.
+
+3. Access, services and regions
+No demo credentials, sample files or network are needed. All audio and user-created song/setlist data are local. Core functionality uses Apple frameworks (SwiftUI/UIKit, AVFoundation, CoreMIDI and MediaPlayer), without a backend, authentication provider, payment processor, advertising, analytics or AI service. The Vercel-hosted support/privacy website is optional. The same features are available across regions; the interface supports English, Simplified/Traditional Chinese, Japanese, Korean, French, German, Spanish and Brazilian Portuguese.
+
+4. Third-party material
+This is a music practice utility, not a regulated service. Bundled recorded percussion uses CC0 sources from Virtuosity Drums, Versilian Community Sample Library and BigSoundBank. Attribution.txt, Virtuosity-LICENSE.txt, VCSL-LICENSE.txt and sources.json are included in the app bundle. Electronic clicks are synthesized locally. Song titles in store screenshots are illustrative user-entered cover-band setlist data; recordings of those songs are not provided, and no artist endorsement is claimed.

@@ -32,7 +32,7 @@ No free/price references in screenshot captions, subtitles or promotional text. 
 - Next-version draft only; App Store production release has not been submitted or published by this materials task.
 - See `publication-audit.json` for the verified save/upload state.
 
-Text and subtitles have been verified in all nine locales. All new screenshots were uploaded on 2026-11-10 using the macOS native file chooser, without changing Chrome extension permissions: 8 iPhone and 4 iPad images per locale (108 total). All eighteen saved groups were checked against the selected locale, thumbnail assets, screenshot counts and ordered filenames. See `screenshot-upload-audit.json`, `upload-proof-iphone.png`, and `upload-proof-ipad.png`. The version remains a draft and has not been submitted for review.
+Text and subtitles have been verified in all nine locales. All new screenshots were uploaded on 2026-11-10 using the macOS native file chooser, without changing Chrome extension permissions: 8 iPhone and 4 iPad images per locale (108 total). All eighteen saved groups were checked against the selected locale, thumbnail assets, screenshot counts and ordered filenames. See `screenshot-upload-audit.json`, `upload-proof-iphone.png`, and `upload-proof-ipad.png`. Build 1.0.2 (83) and updated review notes are saved. Three submission attempts on 2026-11-10 were blocked by Apple’s validation: “1 or more screenshots must finish processing.” The version remains Prepare for Submission; it has not entered the review queue. See `submission-processing-blocker.png`.
 
 ## Measurement
 
