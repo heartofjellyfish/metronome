@@ -25,6 +25,8 @@ private final class CatalogCell: UICollectionViewCell {
     var swipeID: UUID?
     var actionsView: UIView?
     private let swipeMask = CAGradientLayer()
+    private var swipeHighlight: UIView?
+    var swipeHighlightColor: UIColor = .clear
     private(set) var rowView: (UIView & UIContentView)?
 
     func setRow(_ configuration: UIContentConfiguration) {
@@ -59,7 +61,10 @@ private final class CatalogCell: UICollectionViewCell {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        if swipeID != nil { updateSwipeMask() }
+        if swipeID != nil {
+            updateSwipeMask()
+            swipeHighlight?.frame = contentView.bounds.insetBy(dx: 12, dy: 0)
+        }
     }
 
     private func updateSwipeMask() {
@@ -78,6 +83,18 @@ private final class CatalogCell: UICollectionViewCell {
 
     func setSwipeOffset(_ offset: CGFloat, width: CGFloat) {
         updateSwipeMask()
+        if swipeHighlight == nil {
+            let highlight = UIView()
+            highlight.isUserInteractionEnabled = false
+            highlight.accessibilityElementsHidden = true
+            contentView.insertSubview(highlight, at: 0)
+            swipeHighlight = highlight
+        }
+        // One subtle, stationary band connects the shifted song with its revealed actions.
+        // It stays inside the same inset mask so the screen's bezel and shadow remain intact.
+        swipeHighlight?.backgroundColor = swipeHighlightColor
+        swipeHighlight?.frame = contentView.bounds.insetBy(dx: 12, dy: 0)
+        swipeHighlight?.alpha = min(1, abs(offset) / max(width, 1))
         rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
         // Reveal only the trailing strip. The transparent row preserves the shared inset shadow.
         actionsView?.frame = CGRect(x: bounds.width + offset, y: (bounds.height - 60) / 2,
@@ -87,6 +104,8 @@ private final class CatalogCell: UICollectionViewCell {
 
     func closeSwipe() {
         contentView.layer.mask = nil
+        swipeHighlight?.removeFromSuperview()
+        swipeHighlight = nil
         rowView?.layer.removeAllAnimations()
         rowView?.transform = .identity
         rowView?.isUserInteractionEnabled = true
@@ -286,6 +305,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
         func configure(_ candidate: UICollectionViewCell, _ path: IndexPath) {
             guard let cell = candidate as? CatalogCell else { return }
             cell.configuredRevision = revision
+            cell.swipeHighlightColor = UIColor(parent.p.ink).withAlphaComponent(parent.p.dark ? 0.07 : 0.055)
             if cell.swipeID != nil {
                 if path.section == 1, items.indices.contains(path.item),
                    let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty { return }
