@@ -1,0 +1,158 @@
+{
+  "version": "1.0.2",
+  "appId": "6819347521",
+  "date": "2026-11-09",
+  "state": "Prepare for Submission",
+  "metadata": [
+    {
+      "locale": "en-US",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "zh-Hans",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "zh-Hant",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "ja",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "ko",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "fr-FR",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "de-DE",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "es-ES",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    },
+    {
+      "locale": "pt-BR",
+      "verified": true,
+      "fields": [
+        "description",
+        "keywords",
+        "promotionalText",
+        "whatsNew"
+      ]
+    }
+  ],
+  "subtitles": [
+    {
+      "locale": "en-US",
+      "verified": true,
+      "subtitle": "Live Mode, Bluetooth, Setlists"
+    },
+    {
+      "locale": "zh-Hans",
+      "verified": true,
+      "subtitle": "现场模式、蓝牙踏板、演出歌单"
+    },
+    {
+      "locale": "zh-Hant",
+      "verified": true,
+      "subtitle": "現場模式、藍牙踏板、演出歌單"
+    },
+    {
+      "locale": "ja",
+      "verified": true,
+      "subtitle": "ライブモード、Bluetoothペダル、セットリスト"
+    },
+    {
+      "locale": "ko",
+      "verified": true,
+      "subtitle": "라이브 모드, Bluetooth 페달, 세트리스트"
+    },
+    {
+      "locale": "fr-FR",
+      "verified": true,
+      "subtitle": "Scène, Bluetooth, setlists"
+    },
+    {
+      "locale": "de-DE",
+      "verified": true,
+      "subtitle": "Live, Bluetooth & Setlists"
+    },
+    {
+      "locale": "es-ES",
+      "verified": true,
+      "subtitle": "Directo, Bluetooth y setlists"
+    },
+    {
+      "locale": "pt-BR",
+      "verified": true,
+      "subtitle": "Ao vivo, Bluetooth e setlists"
+    }
+  ],
+  "screenshotsUploaded": false,
+  "screenshotUploadBlocker": "Chrome extension file-URL access disabled; native picker unavailable while Mac locked. No attempt to bypass browser security policy.",
+  "englishDraftScreenshotGroup": "Existing Face ID large screenshot association removed while preparing replacement; new assets not yet uploaded. Other locales retain their prior assets. Originals remain in Asset Library.",
+  "submitted": false,
+  "localAssets": {
+    "iphone": 72,
+    "ipad": 27,
+    "dimensions": {
+      "1284x2778": 72,
+      "2064x2752": 27
+    },
+    "nativeCaptureJourneys": "Nine languages passed on iPhone and iPad simulators; final English/Chinese and all pedal cards recaptured with full non-charging status bars."
+  }
+}

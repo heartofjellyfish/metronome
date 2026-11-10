@@ -1,18 +1,18 @@
 # Product marketing context
 
-Version: v3 · Updated: 2026-10-05
+Version: v4 · Updated: 2026-11-09
 
 ## Product
 
-**metronome, just cleaner** is an ad-free iPhone and iPad metronome with a tactile instrument interface, recorded percussion sounds and focused practice tools.
+**metronome, just cleaner** is an ad-free iPhone and iPad metronome with a tactile instrument interface, recorded percussion, focused practice tools and a Live Mode for the stage.
 
 Category: Music. Native SwiftUI, iOS 17+. Initial App Store release: 1.0. Founder confirmed on 2026-10-05: free for life, ad-free for life, all current features included. Set App Store price to free before release.
 
-Verified in source and README: 20–300 BPM; dial, numeric entry and tap tempo; selectable meters and subdivisions; accent/normal/mute for each beat; 12 sounds (11 recorded instruments and an electronic click); count-in; ascending/descending tempo ramps; audible/silent practice bars; locally saved named presets; ivory and graphite themes. Audio ships locally. No ad, analytics, purchase or remote dependency integration was found in the inspected project.
+Verified in source and README: 20–300 BPM; dial, numeric entry and tap tempo; selectable meters and subdivisions; accent/normal/mute for each beat; recorded percussion plus synthesized clicks; count-in; ascending/descending tempo ramps; audible/silent practice bars; locally saved named presets; ivory and graphite themes. Audio ships locally. Version 1.0.2 Build 83 adds the large-beat Live View, Bluetooth pedal assignments, setlists, a shared song library with per-song notes, expanded subdivisions and two-sound polyrhythm practice. The next-version product page leads with Live Mode, Bluetooth pedals and setlists. Practice Routine remains future work. No ad, analytics, purchase or remote dependency integration was found in the inspected project.
 
 ## Audience and jobs
 
-Initial audience hypothesis: musicians practicing regularly on their own, especially drummers, guitarists and pianists who value a considered interface and a comfortable click sound. English (U.S.) is the initial listing language, not a confirmed exclusive sales territory.
+Musicians across instruments: piano, violin, guitar, drums and more. Students, teachers, hobbyists and performers. Use cases include solo practice, lessons, rehearsals and stage performance. Nine existing interface/store languages: English, Simplified and Traditional Chinese, Japanese, Korean, French, German, Spanish and Brazilian Portuguese. Do not position the app as drummer-only.
 
 Jobs: start a practice pulse; hear subdivisions and accents; gradually change speed; practice keeping time through silence; return to a saved rhythm.
 
@@ -22,7 +22,7 @@ Founder-selected priorities: no ads, quick operation, good sound and strong aest
 
 Positioning: a metronome that feels like a small, thoughtfully made musical instrument. Show the tempo dial and restrained ivory/graphite surfaces. Demonstrate quality through recordings, useful controls and visual detail.
 
-Core message: **Set your tempo. Start playing.**
+Core message for 1.0.2: **Live Mode. See every beat.** Support with Bluetooth pedal control and setlists; retain no-ads, good sounds and focused practice as the broader product story.
 
 ## Competition
 
@@ -33,11 +33,11 @@ Consequently, “no ads” is a useful promise but not a unique market advantage
 ## Differentiation and proof
 
 - Instrument-like visual design: current app screenshots.
-- 11 recorded percussion instruments plus electronic click: source and audio provenance.
+- Recorded percussion and synthesized clicks: source and audio provenance; do not use a fixed sound count in marketing.
 - Rhythm shaping, ramp and silent-bar training: implemented features and existing functional tests.
 - No ads: no advertising integration found in inspected source/project.
 
-No launch-speed measurement on the connected phone, customer counts, ratings, endorsements or clinical/educational outcomes are available. Avoid “instant,” “studio grade,” “perfect timing” and “zero latency” as technical promises. Background/lock-screen/headphone journeys need physical validation before becoming headline claims. A privacy declaration requires a separate full data-practices review.
+Build 83 Release first-responsive-screen launch was measured on the connected iPhone 14 Pro at a mean 0.43 s across five XCTest samples; this is not a measurement of Bluetooth latency or first-play audio latency. No verified customer counts, awards, endorsements or educational outcomes are available. Studio-grade remains the founder-approved sound-quality positioning, not a technical certification. Avoid perfect-timing and zero-latency promises. Real pedal, call/alarm, lock-screen and long headphone journeys require physical validation before becoming reliability claims. Keyboard-style pedals require the app on screen; media and MIDI modes differ. Never promise compatibility with every Bluetooth pedal.
 
 ## Objections and fit
 
@@ -61,9 +61,11 @@ Read `AppStore/brand-preferences.md` before drafting or revising visual assets a
 
 ## Goals
 
-First: publish a truthful, coherent English product page. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
+For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Keep the first three screenshots focused on the visible beat cue, Bluetooth pedals and setlists. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
 
 ## Changelog
+
+- v4 (2026-11-09): Repositioned the next release around Live Mode, Bluetooth pedals and setlists; broadened musician use cases, removed fixed sound counts, and recorded measured launch evidence and hardware-test limits.
 
 - v3 (2026-10-05): Recorded explicit founder preferences and approved creative decisions for reuse across future apps.
 

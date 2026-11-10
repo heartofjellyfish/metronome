@@ -1,6 +1,57 @@
 import XCTest
 
 final class PerformanceUITests: XCTestCase {
+    // Capture real screens for the Live Mode launch, using sample songs and saved
+    // keyboard bindings. Fixtures illustrate UI states, not hardware certification.
+    private func captureLiveLaunchAssets(_ language: String) {
+        launch(language)
+        func capture(_ name: String) { shot("launch__\(language)__\(name)") }
+        capture("04-home")
+        tap("settings"); tap("settings-setlists")
+        let list = language.hasPrefix("zh") ? "周六演出" : "Saturday"
+        tap("setlist-" + list)
+        // Sample song titles are user content; use short, neutral titles in every locale.
+        for (old, name) in [("Gossip", "Blue Hour"), ("男孩别哭", "Afterglow"), ("夜来香", "Home Again")] {
+            tap("song-" + old)
+            liveSongTitle.doubleTap()
+            let field = app.textFields["song-name"]
+            field.tap()
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + name + "\n")
+            tap("save-song"); tap("close-performance")
+        }
+        capture("03-setlists")
+        tap("song-Blue Hour"); tap("performance-play")
+        capture("01-live")
+        tap("performance-play"); tap("close-performance"); tap("close-panel")
+        if app.windows.firstMatch.frame.width < 700 {
+            tap("all-sounds"); capture("05-sounds"); tap("close-panel")
+            tap("practice"); tap("practice-ramp"); tap("RAMP-on"); capture("07-ramp")
+            tap("close-panel"); tap("practice-gap"); tap("SOUND / SILENCE-on"); capture("08-silent")
+            tap("close-panel"); tap("close-panel"); tap("close-settings")
+            tap("home-division"); tap("division-patterns"); tap("pattern-family-3"); capture("06-rhythms"); tap("close-panel")
+        }
+        app.terminate()
+        app.launchArguments = ["--reference", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound", "--pedal-fixture-keyboard", "-AppleLanguages", "(\(language))"]
+        app.launch(); XCTAssertTrue(b("pedal-toggle").waitForExistence(timeout: 8))
+        capture("02-pedal"); app.terminate()
+    }
+    func testLiveLaunchAssetsEnglish() { captureLiveLaunchAssets("en") }
+    func testLiveLaunchAssetsLocalized() {
+        for language in ["zh-Hans", "zh-Hant", "ja", "ko", "fr", "de", "es", "pt-BR"] {
+            captureLiveLaunchAssets(language)
+        }
+    }
+    func testLiveLaunchAssetsChineseRecapture() {
+        for language in ["zh-Hans", "zh-Hant"] { captureLiveLaunchAssets(language) }
+    }
+    func testLiveLaunchPedalAssets() {
+        for language in ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "de", "es", "pt-BR"] {
+            app = XCUIApplication()
+            app.launchArguments = ["--reference", "--light", "--panel=pedal", "--pedal-ui-test", "--pedal-fixture-bound", "--pedal-fixture-keyboard", "-AppleLanguages", "(\(language))"]
+            app.launch(); XCTAssertTrue(b("pedal-toggle").waitForExistence(timeout: 8))
+            shot("launch__\(language)__02-pedal"); app.terminate()
+        }
+    }
     private var app: XCUIApplication!
     override func setUpWithError() throws { continueAfterFailure = false }
     private func launch(_ lang: String = "zh-Hans", dark: Bool = false, manyLists: Bool = false) {

@@ -1,0 +1,3 @@
+# Keep full-resolution native captures locally; the UI-test journey reproduces
+# them. Commit the finished store images and editable composition sources.
+screenshots/*/*/raw/

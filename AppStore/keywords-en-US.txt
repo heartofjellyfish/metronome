@@ -1,1 +1,1 @@
-bpm,rhythm,beat,practice,timing,accent,subdivision,triplet,silent,bars,gap,ramp,percussion,presets
+pedal,bpm,tempo,rhythm,practice,accent,subdivision,triplet,silent,bars,ramp,percussion,polyrhythm

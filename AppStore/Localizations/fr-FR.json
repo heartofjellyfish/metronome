@@ -1,34 +1,43 @@
 {
-  "subtitle": "Sans pub. Sons réels. Tap",
-  "keywords": "métronome,bpm,rythme,mesure,accent,triolet,silence,rampe,percussion,pratique",
-  "promo": "Ouvrez. Jouez. Sans pub ni interruption. De vraies percussions, des rampes de tempo et des mesures muettes. Un petit instrument qui donne envie de pratiquer.",
-  "description": "Ouvrez. Jouez. Sans pop-up. Sans pub.\nToutes les fonctions sont là.\n\nDROIT AU RYTHME.\nPas d’écran de chargement, de pop-up au démarrage ou de demande de note. Tournez la molette, saisissez un BPM ou tapotez en rythme. De 20 à 300 BPM.\n\nDES PERCUSSIONS DE QUALITÉ STUDIO.\nDe vrais instruments. Joués par de vraies personnes. Woodblock, charley, rimshot, shaker et d’autres sons enregistrés, plus un clic électronique. Écoutez. Choisissez votre préféré.\n\nLA SIMPLICITÉ, SOIGNÉE.\nDu minimalisme dans chaque détail. Un petit instrument qu’on a plaisir à retrouver. Thème clair ou sombre, selon l’humeur.\n\nDES ACCENTS. DU GROOVE.\nChoisissez la mesure et les subdivisions, triolets compris. Rendez chaque temps plus fort, plus doux ou muet.\n\nPLUS VITE. PETIT À PETIT.\nRéglez le tempo de départ, la cible et l’intervalle de changement. La rampe fait avancer le tempo. Le décompte laisse aux mains le temps de se préparer.\n\nLE CLIC SE REPOSE. VOUS CONTINUEZ.\nChoisissez combien de mesures sonnent et combien restent muettes. Quand le clic revient, écoutez si vous êtes toujours ensemble.\n\nLA MÊME CHANSON DEMAIN ?\nGardez tempo, mesure, son et réglages de pratique dans un préréglage. Prêts pour la prochaine fois.\n\nAllez jouer quelque chose.",
+  "subtitle": "Scène, Bluetooth, setlists",
+  "keywords": "métronome,pédale,bpm,tempo,rythme,pratique,accent,triolet,silence,mesure,percussion,polyrythmie",
+  "promo": "Le mode scène arrive. Grands chiffres, pédales Bluetooth et setlists pour tout le concert. Les mains restent sur votre instrument. Toujours sans pub.",
+  "description": "Le métronome monte sur scène.\nMode scène, pédales Bluetooth et setlists. Les mains restent à la musique.\n\nChaque temps, d’un coup d’œil.\nUn grand numéro de temps, des accents bien lisibles. Morceau, tempo, mesure et subdivision réunis.\n\nLe pied prend le relais.\nAssignez une pédale Bluetooth compatible à lecture/arrêt, morceau suivant/précédent, tap tempo ou réglage des BPM. Les commandes sont mémorisées. Les pédales de type clavier fonctionnent lorsque l’app est à l’écran ; les modes multimédia et MIDI ont des capacités différentes.\n\nVotre concert, dans l’ordre.\nCréez vos setlists depuis la bibliothèque. Gardez tempo, mesure, subdivision, son et notes pour chaque morceau. Réorganisez par glisser-déposer. Changez de morceau quand vous le décidez. Modifiez un morceau partagé une fois : toutes ses setlists sont à jour.\n\nDROIT AU RYTHME.\nPas d’écran de chargement, de pop-up au démarrage ou de demande de note. Tournez la molette, saisissez un BPM ou tapotez en rythme. De 20 à 300 BPM.\n\nDES PERCUSSIONS DE QUALITÉ STUDIO.\nDe vrais instruments. Joués par de vraies personnes. Woodblock, charley, rimshot, shaker et d’autres sons enregistrés, plus un clic électronique. Écoutez. Choisissez votre préféré.\n\nLA SIMPLICITÉ, SOIGNÉE.\nDu minimalisme dans chaque détail. Un petit instrument qu’on a plaisir à retrouver. Thème clair ou sombre, selon l’humeur.\n\nDES ACCENTS. DU GROOVE.\nChoisissez la mesure et les subdivisions, triolets compris. Rendez chaque temps plus fort, plus doux ou muet.\n\nPLUS VITE. PETIT À PETIT.\nRéglez le tempo de départ, la cible et l’intervalle de changement. La rampe fait avancer le tempo. Le décompte laisse aux mains le temps de se préparer.\n\nLE CLIC SE REPOSE. VOUS CONTINUEZ.\nChoisissez combien de mesures sonnent et combien restent muettes. Quand le clic revient, écoutez si vous êtes toujours ensemble.\n\nLA MÊME CHANSON DEMAIN ?\nGardez tempo, mesure, son et réglages de pratique dans un préréglage. Prêts pour la prochaine fois.\n\nAllez jouer quelque chose.",
   "captions": [
     [
-      "Ouvrez. Jouez.\nSans pop-up.",
-      "Sans pub. Sans interruption."
+      "Mode scène.\nChaque temps en vue.",
+      "Grands chiffres. Accents bien lisibles."
     ],
     [
-      "Percussions\nqualité studio.",
-      "De vrais instruments. De vraies personnes."
+      "Pédales Bluetooth.\nLes mains libres.",
+      "Lancez, arrêtez, changez de morceau au pied."
     ],
     [
-      "La simplicité,\nsoignée.",
-      "Du minimalisme dans chaque détail."
+      "Vos setlists.\nPrêtes pour la scène.",
+      "Tempo, mesure, son et notes par morceau."
     ],
     [
-      "Des accents.\nDu groove.",
-      "Temps forts ou légers. Trouvez votre feeling."
+      "Ouvrez. Jouez.\nSans pop-ups.",
+      "Sans pub. Directement à votre instrument."
     ],
     [
-      "Plus vite.\nPetit à petit.",
-      "Commencez lentement. La rampe fait le reste."
+      "Percussion de\nqualité studio.",
+      "Instruments enregistrés et clic de scène."
     ],
     [
-      "Des mesures\nsans clic.",
-      "Le clic se repose. Vous continuez."
+      "Trouvez votre\nrythme.",
+      "Subdivisions, silences et swing."
+    ],
+    [
+      "Plus vite.\nPas à pas.",
+      "Commencez lentement. Le tempo suit."
+    ],
+    [
+      "Des mesures muettes.\nContinuez à jouer.",
+      "Le clic fait une pause. Vous gardez le rythme."
     ]
   ],
   "name": "metronome, just cleaner",
-  "support_url": "https://app.qi.land/metronome/"
+  "support_url": "https://app.qi.land/metronome/",
+  "whats_new": "Le mode scène arrive.\n\n• Grands numéros de temps et accents lisibles sur scène.\n• Pédales Bluetooth : lecture/arrêt, changement de morceau, tap tempo et BPM.\n• Setlists et bibliothèque : tempo, mesure, subdivision, son et notes par morceau.\n• Plus de subdivisions et de motifs. Deux sons au choix pour les polyrythmes.\n• Ajout de plusieurs morceaux et actions par balayage.\n\nToujours sans pub. Toujours aussi simple."
 }
