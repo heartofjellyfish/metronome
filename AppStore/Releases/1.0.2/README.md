@@ -29,10 +29,12 @@ No free/price references in screenshot captions, subtitles or promotional text. 
 
 - Copy checked against Apple's 30-character subtitle, 170-character promo, 4,000-character description/release-note and 100-byte keyword limits.
 - Apple sources: https://developer.apple.com/app-store/product-page/ and https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information
-- Next-version draft only; App Store production release has not been submitted or published by this materials task.
+- Version 1.0.2 (83) submitted on 2026-11-10; Apple confirmed Waiting for Review. Automatic release after approval is selected.
 - See `publication-audit.json` for the verified save/upload state.
 
-Text and subtitles have been verified in all nine locales. All new screenshots were uploaded on 2026-11-10 using the macOS native file chooser, without changing Chrome extension permissions: 8 iPhone and 4 iPad images per locale (108 total). All eighteen saved groups were checked against the selected locale, thumbnail assets, screenshot counts and ordered filenames. See `screenshot-upload-audit.json`, `upload-proof-iphone.png`, and `upload-proof-ipad.png`. Build 1.0.2 (83) and updated review notes are saved. Three submission attempts on 2026-11-10 were blocked by Apple’s validation: “1 or more screenshots must finish processing.” The version remains Prepare for Submission; it has not entered the review queue. See `submission-processing-blocker.png`.
+Text and subtitles have been verified in all nine locales. All eighteen screenshot groups were verified after loading: 8 ordered iPhone and 4 ordered iPad images per locale, 108 total, each with an Apple CDN thumbnail. Pending uploads were repaired through the native macOS file chooser and completed assets were reused where possible. English iPhone screenshots were re-encoded to PNG without changing their artwork; all other groups retain JPEGs. No Chrome extension permissions were changed.
+
+Build **1.0.2 (83)** was submitted on **2026-11-10**. Apple displayed **1 Item Submitted** and **Waiting for Review**. Automatic release after approval is selected. The earlier processing blocker is resolved. See `screenshot-processing-audit.json`, `submission-confirmation.png` and `publication-audit.json`. The earlier `screenshot-upload-audit.json` establishes counts/order only; it did not establish completion of every image's server processing.
 
 ## Measurement
 
