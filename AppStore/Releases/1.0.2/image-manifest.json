@@ -8,8 +8,8 @@
     "sha256": "bb4d37ef0897450cce3c0b04468280e28fbaad15c9ba5d237366dfa53f4281d4"
   },
   "screenshots/ipad/de/store/03.jpg": {
-    "bytes": 621539,
-    "sha256": "64dc21540f2a091e82fd7411ffd3314d7f0ea6587de0ff5b384504e302cf9b13"
+    "bytes": 686602,
+    "sha256": "061441d21b1affc6e5de0fc301430d5c3e1483950f78e80b8060de32ffd9c7f8"
   },
   "screenshots/ipad/en/store/01.jpg": {
     "bytes": 648757,
@@ -20,8 +20,8 @@
     "sha256": "f0fffd65f83d73fe05bcfb8baa1b77ad05d7c86c200ad0938f579dd3fdbe90d6"
   },
   "screenshots/ipad/en/store/03.jpg": {
-    "bytes": 617400,
-    "sha256": "6b903fc1f8faa87c43d4c448039637099b4ca264879afb30ca638308d69d7e8a"
+    "bytes": 682534,
+    "sha256": "8cfa563a198e8468aafc843b097121fe067d49e1389dc9ad203e3b64cd8faae1"
   },
   "screenshots/ipad/es/store/01.jpg": {
     "bytes": 658533,
@@ -32,8 +32,8 @@
     "sha256": "2c48ed1948bea80db63a7e2850d3317a5f1d253ef28828a09070cb596e6f13ca"
   },
   "screenshots/ipad/es/store/03.jpg": {
-    "bytes": 614620,
-    "sha256": "7499619d30a5bf546c82ea0d43dd6b3dcf32388a2992083b23091b1f722fbf82"
+    "bytes": 679681,
+    "sha256": "f66814890afa5842e4ce9a333e67a9581a13bad4b78546a57ee1e748e82f4df9"
   },
   "screenshots/ipad/fr/store/01.jpg": {
     "bytes": 660333,
@@ -44,8 +44,8 @@
     "sha256": "33e2d2f877d0a93a3494e6586ade79d4579d3e7f48af203275013017b0f3988c"
   },
   "screenshots/ipad/fr/store/03.jpg": {
-    "bytes": 620555,
-    "sha256": "5d552a6eea5b8683bffe158921dace23457caa35f17103b503380dac382e101b"
+    "bytes": 685645,
+    "sha256": "37ee3085360e60d62cb4b12a371728bee674deaec71152ac35931c8c403c6276"
   },
   "screenshots/ipad/ja/store/01.jpg": {
     "bytes": 652820,
@@ -56,8 +56,8 @@
     "sha256": "76eec822399213cf4c7afdd4e1bfdf8efea31749f3387af57e014c890a3f7740"
   },
   "screenshots/ipad/ja/store/03.jpg": {
-    "bytes": 606790,
-    "sha256": "bfbb0d342d12db12c34a3a76e1917b590bb9db7e7dab05d51fd5b87d763656d7"
+    "bytes": 671745,
+    "sha256": "48b20463a66de5ff642dce5aa4297d5222c7b8aeefc2393efe29afd7cc4a8041"
   },
   "screenshots/ipad/ko/store/01.jpg": {
     "bytes": 636594,
@@ -68,8 +68,8 @@
     "sha256": "2f1204c60a4ad026eaffd06ae5746244d45f57e696930788f86b68a38c2351a5"
   },
   "screenshots/ipad/ko/store/03.jpg": {
-    "bytes": 594088,
-    "sha256": "833d0c8d6ad4d496944cc481ad73e9aa7f205ad45080936f5d44d25c7881c834"
+    "bytes": 659066,
+    "sha256": "9ff40c07978f851ac362ee3441b2253a7d247e403f682209474d12cda23578f4"
   },
   "screenshots/ipad/pt-BR/store/01.jpg": {
     "bytes": 658553,
@@ -80,8 +80,8 @@
     "sha256": "3ce8393e5c1f5b7602aa6dd3885a45bbdfc03db9343716b2d6973ea77a7c3334"
   },
   "screenshots/ipad/pt-BR/store/03.jpg": {
-    "bytes": 623365,
-    "sha256": "1acad6ade6c9212718811b189b43feb08a7ec1a85a65feaa47b4f6567a116cec"
+    "bytes": 688431,
+    "sha256": "908bc5f6725de2e3e7d505f6ef5412d48167b3fe1bba375f99a11145a27369b2"
   },
   "screenshots/ipad/zh-Hans/store/01.jpg": {
     "bytes": 650056,
@@ -92,8 +92,8 @@
     "sha256": "7a99992b789941cb1add2da07647bf09ae190af83887dafada9420bb5f793662"
   },
   "screenshots/ipad/zh-Hans/store/03.jpg": {
-    "bytes": 604134,
-    "sha256": "77b9611d6c4b309b061f84e2db6bcbab2811202c6c869c602fc4291b0a453aa1"
+    "bytes": 669234,
+    "sha256": "bf96e0e99fbba8169e849bd454b7b61c6786a4979609fe1b150df125b6543e96"
   },
   "screenshots/ipad/zh-Hant/store/01.jpg": {
     "bytes": 651107,
@@ -104,8 +104,8 @@
     "sha256": "e393264a6cac5b917f5151e706f916addf031ec544c001bb7285feea7de32742"
   },
   "screenshots/ipad/zh-Hant/store/03.jpg": {
-    "bytes": 605529,
-    "sha256": "969d8d8ec7714af3e3167be2d2872c7f66f92c7c0a76b6691ce1800bd7df6952"
+    "bytes": 670641,
+    "sha256": "b9eb7e0ef99b2f2fc7cb33a5adacf1268885e8d837cac981549d399b615afc13"
   },
   "screenshots/iphone/de/store/01.jpg": {
     "bytes": 555890,
@@ -116,8 +116,8 @@
     "sha256": "69853ffda9723c7776d04a606930af7b65724a888b9edad8fb61ffb5ce53f38e"
   },
   "screenshots/iphone/de/store/03.jpg": {
-    "bytes": 519272,
-    "sha256": "b4950af867d05c936d0321d43387b679dd397cb9612e9c8b31391c845c6336ec"
+    "bytes": 563991,
+    "sha256": "8da2d693dceac814b9c1d03cd800dce8fd76af28e0a20b0439f37c5f01807ef2"
   },
   "screenshots/iphone/de/store/04.jpg": {
     "bytes": 565125,
@@ -148,8 +148,8 @@
     "sha256": "a6d1dd7d21b51378eca212f422b39fff65b09b312092b36dcec840634d807dab"
   },
   "screenshots/iphone/en/store/03.jpg": {
-    "bytes": 514837,
-    "sha256": "f1e9fc1fcb74de9b1d3d78ae082d51de52c319b18bca76cc17b6c2c6c5f4790d"
+    "bytes": 559524,
+    "sha256": "f65ee407a6e703d6816d1e2dadff7325ffe4a3610349637be1655a8fcaaf6b84"
   },
   "screenshots/iphone/en/store/04.jpg": {
     "bytes": 551841,
@@ -180,8 +180,8 @@
     "sha256": "832f57b3e0a6c054eef07afb9d9ee0189bb50b259033738cb2c8b1509b7a7583"
   },
   "screenshots/iphone/es/store/03.jpg": {
-    "bytes": 513799,
-    "sha256": "7f5064c45d7d631d25d2a538e3c57f8d9a0e3b7f69fe1d158cfb8a727b4cf305"
+    "bytes": 558499,
+    "sha256": "14e6252a59e7f0fb862730f02ca1bb7667aaa2f89f831f62dca326ee12dda8ac"
   },
   "screenshots/iphone/es/store/04.jpg": {
     "bytes": 567804,
@@ -212,8 +212,8 @@
     "sha256": "3e31e600230e7d697b581162791bddfef59a50549975f5a0de594801d812d5c5"
   },
   "screenshots/iphone/fr/store/03.jpg": {
-    "bytes": 521761,
-    "sha256": "ee68d75614595ee78c2fd76d75ed99e0d65480112899dde24976ff41e479c34c"
+    "bytes": 566448,
+    "sha256": "c7ddeb859de951afae37f603852834921ab7958270767a09f3220bacb6c47b5c"
   },
   "screenshots/iphone/fr/store/04.jpg": {
     "bytes": 565822,
@@ -244,8 +244,8 @@
     "sha256": "3f58b70710929d70c1e690526030fdb7afccc79e40be59076f6726029e868222"
   },
   "screenshots/iphone/ja/store/03.jpg": {
-    "bytes": 509285,
-    "sha256": "e5b78b3769f2faff25645cb33ea8af02c4c33c99487d29d196a85bde71f8ad4d"
+    "bytes": 553616,
+    "sha256": "1d03ebf7d5e09083ebe5a33de411237920844b51a3a548398a2cf676317ea6a7"
   },
   "screenshots/iphone/ja/store/04.jpg": {
     "bytes": 554512,
@@ -276,8 +276,8 @@
     "sha256": "75e534a8353671edfe063d1f4d8e1e6e63c8086d3896e7c788f77619e9ac9da4"
   },
   "screenshots/iphone/ko/store/03.jpg": {
-    "bytes": 494810,
-    "sha256": "e645912d7d1dcdf9c40f7a7a1474fc795feedb2dc3b387ab26142a3f0e5188ac"
+    "bytes": 539450,
+    "sha256": "3fe0b2b5574a55a58831c5aa762ceb9c7dbde013c5008f453e9013c1152488a4"
   },
   "screenshots/iphone/ko/store/04.jpg": {
     "bytes": 539295,
@@ -308,8 +308,8 @@
     "sha256": "9aeaa3438e019e47a6b76a6dc725e27abffa26653e2de4da7e0ffcdfcfb754c5"
   },
   "screenshots/iphone/pt-BR/store/03.jpg": {
-    "bytes": 521129,
-    "sha256": "8c06c22fcd1060dda5b9497a97be65ebc14eb5b611041031cf048c6f0704f89c"
+    "bytes": 565762,
+    "sha256": "fa1ed5453378fe9429195b4373208ccbe68ef835258bb7aa99b0f94c13de4a77"
   },
   "screenshots/iphone/pt-BR/store/04.jpg": {
     "bytes": 561542,
@@ -340,8 +340,8 @@
     "sha256": "5f75f7958107d8c7474708fea3dc4d6ad915b5084bc288ea34f3a4e7be508531"
   },
   "screenshots/iphone/zh-Hans/store/03.jpg": {
-    "bytes": 502372,
-    "sha256": "f5d16c38c5d18ec4ea772a7f14af7406c7d759d1c462c0b544ec1f4298716ad0"
+    "bytes": 546719,
+    "sha256": "d33cd4dc9719890cbb996d8370f444a79c0afaa467e26ea21bee94d239a5fd2f"
   },
   "screenshots/iphone/zh-Hans/store/04.jpg": {
     "bytes": 554322,
@@ -372,8 +372,8 @@
     "sha256": "77be567b5f58d1505630542976fc1d930352915df24ba78f01f91bda928f861e"
   },
   "screenshots/iphone/zh-Hant/store/03.jpg": {
-    "bytes": 504002,
-    "sha256": "f97ba0b3a7c1225dc9a71db077181a67f8000c00803b9067e4acdaba8b304f6e"
+    "bytes": 548393,
+    "sha256": "40ab5fe9b09f4098ae84fc28b12b0829f816aea1813f0497f1222fdc825e0d39"
   },
   "screenshots/iphone/zh-Hant/store/04.jpg": {
     "bytes": 557228,

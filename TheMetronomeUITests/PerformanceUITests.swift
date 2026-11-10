@@ -44,6 +44,31 @@ final class PerformanceUITests: XCTestCase {
             tap("song-tempo"); enterTempo(bpm)
             tap("save-song"); tap("close-performance")
         }
+        appendTourSongs()
+    }
+    private func appendTourSongs() {
+        tap("edit-setlist"); tap("add-song")
+        for (name, bpm) in [("Time", "120"), ("Karma Police", "75"), ("Here Comes the Sun", "129"),
+                            ("Comfortably Numb", "63"), ("No Surprises", "76"), ("Let It Be", "72"),
+                            ("Another Brick in the Wall", "104"), ("High and Dry", "88"), ("Hey Jude", "74")] {
+            tap("new-song")
+            let field = app.textFields["song-name"]
+            field.tap(); field.typeText(name + "\n")
+            tap("song-tempo"); enterTempo(bpm); tap("save-song")
+        }
+        tap("save-setlist")
+    }
+    func testFullTourSetlistLaunchAssets() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "-AppleLanguages", "(en)"]
+        app.launch(); XCTAssertTrue(b("settings").waitForExistence(timeout: 8))
+        openList("2026 North America Tour"); appendTourSongs(); app.terminate()
+        for language in ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "de", "es", "pt-BR"] {
+            app.launchArguments = ["--reference", "--light", "-AppleLanguages", "(\(language))"]
+            app.launch(); XCTAssertTrue(b("settings").waitForExistence(timeout: 8))
+            openList("2026 North America Tour")
+            shot("launch__\(language)__03-setlists"); app.terminate()
+        }
     }
     func testTourSetlistLaunchAssets() {
         launch("en"); openList("Saturday"); prepareTourSetlist("Saturday")

@@ -1,6 +1,6 @@
 # Product marketing context
 
-Version: v6 · Updated: 2026-11-10
+Version: v7 · Updated: 2026-11-10
 
 ## Product
 
@@ -64,6 +64,8 @@ Read `AppStore/brand-preferences.md` before drafting or revising visual assets a
 For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Use separate screenshots for Live View, Bluetooth pedals, and setlists. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
 
 ## Changelog
+
+- v7 (2026-11-10): Expanded the cover-band tour catalog to twelve real song titles so the visible setlist is filled naturally on phone and iPad, preserving normal row spacing.
 
 - v6 (2026-11-10): Split Live View and setlists into separate cards again at the founder’s request. Bluetooth pedals retain a standalone card. Demo repertoire uses a Pink Floyd / Radiohead / Beatles cover-band set called “2026 North America Tour,” entered in the actual app UI.
 
