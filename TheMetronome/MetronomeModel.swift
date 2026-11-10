@@ -189,6 +189,22 @@ struct SongLibraryStore: Codable {
 @MainActor
 final class MetronomeModel: ObservableObject {
     @Published var rhythm: Rhythm { didSet { audio.mailbox.set(playbackRhythm); save(); if playing { updateNowPlaying() } } }
+    @Published var keepLiveScreenAwake = true {
+        didSet {
+            UserDefaults.standard.set(keepLiveScreenAwake, forKey: "keepLiveScreenAwake")
+            updateScreenAwake()
+        }
+    }
+    private var liveViewVisible = false
+    var screenShouldStayAwake: Bool { liveViewVisible ? keepLiveScreenAwake : playing }
+    func setLiveViewVisible(_ visible: Bool) {
+        liveViewVisible = visible
+        updateScreenAwake()
+    }
+    private func updateScreenAwake() {
+        UIApplication.shared.isIdleTimerDisabled = UIApplication.shared.applicationState == .active && screenShouldStayAwake
+    }
+
     @Published var dark: Bool { didSet { UserDefaults.standard.set(dark, forKey: "dark") } }
     @Published var haptics = true { didSet { UserDefaults.standard.set(haptics, forKey: "haptics") } }
     @Published var soundEnabled = true { didSet { audio.setAudible(soundEnabled) } }
@@ -446,6 +462,7 @@ final class MetronomeModel: ObservableObject {
         var stored = defaults.data(forKey: "rhythm").flatMap { try? JSONDecoder().decode(Rhythm.self, from: $0) } ?? Rhythm()
         stored.sanitize(); rhythm = stored
         dark = defaults.bool(forKey: "dark")
+        keepLiveScreenAwake = defaults.object(forKey: "keepLiveScreenAwake") as? Bool ?? true
         presets = defaults.data(forKey: "presets").flatMap { try? JSONDecoder().decode([SavedPreset].self, from: $0) } ?? []
         selectedPresetID = defaults.string(forKey: "selectedPresetID").flatMap(UUID.init(uuidString:))
         if let store = defaults.data(forKey: "songLibraryStore").flatMap({ try? JSONDecoder().decode(SongLibraryStore.self, from: $0) }) {
@@ -522,6 +539,12 @@ final class MetronomeModel: ObservableObject {
                 self.stop(); self.audio = MetronomeAudio()
                 self.error = L10n.text("Audio output changed. Press play to continue.")
             }
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.updateScreenAwake() }
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in UIApplication.shared.isIdleTimerDisabled = false }
         })
         pedal.perform = { [weak self] action in self?.performPedal(action) }
         let center = MPRemoteCommandCenter.shared()
@@ -602,7 +625,7 @@ final class MetronomeModel: ObservableObject {
             interrupted = true; resumeAfterInterruption = playing
             audio.suspend(); playing = false
             displayTimer?.invalidate(); displayTimer = nil; previewTimer?.invalidate()
-            UIApplication.shared.isIdleTimerDisabled = false
+            updateScreenAwake()
             updateNowPlaying()
         } else if type == AVAudioSession.InterruptionType.ended.rawValue {
             guard interrupted else { return }
@@ -652,7 +675,7 @@ final class MetronomeModel: ObservableObject {
         previewTimer?.invalidate()
         do {
             try audio.start(playbackRhythm, resuming: resuming || needsManualResume, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; needsManualResume = false; lastSerial = 0; event = nil
-            UIApplication.shared.isIdleTimerDisabled = true
+            updateScreenAwake()
             displayTimer = Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshBeat() }
             }
@@ -665,7 +688,7 @@ final class MetronomeModel: ObservableObject {
         resumeAfterInterruption = false
         playing = false; displayTimer?.invalidate(); displayTimer = nil
         previewTimer?.invalidate(); audio.stop(); event = nil
-        UIApplication.shared.isIdleTimerDisabled = false
+        updateScreenAwake()
         updateNowPlaying()
     }
     func refreshBeat() {

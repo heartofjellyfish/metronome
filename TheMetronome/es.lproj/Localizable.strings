@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "Asignaciones guardadas. Pisa el pedal para probarlas.";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "Toca el botón de asignación junto a la acción y pisa el interruptor que quieras usar.";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "Este interruptor está libre. Toca el botón de asignación junto a la acción y vuelve a pisarlo.";
+"Keep screen awake" = "Mantener la pantalla encendida";
+"Allow automatic screen lock" = "Permitir el bloqueo automático";

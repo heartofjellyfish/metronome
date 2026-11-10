@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "저장된 설정이 있습니다. 페달을 밟아 보세요.";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "원하는 동작 옆의 지정 버튼을 누르고 사용할 페달 스위치를 밟으세요.";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "아직 지정되지 않은 스위치입니다. 동작 옆의 지정 버튼을 누르고 다시 밟으세요.";
+"Keep screen awake" = "공연 화면 켜두기";
+"Allow automatic screen lock" = "자동 잠금 허용";

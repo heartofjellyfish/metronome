@@ -5,6 +5,31 @@ import SwiftUI
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
+    @MainActor func testLiveScreenAwakePreferenceCoversStoppedPlayingAndExit() {
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: "keepLiveScreenAwake")
+        defaults.removeObject(forKey: "keepLiveScreenAwake")
+        defer { defaults.set(previous, forKey: "keepLiveScreenAwake") }
+        let model = MetronomeModel()
+        defer { model.setLiveViewVisible(false); model.stop() }
+        XCTAssertTrue(model.keepLiveScreenAwake)
+        XCTAssertFalse(model.screenShouldStayAwake)
+        model.setLiveViewVisible(true)
+        XCTAssertTrue(model.screenShouldStayAwake)
+        model.stop()
+        XCTAssertTrue(model.screenShouldStayAwake)
+        model.keepLiveScreenAwake = false
+        XCTAssertFalse(model.screenShouldStayAwake)
+        model.start()
+        XCTAssertTrue(model.playing)
+        XCTAssertFalse(model.screenShouldStayAwake)
+        model.setLiveViewVisible(false)
+        XCTAssertTrue(model.screenShouldStayAwake)
+        model.stop()
+        XCTAssertFalse(model.screenShouldStayAwake)
+        XCTAssertFalse(MetronomeModel().keepLiveScreenAwake)
+    }
+
     @MainActor func testFirstPressLearnsWithoutVerificationAndSavedMappingWorksAfterReset() {
         let defaults = UserDefaults(suiteName: "PedalDirectLearningTests")!
         defaults.removePersistentDomain(forName: "PedalDirectLearningTests")

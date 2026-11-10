@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "已有绑定，踩一下踏板试试。";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "点想控制的动作旁的「绑定」，再踩你想用的那一边。";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "刚踩的键还没绑定。选一个动作，点「绑定」，再踩一次。";
+"Keep screen awake" = "演出时保持亮屏";
+"Allow automatic screen lock" = "允许自动锁屏";

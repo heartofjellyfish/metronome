@@ -36,6 +36,23 @@ final class PerformanceUITests: XCTestCase {
         if b("close-settings").isHittable { tap("close-settings") }
     }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testLiveScreenPreferenceIsSavedAndReadyViewStillOpens() {
+        launch("en")
+        tap("settings")
+        let scroll = app.scrollViews["settings-scroll"]
+        for _ in 0..<5 { if b("live-screen-on").isHittable { break }; scroll.swipeUp() }
+        tap("live-screen-on")
+        XCTAssertTrue(b("live-screen-on").isSelected)
+        shot("72-live-screen-settings")
+        tap("live-screen-off")
+        XCTAssertTrue(b("live-screen-off").isSelected)
+        tap("settings-setlists"); tap("setlist-Saturday"); tap("song-Gossip")
+        XCTAssertTrue(b("performance-play").exists)
+        tap("close-performance"); tap("close-panel")
+        XCTAssertTrue(b("live-screen-off").isSelected)
+        tap("live-screen-on")
+    }
+
     func testCircularSwipeActionsEditCancelRemoveAndDelete() {
         launch("en")
         tap("transport")

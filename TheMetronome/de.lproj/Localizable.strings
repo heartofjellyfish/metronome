@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "Belegung gespeichert. Tritt zum Testen auf dein Pedal.";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "Tippe bei der gewünschten Aktion auf Zuweisen und tritt auf den gewünschten Schalter.";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "Dieser Schalter ist frei. Tippe bei einer Aktion auf Zuweisen und tritt erneut darauf.";
+"Keep screen awake" = "Display bei Auftritten anlassen";
+"Allow automatic screen lock" = "Automatische Displaysperre erlauben";

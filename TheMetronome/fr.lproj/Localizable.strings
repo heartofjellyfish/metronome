@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "Affectations enregistrées. Appuyez sur la pédale pour essayer.";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "Touchez le bouton d’affectation à côté de l’action, puis appuyez sur le contacteur souhaité.";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "Ce contacteur est libre. Touchez le bouton d’affectation de l’action voulue et appuyez de nouveau sur le contacteur.";
+"Keep screen awake" = "Garder l’écran allumé en concert";
+"Allow automatic screen lock" = "Autoriser le verrouillage automatique";

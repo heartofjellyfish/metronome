@@ -54,6 +54,17 @@ struct SettingsView: View {
                                 liveKey("Song library", icon: .songLibrary, route: .songLibrary)
                                 liveKey("Pedal", icon: .pedal, route: .pedal)
                             }
+                            ViewThatFits(in: .horizontal) {
+                                HStack(spacing: 12) {
+                                    Text("Keep screen awake").font(.system(size: 14))
+                                    Spacer(minLength: 0)
+                                    liveScreenKeys
+                                }
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Keep screen awake").font(.system(size: 14))
+                                    liveScreenKeys.frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                            }
                             Button {
                                 preparation.toggle()
                                 if !preparation { withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("live-section", anchor: .center) } }
@@ -111,6 +122,19 @@ struct SettingsView: View {
             .onDisappear { model.endSoundPreview() }
             .onChange(of: model.error) { _, value in if value != nil { present(.audio) } }
     }
+    private var liveScreenKeys: some View {
+        HStack(spacing: 8) {
+            ForEach([false, true], id: \.self) { on in
+                Button { model.keepLiveScreenAwake = on } label: {
+                    Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: model.keepLiveScreenAwake == on))
+                    .accessibilityLabel(Text(on ? "Keep screen awake" : "Allow automatic screen lock"))
+                    .accessibilityIdentifier(on ? "live-screen-on" : "live-screen-off")
+                    .accessibilityAddTraits(model.keepLiveScreenAwake == on ? .isSelected : [])
+            }
+        }
+    }
+
     private func liveKey(_ title: String, icon: SettingsIllustration.Kind, route: InstrumentPanelKind) -> some View {
         Button { model.endSoundPreview(); present(route) } label: {
             VStack(spacing: 5) {

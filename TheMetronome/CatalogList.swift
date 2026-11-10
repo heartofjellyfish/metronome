@@ -44,9 +44,16 @@ private final class CatalogCell: UICollectionViewCell {
         }
     }
 
+    func setSwipeOffset(_ offset: CGFloat, width: CGFloat) {
+        rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
+        // Reveal only the trailing strip. The transparent row preserves the shared inset shadow.
+        actionsView?.frame = CGRect(x: bounds.width + offset, y: (bounds.height - 60) / 2,
+                                    width: -offset, height: 60)
+        actionsView?.subviews.first?.frame = CGRect(x: -offset - width, y: 0, width: width, height: 60)
+    }
+
     func closeSwipe() {
         rowView?.layer.removeAllAnimations()
-        rowView?.backgroundColor = .clear
         rowView?.transform = .identity
         rowView?.isUserInteractionEnabled = true
         actionsView?.removeFromSuperview()
@@ -73,10 +80,10 @@ private struct CatalogSwipeKey: View {
     var body: some View {
         Button(action: action.perform) {
             VStack(spacing: 3) {
-                Image(systemName: action.icon).font(.system(size: 18)).frame(width: 44, height: 44)
+                Image(systemName: action.icon).font(.system(size: 16, weight: .regular)).frame(width: 38, height: 38)
                 Text(L10n.text(action.title)).font(.caption2).lineLimit(1)
             }.foregroundStyle(action.destructive ? (p.dark ? Color(hex: 0xFFABA0) : Color(hex: 0x91362C)) : p.ink)
-                .frame(width: 64).frame(minHeight: 64).contentShape(Rectangle())
+                .frame(width: 56).frame(height: 60, alignment: .top).contentShape(Rectangle())
         }.buttonStyle(CatalogSwipeKeyStyle(p: p)).accessibilityIdentifier(action.id)
     }
 }
@@ -86,8 +93,8 @@ private struct CatalogSwipeKeyStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(alignment: .top) {
-                HardwareKeySurface(p: p, radius: 22, pressed: configuration.isPressed)
-                    .frame(width: 44, height: 44)
+                HardwareKeySurface(p: p, radius: 19, pressed: configuration.isPressed)
+                    .frame(width: 38, height: 38)
             }
             .offset(y: configuration.isPressed ? 1 : 0)
     }
@@ -312,7 +319,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                       let actions = parent.swipeActions?(items[path.item]), !actions.isEmpty else { return }
                 if swipedCell !== cell { dismissSwipe() }
                 swipedCell = cell
-                swipeWidth = CGFloat(actions.count) * 64 + 12
+                swipeWidth = CGFloat(actions.count) * 56 + 20
                 swipeOrigin = cell.rowView?.transform.tx ?? 0
                 if cell.actionsView == nil {
                     let config = UIHostingConfiguration {
@@ -324,23 +331,24 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                                         action.perform()
                                     }), p: self.parent.p)
                             }
-                        }.padding(.trailing, 12)
+                        }.padding(.trailing, 20)
                     }.margins(.all, 0)
                     let buttons = config.makeContentView()
                     buttons.backgroundColor = .clear
-                    cell.contentView.insertSubview(buttons, at: 0)
-                    cell.actionsView = buttons
+                    let reveal = UIView()
+                    reveal.clipsToBounds = true
+                    reveal.addSubview(buttons)
+                    cell.contentView.insertSubview(reveal, at: 0)
+                    cell.actionsView = reveal
                     cell.swipeID = items[path.item].id
                     cell.clipsToBounds = true
-                    buttons.frame = CGRect(x: cell.bounds.width - swipeWidth, y: (cell.bounds.height - 64) / 2,
-                                           width: swipeWidth, height: 64)
+                    cell.setSwipeOffset(swipeOrigin, width: swipeWidth)
                 }
-                cell.rowView?.backgroundColor = UIColor(parent.p.well)
                 cell.rowView?.isUserInteractionEnabled = false
             case .changed:
                 guard let cell = swipedCell else { return }
                 let offset = max(-swipeWidth, min(0, swipeOrigin + gesture.translation(in: view).x))
-                cell.rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
+                cell.setSwipeOffset(offset, width: swipeWidth)
             case .ended, .cancelled, .failed:
                 guard let cell = swipedCell else { return }
                 let velocity = gesture.velocity(in: view).x
@@ -348,7 +356,7 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
                     (velocity < -350 || (velocity < 350 && (cell.rowView?.transform.tx ?? 0) < -swipeWidth * 0.45))
                 let duration = UIAccessibility.isReduceMotionEnabled ? 0 : 0.18
                 UIView.animate(withDuration: duration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
-                    cell.rowView?.transform = open ? CGAffineTransform(translationX: -self.swipeWidth, y: 0) : .identity
+                    cell.setSwipeOffset(open ? -self.swipeWidth : 0, width: self.swipeWidth)
                 } completion: { _ in
                     if !open && self.swipedCell === cell { self.dismissSwipe() }
                 }

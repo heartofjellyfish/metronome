@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "已有綁定，踩一下踏板試試。";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "點選動作旁的綁定鍵，再踩想使用的那一側。";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "剛踩的鍵還沒綁定。選一個動作，點綁定鍵，再踩一次。";
+"Keep screen awake" = "演出時保持亮屏";
+"Allow automatic screen lock" = "允許自動鎖定螢幕";

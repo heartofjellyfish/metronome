@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "割り当てを保存済みです。ペダルを踏んでみましょう。";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "操作の横にある割り当てボタンをタップし、使いたいスイッチを踏みます。";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "このスイッチは未設定です。操作の横の割り当てボタンをタップし、もう一度踏んでください。";
+"Keep screen awake" = "演奏画面を常時表示";
+"Allow automatic screen lock" = "自動ロックを許可";

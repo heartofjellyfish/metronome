@@ -486,3 +486,5 @@
 "Bindings saved. Press your pedal to try them." = "Bindings saved. Press your pedal to try them.";
 "Tap Learn beside an action, then press the pedal switch you want to use." = "Tap Learn beside an action, then press the pedal switch you want to use.";
 "This switch is unassigned. Tap Learn beside an action, then press it again." = "This switch is unassigned. Tap Learn beside an action, then press it again.";
+"Keep screen awake" = "Keep screen awake";
+"Allow automatic screen lock" = "Allow automatic screen lock";
