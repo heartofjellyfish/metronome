@@ -2,15 +2,15 @@
 
 ## Message and order
 
-Live Mode is the lead feature for this update. The first three screenshots independently cover large-beat Live View, Bluetooth pedals, and setlists, in that order. Each card shows one full real app screen. Preserve the broader musician audience: students, teachers, hobbyists and performers across instruments. Practice Routine is a future version and is not promoted here.
+Live Mode is the lead feature for this update. The first four screenshots cover instant, ad-free use; Live View; setlists; and Bluetooth pedals, in that order. Each card shows one full real app screen. Preserve the broader musician audience: students, teachers, hobbyists and performers across instruments. Practice Routine is a future version and is not promoted here.
 
-English subtitle: `Live Mode, Bluetooth, Setlists` (30 characters). No name change. No-ads messaging remains in promotional text, description and screenshot 4. Hidden keywords cover real musical features rather than slogans; no search-volume or difficulty estimates are claimed.
+English subtitle: `Live Mode, Bluetooth, Setlists` (30 characters). No name change. No-ads messaging remains in promotional text, description and screenshot 1. Hidden keywords cover real musical features rather than slogans; no search-volume or difficulty estimates are claimed.
 
 ## Assets
 
 - `metadata/`: nine language versions of subtitle, keywords, promotional text, description, release notes and eight screenshot captions.
 - `screenshots/iphone/<language>/`: native UI captures plus eight 1284 × 2778 compositions.
-- `screenshots/ipad/<language>/`: native iPad captures plus three 2064 × 2752 Live Mode compositions.
+- `screenshots/ipad/<language>/`: native iPad captures plus four 2064 × 2752 Live Mode compositions.
 - `render.swift`: deterministic AppKit composition using the approved paper texture. UI captures are fitted proportionally and left intact.
 
 Finished store files are high-quality JPEGs (96% quality); native PNG captures are retained locally under `raw/` and can be reproduced with `PerformanceUITests/testLiveLaunchAssetsEnglish`, `testLiveLaunchAssetsLocalized`, `testLiveLaunchPedalAssets`, `testTourSetlistLaunchAssets`, and `testFullTourSetlistLaunchAssets`. The raw directories are excluded from Git to avoid committing a second large copy of every screen.

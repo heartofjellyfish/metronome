@@ -61,7 +61,7 @@ Read `AppStore/brand-preferences.md` before drafting or revising visual assets a
 
 ## Goals
 
-For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Use separate screenshots for Live View, Bluetooth pedals, and setlists. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
+For 1.0.2: prepare a truthful Live Mode launch across the nine existing store languages. Lead with instant, ad-free use, followed by Live View, setlists, and Bluetooth pedals. Then measure product-page conversion and downloads; gather real feedback about sounds and daily practice. Keyword demand and difficulty remain unmeasured. Candidate keywords are hypotheses until assessed with an ASO tool or Apple Ads data.
 
 ## Changelog
 

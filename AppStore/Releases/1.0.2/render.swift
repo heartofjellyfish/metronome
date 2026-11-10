@@ -10,8 +10,8 @@ let paper = NSColor(calibratedRed: 0.94, green: 0.92, blue: 0.87, alpha: 1)
 struct Card { let file: String; let source: String; let title: String; let detail: String }
 let copyURL = root.appendingPathComponent("captions.json")
 let copy = try JSONDecoder().decode([[String]].self, from: Data(contentsOf: copyURL))
-let sources = ["01-live", "02-pedal", "03-setlists", "04-home", "05-sounds", "06-rhythms", "07-ramp", "08-silent"]
-let cards = copy.prefix(isPad ? 3 : 8).enumerated().map { i, value in Card(file: String(format: "%02d", i+1), source: sources[i]+".png", title: value[0], detail: value[1]) }
+let sources = ["04-home", "01-live", "03-setlists", "02-pedal", "05-sounds", "06-rhythms", "07-ramp", "08-silent"]
+let cards = copy.prefix(isPad ? 4 : 8).enumerated().map { i, value in Card(file: String(format: "%02d", i+1), source: sources[i]+".png", title: value[0], detail: value[1]) }
 try FileManager.default.createDirectory(at: root.appendingPathComponent("store"), withIntermediateDirectories: true)
 func canvas(_ w: Int, _ h: Int, draw: () -> Void) -> NSBitmapImageRep {
     let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
@@ -52,7 +52,7 @@ for c in cards {
     let bmp = canvas(width, height) {
         drawImage(paperImage, rect: NSRect(x: 0, y: 0, width: width, height: height))
         text(c.title, x: 94, y: 138, size: isPad ? 126 : 108, weight: .bold, color: ink, line: 116)
-        text(c.detail, x: 100, y: 405, size: isPad ? 54 : 48, weight: .regular, color: ink)
+        text(c.detail, x: 100, y: 405, size: c.file == "01" ? (isPad ? 60 : 54) : (isPad ? 54 : 48), weight: .regular, color: ink)
         // Full UI is fitted, never stretched or re-created. Native capture includes status bar.
         let availableHeight: CGFloat = CGFloat(height) - 560
         let targetWidth: CGFloat = min(CGFloat(width - 260), availableHeight * image.size.width / image.size.height)
