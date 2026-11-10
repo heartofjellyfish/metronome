@@ -36,6 +36,21 @@ final class PerformanceUITests: XCTestCase {
         if b("close-settings").isHittable { tap("close-settings") }
     }
     private func openList(_ name: String) { tap("settings"); tap("settings-setlists"); tap("setlist-\(name)") }
+    func testLongSongSwipeStaysInsideTheInsetScreen() {
+        app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        tap("settings"); tap("settings-songLibrary")
+        let title = "昨天我给你打了电话但你没有接，提示你看到了但是我并没有收到什么信息"
+        let row = b("library-open-" + title)
+        if !row.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        row.swipeLeft()
+        XCTAssertTrue(b("swipe-library-edit-" + title).isHittable)
+        shot("73-long-title-inset")
+        app.collectionViews.firstMatch.swipeUp()
+        XCTAssertFalse(b("swipe-library-edit-" + title).exists)
+    }
+
     func testLiveScreenPreferenceIsSavedAndReadyViewStillOpens() {
         launch("en")
         tap("settings")

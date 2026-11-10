@@ -24,6 +24,7 @@ private final class CatalogCell: UICollectionViewCell {
     var configuredRevision = -1
     var swipeID: UUID?
     var actionsView: UIView?
+    private let swipeMask = CAGradientLayer()
     private(set) var rowView: (UIView & UIContentView)?
 
     func setRow(_ configuration: UIContentConfiguration) {
@@ -44,7 +45,27 @@ private final class CatalogCell: UICollectionViewCell {
         }
     }
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if swipeID != nil { updateSwipeMask() }
+    }
+
+    private func updateSwipeMask() {
+        let viewport = contentView.bounds.insetBy(dx: 12, dy: 0)
+        let fade = min(0.1, 2 / max(1, viewport.width))
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        swipeMask.frame = viewport
+        swipeMask.startPoint = CGPoint(x: 0, y: 0.5)
+        swipeMask.endPoint = CGPoint(x: 1, y: 0.5)
+        swipeMask.colors = [UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
+        swipeMask.locations = [0, NSNumber(value: fade), NSNumber(value: 1 - fade), 1]
+        contentView.layer.mask = swipeMask
+        CATransaction.commit()
+    }
+
     func setSwipeOffset(_ offset: CGFloat, width: CGFloat) {
+        updateSwipeMask()
         rowView?.transform = CGAffineTransform(translationX: offset, y: 0)
         // Reveal only the trailing strip. The transparent row preserves the shared inset shadow.
         actionsView?.frame = CGRect(x: bounds.width + offset, y: (bounds.height - 60) / 2,
@@ -53,6 +74,7 @@ private final class CatalogCell: UICollectionViewCell {
     }
 
     func closeSwipe() {
+        contentView.layer.mask = nil
         rowView?.layer.removeAllAnimations()
         rowView?.transform = .identity
         rowView?.isUserInteractionEnabled = true
