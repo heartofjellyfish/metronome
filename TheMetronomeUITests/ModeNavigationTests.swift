@@ -23,11 +23,15 @@ final class ModeNavigationTests: XCTestCase {
         app.buttons["settings-transport"].tap()
         let playingLabel = app.buttons["settings-transport"].label
         app.buttons["mode-menu"].tap()
+        assertMenuAnchor(app)
+        proof(app, "Practice menu anchor")
         app.buttons["mode-live"].tap()
         XCTAssertEqual(app.buttons["settings-transport"].label, playingLabel)
         XCTAssertEqual(app.buttons["mode-menu"].label, "Live")
         proof(app, "Live mode")
         app.buttons["mode-menu"].tap()
+        assertMenuAnchor(app)
+        proof(app, "Live menu anchor")
         app.buttons["mode-metronome"].tap()
         XCTAssertEqual(app.buttons["transport"].label, playingLabel)
         app.buttons["transport"].tap()
@@ -36,6 +40,13 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertFalse(app.buttons["mode-live"].exists)
         XCTAssertTrue(app.buttons["tempoDisplay"].exists)
         XCTAssertEqual(app.buttons["mode-menu"].label, "Metronome")
+    }
+    private func assertMenuAnchor(_ app: XCUIApplication) {
+        let header = app.buttons["mode-menu"].frame
+        let item = app.buttons["mode-metronome"].frame
+        XCTAssertLessThan(item.minY - header.maxY, 35)
+        XCTAssertGreaterThanOrEqual(item.minY, header.maxY - 1)
+        XCTAssertLessThan(abs(item.minX - header.minX), 20)
     }
     private func proof(_ app: XCUIApplication, _ name: String) {
         let image = XCTAttachment(screenshot: app.screenshot())

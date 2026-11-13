@@ -24,17 +24,21 @@ struct MetronomeView: View {
                     VStack(spacing: 0) {
                         modeHeader.frame(height: 38)
                         ModeLanding(model: model, mode: mode, open: present)
-                    }.overlay(alignment: .topLeading) {
-                        if modesOpen {
-                            Color.black.opacity(0.001).padding(.top, 38).onTapGesture { modesOpen = false }
-                            modeMenu.padding(.top, 40).padding(.leading, 24)
-                        }
                     }
                 }
             }
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(settings || panel != nil)
-                .frame(width: 414, height: 774)
+                .frame(width: 414, height: 774, alignment: .top)
+                .overlay(alignment: .topLeading) {
+                    if modesOpen {
+                        ZStack(alignment: .topLeading) {
+                            Color.black.opacity(0.001).padding(.top, 38)
+                                .onTapGesture { modesOpen = false }
+                            modeMenu.padding(.top, 40).padding(.leading, 24)
+                        }
+                    }
+                }
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }.accessibilityHidden(settings || panel != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
@@ -72,7 +76,7 @@ struct MetronomeView: View {
             model.endSoundPreview()
             mode = choice
             modesOpen = false
-        }.frame(width: 206)
+        }.frame(width: 300)
     }
     private var instrumentFace: some View {
         ZStack(alignment: .topLeading) {
@@ -150,10 +154,6 @@ struct MetronomeView: View {
             Button { present(model.activeSetlist != nil ? .setlists : (model.currentSong != nil ? .songLibrary : .presets)) } label: {
                 Text(model.presetCaption).technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
             }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel(L10n.text(model.activeSetlist != nil ? "Setlists" : model.currentSong != nil ? "Song library" : "Saved presets")).accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
-            if modesOpen {
-                Color.black.opacity(0.001).frame(width: 414, height: 736).offset(y: 38).onTapGesture { modesOpen = false }
-                modeMenu.position(x: 127, y: 101)
-            }
         }.foregroundStyle(p.ink)
     }
     func selector(_ title: String, value: String) -> some View {

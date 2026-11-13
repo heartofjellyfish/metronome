@@ -6,57 +6,18 @@ enum InstrumentMode: String, CaseIterable, Identifiable {
     var title: String { L10n.text(self == .metronome ? "Metronome" : self == .practice ? "Practice" : "Live") }
 }
 
-/// Miniature physical objects, drawn at a shared size so every mode has equal visual weight.
+/// Approved miniature instrument artwork, shared by the chooser and mode surfaces.
 struct ModeIllustration: View {
     let mode: InstrumentMode
+    private var asset: String {
+        switch mode {
+        case .metronome: "ModeMetronome"
+        case .practice: "ModePractice"
+        case .live: "ModeLive"
+        }
+    }
     var body: some View {
-        Canvas { context, size in
-            let s = min(size.width / 80, size.height / 64)
-            context.translateBy(x: (size.width - 80*s)/2, y: (size.height - 64*s)/2)
-            context.scaleBy(x: s, y: s)
-            let ink = Color(hex: 0x41443E), brass = Color(hex: 0xAC9060)
-            func line(_ points: [CGPoint], _ color: Color, _ width: CGFloat) {
-                var path = Path(); path.addLines(points)
-                context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
-            }
-            func rect(_ r: CGRect, _ color: Color, _ radius: CGFloat = 2) {
-                context.fill(Path(roundedRect: r, cornerRadius: radius), with: .linearGradient(Gradient(colors: [color, color.opacity(0.85)]), startPoint: r.origin, endPoint: CGPoint(x: r.maxX, y: r.maxY)))
-            }
-            if mode == .practice {
-                // P3: a score stand, equally relevant to strings, keys, winds and percussion.
-                line([CGPoint(x:40,y:29),CGPoint(x:40,y:53)], ink, 3)
-                line([CGPoint(x:22,y:60),CGPoint(x:40,y:51),CGPoint(x:58,y:60)], ink, 3)
-                line([CGPoint(x:40,y:51),CGPoint(x:40,y:61)], brass, 3)
-                rect(CGRect(x:13,y:3,width:54,height:32), ink, 3)
-                rect(CGRect(x:17,y:6,width:46,height:25), Color(hex:0xE8DDC3))
-                for y in [12,17,22,27] { line([CGPoint(x:21,y:y),CGPoint(x:59,y:y)], brass.opacity(0.5), 0.6) }
-                for x in [28,45] {
-                    context.fill(Path(ellipseIn:CGRect(x:x-4,y:21,width:7,height:4)),with:.color(ink))
-                    line([CGPoint(x:x+2,y:23),CGPoint(x:x+2,y:10)],ink,1.5)
-                }
-                rect(CGRect(x:10,y:32,width:60,height:4), ink)
-            } else if mode == .live {
-                // L1: a small stage and paired lamps; light is contained, never a neon glow.
-                context.fill(Path(ellipseIn:CGRect(x:10,y:48,width:60,height:12)),with:.color(ink))
-                rect(CGRect(x:10,y:49,width:60,height:7),ink)
-                context.fill(Path(ellipseIn:CGRect(x:10,y:44,width:60,height:12)),with:.color(brass))
-                for side in [0,1] {
-                    let x: CGFloat = side == 0 ? 24 : 56
-                    var beam = Path(); beam.move(to:CGPoint(x:x,y:21)); beam.addLine(to:CGPoint(x:side == 0 ? 20 : 38,y:49)); beam.addLine(to:CGPoint(x:side == 0 ? 42 : 60,y:49)); beam.closeSubpath()
-                    context.fill(beam,with:.linearGradient(Gradient(colors:[Color(hex:0xE7C580).opacity(0.55),.clear]),startPoint:CGPoint(x:x,y:21),endPoint:CGPoint(x:x,y:50)))
-                    line([CGPoint(x:x,y:9),CGPoint(x:x,y:17)],brass,2)
-                    rect(CGRect(x:x-7,y:15,width:14,height:13),ink,4)
-                    context.fill(Path(ellipseIn:CGRect(x:x-5,y:23,width:10,height:5)),with:.color(Color(hex:0xE8C680)))
-                }
-                rect(CGRect(x:12,y:6,width:56,height:4),ink)
-            } else {
-                var outline = Path(); outline.move(to:CGPoint(x:29,y:6)); outline.addLine(to:CGPoint(x:51,y:6)); outline.addLine(to:CGPoint(x:63,y:58)); outline.addLine(to:CGPoint(x:17,y:58)); outline.closeSubpath()
-                context.fill(outline,with:.color(ink))
-                rect(CGRect(x:32,y:12,width:16,height:37),Color(hex:0xD8CDAF))
-                line([CGPoint(x:40,y:48),CGPoint(x:52,y:17)],brass,2.5)
-                rect(CGRect(x:46,y:21,width:9,height:6),brass,1)
-            }
-        }.accessibilityHidden(true)
+        Image(asset).resizable().scaledToFit().accessibilityHidden(true)
     }
 }
 
@@ -80,11 +41,11 @@ struct ModeChooser: View {
             HStack(spacing: 0) {
                 ForEach(InstrumentMode.allCases) { mode in
                     Button { select(mode) } label: {
-                        VStack(spacing: 8) {
-                            ModeIllustration(mode: mode).brightness(current == mode ? 0.24 : 0).frame(height: 32)
-                            Text(mode.title).font(.custom("HelveticaNeue-CondensedBold", size: 12))
+                        VStack(spacing: 2) {
+                            ModeIllustration(mode: mode).frame(height: 52)
+                            Text(mode.title).font(.system(size: 13, weight: .medium))
                                 .lineLimit(1).minimumScaleFactor(0.85)
-                        }.frame(maxWidth: .infinity).frame(height: 106)
+                        }.frame(maxWidth: .infinity).frame(height: 84)
                             .foregroundStyle(current == mode ? Color(hex: 0xF5F0E2) : p.ink)
                             .background {
                                 if current == mode {
@@ -97,7 +58,7 @@ struct ModeChooser: View {
                             }
                             .overlay(alignment: .trailing) {
                                 if mode != .live && current != mode && InstrumentMode.allCases[InstrumentMode.allCases.firstIndex(of: mode)! + 1] != current {
-                                    Rectangle().fill(p.edge.opacity(0.45)).frame(width: 0.5, height: 70)
+                                    Rectangle().fill(p.edge.opacity(0.45)).frame(width: 0.5, height: 54)
                                 }
                             }
                             .contentShape(Rectangle())
@@ -106,7 +67,7 @@ struct ModeChooser: View {
                         .accessibilityAddTraits(current == mode ? .isSelected : [])
                 }
             }.padding(3).insetPanel(p, radius: 8).padding(9)
-            .frame(width: 206)
+            .frame(width: 300)
             .foregroundStyle(p.ink)
             .background {
                 RoundedRectangle(cornerRadius: 12).fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
