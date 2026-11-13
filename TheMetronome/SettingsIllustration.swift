@@ -8,7 +8,7 @@ struct SettingsIllustration: View {
         GeometryReader { g in
             Group {
                 switch kind {
-                case .practice: practice
+                case .practice: ModeIllustration(mode: .practice)
                 case .presets: disk
                 case .pedal: Image("BluetoothFootPedal")
                 case .setlists: Image("SetlistSheet")
@@ -21,20 +21,6 @@ struct SettingsIllustration: View {
     }
     private var graphite: LinearGradient {
         LinearGradient(colors: [Color(hex: 0xA09E90), Color(hex: 0x74766C)], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    private var practice: some View {
-        ZStack {
-            Ellipse().fill(Color(hex: 0x64675E)).frame(width: 65, height: 43).offset(y: 8)
-            Ellipse().fill(graphite).overlay(Ellipse().stroke(Color(hex: 0x85847A), lineWidth: 1))
-                .overlay(Ellipse().stroke(.black.opacity(0.2), lineWidth: 0.7).padding(4))
-                .frame(width: 65, height: 43).offset(y: 3)
-            ForEach(0..<2) { i in
-                HStack(spacing: -1) {
-                    Ellipse().fill(Color(hex: 0xDFC191)).frame(width: 8, height: 5)
-                    Capsule().fill(LinearGradient(colors: [Color(hex: 0xECD2AA), Color(hex: 0xAE8551)], startPoint: .top, endPoint: .bottom)).frame(width: 57, height: 3.5)
-                }.rotationEffect(.degrees(i == 0 ? 25 : 35)).offset(x: 5, y: CGFloat(i * 9) - 4)
-            }
-        }.shadow(color: .black.opacity(0.12), radius: 1, x: 0, y: 2)
     }
     private var disk: some View {
         ZStack {

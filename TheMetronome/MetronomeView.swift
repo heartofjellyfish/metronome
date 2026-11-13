@@ -9,14 +9,29 @@ struct TheMetronomeApp: App {
 struct MetronomeView: View {
     @ObservedObject var model: MetronomeModel
     @State private var settings = false
+    @State private var mode: InstrumentMode = .metronome
+    @State private var modesOpen = false
     @State private var panel: InstrumentPanelKind?
     @State private var panelSession = UUID()
-    private func present(_ kind: InstrumentPanelKind) { panelSession = UUID(); panel = kind }
+    private func present(_ kind: InstrumentPanelKind) { modesOpen = false; panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     var body: some View {
         GeometryReader { geometry in
             let scale = min(geometry.size.width / 414, geometry.size.height / 774)
-            instrumentFace
+            Group {
+                if mode == .metronome { instrumentFace }
+                else {
+                    VStack(spacing: 0) {
+                        modeHeader.frame(height: 38)
+                        ModeLanding(model: model, mode: mode, open: present)
+                    }.overlay(alignment: .topTrailing) {
+                        if modesOpen {
+                            Color.black.opacity(0.001).padding(.top, 38).onTapGesture { modesOpen = false }
+                            modeMenu.padding(.top, 36).padding(.trailing, 20)
+                        }
+                    }
+                }
+            }
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(settings || panel != nil)
                 .frame(width: 414, height: 774)
@@ -31,18 +46,36 @@ struct MetronomeView: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .onAppear {
                 #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--modes") { modesOpen = true }
+                if ProcessInfo.processInfo.arguments.contains("--mode-practice") { mode = .practice }
+                if ProcessInfo.processInfo.arguments.contains("--mode-live") { mode = .live }
                 if ProcessInfo.processInfo.arguments.contains("--settings") { settings = true }
                 if let route = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--panel=") }), let kind = InstrumentPanelKind(rawValue: String(route.dropFirst(8))) { present(kind) }
                 #endif
             }
     }
+    private var modeHeader: some View {
+        HStack(spacing: 12) {
+            Text(mode == .metronome ? "METRONOME" : mode.title).technical(11, spacing: 3)
+            Spacer(minLength: 8)
+            Button { modesOpen.toggle() } label: {
+                Text(L10n.text("Modes")).font(.system(size: 14, weight: .medium, design: .monospaced)).frame(minWidth: 60, minHeight: 38)
+            }.buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityIdentifier("mode-menu")
+            Button { modesOpen = false; settings = true } label: {
+                Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
+            }.accessibilityLabel("Settings").accessibilityIdentifier("settings")
+        }.padding(.horizontal, 24).foregroundStyle(p.ink)
+    }
+    private var modeMenu: some View {
+        ModeChooser(current: mode, p: p) { choice in
+            model.endSoundPreview()
+            mode = choice
+            modesOpen = false
+        }.frame(width: 252)
+    }
     private var instrumentFace: some View {
         ZStack(alignment: .topLeading) {
-            Text("METRONOME").technical(11, spacing: 4.3)
-                .frame(width: 300, alignment: .leading).position(x: 177, y: 15)
-            Button { settings = true } label: {
-                Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
-            }.position(x: 374, y: 15).accessibilityLabel("Settings").accessibilityIdentifier("settings")
+            modeHeader.frame(width: 414, height: 38).position(x: 207, y: 15)
 
             Button { present(.tempo) } label: {
                 HStack(alignment: .center, spacing: 28) {
@@ -116,6 +149,10 @@ struct MetronomeView: View {
             Button { present(model.activeSetlist != nil ? .setlists : (model.currentSong != nil ? .songLibrary : .presets)) } label: {
                 Text(model.presetCaption).technical(9, spacing: 1.6).lineLimit(1).frame(width: 360, height: 28)
             }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel(L10n.text(model.activeSetlist != nil ? "Setlists" : model.currentSong != nil ? "Song library" : "Saved presets")).accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
+            if modesOpen {
+                Color.black.opacity(0.001).frame(width: 414, height: 736).offset(y: 38).onTapGesture { modesOpen = false }
+                modeMenu.position(x: 264, y: 94)
+            }
         }.foregroundStyle(p.ink)
     }
     func selector(_ title: String, value: String) -> some View {
