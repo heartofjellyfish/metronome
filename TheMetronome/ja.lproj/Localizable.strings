@@ -496,3 +496,13 @@
 "Metronome" = "メトロノーム";
 
 "Live" = "ライブ";
+
+"Outer ring" = "外側";
+
+"Inner ring" = "内側";
+
+"Applies to the next start." = "次の再生開始時に適用。";
+
+"Save current" = "現在の設定を保存";
+
+"Both rings share one cycle." = "2つの輪が同じ周期を刻みます。";

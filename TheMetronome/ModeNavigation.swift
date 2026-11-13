@@ -83,34 +83,29 @@ struct ModeLanding: View {
     let open: (InstrumentPanelKind) -> Void
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 18) {
-                ModeIllustration(mode: mode).frame(width: 64, height: 56)
-                Text(mode.title).font(.system(size: 28, weight: .semibold))
-                Spacer()
-            }.padding(.top, 25)
+        VStack(spacing: 16) {
             ScrollView {
-                VStack(spacing: 14) {
-                    if mode == .practice {
-                        PracticeControls(model: model, open: open)
-                        route("PRESETS", icon: .presets, kind: .presets)
-                    } else {
-                        route("Setlists", icon: .setlists, kind: .setlists)
-                        route("Song library", icon: .songLibrary, kind: .songLibrary)
-                        route("Pedal", icon: .pedal, kind: .pedal)
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack(alignment: .center, spacing: 20) {
+                        Button { open(.tempo) } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                                Text("\(model.bpm)").font(InstrumentType.display(68)).monospacedDigit()
+                                Text("BPM").technical(10, spacing: 1)
+                            }
+                        }.buttonStyle(.plain).accessibilityLabel("Set tempo")
+                        Spacer(minLength: 0)
+                        Button { open(.meter) } label: { Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").font(InstrumentType.value(25)) }.buttonStyle(.plain)
+                        Button { open(.division) } label: { RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 48, height: 34) }.buttonStyle(.plain).accessibilityLabel("Division")
+                    }.padding(18).frame(maxWidth: .infinity).insetPanel(p, radius: 18)
+                    PracticeControls(model: model, open: open)
+                    HStack {
+                        Spacer()
+                        Button { open(.presets) } label: { Label("Presets", systemImage: "bookmark").padding(.horizontal, 18).frame(minHeight: 44) }
+                            .buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("practice-presets")
                     }
-                }.padding(.vertical, 8)
+                }.padding(.top, 22).padding(.bottom, 12)
             }
             SettingsPlaybackBar(model: model, p: p)
         }.padding(.horizontal, 26).padding(.bottom, 18).foregroundStyle(p.ink)
-    }
-    private func route(_ title: String, icon: SettingsIllustration.Kind, kind: InstrumentPanelKind) -> some View {
-        Button { open(kind) } label: {
-            HStack(spacing: 16) {
-                SettingsIllustration(kind: icon).frame(width: 52, height: 48)
-                Text(L10n.text(title)).font(.system(size: 17, weight: .medium))
-                Spacer(); Image(systemName: "chevron.right").font(.caption)
-            }.padding(16)
-        }.buttonStyle(HardwareButtonStyle(p: p, radius: 12))
     }
 }

@@ -102,6 +102,7 @@ struct Rhythm: Codable, Equatable {
     // Optional additions keep previously saved rhythms decodable.
     var divisionMask: Int?
     var crossRhythm: Int?
+    var polyrhythmStoredSecondary: Int?
     var polyrhythmPrimary: Int?
     var polyrhythmPrimarySound: Int?
     var polyrhythmSecondarySound: Int?
@@ -198,6 +199,7 @@ struct Rhythm: Codable, Equatable {
             divisionMask = valid == 0 || valid == (1 << subdivision) - 1 ? nil : valid
         }
         if let crossRhythm, !(2...9).contains(crossRhythm) { self.crossRhythm = nil }
+        if let polyrhythmStoredSecondary { self.polyrhythmStoredSecondary = min(9, max(2, polyrhythmStoredSecondary)) }
         if let polyrhythmPrimary { self.polyrhythmPrimary = min(8, max(2, polyrhythmPrimary)) }
         if let swing { self.swing = swing.isFinite && subdivision.isMultiple(of: 2) ? min(0.75, max(0.5, swing)) : nil }
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
@@ -223,6 +225,7 @@ struct ClockEvent {
     var gainScale: Float = 1
     var hitInterval: Double = .infinity
     var crossStrength: Int = 0
+    var cyclePosition: Double = 0
 }
 
 /// Driven by audio sample frames, never a UI timer. Owned exclusively by the render thread.
@@ -321,7 +324,7 @@ final class SampleClock {
         let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
             : (rhythm.crossCount > 0 ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
         let lower = crossHit && !silent && mainStrength > 0 ? (primary ? 2 : 1) : 0
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, crossStrength: lower), strength)
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, crossStrength: lower, cyclePosition: Double(position) / Double(rhythm.clockDivisions)), strength)
     }
 }
 

@@ -8,7 +8,7 @@ enum InstrumentPanelKind: String, Identifiable {
         case .tempo: return L10n.text("SET TEMPO")
         case .meter: return L10n.text("METER")
         case .division: return L10n.text("DIVISION")
-        case .countIn: return L10n.text("COUNT IN")
+        case .countIn: return L10n.text("Count-in")
         case .every: return L10n.text("RAMP INTERVAL")
         case .increment: return L10n.text("TEMPO STEP")
         case .practice: return L10n.text("Practice")
@@ -33,7 +33,8 @@ enum InstrumentPanelKind: String, Identifiable {
         case .ramp, .gap, .polyrhythm: return 740
         case .practice: return 570
         case .setlists, .songLibrary: return 740
-        case .presets: return 560
+        case .presets: return 740
+        case .countIn: return 540
         case .audio: return 300
         case .sounds: return 740
         case .pedal: return 650
@@ -56,6 +57,8 @@ struct InstrumentPanel: View {
     private var returnsToPractice: Bool { !returnRoutes.isEmpty }
     @State private var panelContentHeight: CGFloat = 0
     @State private var presetName = ""
+    @State private var savingPreset = false
+    @State private var editingPresets = false
     @State private var deleting: UUID?
     @State private var addingPreset: SavedPreset?
     @State private var presetNotice: String?
@@ -84,7 +87,7 @@ struct InstrumentPanel: View {
             else { standardPanel }
         }
     }
-    private var showsBack: Bool { returnsToPractice || polyrhythmSoundLane != nil || divisionEditing }
+    private var showsBack: Bool { [.ramp, .gap, .polyrhythm, .countIn, .presets].contains(kind) || returnsToPractice || polyrhythmSoundLane != nil || divisionEditing }
     private var navigationKey: some View {
         let destination = divisionEditing ? "Back to subdivisions" : polyrhythmSoundLane != nil ? "Back to polyrhythm" : "Back to practice"
         return Button(action: dismiss) {
@@ -177,27 +180,34 @@ struct InstrumentPanel: View {
     }
     private var quantityPicker: some View {
         VStack(alignment: .leading, spacing: 23) {
-            Text(L10n.text(kind == .countIn ? "A MOMENT TO GET READY." : kind == .every ? "CHANGE TEMPO AFTER THIS MANY BARS." : "BPM ADDED OR REMOVED AT EACH STEP."))
-                .technical(9, spacing: 1).foregroundStyle(p.muted).fixedSize(horizontal: false, vertical: true)
+            if kind != .countIn {
+                Text(L10n.text(kind == .every ? "CHANGE TEMPO AFTER THIS MANY BARS." : "BPM ADDED OR REMOVED AT EACH STEP."))
+                    .font(.subheadline).foregroundStyle(p.muted)
+            }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 12) {
                 ForEach(quantities, id: \.self) { value in
-                    choice(kind == .countIn && value == 0 ? "OFF" : String(value), selected: selected == value, height: 63) {
+                    choice(kind == .countIn ? (value == 0 ? "Off" : L10n.bars(value)) : String(value), selected: (kind == .countIn ? model.rhythm.countIn : kind == .every ? model.rhythm.every : model.rhythm.increment) == value, height: 63) {
                         switch kind {
                         case .countIn: model.rhythm.countIn = value
                         case .every: model.rhythm.every = value
                         case .increment: model.rhythm.increment = value
                         default: break
                         }
-                        dismiss()
+                        if kind != .countIn && !model.playing { dismiss() }
                     }
                 }
+            }
+            if kind == .countIn {
+                CountInDisplay(model: model, p: p)
+                Text("Applies to the next start.").font(.footnote).foregroundStyle(p.muted)
             }
         }
     }
     private var practicePanel: some View { PracticeControls(model: model, open: navigate) }
     private var rampPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
-            switchRow("RAMP", value: $model.rhythm.ramp)
+            switchRow("Tempo ramp", value: $model.rhythm.ramp)
+            RampDisplay(model: model, p: p)
             HStack(spacing: 13) {
                 numberWell("START", value: model.rhythm.start) { navigate(.start) }
                 Image(systemName: "arrow.right").font(.system(size: 13))
@@ -212,22 +222,23 @@ struct InstrumentPanel: View {
     }
     private var gapPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
-            switchRow("SOUND / SILENCE", value: $model.rhythm.gap)
-            HStack(spacing: 14) {
+            switchRow("Silent bars", value: $model.rhythm.gap)
+            SilentBarsDisplay(model: model, p: p)
+            VStack(spacing: 18) {
                 stepper("SOUND BARS", value: $model.rhythm.audibleBars, range: 1...16)
                 stepper("SILENT BARS", value: $model.rhythm.silentBars, range: 1...16)
             }
-            HStack(spacing: 6) {
-                ForEach(0..<min(16, model.rhythm.audibleBars + model.rhythm.silentBars), id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 4).fill(i < model.rhythm.audibleBars ? p.ink : p.muted.opacity(0.2)).frame(height: 35)
-                }
-            }.padding(20).insetPanel(p, radius: 12)
             Text("The click takes a break. You keep playing.").font(.system(size: 14)).foregroundStyle(p.muted)
         }
     }
     private func navigate(_ route: InstrumentPanelKind) { returnRoutes.append(kind); kind = route }
     private var presetPanel: some View {
         VStack(alignment: .leading, spacing: 21) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(model.rhythm.savedTempo + " BPM").font(InstrumentType.value(28))
+                Text(model.rhythm.savedSummary).font(.subheadline).foregroundStyle(p.muted)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(18).insetPanel(p, radius: 14)
+            if savingPreset {
             HStack(spacing: 11) {
                 TextField("NAME THIS RHYTHM", text: $presetName).accessibilityIdentifier("preset-name")
                     .font(.system(size: 12, design: .monospaced)).textInputAutocapitalization(.sentences)
@@ -237,6 +248,14 @@ struct InstrumentPanel: View {
                     .buttonStyle(HardwareButtonStyle(p: p)).disabled(presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .opacity(presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
                     .accessibilityLabel("Save current rhythm").accessibilityIdentifier("save-preset")
+            }
+            } else {
+                HStack {
+                    Spacer()
+                    Button { savingPreset = true; naming = true } label: {
+                        Label("Save current", systemImage: "bookmark").padding(.horizontal, 16).frame(minHeight: 44)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("save-current-preset")
+                }
             }
             if model.presets.isEmpty {
                 VStack(spacing: 15) {
@@ -257,6 +276,7 @@ struct InstrumentPanel: View {
                     }
                 }.padding(15).insetPanel(p, radius: 12)
             }
+            VStack(spacing: 0) {
             ForEach(model.presets) { preset in
                 VStack(spacing: 11) {
                     HStack(spacing: 12) {
@@ -272,16 +292,18 @@ struct InstrumentPanel: View {
                                     Text("BPM").technical(9, spacing: 1)
                                 }
                             }.padding(15).frame(maxWidth: .infinity, minHeight: 76)
-                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 10)).accessibilityIdentifier("load-preset-\(preset.name)")
+                        }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("load-preset-\(preset.name)")
                             .accessibilityAddTraits(model.isCurrentPreset(preset) ? .isSelected : [])
                             .overlay(alignment: .topLeading) {
                                 if model.isCurrentPreset(preset) { LED(on: true, size: 5).offset(x: 6, y: 6).allowsHitTesting(false) }
                             }
+                        if editingPresets {
                         Menu {
                             Button("Add to setlist") { addingPreset = preset; presetNotice = nil }
                             Button("DELETE", role: .destructive) { deleting = preset.id }
                         } label: { Image(systemName: "ellipsis").frame(width: 40, height: 44) }
                             .buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityLabel(L10n.format("Options for %@", preset.name))
+                        }
                     }
                     if deleting == preset.id {
                         VStack(alignment: .leading, spacing: 12) {
@@ -293,12 +315,20 @@ struct InstrumentPanel: View {
                         }.padding(14).insetPanel(p, radius: 10)
                     }
                 }
+                if preset.id != model.presets.last?.id { Divider().padding(.horizontal, 16) }
+            }
+            }.insetPanel(p, radius: 14)
+            if !model.presets.isEmpty {
+                Button { editingPresets.toggle() } label: {
+                    Label(editingPresets ? "Done" : "Edit", systemImage: editingPresets ? "checkmark" : "pencil")
+                        .padding(.horizontal, 16).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p))
             }
         }
     }
     private func savePreset() {
         guard !presetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        model.addPreset(presetName); presetName = ""; naming = false
+        model.addPreset(presetName); presetName = ""; naming = false; savingPreset = false
     }
     private func practiceChoice(_ title: String, value: String, route: InstrumentPanelKind, selection: Int) -> some View {
         Button { selected = selection; navigate(route) } label: {
@@ -339,7 +369,7 @@ struct InstrumentPanel: View {
     private func numberWell(_ label: String, value: Int, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             Text(L10n.text(label)).technical(9, spacing: 2)
-            Button(action: action) { Text(String(value)).font(InstrumentType.value(34)).frame(maxWidth: .infinity).frame(height: 67).insetPanel(p, radius: 11) }.buttonStyle(.plain)
+            Button(action: action) { Text("\(value) BPM").font(InstrumentType.value(25)).frame(maxWidth: .infinity).frame(height: 58) }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
                 .accessibilityLabel("\(L10n.text(label)), \(value) BPM")
         }
     }

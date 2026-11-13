@@ -5,9 +5,8 @@ struct PolyrhythmPanel: View {
     let p: InstrumentPalette
     @State private var advanced = false
     @Binding var soundLane: Int?
-    @State private var rememberedLower = 2
     private var upper: Int { model.rhythm.polyrhythmPrimary ?? 3 }
-    private var lower: Int { model.rhythm.crossRhythm ?? rememberedLower }
+    private var lower: Int { model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2 }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if let soundLane { soundPicker(soundLane) }
@@ -15,7 +14,7 @@ struct PolyrhythmPanel: View {
                 HStack(spacing: 10) {
                     ForEach([false, true], id: \.self) { on in
                         Button {
-                            model.endSoundPreview(); rememberedLower = lower
+                            model.endSoundPreview(); model.rhythm.polyrhythmStoredSecondary = lower
                             model.rhythm.polyrhythmPrimary = upper
                             model.rhythm.crossRhythm = on ? lower : nil
                         } label: { Text(L10n.text(on ? "ON" : "OFF")).frame(maxWidth: .infinity, minHeight: 44) }
@@ -25,19 +24,18 @@ struct PolyrhythmPanel: View {
                     }
                 }
                 HStack(spacing: 10) { ratio(3, 2); ratio(4, 3); ratio(5, 4) }
-                // One recessed cycle contains two voices, each with its own instrument key.
-                VStack(spacing: 22) {
+                PolyrhythmRings(model: model, upper: upper, lower: lower, p: p)
+                VStack(spacing: 12) {
                     lane(upper, index: 0)
-                    Rectangle().fill(p.edge.opacity(0.4)).frame(height: 0.5)
                     lane(lower, index: 1)
-                }.padding(18).insetPanel(p, radius: 14)
-                Text("Both rows start and finish together.").font(.subheadline).foregroundStyle(p.muted)
+                }
+                Text("Both rings share one cycle.").font(.subheadline).foregroundStyle(p.muted)
                 Button { advanced.toggle() } label: {
                     HStack { Text("Other ratios"); Spacer(); Image(systemName: advanced ? "chevron.up" : "chevron.down") }.padding(.horizontal, 16).frame(minHeight: 44)
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("polyrhythm-more")
                 if advanced {
                     countRow(instrument(0).title, value: upper, range: 2...8) { model.rhythm.polyrhythmPrimary = $0; model.rhythm.crossRhythm = lower }
-                    countRow(instrument(1).title, value: lower, range: 2...9) { model.rhythm.polyrhythmPrimary = upper; model.rhythm.crossRhythm = $0 }
+                    countRow(instrument(1).title, value: lower, range: 2...9) { model.rhythm.polyrhythmPrimary = upper; model.rhythm.crossRhythm = $0; model.rhythm.polyrhythmStoredSecondary = $0 }
                 }
             }
         }.onDisappear { model.endSoundPreview() }
@@ -67,7 +65,7 @@ struct PolyrhythmPanel: View {
     }
     private func ratio(_ a: Int, _ b: Int) -> some View {
         Button {
-            model.endSoundPreview(); model.rhythm.polyrhythmPrimary = a; model.rhythm.crossRhythm = b
+            model.endSoundPreview(); model.rhythm.polyrhythmPrimary = a; model.rhythm.crossRhythm = b; model.rhythm.polyrhythmStoredSecondary = b
         } label: { Text(L10n.format("%d over %d", a, b)).font(.system(size: 15, weight: .medium)).frame(maxWidth: .infinity, minHeight: 48) }
             .buttonStyle(HardwareButtonStyle(p: p, charcoal: model.rhythm.crossCount > 0 && upper == a && lower == b))
             .accessibilityIdentifier("polyrhythm-\(a)-\(b)")
@@ -83,9 +81,9 @@ struct PolyrhythmPanel: View {
                         Spacer(); Image(systemName: "chevron.right").font(.caption)
                     }.padding(.horizontal, 12).frame(minHeight: 48)
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-lane-\(index)")
-                Text("\(count)").font(InstrumentType.value(30)).frame(width: 32)
+                Text(L10n.text(index == 0 ? "Outer ring" : "Inner ring")).font(.caption).foregroundStyle(p.muted).frame(width: 65)
             }
-            HStack(spacing: 8) { ForEach(0..<count, id: \.self) { _ in Capsule().fill(index == 0 ? p.ink : p.muted).frame(maxWidth: .infinity).frame(height: 6) } }
+
         }
     }
     private func countRow(_ title: String, value: Int, range: ClosedRange<Int>, set: @escaping (Int) -> Void) -> some View {

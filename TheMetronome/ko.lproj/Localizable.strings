@@ -496,3 +496,13 @@
 "Metronome" = "메트로놈";
 
 "Live" = "라이브";
+
+"Outer ring" = "바깥 원";
+
+"Inner ring" = "안쪽 원";
+
+"Applies to the next start." = "다음 재생 시작 시 적용됩니다.";
+
+"Save current" = "현재 설정 저장";
+
+"Both rings share one cycle." = "두 원이 같은 주기로 돌아갑니다.";

@@ -496,3 +496,13 @@
 "Metronome" = "Metrónomo";
 
 "Live" = "Directo";
+
+"Outer ring" = "Círculo exterior";
+
+"Inner ring" = "Círculo interior";
+
+"Applies to the next start." = "Se aplica al iniciar de nuevo.";
+
+"Save current" = "Guardar ajustes";
+
+"Both rings share one cycle." = "Ambos círculos comparten un ciclo.";

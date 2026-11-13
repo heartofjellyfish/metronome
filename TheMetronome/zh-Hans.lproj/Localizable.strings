@@ -496,3 +496,13 @@
 "Metronome" = "节拍器";
 
 "Live" = "现场";
+
+"Outer ring" = "外圈";
+
+"Inner ring" = "内圈";
+
+"Applies to the next start." = "下次开始时生效。";
+
+"Save current" = "保存当前设置";
+
+"Both rings share one cycle." = "两圈在同一周期内走完。";

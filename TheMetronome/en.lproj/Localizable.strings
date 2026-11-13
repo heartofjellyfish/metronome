@@ -496,3 +496,13 @@
 "Metronome" = "Metronome";
 
 "Live" = "Live";
+
+"Outer ring" = "Outer ring";
+
+"Inner ring" = "Inner ring";
+
+"Applies to the next start." = "Applies to the next start.";
+
+"Save current" = "Save current";
+
+"Both rings share one cycle." = "Both rings share one cycle.";
