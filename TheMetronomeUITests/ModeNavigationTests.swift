@@ -6,6 +6,10 @@ final class ModeNavigationTests: XCTestCase {
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
         app.launch()
         XCTAssertTrue(app.buttons["mode-menu"].waitForExistence(timeout: 8))
+        proof(app, "Collapsed text mode trigger")
+        app.buttons["mode-menu"].tap()
+        app.buttons["mode-menu"].tap()
+        XCTAssertFalse(app.buttons["mode-live"].exists)
         app.buttons["mode-menu"].tap()
         let widths = ["metronome", "practice", "live"].map { app.buttons["mode-\($0)"].frame.width }
         XCTAssertEqual(widths[0], widths[1], accuracy: 1)

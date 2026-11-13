@@ -60,58 +60,22 @@ struct ModeIllustration: View {
     }
 }
 
-/// One continuous housing: the tab grows into a shared recessed three-way selector.
-private struct ModeHousing: Shape {
-    func path(in r: CGRect) -> Path {
-        let left = r.width - 140.0, right = r.width - 52.0
-        var p = Path()
-        p.move(to: CGPoint(x: left + 9, y: 0))
-        p.addLine(to: CGPoint(x: right - 9, y: 0))
-        p.addQuadCurve(to: CGPoint(x: right, y: 9), control: CGPoint(x: right, y: 0))
-        p.addLine(to: CGPoint(x: right, y: 29))
-        p.addQuadCurve(to: CGPoint(x: right + 9, y: 38), control: CGPoint(x: right, y: 38))
-        p.addLine(to: CGPoint(x: r.width - 12, y: 38))
-        p.addQuadCurve(to: CGPoint(x: r.width, y: 50), control: CGPoint(x: r.width, y: 38))
-        p.addLine(to: CGPoint(x: r.width, y: r.height - 12))
-        p.addQuadCurve(to: CGPoint(x: r.width - 12, y: r.height), control: CGPoint(x: r.width, y: r.height))
-        p.addLine(to: CGPoint(x: 12, y: r.height))
-        p.addQuadCurve(to: CGPoint(x: 0, y: r.height - 12), control: CGPoint(x: 0, y: r.height))
-        p.addLine(to: CGPoint(x: 0, y: 50))
-        p.addQuadCurve(to: CGPoint(x: 12, y: 38), control: CGPoint(x: 0, y: 38))
-        p.addLine(to: CGPoint(x: left - 9, y: 38))
-        p.addQuadCurve(to: CGPoint(x: left, y: 29), control: CGPoint(x: left, y: 38))
-        p.addLine(to: CGPoint(x: left, y: 9))
-        p.addQuadCurve(to: CGPoint(x: left + 9, y: 0), control: CGPoint(x: left, y: 0))
-        p.closeSubpath()
-        return p
-    }
-}
-
 struct ModeTriggerLabel: View {
     let expanded: Bool
     var body: some View {
         HStack(spacing: 5) {
-            Text(L10n.text("Modes")).font(.system(size: 14, weight: .medium, design: .monospaced))
+            Text(L10n.text("Modes").uppercased()).technical(11, spacing: 4.3)
             Image(systemName: expanded ? "chevron.up" : "chevron.down")
                 .font(.system(size: 8, weight: .medium)).opacity(0.65)
-        }.frame(width: 88, height: 38)
+        }.frame(minWidth: 88, minHeight: 44, alignment: .leading).contentShape(Rectangle())
     }
 }
 
 struct ModeChooser: View {
     let current: InstrumentMode
     let p: InstrumentPalette
-    let close: () -> Void
     let select: (InstrumentMode) -> Void
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Spacer()
-                Button(action: close) { ModeTriggerLabel(expanded: true) }
-                    .buttonStyle(.plain).accessibilityIdentifier("mode-menu")
-                    .accessibilityValue(L10n.text("Collapse"))
-                Color.clear.frame(width: 52)
-            }.frame(height: 38)
             HStack(spacing: 0) {
                 ForEach(InstrumentMode.allCases) { mode in
                     Button { select(mode) } label: {
@@ -141,11 +105,11 @@ struct ModeChooser: View {
                         .accessibilityAddTraits(current == mode ? .isSelected : [])
                 }
             }.padding(3).insetPanel(p, radius: 8).padding(9)
-        }.frame(width: 206, height: 168)
+            .frame(width: 206)
             .foregroundStyle(p.ink)
             .background {
-                ModeHousing().fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
-                    .overlay(ModeHousing().stroke(p.light, lineWidth: 0.8))
+                RoundedRectangle(cornerRadius: 12).fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(p.light, lineWidth: 0.8))
                     .shadow(color: .black.opacity(0.23), radius: 4, y: 2)
             }
     }
