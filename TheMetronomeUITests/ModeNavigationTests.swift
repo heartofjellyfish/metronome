@@ -41,6 +41,38 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["tempoDisplay"].exists)
         XCTAssertEqual(app.buttons["mode-menu"].label, "Metronome")
     }
+    func testLiveHomeRoutesAndEmptyState() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["live-new-setlist"].waitForExistence(timeout: 8))
+        proof(app, "Live home — empty")
+        app.buttons["live-new-setlist"].tap()
+        XCTAssertTrue(app.buttons["cancel-setlist"].waitForExistence(timeout: 3))
+        app.buttons["cancel-setlist"].tap()
+        app.buttons["close-panel"].tap()
+        XCTAssertTrue(app.buttons["live-new-setlist"].exists)
+        app.buttons["live-tool-songLibrary"].tap()
+        XCTAssertTrue(app.buttons["library-new-song"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        app.buttons["live-preparation"].tap()
+        XCTAssertTrue(app.staticTexts["Avoid call interruptions"].exists)
+        app.terminate()
+        app.launchArguments += ["--redesign-ui-test", "--many-setlists"]
+        app.launch()
+        let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-setlist-"))
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 8))
+        proof(app, "Live home — long catalog")
+        rows.firstMatch.tap()
+        XCTAssertTrue(app.buttons["choose-setlist"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        XCTAssertTrue(app.buttons["live-new-setlist"].exists)
+        app.terminate()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 8))
+        proof(app, "Live home — short catalog")
+    }
     private func assertMenuAnchor(_ app: XCUIApplication) {
         let header = app.buttons["mode-menu"].frame
         let item = app.buttons["mode-metronome"].frame

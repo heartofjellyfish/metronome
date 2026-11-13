@@ -35,8 +35,10 @@ struct SetlistPanel: View {
     @State private var performing = false
     @FocusState private var namingList: Bool
 
-    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, close: @escaping () -> Void) {
+    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, startCreating: Bool = false, close: @escaping () -> Void) {
         self.model = model; self.p = p; self.close = close; self.startInSongLibrary = startInSongLibrary
+        _editing = State(initialValue: startCreating)
+        _creatingList = State(initialValue: startCreating)
         _browsingSetlistID = State(initialValue: model.setlists.first { $0.id == initialSetlistID }?.id)
     }
     private var browsedList: SongSetlist? { model.setlists.first { $0.id == browsingSetlistID } }

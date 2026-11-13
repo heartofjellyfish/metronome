@@ -12,6 +12,8 @@ struct MetronomeView: View {
     @State private var mode: InstrumentMode = .metronome
     @State private var modesOpen = false
     @State private var panel: InstrumentPanelKind?
+    @State private var liveListRoute: LiveListRoute?
+    private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var creating: Bool }
     @State private var panelSession = UUID()
     private func present(_ kind: InstrumentPanelKind) { modesOpen = false; panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
@@ -23,12 +25,19 @@ struct MetronomeView: View {
                 else {
                     VStack(spacing: 0) {
                         modeHeader.frame(height: 38)
-                        ModeLanding(model: model, mode: mode, open: present)
+                        if mode == .live {
+                            LiveModeHome(model: model, open: present) { id, creating in
+                                modesOpen = false
+                                liveListRoute = LiveListRoute(setlistID: id, creating: creating)
+                            }
+                        } else {
+                            ModeLanding(model: model, mode: mode, open: present)
+                        }
                     }
                 }
             }
                 .accessibilityElement(children: .contain)
-                .accessibilityHidden(settings || panel != nil)
+                .accessibilityHidden(settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
                 .overlay(alignment: .topLeading) {
                     if modesOpen {
@@ -41,10 +50,15 @@ struct MetronomeView: View {
                 }
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-        }.accessibilityHidden(settings || panel != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+        }.accessibilityHidden(settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
+            }
+            .overlay {
+                if let route = liveListRoute {
+                    SetlistPanel(model: model, p: p, initialSetlistID: route.setlistID, startCreating: route.creating) { liveListRoute = nil }.id(route.id)
+                }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
             .ignoresSafeArea(.keyboard, edges: .bottom)
