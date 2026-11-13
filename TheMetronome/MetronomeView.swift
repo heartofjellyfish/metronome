@@ -27,7 +27,7 @@ struct MetronomeView: View {
                     }.overlay(alignment: .topTrailing) {
                         if modesOpen {
                             Color.black.opacity(0.001).padding(.top, 38).onTapGesture { modesOpen = false }
-                            modeMenu.padding(.top, 36).padding(.trailing, 20)
+                            modeMenu.padding(.trailing, 24)
                         }
                     }
                 }
@@ -59,19 +59,20 @@ struct MetronomeView: View {
             Text(mode == .metronome ? "METRONOME" : mode.title).technical(11, spacing: 3)
             Spacer(minLength: 8)
             Button { modesOpen.toggle() } label: {
-                Text(L10n.text("Modes")).font(.system(size: 14, weight: .medium, design: .monospaced)).frame(minWidth: 60, minHeight: 38)
+                ModeTriggerLabel(expanded: false)
             }.buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityIdentifier("mode-menu")
+                .opacity(modesOpen ? 0 : 1).accessibilityHidden(modesOpen)
             Button { modesOpen = false; settings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
             }.accessibilityLabel("Settings").accessibilityIdentifier("settings")
         }.padding(.horizontal, 24).foregroundStyle(p.ink)
     }
     private var modeMenu: some View {
-        ModeChooser(current: mode, p: p) { choice in
+        ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
             model.endSoundPreview()
             mode = choice
             modesOpen = false
-        }.frame(width: 252)
+        }.frame(width: 206, height: 168)
     }
     private var instrumentFace: some View {
         ZStack(alignment: .topLeading) {
@@ -151,7 +152,7 @@ struct MetronomeView: View {
             }.buttonStyle(.plain).position(x: 207, y: 753).accessibilityLabel(L10n.text(model.activeSetlist != nil ? "Setlists" : model.currentSong != nil ? "Song library" : "Saved presets")).accessibilityValue(model.presetCaption).accessibilityIdentifier("presets")
             if modesOpen {
                 Color.black.opacity(0.001).frame(width: 414, height: 736).offset(y: 38).onTapGesture { modesOpen = false }
-                modeMenu.position(x: 264, y: 94)
+                modeMenu.position(x: 287, y: 80)
             }
         }.foregroundStyle(p.ink)
     }
