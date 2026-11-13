@@ -61,10 +61,11 @@ struct ModeIllustration: View {
 }
 
 struct ModeTriggerLabel: View {
+    let mode: InstrumentMode
     let expanded: Bool
     var body: some View {
         HStack(spacing: 5) {
-            Text(L10n.text("Modes").uppercased()).technical(11, spacing: 4.3)
+            Text(mode.title.uppercased()).technical(11, spacing: 4.3).lineLimit(1)
             Image(systemName: expanded ? "chevron.up" : "chevron.down")
                 .font(.system(size: 8, weight: .medium)).opacity(0.65)
         }.frame(minWidth: 88, minHeight: 44, alignment: .leading).contentShape(Rectangle())

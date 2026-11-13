@@ -57,8 +57,9 @@ struct MetronomeView: View {
     private var modeHeader: some View {
         HStack(spacing: 12) {
             Button { modesOpen.toggle() } label: {
-                ModeTriggerLabel(expanded: modesOpen)
+                ModeTriggerLabel(mode: mode, expanded: modesOpen)
             }.buttonStyle(.plain).accessibilityIdentifier("mode-menu")
+                .accessibilityLabel(mode.title)
                 .accessibilityValue(L10n.text(modesOpen ? "Collapse" : "Expand"))
             Spacer(minLength: 8)
             Button { modesOpen = false; settings = true } label: {
