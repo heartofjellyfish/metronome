@@ -35,10 +35,17 @@ struct SetlistPanel: View {
     @State private var performing = false
     @FocusState private var namingList: Bool
 
-    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, startCreating: Bool = false, close: @escaping () -> Void) {
+    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, startCreating: Bool = false, initialAction: LiveSetlistAction = .browse, close: @escaping () -> Void) {
         self.model = model; self.p = p; self.close = close; self.startInSongLibrary = startInSongLibrary
-        _editing = State(initialValue: startCreating)
+        _editing = State(initialValue: startCreating || initialAction == .edit)
         _creatingList = State(initialValue: startCreating)
+        if let list = model.setlists.first(where: { $0.id == initialSetlistID }) {
+            if initialAction == .edit {
+                _listName = State(initialValue: list.name)
+                _draftSongIDs = State(initialValue: list.songs.map(\.id))
+            }
+            if initialAction == .delete { _deletingList = State(initialValue: list) }
+        }
         _browsingSetlistID = State(initialValue: model.setlists.first { $0.id == initialSetlistID }?.id)
     }
     private var browsedList: SongSetlist? { model.setlists.first { $0.id == browsingSetlistID } }
@@ -402,6 +409,7 @@ struct SetlistPanel: View {
     private func saveList() {
         dismissTextInput()
         guard let id = model.saveSetlist(id: creatingList ? nil : browsingSetlistID, name: listName, songIDs: draftSongIDs) else { return }
+        SetlistRecency.touch(id)
         browsingSetlistID = id; cancelList()
     }
     private func grip(_ id: String) -> some View {
@@ -424,6 +432,7 @@ struct SetlistPanel: View {
         }.padding(.horizontal, 12).frame(height: 44).insetPanel(p, radius: 9)
     }
     private func openList(_ list: SongSetlist) {
+        SetlistRecency.touch(list.id)
         dismissTextInput()
         bookmarks.prefer(list.id, on: "setlists")
         bookmarks.clear(list.id.uuidString)
@@ -461,14 +470,7 @@ struct SetlistPanel: View {
         let showFrequent = searchingLists && query.isEmpty && model.setlists.count >= 20
         let move: ((UUID, Int) -> Void)? = query.isEmpty ? { id, index in model.moveSetlist(id, to: index) } : nil
         return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move, swipeActions: { list in
-            [
-                CatalogRowAction(id: "edit-setlist-" + list.name, title: "Edit", icon: "pencil") {
-                    openList(list); beginEdit(new: false)
-                },
-                CatalogRowAction(id: "delete-setlist-" + list.name, title: "Delete", icon: "trash", destructive: true) {
-                    deletingList = list
-                }
-            ]
+            setlistActions(list, edit: { openList(list); beginEdit(new: false) }, delete: { deletingList = list })
         }, onContentHeight: { if query.isEmpty && !searchingLists && abs(shelfHeight - $0) > 0.5 { shelfHeight = $0 } }, row: { _, list in
             HStack(spacing: 6) {
                 if query.isEmpty { grip("drag-setlist-\(list.name)") }
@@ -478,7 +480,7 @@ struct SetlistPanel: View {
                             Text(list.name).font(.headline).multilineTextAlignment(.leading)
                             Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
                         }
-                        Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption)
+                        Spacer(minLength: 0)
                     }.frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
                 }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
             }.padding(.horizontal, 12).padding(.vertical, 5)
@@ -491,7 +493,7 @@ struct SetlistPanel: View {
                         Text("Frequently used").font(.footnote).foregroundStyle(p.muted)
                         ForEach(frequent) { list in
                             Button { openList(list) } label: {
-                                HStack { Text(list.name); Spacer(); Image(systemName: "chevron.right") }.padding(10)
+                                HStack { Text(list.name); Spacer() }.padding(10)
                             }.buttonStyle(HardwareButtonStyle(p: p))
                         }
                     }
@@ -581,7 +583,7 @@ struct SetlistPanel: View {
                 model.loadSong(value, from: browsingSetlistID)
                 performing = true
             } label: {
-                HStack { songInfo(value, maxTitleLines: 2); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption) }
+                HStack { songInfo(value, maxTitleLines: 2); Spacer(minLength: 0) }
                     .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
                 .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])

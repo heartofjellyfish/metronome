@@ -13,7 +13,7 @@ struct MetronomeView: View {
     @State private var modesOpen = false
     @State private var panel: InstrumentPanelKind?
     @State private var liveListRoute: LiveListRoute?
-    private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var creating: Bool }
+    private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var action: LiveSetlistAction }
     @State private var panelSession = UUID()
     private func present(_ kind: InstrumentPanelKind) { modesOpen = false; panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
@@ -26,9 +26,9 @@ struct MetronomeView: View {
                     VStack(spacing: 0) {
                         modeHeader.frame(height: 38)
                         if mode == .live {
-                            LiveModeHome(model: model, open: present) { id, creating in
+                            LiveModeHome(model: model, open: present) { id, action in
                                 modesOpen = false
-                                liveListRoute = LiveListRoute(setlistID: id, creating: creating)
+                                liveListRoute = LiveListRoute(setlistID: id, action: action)
                             }
                         } else {
                             ModeLanding(model: model, mode: mode, open: present)
@@ -57,7 +57,7 @@ struct MetronomeView: View {
             }
             .overlay {
                 if let route = liveListRoute {
-                    SetlistPanel(model: model, p: p, initialSetlistID: route.setlistID, startCreating: route.creating) { liveListRoute = nil }.id(route.id)
+                    SetlistPanel(model: model, p: p, initialSetlistID: route.setlistID, startCreating: route.action == .create, initialAction: route.action) { liveListRoute = nil }.id(route.id)
                 }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
