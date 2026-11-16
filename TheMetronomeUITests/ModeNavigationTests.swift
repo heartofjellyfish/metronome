@@ -1,6 +1,48 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
+    func testRefinedModeJourneys() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--many-setlists", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["live-all-setlists"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["live-new-setlist"].exists)
+        XCTAssertFalse(app.staticTexts["Recent setlists"].exists)
+        proof(app, "Refined Live — ordered scrollable lists")
+        let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-setlist-"))
+        let first = rows.firstMatch.identifier
+        rows.firstMatch.swipeUp()
+        XCTAssertNotEqual(rows.firstMatch.identifier, first)
+        app.buttons["live-all-setlists"].tap()
+        XCTAssertTrue(app.buttons["new-setlist"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        app.buttons["live-tool-songLibrary"].tap()
+        let song = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "library-open-")).firstMatch
+        XCTAssertTrue(song.waitForExistence(timeout: 3))
+        song.tap()
+        XCTAssertTrue(app.buttons["performance-play"].waitForExistence(timeout: 3))
+        app.buttons["close-performance"].tap()
+        app.buttons["close-panel"].tap()
+        XCTAssertTrue(app.buttons["live-recent-song"].waitForExistence(timeout: 3))
+        proof(app, "Live with recent song")
+        app.buttons["live-recent-song"].tap()
+        XCTAssertTrue(app.buttons["performance-play"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["performance-next"].exists)
+        app.buttons["close-performance"].tap()
+        app.buttons["mode-menu"].tap()
+        proof(app, "Connected mode housing")
+        app.buttons["mode-practice"].tap()
+        XCTAssertTrue(app.buttons["practice-ramp"].waitForExistence(timeout: 3))
+        proof(app, "Practice hardware controls")
+        app.buttons["practice-ramp"].tap()
+        XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3))
+        app.buttons["close-panel"].tap()
+        app.buttons["settings"].tap()
+        XCTAssertTrue(app.buttons["settings-pedal"].waitForExistence(timeout: 3))
+        proof(app, "Settings pedal and consistent general controls")
+        app.buttons["settings-pedal"].tap()
+        XCTAssertTrue(app.buttons["close-panel"].waitForExistence(timeout: 3))
+    }
     func testRepeatedModeSwitchingPreservesTransport() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
@@ -17,7 +59,7 @@ final class ModeNavigationTests: XCTestCase {
         proof(app, "Settings — sound and general only")
         app.buttons["close-settings"].tap()
         app.buttons["mode-menu"].tap()
-        app.buttons["mode-menu"].tap()
+        app.buttons["mode-menu-close"].tap()
         XCTAssertFalse(app.buttons["mode-live"].exists)
         app.buttons["mode-menu"].tap()
         let widths = ["metronome", "practice", "live"].map { app.buttons["mode-\($0)"].frame.width }
@@ -53,25 +95,23 @@ final class ModeNavigationTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
         app.launch()
-        XCTAssertTrue(app.buttons["live-new-setlist"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["live-all-setlists"].waitForExistence(timeout: 8))
         proof(app, "Live home — empty")
-        app.buttons["live-new-setlist"].tap()
+        app.buttons["live-all-setlists"].tap()
+        app.buttons["new-setlist"].tap()
         XCTAssertTrue(app.buttons["cancel-setlist"].waitForExistence(timeout: 3))
         app.buttons["cancel-setlist"].tap()
         app.buttons["close-panel"].tap()
-        XCTAssertTrue(app.buttons["live-new-setlist"].exists)
+        XCTAssertFalse(app.buttons["live-new-setlist"].exists)
         app.buttons["live-tool-songLibrary"].tap()
         XCTAssertTrue(app.buttons["library-new-song"].waitForExistence(timeout: 3))
         app.buttons["close-panel"].tap()
-        app.buttons["live-preparation"].tap()
-        XCTAssertTrue(app.staticTexts["Avoid call interruptions"].exists)
         app.terminate()
         app.launchArguments += ["--redesign-ui-test", "--many-setlists"]
         app.launch()
         let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-setlist-"))
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 8))
         proof(app, "Live home — long catalog")
-        XCTAssertEqual(rows.count, 3)
         rows.firstMatch.swipeLeft()
         let edit = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "swipe-edit-setlist-")).firstMatch
         XCTAssertTrue(edit.waitForExistence(timeout: 3))
@@ -97,7 +137,7 @@ final class ModeNavigationTests: XCTestCase {
         rows.firstMatch.tap()
         XCTAssertTrue(app.buttons["choose-setlist"].waitForExistence(timeout: 3))
         app.buttons["close-panel"].tap()
-        XCTAssertTrue(app.buttons["live-new-setlist"].exists)
+        XCTAssertFalse(app.buttons["live-new-setlist"].exists)
         app.terminate()
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
         app.launch()

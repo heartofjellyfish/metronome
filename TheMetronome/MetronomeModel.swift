@@ -419,12 +419,20 @@ final class MetronomeModel: ObservableObject {
         }
         return value.id
     }
+    var recentSongs: [SavedPreset] {
+        let ids = UserDefaults.standard.stringArray(forKey: "recentSongIDs") ?? []
+        return ids.compactMap { id in songLibrary.first { $0.id.uuidString == id } }
+    }
     func loadSong(_ input: SavedPreset, from target: UUID? = nil) {
         guard let song = songLibrary.first(where: { $0.id == input.id }) else { return }
         if let target {
             guard setlists.contains(where: { $0.id == target && $0.songs.contains(where: { $0.id == song.id }) }) else { return }
             activeSetlistID = target
         }
+        var recent = UserDefaults.standard.stringArray(forKey: "recentSongIDs") ?? []
+        recent.removeAll { $0 == song.id.uuidString }
+        recent.insert(song.id.uuidString, at: 0)
+        UserDefaults.standard.set(Array(recent.prefix(20)), forKey: "recentSongIDs")
         liveTempoSongID = nil
         if selectedSongID == song.id, rhythm == song.rhythm.performanceCopy { return }
         tapTempo = TapTempo()

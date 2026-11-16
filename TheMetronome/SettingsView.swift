@@ -40,14 +40,22 @@ struct SettingsView: View {
                         }
                         VStack(spacing: 16) {
                             SectionLabel(text: "02 GENERAL", p: p)
+                            Button { present(.pedal) } label: {
+                                HStack(spacing: 10) {
+                                    SettingsIllustration(kind: .pedal).frame(width: 42, height: 34)
+                                    Text("Pedal setup").font(.system(size: 14, weight: .medium))
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.caption)
+                                }.padding(.horizontal, 14).frame(height: 50)
+                            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("settings-pedal")
                             ViewThatFits(in: .horizontal) {
                                 HStack {
-                                    Text("Keep screen awake").font(.system(size: 14))
+                                    Text("Keep screen awake").technical(11, spacing: 1)
                                     Spacer(minLength: 0)
                                     liveScreenKeys
                                 }
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Keep screen awake").font(.system(size: 14))
+                                    Text("Keep screen awake").technical(11, spacing: 1)
                                     liveScreenKeys.frame(maxWidth: .infinity, alignment: .trailing)
                                 }
                             }

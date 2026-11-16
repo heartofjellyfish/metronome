@@ -7,7 +7,7 @@ struct LiveModeHome: View {
     let openSetlist: (UUID?, LiveSetlistAction) -> Void
     @State private var bookmarks = ListBookmarks()
     @State private var contentHeight: CGFloat = 0
-    @State private var preparation = false
+    @State private var recentSongOpen = false
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
 
     var body: some View {
@@ -15,50 +15,46 @@ struct LiveModeHome: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        SectionLabel(text: "Recent setlists", p: p)
+                        SectionLabel(text: "Setlists", p: p)
                         Button { openSetlist(nil, .browse) } label: { Text("All").font(.system(size: 14, weight: .medium)).padding(.horizontal, 18).frame(minHeight: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("live-all-setlists")
                     }
                     if model.setlists.isEmpty {
                         Text("No setlists yet.").font(.subheadline).foregroundStyle(p.muted)
                             .frame(maxWidth: .infinity, minHeight: 76, alignment: .center).insetPanel(p)
                     } else {
-                        catalog.frame(height: min(310, max(76, contentHeight > 0 ? contentHeight : CGFloat(recentLists.count) * 76 + 16)))
+                        catalog.frame(height: min(252, max(76, contentHeight > 0 ? contentHeight : CGFloat(model.setlists.count) * 76 + 16)))
                     }
                     HStack(spacing: 12) {
                         tool("Song library", icon: .songLibrary, kind: .songLibrary)
-                        Button { openSetlist(nil, .create) } label: {
-                            Label("New setlist", systemImage: "plus").font(.system(size: 15, weight: .medium))
-                                .padding(.horizontal, 10).frame(maxWidth: .infinity, minHeight: 48)
-                        }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("live-new-setlist")
+                        tool("Pedal setup", icon: .pedal, kind: .pedal)
                     }
-                    SectionLabel(text: "Performance setup", p: p).padding(.top, 18)
-                    tool("Pedal", icon: .pedal, kind: .pedal)
-                    Button { preparation.toggle() } label: {
-                        HStack {
-                            Label("Pre-show checklist", systemImage: "checklist").font(.system(size: 14))
-                            Spacer()
-                            Image(systemName: preparation ? "chevron.up" : "chevron.down").font(.system(size: 11))
-                        }.padding(.horizontal, 14).frame(minHeight: 48).contentShape(Rectangle())
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("live-preparation")
-                        .accessibilityValue(L10n.text(preparation ? "Collapse" : "Expand"))
-                    if preparation { PerformancePreparation(p: p) }
+                    if let song = model.recentSongs.first {
+                        SectionLabel(text: "Recent song", p: p).padding(.top, 12)
+                        Button {
+                            model.loadStandaloneSong(song.id)
+                            recentSongOpen = true
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(verbatim: song.name).font(.system(size: 18, weight: .semibold)).lineLimit(2)
+                                    Text("\(song.rhythm.bpm) BPM · \(song.rhythm.beats)/\(song.rhythm.denominator)").font(.system(size: 13)).foregroundStyle(p.muted)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 12))
+                            }.padding(18).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                        }.buttonStyle(InsetRowButtonStyle(p: p)).insetPanel(p)
+                            .accessibilityIdentifier("live-recent-song")
+                    }
                 }.padding(.top, 22).padding(.bottom, 16)
             }.scrollClipDisabled()
             // Keep an active session controllable while browsing, without inviting an accidental start.
             if model.playing { SettingsPlaybackBar(model: model, p: p) }
         }.padding(.horizontal, 26).padding(.bottom, 18).foregroundStyle(p.ink)
-    }
-
-    private var recentLists: [SongSetlist] {
-        let dates = SetlistRecency.dates
-        return Array(model.setlists.enumerated().sorted { a, b in
-            let x = dates[a.element.id.uuidString, default: 0], y = dates[b.element.id.uuidString, default: 0]
-            return x == y ? a.offset < b.offset : x > y
-        }.prefix(3).map(\.element))
+            .fullScreenCover(isPresented: $recentSongOpen) { PerformanceView(model: model, fromSongLibrary: true, back: { recentSongOpen = false }) }
     }
 
     private var catalog: some View {
-        CatalogList(items: recentLists, p: p, bookmarks: bookmarks, page: "live-home", compactMargins: true, swipeActions: { list in
+        CatalogList(items: model.setlists, p: p, bookmarks: bookmarks, page: "live-home", compactMargins: true, swipeActions: { list in
                         setlistActions(list, edit: { openSetlist(list.id, .edit) }, delete: { openSetlist(list.id, .delete) })
                     },
                     onContentHeight: { if abs(contentHeight - $0) > 0.5 { contentHeight = $0 } }, row: { _, list in
@@ -70,6 +66,7 @@ struct LiveModeHome: View {
                             .font(.system(size: 13)).foregroundStyle(p.muted)
                     }
                     Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(p.muted)
                 }.frame(maxWidth: .infinity, minHeight: 58).padding(.horizontal, 14).padding(.vertical, 5).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("live-setlist-\(list.id)")
         }, above: { EmptyView() }, below: { EmptyView() }).screen()
@@ -77,10 +74,10 @@ struct LiveModeHome: View {
 
     private func tool(_ title: LocalizedStringKey, icon: SettingsIllustration.Kind, kind: InstrumentPanelKind) -> some View {
         Button { open(kind) } label: {
-            HStack(spacing: 8) {
-                SettingsIllustration(kind: icon).frame(width: 38, height: 32)
+            VStack(spacing: 6) {
+                SettingsIllustration(kind: icon).frame(width: 46, height: 38)
                 Text(title).font(.system(size: 15, weight: .medium)).lineLimit(1).minimumScaleFactor(0.85)
-            }.padding(.horizontal, 12).frame(maxWidth: .infinity, alignment: .leading).frame(height: 48)
+            }.padding(.horizontal, 12).frame(maxWidth: .infinity, alignment: .center).frame(height: 88)
         }.buttonStyle(HardwareButtonStyle(p: p, radius: 12)).accessibilityIdentifier("live-tool-\(kind.rawValue)")
     }
 }

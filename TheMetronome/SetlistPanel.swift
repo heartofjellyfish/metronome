@@ -481,6 +481,7 @@ struct SetlistPanel: View {
                             Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
                         }
                         Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted)
                     }.frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
                 }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
             }.padding(.horizontal, 12).padding(.vertical, 5)
@@ -583,7 +584,7 @@ struct SetlistPanel: View {
                 model.loadSong(value, from: browsingSetlistID)
                 performing = true
             } label: {
-                HStack { songInfo(value, maxTitleLines: 2); Spacer(minLength: 0) }
+                HStack { songInfo(value, maxTitleLines: 2); Spacer(minLength: 0); Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted) }
                     .frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
             }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("song-\(value.name)")
                 .accessibilityAddTraits(model.activeSetlistID == browsingSetlistID && model.selectedSongID == value.id ? .isSelected : [])

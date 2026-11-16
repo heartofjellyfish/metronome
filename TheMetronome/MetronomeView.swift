@@ -44,7 +44,11 @@ struct MetronomeView: View {
                         ZStack(alignment: .topLeading) {
                             Color.black.opacity(0.001).padding(.top, 38)
                                 .onTapGesture { modesOpen = false }
-                            modeMenu.padding(.top, 40).padding(.leading, 24)
+                            modeMenu.padding(.top, 40).padding(.leading, 14)
+                            Button { modesOpen = false } label: {
+                                ModeTriggerLabel(mode: mode, expanded: true)
+                            }.buttonStyle(.plain).padding(.leading, 24).offset(y: -3)
+                                .accessibilityIdentifier("mode-menu-close")
                         }
                     }
                 }

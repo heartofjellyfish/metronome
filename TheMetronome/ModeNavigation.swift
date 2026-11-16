@@ -70,10 +70,33 @@ struct ModeChooser: View {
             .frame(width: 300)
             .foregroundStyle(p.ink)
             .background {
-                RoundedRectangle(cornerRadius: 12).fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(p.light, lineWidth: 0.8))
+                ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110).fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
+                    .overlay(ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110).stroke(p.light, lineWidth: 0.8))
                     .shadow(color: .black.opacity(0.23), radius: 4, y: 2)
             }
+    }
+}
+
+/// One continuous housing joins the text trigger to its selector tray.
+private struct ModeMenuShell: Shape {
+    let tabWidth: CGFloat
+    func path(in r: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: 12))
+        path.addLine(to: CGPoint(x: 0, y: -25))
+        path.addQuadCurve(to: CGPoint(x: 10, y: -35), control: CGPoint(x: 0, y: -35))
+        path.addLine(to: CGPoint(x: tabWidth - 10, y: -35))
+        path.addQuadCurve(to: CGPoint(x: tabWidth, y: -25), control: CGPoint(x: tabWidth, y: -35))
+        path.addLine(to: CGPoint(x: tabWidth, y: -10))
+        path.addQuadCurve(to: CGPoint(x: tabWidth + 10, y: 0), control: CGPoint(x: tabWidth, y: 0))
+        path.addLine(to: CGPoint(x: r.maxX - 12, y: 0))
+        path.addQuadCurve(to: CGPoint(x: r.maxX, y: 12), control: CGPoint(x: r.maxX, y: 0))
+        path.addLine(to: CGPoint(x: r.maxX, y: r.maxY - 12))
+        path.addQuadCurve(to: CGPoint(x: r.maxX - 12, y: r.maxY), control: CGPoint(x: r.maxX, y: r.maxY))
+        path.addLine(to: CGPoint(x: 12, y: r.maxY))
+        path.addQuadCurve(to: CGPoint(x: 0, y: r.maxY - 12), control: CGPoint(x: 0, y: r.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
