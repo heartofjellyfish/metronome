@@ -6,11 +6,12 @@ struct PracticeControls: View {
     let open: (InstrumentPanelKind) -> Void
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
             practiceRoute("Tempo ramp", detail: "\(model.rhythm.start) → \(model.rhythm.end) BPM", route: .ramp, enabled: model.rhythm.ramp)
             practiceRoute("Silent bars", detail: L10n.format("%d sound bars · %d silent bars", model.rhythm.audibleBars, model.rhythm.silentBars), route: .gap, enabled: model.rhythm.gap)
+            }
             practiceRoute("Polyrhythm", detail: "\(model.rhythm.polyrhythmPrimary ?? 3) : \(model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2)", route: .polyrhythm, enabled: model.rhythm.crossCount > 0)
-            practiceRoute("Count-in", detail: model.rhythm.countIn == 0 ? L10n.text("Off") : L10n.bars(model.rhythm.countIn), route: .countIn, enabled: model.rhythm.countIn > 0)
         }
     }
     private func practiceRoute(_ title: String, detail: String, route: InstrumentPanelKind, enabled: Bool) -> some View {

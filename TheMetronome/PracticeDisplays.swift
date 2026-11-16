@@ -57,6 +57,7 @@ struct SilentBarsDisplay: View {
 
 /// Both rings use the same audio-clock cycle. No independently running UI timer.
 struct PolyrhythmRings: View {
+    static func color(_ lane: Int) -> Color { Color(hex: lane == 0 ? 0xAD6545 : 0x477D7B) }
     @ObservedObject var model: MetronomeModel
     let upper: Int
     let lower: Int
@@ -76,7 +77,7 @@ struct PolyrhythmRings: View {
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
                     let lit = phase.map { abs($0-position) < 0.001 } ?? false
                     let rect = CGRect(x: point.x-6, y: point.y-6, width: 12, height: 12)
-                    context.fill(Path(ellipseIn: rect), with: .color(lit ? InstrumentPalette.amber : lane == 0 ? p.ink : p.muted))
+                    context.fill(Path(ellipseIn: rect), with: .color(Self.color(lane).opacity(lit ? 1 : 0.55)))
                 }
             }
             context.draw(Text("\(upper) : \(lower)").font(InstrumentType.value(25)).foregroundColor(p.ink), at: center)

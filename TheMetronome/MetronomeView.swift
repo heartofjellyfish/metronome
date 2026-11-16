@@ -42,7 +42,7 @@ struct MetronomeView: View {
                 .overlay(alignment: .topLeading) {
                     if modesOpen {
                         ZStack(alignment: .topLeading) {
-                            Color.black.opacity(0.001).padding(.top, 38)
+                            Color.black.opacity(0.001)
                                 .onTapGesture { modesOpen = false }
                             modeMenu.padding(.top, 40).padding(.leading, 14)
                             Button { modesOpen = false } label: {

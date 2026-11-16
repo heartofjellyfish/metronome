@@ -48,6 +48,14 @@ struct SettingsView: View {
                                     Image(systemName: "chevron.right").font(.caption)
                                 }.padding(.horizontal, 14).frame(height: 50)
                             }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("settings-pedal")
+                            Button { present(.countIn) } label: {
+                                HStack {
+                                    Text("Count-in").technical(11, spacing: 1)
+                                    Spacer()
+                                    Text(model.rhythm.countIn == 0 ? L10n.text("Off") : L10n.bars(model.rhythm.countIn))
+                                    Image(systemName: "chevron.right").font(.caption)
+                                }.padding(.horizontal, 14).frame(height: 44)
+                            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("settings-count-in")
                             ViewThatFits(in: .horizontal) {
                                 HStack {
                                     Text("Keep screen awake").technical(11, spacing: 1)

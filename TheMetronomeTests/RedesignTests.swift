@@ -2,6 +2,31 @@ import XCTest
 @testable import TheMetronome
 
 final class RedesignTests: XCTestCase {
+    func testPolyrhythmTempoRefersToBAndMutePreservesVisualClock() throws {
+        var r = Rhythm(); r.bpm = 60; r.polyrhythmPrimary = 3; r.crossRhythm = 2
+        r.polyrhythmTempoIsSecondary = true
+        let clock = SampleClock(rate: 4800); clock.reset(r)
+        var a: [Int] = [], b: [Int] = []
+        for frame in 0..<9600 {
+            if let (event, strength) = clock.advance() {
+                if strength > 0 { a.append(frame) }
+                if event.crossStrength > 0 { b.append(frame) }
+            }
+        }
+        XCTAssertEqual(a, [0, 3200, 6400])
+        XCTAssertEqual(b, [0, 4800])
+        r.polyrhythmPrimaryMuted = true; r.polyrhythmSecondaryMuted = true
+        let decoded = try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r))
+        XCTAssertEqual(decoded.polyrhythmPrimaryMuted, true)
+        clock.reset(decoded)
+        var events = 0
+        for _ in 0..<9600 { if clock.advance() != nil { events += 1 } }
+        XCTAssertEqual(events, 6, "Muting audio must not freeze either ring")
+        r.polyrhythmTempoIsSecondary = nil
+        XCTAssertEqual(r.polyrhythmCycleBeats, 1, "Legacy presets retain their original cycle speed")
+        r.crossRhythm = nil
+        XCTAssertEqual(r.polyrhythmCycleBeats, 1)
+    }
     func testSyncopatedSixteenthsUsePartialBeamsInsteadOfFlags() {
         var rhythm = Rhythm(); rhythm.setDivision(4, mask: 11)
         let score = RhythmEngraving(rhythm)

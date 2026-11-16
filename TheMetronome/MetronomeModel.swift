@@ -107,7 +107,7 @@ final class MetronomeAudio {
                 }
                 if let (event, strength) = clock.advance() {
                     latest = event; serial += 1
-                    if strength > 0 {
+                    if strength > 0 && !(clock.rhythm.crossCount > 0 && clock.rhythm.polyrhythmPrimaryMuted == true) {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
                         let sound = clock.rhythm.crossCount > 0 ? clock.rhythm.primaryPulseSound : clock.rhythm.sound
@@ -122,7 +122,7 @@ final class MetronomeAudio {
                         }
                         voiceIndex += 1
                     }
-                    if event.crossStrength > 0 {
+                    if event.crossStrength > 0 && clock.rhythm.polyrhythmSecondaryMuted != true {
                         let sound = clock.rhythm.secondaryPulseSound
                         if [1, 16].contains(sound) {
                             switch crossVoiceIndex % 4 {

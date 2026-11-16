@@ -112,6 +112,20 @@ struct InstrumentPanel: View {
                         if !showsBack { navigationKey }
                     }.padding(23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
+                    if kind == .polyrhythm && polyrhythmSoundLane == nil {
+                        VStack(spacing: 10) {
+                            PolyrhythmRings(model: model, upper: model.rhythm.polyrhythmPrimary ?? 3,
+                                lower: model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2, p: p)
+                            Button { returnRoutes.append(.polyrhythm); kind = .tempo } label: {
+                                HStack {
+                                    Text(L10n.text("B tempo")).font(.system(size: 14, weight: .medium))
+                                    Spacer()
+                                    Text("\(polyrhythmDisplayTempo) BPM").monospacedDigit()
+                                    Image(systemName: "chevron.right").font(.caption)
+                                }.padding(.horizontal, 14).frame(height: 44)
+                            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-tempo")
+                        }.padding(.horizontal, 23).padding(.top, 16)
+                    }
                     ScrollViewReader { proxy in
                         ScrollView {
                             content.padding(23).id("panel-top")
@@ -136,6 +150,9 @@ struct InstrumentPanel: View {
         }.transition(.identity)
             .preferredColorScheme(model.dark ? .dark : .light)
     }
+    private var polyrhythmDisplayTempo: Int {
+        model.bpm * (model.rhythm.crossCount > 0 && model.rhythm.polyrhythmTempoIsSecondary != true ? model.rhythm.crossCount : 1)
+    }
     private var hasTransport: Bool { [.division, .meter, .practice, .ramp, .gap, .polyrhythm, .sounds, .presets, .countIn, .every, .increment].contains(kind) }
     private var compactPanelHeight: CGFloat {
         guard [.presets, .practice, .ramp, .gap].contains(kind), panelContentHeight > 0 else { return kind.height }
@@ -144,12 +161,14 @@ struct InstrumentPanel: View {
     @ViewBuilder private var content: some View {
         switch kind {
         case .tempo, .start, .end:
-            TempoKeypad(initial: kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : model.bpm,
+            TempoKeypad(initial: kind == .start ? model.rhythm.start : kind == .end ? model.rhythm.end : (returnRoutes.last == .polyrhythm ? polyrhythmDisplayTempo : model.bpm),
                         title: kind == .tempo ? "SET TEMPO" : "SET VALUE", p: p, feedback: model.tickFeedback) { value in
                 switch kind {
                 case .start: model.rhythm.start = value
                 case .end: model.rhythm.end = value
-                default: model.setBPM(value)
+                default:
+                    if returnRoutes.last == .polyrhythm { model.rhythm.polyrhythmTempoIsSecondary = true }
+                    model.setBPM(value)
                 }
                 dismiss()
             }.id(kind)

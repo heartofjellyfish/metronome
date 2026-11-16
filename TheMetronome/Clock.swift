@@ -106,6 +106,11 @@ struct Rhythm: Codable, Equatable {
     var polyrhythmPrimary: Int?
     var polyrhythmPrimarySound: Int?
     var polyrhythmSecondarySound: Int?
+    // Optional fields preserve the timing of older saved presets until explicitly reconfigured.
+    var polyrhythmTempoIsSecondary: Bool?
+    var polyrhythmPrimaryMuted: Bool?
+    var polyrhythmSecondaryMuted: Bool?
+    var polyrhythmCycleBeats: Int { crossCount > 0 && polyrhythmTempoIsSecondary == true ? crossCount : 1 }
     var primaryPulseSound: Int { validPulseSound(polyrhythmPrimarySound, fallback: .wood) }
     var secondaryPulseSound: Int { validPulseSound(polyrhythmSecondarySound, fallback: .bell) }
     private func validPulseSound(_ raw: Int?, fallback: InstrumentSound) -> Int {
@@ -310,7 +315,7 @@ final class SampleClock {
             }
         }
         let silent = !counting && rhythm.gap && practiceBar % (rhythm.audibleBars + rhythm.silentBars) >= rhythm.audibleBars
-        let interval = 60 / Double(tempo * rhythm.clockDivisions)
+        let interval = 60 * Double(rhythm.polyrhythmCycleBeats) / Double(tempo * rhythm.clockDivisions)
         let swingScale = rhythm.crossCount == 0 ? (tick.isMultiple(of: 2) ? rhythm.swingRatio * 2 : (1 - rhythm.swingRatio) * 2) : 1
         framesUntilTick += rate * interval * swingScale
         let mainStrength = rhythm.beatStrength(beat, counting: counting)
