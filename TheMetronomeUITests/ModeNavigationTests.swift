@@ -1,12 +1,12 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
-    func testModeChooserReplacesTempoScreen() {
+    func testFullScreenChooserPreservesPlayback() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
         app.launch()
         XCTAssertTrue(app.buttons["tempoDisplay"].waitForExistence(timeout: 8))
-        let screen = app.buttons["tempoDisplay"].frame
+        let screen = app.frame
         let tempoLabel = app.buttons["tempoDisplay"].label
         let transport = app.buttons["transport"].frame
         app.buttons["mode-menu"].tap()
@@ -16,9 +16,9 @@ final class ModeNavigationTests: XCTestCase {
             XCTAssertTrue(screen.contains(frame))
         }
         XCTAssertTrue(app.buttons["mode-metronome"].isSelected)
-        proof(app, "Mode selection inside original display")
+        proof(app, "Full-screen modes — Metronome selected")
         // First tap outside consumes the gesture, including taps over playback.
-        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: transport.midX, dy: transport.midY)).tap()
+        app.buttons["mode-menu-close"].tap()
         XCTAssertTrue(app.buttons["tempoDisplay"].exists)
         XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
         XCTAssertEqual(app.buttons["transport"].frame, transport)
@@ -234,12 +234,12 @@ final class ModeNavigationTests: XCTestCase {
 
     }
     private func assertMenuAnchor(_ app: XCUIApplication) {
-        let header = app.buttons["mode-menu"].frame
-        let item = app.buttons["mode-metronome"].frame
-        // Choices now live inside the shared LCD, below its Choose mode heading.
-        XCTAssertLessThan(item.minY - header.maxY, 60)
-        XCTAssertGreaterThanOrEqual(item.minY, header.maxY - 1)
-        XCTAssertLessThan(abs(item.minX - header.minX), 40)
+        let rows = ["metronome", "practice", "live"].map { app.buttons["mode-\($0)"].frame }
+        XCTAssertTrue(app.buttons["mode-menu-close"].isHittable)
+        XCTAssertEqual(rows[0].height, rows[1].height, accuracy: 1)
+        XCTAssertEqual(rows[1].height, rows[2].height, accuracy: 1)
+        XCTAssertGreaterThan(rows[1].minY, rows[0].minY)
+        XCTAssertTrue(app.frame.contains(rows[2]))
     }
     private func proof(_ app: XCUIApplication, _ name: String) {
         let image = XCTAttachment(screenshot: app.screenshot())

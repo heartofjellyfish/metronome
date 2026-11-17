@@ -43,24 +43,14 @@ struct MetronomeView: View {
                 }
             }
                 .accessibilityElement(children: .contain)
-                .accessibilityHidden(settings || panel != nil || liveListRoute != nil)
+                .accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
-                .overlay(alignment: .topLeading) {
-                    if modesOpen {
-                        ZStack(alignment: .topLeading) {
-                            Color.black.opacity(0.001)
-                                .onTapGesture { modesOpen = false }
-                            modeMenu.position(x: 207, y: 114)
-                            Button { modesOpen = false } label: {
-                                ModeTriggerLabel(mode: mode, expanded: true)
-                            }.buttonStyle(.plain).padding(.leading, 24).offset(y: -7)
-                                .accessibilityIdentifier("mode-menu-close")
-                        }
-                    }
-                }
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-        }.accessibilityHidden(settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+        }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+            .overlay {
+                if modesOpen { modeMenu.zIndex(10) }
+            }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
@@ -119,7 +109,7 @@ struct MetronomeView: View {
         }.frame(width: 365, height: 144).insetPanel(p).foregroundStyle(p.ink).opacity(modesOpen ? 0 : 1)
     }
     private var modeMenu: some View {
-        ModeChooser(current: mode, p: p, embedded: true) { choice in
+        ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
             model.endSoundPreview()
             mode = choice
             modesOpen = false
