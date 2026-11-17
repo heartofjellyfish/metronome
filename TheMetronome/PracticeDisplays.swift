@@ -128,7 +128,7 @@ struct PolyrhythmRings: View {
                 context.stroke(Path(ellipseIn: hub.insetBy(dx: 0.6, dy: 0.6)), with: .color(p.light.opacity(0.25)), lineWidth: 0.5)
             }
             if phase == nil {
-                context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: ":")).font(InstrumentType.value(32)).foregroundColor(p.ink), at: center)
+                context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: ":")).font(InstrumentType.value(model.rhythm.polyCounts.count == 3 ? 18 : 20)).foregroundColor(p.ink), at: center)
             }
         }
         }.frame(height: 154).padding(14).insetPanel(p, radius: 16)

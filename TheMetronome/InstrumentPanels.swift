@@ -126,7 +126,7 @@ struct InstrumentPanel: View {
                         ScrollView {
                             content.padding(23).id("panel-top")
                                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelContentHeight = $0 }
-                        }.scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
+                        }.clipped().scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
                             .onChange(of: divisionEditing) { _, _ in proxy.scrollTo("panel-top", anchor: .top) }
                     }
                     if hasTransport {
