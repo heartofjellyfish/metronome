@@ -36,8 +36,26 @@ struct ModeTriggerLabel: View {
 struct ModeChooser: View {
     let current: InstrumentMode
     let p: InstrumentPalette
+    var embedded = false
     let select: (InstrumentMode) -> Void
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if embedded {
+            VStack(spacing: 6) {
+                Text(L10n.text("Choose mode")).font(.system(size: 12, weight: .medium)).foregroundStyle(p.muted)
+                choices
+            }.padding(12).frame(width: 365, height: 144).insetPanel(p)
+        } else {
+            choices.padding(3).insetPanel(p, radius: 8).padding(9)
+                .frame(width: 300).foregroundStyle(p.ink)
+                .background {
+                    ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110)
+                        .fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
+                        .overlay(ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110).stroke(p.light, lineWidth: 0.8))
+                        .shadow(color: .black.opacity(0.23), radius: 4, y: 2)
+                }
+        }
+    }
+    private var choices: some View {
             HStack(spacing: 0) {
                 ForEach(InstrumentMode.allCases) { mode in
                     Button { select(mode) } label: {
@@ -66,13 +84,6 @@ struct ModeChooser: View {
                         .accessibilityIdentifier("mode-\(mode.rawValue)")
                         .accessibilityAddTraits(current == mode ? .isSelected : [])
                 }
-            }.padding(3).insetPanel(p, radius: 8).padding(9)
-            .frame(width: 300)
-            .foregroundStyle(p.ink)
-            .background {
-                ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110).fill(LinearGradient(colors: [p.top, p.body], startPoint: .top, endPoint: .bottom))
-                    .overlay(ModeMenuShell(tabWidth: current == .metronome ? 180 : current == .practice ? 150 : 110).stroke(p.light, lineWidth: 0.8))
-                    .shadow(color: .black.opacity(0.23), radius: 4, y: 2)
             }
     }
 }

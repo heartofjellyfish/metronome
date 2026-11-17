@@ -1,6 +1,43 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
+    func testModeChooserReplacesTempoScreen() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tempoDisplay"].waitForExistence(timeout: 8))
+        let screen = app.buttons["tempoDisplay"].frame
+        let tempoLabel = app.buttons["tempoDisplay"].label
+        let transport = app.buttons["transport"].frame
+        app.buttons["mode-menu"].tap()
+        XCTAssertFalse(app.buttons["tempoDisplay"].exists)
+        for name in ["metronome", "practice", "live"] {
+            let frame = app.buttons["mode-\(name)"].frame
+            XCTAssertTrue(screen.contains(frame))
+        }
+        XCTAssertTrue(app.buttons["mode-metronome"].isSelected)
+        proof(app, "Mode selection inside original display")
+        // First tap outside consumes the gesture, including taps over playback.
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: transport.midX, dy: transport.midY)).tap()
+        XCTAssertTrue(app.buttons["tempoDisplay"].exists)
+        XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
+        XCTAssertEqual(app.buttons["transport"].frame, transport)
+        let stopped = app.buttons["transport"].label
+        app.buttons["transport"].tap()
+        let playing = app.buttons["transport"].label
+        XCTAssertNotEqual(stopped, playing)
+        app.buttons["mode-menu"].tap()
+        app.buttons["mode-metronome"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, playing)
+        app.buttons["mode-menu"].tap()
+        app.buttons["mode-practice"].tap()
+        XCTAssertTrue(app.buttons["practice-ramp"].waitForExistence(timeout: 3))
+        app.buttons["mode-menu"].tap()
+        app.buttons["mode-metronome"].tap()
+        XCTAssertEqual(app.buttons["transport"].label, playing)
+        XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
+        app.buttons["transport"].tap()
+    }
     func testRefinedModeJourneys() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--many-setlists", "--mode-live", "-AppleLanguages", "(en)"]
