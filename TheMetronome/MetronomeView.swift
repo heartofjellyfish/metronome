@@ -3,7 +3,11 @@ import SwiftUI
 @main
 struct TheMetronomeApp: App {
     @StateObject private var model = MetronomeModel()
-    var body: some Scene { WindowGroup { MetronomeView(model: model).background(KeyboardGestures()).preferredColorScheme(model.dark ? .dark : .light) } }
+    @Environment(\.scenePhase) private var scenePhase
+    var body: some Scene { WindowGroup { MetronomeView(model: model).background(KeyboardGestures()).preferredColorScheme(model.dark ? .dark : .light)
+        .onAppear { model.updateScreenScenePhase(scenePhase) }
+        .onChange(of: scenePhase) { _, phase in model.updateScreenScenePhase(phase) }
+    } }
 }
 
 struct MetronomeView: View {

@@ -214,14 +214,17 @@ final class MetronomeModel: ObservableObject {
             updateScreenAwake()
         }
     }
-    private var liveViewVisible = false
-    var screenShouldStayAwake: Bool { liveViewVisible ? keepLiveScreenAwake : playing }
-    func setLiveViewVisible(_ visible: Bool) {
-        liveViewVisible = visible
+    // Preserve the stored preference key for existing installations. The preference
+    // is global: navigation and stopping playback must not disable it.
+    private var screenScenePhase: ScenePhase = .inactive
+    var screenShouldStayAwake: Bool { keepLiveScreenAwake || playing }
+    func updateScreenScenePhase(_ phase: ScenePhase) {
+        screenScenePhase = phase
         updateScreenAwake()
     }
     private func updateScreenAwake() {
-        UIApplication.shared.isIdleTimerDisabled = UIApplication.shared.applicationState == .active && screenShouldStayAwake
+        // Transient inactivity (Control Center, system prompts) is still foreground.
+        UIApplication.shared.isIdleTimerDisabled = screenScenePhase != .background && screenShouldStayAwake
     }
 
     @Published var dark: Bool { didSet { UserDefaults.standard.set(dark, forKey: "dark") } }
@@ -567,12 +570,6 @@ final class MetronomeModel: ObservableObject {
                 self.stop(); self.audio = MetronomeAudio()
                 self.error = L10n.text("Audio output changed. Press play to continue.")
             }
-        })
-        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.updateScreenAwake() }
-        })
-        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in UIApplication.shared.isIdleTimerDisabled = false }
         })
         pedal.perform = { [weak self] action in self?.performPedal(action) }
         let center = MPRemoteCommandCenter.shared()

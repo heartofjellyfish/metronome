@@ -87,8 +87,6 @@ struct PerformanceView: View {
                     }
                 }
         }.foregroundStyle(p.ink).preferredColorScheme(model.dark ? .dark : .light)
-            .onAppear { model.setLiveViewVisible(true) }
-            .onDisappear { model.setLiveViewVisible(false) }
 
     }
     private func editCurrentSong() {

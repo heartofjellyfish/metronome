@@ -5,29 +5,40 @@ import SwiftUI
 @testable import TheMetronome
 
 final class LiveModeTests: XCTestCase {
-    @MainActor func testLiveScreenAwakePreferenceCoversStoppedPlayingAndExit() {
+    @MainActor func testScreenAwakeAcrossPlaybackAndSceneTransitions() {
         let defaults = UserDefaults.standard
         let previous = defaults.object(forKey: "keepLiveScreenAwake")
+        let previousIdleTimer = UIApplication.shared.isIdleTimerDisabled
         defaults.removeObject(forKey: "keepLiveScreenAwake")
-        defer { defaults.set(previous, forKey: "keepLiveScreenAwake") }
         let model = MetronomeModel()
-        defer { model.setLiveViewVisible(false); model.stop() }
-        XCTAssertTrue(model.keepLiveScreenAwake)
-        XCTAssertFalse(model.screenShouldStayAwake)
-        model.setLiveViewVisible(true)
-        XCTAssertTrue(model.screenShouldStayAwake)
+        defer {
+            model.stop()
+            defaults.set(previous, forKey: "keepLiveScreenAwake")
+            UIApplication.shared.isIdleTimerDisabled = previousIdleTimer
+        }
+        model.updateScreenScenePhase(.active)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
         model.stop()
-        XCTAssertTrue(model.screenShouldStayAwake)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
+        model.updateScreenScenePhase(.inactive)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
+        model.updateScreenScenePhase(.background)
+        XCTAssertFalse(UIApplication.shared.isIdleTimerDisabled)
+        model.updateScreenScenePhase(.active)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
         model.keepLiveScreenAwake = false
-        XCTAssertFalse(model.screenShouldStayAwake)
+        XCTAssertFalse(UIApplication.shared.isIdleTimerDisabled)
         model.start()
         XCTAssertTrue(model.playing)
-        XCTAssertFalse(model.screenShouldStayAwake)
-        model.setLiveViewVisible(false)
-        XCTAssertTrue(model.screenShouldStayAwake)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
         model.stop()
-        XCTAssertFalse(model.screenShouldStayAwake)
-        XCTAssertFalse(MetronomeModel().keepLiveScreenAwake)
+        XCTAssertFalse(UIApplication.shared.isIdleTimerDisabled)
+        model.keepLiveScreenAwake = true
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
+        let restored = MetronomeModel()
+        XCTAssertTrue(restored.keepLiveScreenAwake)
+        restored.updateScreenScenePhase(.active)
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled)
     }
 
     @MainActor func testFirstPressLearnsWithoutVerificationAndSavedMappingWorksAfterReset() {
