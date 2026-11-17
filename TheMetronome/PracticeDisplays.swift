@@ -73,7 +73,9 @@ struct PolyrhythmRings: View {
         // Canvas lets SwiftUI reuse its drawing between audio-event updates.
         let frameTime = ProcessInfo.processInfo.systemUptime + timeline.date.timeIntervalSinceNow
         let event = model.event
-        let phase = model.playing && model.rhythm.crossCount > 0 ? event?.continuousCycle(at: frameTime) : nil
+        let sweep = model.playing && model.rhythm.crossCount > 0 ? event?.continuousSweep(at: frameTime) : nil
+        let phase = sweep.map { $0.truncatingRemainder(dividingBy: 1) }
+        let erasing = (sweep ?? 0) >= 1
         Canvas { context, size in
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let outer = min(size.width, size.height) / 2 - 18
@@ -82,17 +84,17 @@ struct PolyrhythmRings: View {
                 let radius = outer * (lane == 0 ? 1 : lane == 1 ? 0.70 : 0.40)
                 context.stroke(Path(ellipseIn: CGRect(x: center.x-radius, y: center.y-radius, width: radius*2, height: radius*2)), with: .color(p.muted.opacity(0.35)), lineWidth: 1)
                 let accent = Color(hex: lane == 0 ? 0xE07326 : lane == 1 ? 0x22988B : 0x9376BC)
-                // Phase wraps at twelve: the whole accumulated track resets together.
-                if let phase, phase > 0 {
+                // Keep the remaining colored arc during the erase revolution.
+                if let phase {
                     var swept = Path()
-                    swept.addArc(center: center, radius: radius, startAngle: .degrees(-90), endAngle: .degrees(phase * 360 - 90), clockwise: false)
+                    swept.addArc(center: center, radius: radius, startAngle: .degrees(erasing ? phase * 360 - 90 : -90), endAngle: .degrees(erasing ? 270 : phase * 360 - 90), clockwise: false)
                     context.stroke(swept, with: .color(accent), style: StrokeStyle(lineWidth: 2, lineCap: .round))
                 }
                 for index in 0..<count {
                     let position = Double(index) / Double(count)
                     let angle = position * 2 * Double.pi - Double.pi/2
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
-                    let intensity: Double = phase.map { $0 >= position ? 1 : 0 } ?? 0
+                    let intensity: Double = phase.map { (erasing ? $0 < position : $0 >= position) ? 1 : 0 } ?? 0
                     let radius: CGFloat = 6.5
                     let rect = CGRect(x: point.x-radius, y: point.y-radius, width: radius*2, height: radius*2)
                     context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.2)), with: .color(.black.opacity(0.20)))

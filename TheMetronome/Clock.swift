@@ -252,9 +252,17 @@ struct ClockEvent {
     var hitInterval: Double = .infinity
     var thirdStrength: Int = 0
     var crossStrength: Int = 0
+    var cycleIndex: Int = 0
     var cyclePosition: Double = 0
     var renderTime: TimeInterval = 0
     var cycleDuration: Double = 1
+
+    /// Two revolutions: paint on the first, erase on the second.
+    func continuousSweep(at time: TimeInterval) -> Double {
+        let elapsed = renderTime > 0 && cycleDuration > 0 ? (time - renderTime) / cycleDuration : 0
+        let position = (Double(cycleIndex % 2) + cyclePosition + elapsed).truncatingRemainder(dividingBy: 2)
+        return position < 0 ? position + 2 : position
+    }
 
     func continuousCycle(at time: TimeInterval) -> Double {
         guard renderTime > 0, cycleDuration > 0 else { return cyclePosition }
@@ -363,7 +371,7 @@ final class SampleClock {
             : (rhythm.crossCount > 0 ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
         let lower = crossHit && !silent && mainStrength > 0 ? (primary ? 2 : 1) : 0
         let third = rhythm.crossCount > 0 && rhythm.polyrhythmThird != nil && position % (rhythm.clockDivisions / max(1, rhythm.polyrhythmThird ?? 1)) == 0 && !silent ? (primary ? 2 : 1) : 0
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, thirdStrength: third, crossStrength: lower, cyclePosition: Double(position) / Double(rhythm.clockDivisions)), strength)
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, thirdStrength: third, crossStrength: lower, cycleIndex: tick / rhythm.clockDivisions, cyclePosition: Double(position) / Double(rhythm.clockDivisions)), strength)
     }
 }
 

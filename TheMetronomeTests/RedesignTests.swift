@@ -16,6 +16,19 @@ final class RedesignTests: XCTestCase {
         }
     }
 
+    func testSweepAlternatesWithoutResetAtAudioAnchor() {
+        var e = ClockEvent(beat: 0, bar: 0, bpm: 90, countIn: false, silent: false)
+        e.cyclePosition = 0.75; e.renderTime = 100; e.cycleDuration = 2
+        XCTAssertEqual(e.continuousSweep(at: 100.5), 1, accuracy: 0.00001)
+        XCTAssertEqual(e.continuousSweep(at: 101.5), 1.5, accuracy: 0.00001)
+        XCTAssertEqual(e.continuousSweep(at: 102.5), 0, accuracy: 0.00001)
+        var next = e; next.cycleIndex = 1; next.cyclePosition = 0; next.renderTime = 100.5
+        for frame in 0..<240 {
+            let time = 100 + Double(frame) / 60
+            XCTAssertEqual(e.continuousSweep(at: time), next.continuousSweep(at: time), accuracy: 0.00001)
+        }
+    }
+
     func testThreeVoicesAndReferenceHaveIdenticalCycle() throws {
         var r = Rhythm(); r.bpm = 60; r.polyrhythmPrimary = 3; r.crossRhythm = 2
         r.polyrhythmThird = 4; r.polyrhythmTempoIsSecondary = true
