@@ -127,7 +127,9 @@ struct PolyrhythmRings: View {
                 context.fill(Path(ellipseIn: hub), with: .color(p.ink))
                 context.stroke(Path(ellipseIn: hub.insetBy(dx: 0.6, dy: 0.6)), with: .color(p.light.opacity(0.25)), lineWidth: 0.5)
             }
-            context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: " : ")).font(InstrumentType.value(17)).foregroundColor(p.ink), at: CGPoint(x: 0, y: 0), anchor: .topLeading)
+            if phase == nil {
+                context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: ":")).font(InstrumentType.value(32)).foregroundColor(p.ink), at: center)
+            }
         }
         }.frame(height: 154).padding(14).insetPanel(p, radius: 16)
             .accessibilityLabel(L10n.format("%d over %d", upper, lower)).accessibilityIdentifier("polyrhythm-rings")

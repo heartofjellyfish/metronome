@@ -89,18 +89,30 @@ struct PolyrhythmPanel: View {
     private func lane(_ count: Int, index: Int) -> some View {
         let muted = index == 0 ? model.rhythm.polyrhythmPrimaryMuted == true : index == 1 ? model.rhythm.polyrhythmSecondaryMuted == true : model.rhythm.polyrhythmThirdMuted == true
         let color = PolyrhythmRings.color(index)
-        return VStack(spacing: 10) {
-            HStack(spacing: 10) {
+        return HStack(spacing: 6) {
                 Text(["A", "B", "C"][index]).font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white).frame(width: 28, height: 28)
+                    .foregroundStyle(.white).frame(width: 24, height: 28)
                     .background(color, in: RoundedRectangle(cornerRadius: 6))
                 Button { soundLane = index } label: {
                     HStack {
-                        Text(instrument(index).title).font(.system(size: 17, weight: .medium)).lineLimit(1)
+                        Text(instrument(index).title).font(.system(size: 14, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
                         Image(systemName: "chevron.down").font(.caption2)
                         Spacer(minLength: 0)
                     }.frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("poly-lane-\(index)")
+            HStack(spacing: 0) {
+                Button { changeCount(index, count - 1) } label: {
+                    Image(systemName: "minus").frame(width: 44, height: 44).contentShape(Rectangle())
+                }.disabled(count <= 1).accessibilityIdentifier("poly-minus-\(index)")
+                Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 22)
+                Text("\(count)").font(InstrumentType.value(22)).monospacedDigit().frame(width: 26)
+                Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 22)
+                Button { changeCount(index, count + 1) } label: {
+                    Image(systemName: "plus").frame(width: 44, height: 44).contentShape(Rectangle())
+                }.disabled(count >= 12).accessibilityIdentifier("poly-plus-\(index)")
+            }.buttonStyle(.plain)
+                .background(p.top, in: RoundedRectangle(cornerRadius: 9))
+                .overlay(RoundedRectangle(cornerRadius: 9).stroke(p.edge.opacity(0.5), lineWidth: 0.5))
                 Button {
                     if index == 0 { model.rhythm.polyrhythmPrimaryMuted = !muted }
                     else if index == 1 { model.rhythm.polyrhythmSecondaryMuted = !muted }
@@ -112,20 +124,6 @@ struct PolyrhythmPanel: View {
                     .accessibilityIdentifier("poly-mute-\(index)")
                     .accessibilityLabel("Mute " + ["A", "B", "C"][index])
                     .accessibilityValue(muted ? "Muted" : "Audible")
-            }
-            HStack(spacing: 0) {
-                Button { changeCount(index, count - 1) } label: {
-                    Image(systemName: "minus").frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                }.disabled(count <= 1).accessibilityIdentifier("poly-minus-\(index)")
-                Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 22)
-                Text("\(count)").font(InstrumentType.value(25)).monospacedDigit().frame(maxWidth: .infinity)
-                Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 22)
-                Button { changeCount(index, count + 1) } label: {
-                    Image(systemName: "plus").frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                }.disabled(count >= 12).accessibilityIdentifier("poly-plus-\(index)")
-            }.buttonStyle(.plain)
-                .background(p.top, in: RoundedRectangle(cornerRadius: 9))
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(p.edge.opacity(0.5), lineWidth: 0.5))
         }.padding(12)
             .background(RoundedRectangle(cornerRadius: 14).fill(p.top)
                 .shadow(color: .black.opacity(0.12), radius: 3, y: 3))
