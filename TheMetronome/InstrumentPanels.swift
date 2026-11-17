@@ -54,6 +54,7 @@ struct InstrumentPanel: View {
     @State private var selected: Int
     @State private var customMeter = false
     @State private var polyrhythmSoundLane: Int?
+    @State private var choosingPolyReference = false
     @State private var divisionEditing = false
     @State private var returnRoutes: [InstrumentPanelKind] = []
     private var returnsToPractice: Bool { !returnRoutes.isEmpty }
@@ -152,28 +153,43 @@ struct InstrumentPanel: View {
             .onDisappear { finishTraining() }
     }
     private var polyTransport: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Button { returnRoutes.append(.polyrhythm); kind = .tempo } label: {
-                    HStack(spacing: 5) {
-                        Text(model.rhythm.polyDisplayTempo.formatted(.number.precision(.fractionLength(0...1))) + " BPM").monospacedDigit()
-                        Image(systemName: "pencil").font(.caption)
-                    }.frame(minHeight: 44).contentShape(Rectangle())
-                }.buttonStyle(.plain).accessibilityIdentifier("poly-tempo")
-                HStack(spacing: 5) {
+        VStack(spacing: 10) {
+            Rectangle().fill(p.edge.opacity(0.6)).frame(height: 0.5)
+            if choosingPolyReference {
+                HStack(spacing: 10) {
                     ForEach(0..<model.rhythm.polyCounts.count, id: \.self) { lane in
-                        Button { model.rhythm.polyrhythmReference = lane } label: {
-                            Text(["A", "B", "C"][lane]).font(.system(size: 13, weight: .bold))
-                                .frame(width: 44, height: 32).contentShape(Rectangle())
-                                .background(model.rhythm.polyReference == lane ? PolyrhythmRings.color(lane) : p.muted.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(model.rhythm.polyReference == lane ? .white : p.ink)
-                        }.buttonStyle(.plain).accessibilityIdentifier("poly-reference-\(lane)")
+                        Button {
+                            model.rhythm.polyrhythmReference = lane
+                            choosingPolyReference = false
+                        } label: {
+                            HStack(spacing: 8) {
+                                Circle().fill(PolyrhythmRings.color(lane)).frame(width: 12, height: 12)
+                                Text(["A", "B", "C"][lane])
+                            }.frame(maxWidth: .infinity, minHeight: 44)
+                        }.buttonStyle(HardwareButtonStyle(p: p))
+                            .accessibilityIdentifier("poly-reference-\(lane)")
+                            .accessibilityAddTraits(model.rhythm.polyReference == lane ? .isSelected : [])
                     }
-                }.accessibilityLabel("Tempo reference")
+                }
             }
-            Button { model.endSoundPreview(); model.toggle() } label: {
-                TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity, minHeight: 58)
-            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("practice-transport")
+            HStack(spacing: 12) {
+                HStack(spacing: 0) {
+                    Button { choosingPolyReference = false; returnRoutes.append(.polyrhythm); kind = .tempo } label: {
+                        Text(model.rhythm.polyDisplayTempo.formatted(.number.precision(.fractionLength(0...1))) + " BPM")
+                            .font(.system(size: 18, weight: .medium)).monospacedDigit()
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("poly-tempo")
+                    Button { choosingPolyReference.toggle() } label: {
+                        Circle().fill(PolyrhythmRings.color(model.rhythm.polyReference)).frame(width: 12, height: 12)
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("poly-reference-picker")
+                        .accessibilityLabel(L10n.text("Tempo reference"))
+                        .accessibilityValue(["A", "B", "C"][model.rhythm.polyReference])
+                }
+                Button { choosingPolyReference = false; model.endSoundPreview(); model.toggle() } label: {
+                    TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity, minHeight: 58)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("practice-transport")
+            }
         }.padding(.top, 10)
     }
     private func beginTraining(_ route: InstrumentPanelKind) {
@@ -195,6 +211,9 @@ struct InstrumentPanel: View {
         if route == .polyrhythm {
             value.polyrhythmPrimary = value.polyrhythmPrimary ?? 3
             value.polyrhythmTempoIsSecondary = true
+            if value.polyrhythmCycleSeconds == nil && value.polyrhythmReference == nil {
+                value.polyrhythmCycleSeconds = 60 * Double(value.polyrhythmPrimary ?? 3) / Double(value.bpm)
+            }
         }
         model.rhythm = value
     }

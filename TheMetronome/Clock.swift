@@ -116,7 +116,7 @@ struct Rhythm: Codable, Equatable {
     var silentBarMask: Int?
     var thirdPulseSound: Int { validPulseSound(polyrhythmThirdSound, fallback: .rim) }
     var polyCounts: [Int] { [polyrhythmPrimary ?? 3, crossRhythm ?? polyrhythmStoredSecondary ?? 2] + (polyrhythmThird.map { [$0] } ?? []) }
-    var polyReference: Int { min(polyCounts.count - 1, max(0, polyrhythmReference ?? 1)) }
+    var polyReference: Int { min(polyCounts.count - 1, max(0, polyrhythmReference ?? 0)) }
     var polySeconds: Double { polyrhythmCycleSeconds ?? (60 * Double(polyrhythmCycleBeats) / Double(bpm)) }
     var polyDisplayTempo: Double { 60 * Double(polyCounts[polyReference]) / polySeconds }
     mutating func setPolyTempo(_ value: Int) { polyrhythmCycleSeconds = 60 * Double(polyCounts[polyReference]) / Double(value) }

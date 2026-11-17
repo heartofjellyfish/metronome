@@ -81,21 +81,16 @@ struct PolyrhythmRings: View {
                     let angle = position * 2 * Double.pi - Double.pi/2
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
                     let lit = phase.map { min(count - 1, Int(($0 * Double(count) + 0.0001).rounded(.down))) == index } ?? false
-                    let radius: CGFloat = lit ? 9 : 6
+                    let radius: CGFloat = 6.5
                     let rect = CGRect(x: point.x-radius, y: point.y-radius, width: radius*2, height: radius*2)
-                    if lit {
-                        context.stroke(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)), with: .color(Self.color(lane).opacity(0.55)), lineWidth: 2)
-                    }
-                    context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.5)), with: .color(.black.opacity(0.20)))
+                    context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.2)), with: .color(.black.opacity(0.20)))
                     context.fill(Path(ellipseIn: rect), with: .linearGradient(
-                        Gradient(colors: [lit ? .white : Self.color(lane).opacity(0.8), Self.color(lane)]),
+                        Gradient(colors: lit ? [Color(hex: 0xFFF9E7), Color(hex: 0xE8DDC5)] : [Self.color(lane).opacity(0.82), Self.color(lane)]),
                         startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
-                    context.stroke(Path(ellipseIn: rect.insetBy(dx: 0.5, dy: 0.5)), with: .color(.white.opacity(lit ? 0.7 : 0.28)), lineWidth: 0.7)
-                    context.fill(Path(ellipseIn: CGRect(x: point.x-3, y: point.y-4, width: 4, height: 2)), with: .color(.white.opacity(lit ? 0.65 : 0.28)))
                 }
             }
             context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: " : ")).font(InstrumentType.value(model.rhythm.polyrhythmThird == nil ? 25 : 12)).foregroundColor(p.ink), at: center)
-        }.frame(height: 200).padding(14).insetPanel(p, radius: 16)
+        }.frame(height: 154).padding(14).insetPanel(p, radius: 16)
             .accessibilityLabel(L10n.format("%d over %d", upper, lower)).accessibilityIdentifier("polyrhythm-rings")
     }
 }
