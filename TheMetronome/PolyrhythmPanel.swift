@@ -8,41 +8,57 @@ struct PolyrhythmPanel: View {
     private var upper: Int { model.rhythm.polyrhythmPrimary ?? 3 }
     private var lower: Int { model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2 }
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        Group {
             if let soundLane { soundPicker(soundLane) }
             else {
-                lane(upper, index: 0)
-                lane(lower, index: 1)
-                if let count = model.rhythm.polyrhythmThird { lane(count, index: 2) }
-                HStack { Spacer();
-                    Button {
-                        if model.rhythm.polyReference == 2 { model.rhythm.polyrhythmReference = 0 }
-                        model.rhythm.polyrhythmThird = model.rhythm.polyrhythmThird == nil ? 4 : nil
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: model.rhythm.polyrhythmThird == nil ? "plus" : "minus")
-                            Text(L10n.text(model.rhythm.polyrhythmThird == nil ? "Add voice C" : "Remove voice C")).lineLimit(1)
-                        }
-                            .font(.system(size: 14)).padding(.horizontal, 12).frame(minHeight: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-third")
-                }
-                HStack(spacing: 10) {
-                    ratio(3, 2, 4); ratio(4, 3, 5)
-                    Button { expanded.toggle() } label: {
-                        HStack(spacing: 5) {
-                            Text(L10n.text("More"))
-                            Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2)
-                        }.font(.system(size: 15)).frame(maxWidth: .infinity, minHeight: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-more")
-                }
-                if expanded {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 10) {
-                        ratio(5, 4, 3); ratio(5, 3, 2); ratio(7, 4, 3); ratio(7, 5, 3)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(L10n.text("Rhythm")).font(.system(size: 20, weight: .semibold)).padding(.bottom, 12)
+                    HStack(spacing: 0) {
+                        ratio(3, 2, 4)
+                        Divider()
+                        ratio(4, 3, 5)
+                        Divider()
+                        Button { expanded.toggle() } label: {
+                            Text(L10n.text("More")).font(.system(size: 15, weight: .medium))
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                        }.buttonStyle(.plain).accessibilityIdentifier("poly-more")
+                    }.frame(height: 40)
+                        .background(p.bottom)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(p.edge.opacity(0.7), lineWidth: 0.7))
+                    if expanded {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                            ratio(5, 4, 3); ratio(5, 3, 2); ratio(7, 4, 3); ratio(7, 5, 3)
+                        }.padding(.top, 10)
                     }
-
-                }
+                    seam.padding(.top, 20)
+                    lane(upper, index: 0)
+                    seam
+                    lane(lower, index: 1)
+                    if let count = model.rhythm.polyrhythmThird {
+                        seam
+                        lane(count, index: 2)
+                    }
+                    HStack {
+                        Spacer()
+                        Button {
+                            if model.rhythm.polyReference == 2 { model.rhythm.polyrhythmReference = 0 }
+                            model.rhythm.polyrhythmThird = model.rhythm.polyrhythmThird == nil ? 4 : nil
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: model.rhythm.polyrhythmThird == nil ? "plus" : "minus")
+                                Text(L10n.text(model.rhythm.polyrhythmThird == nil ? "Add voice C" : "Remove voice C")).lineLimit(1)
+                            }.font(.system(size: 14, weight: .medium)).padding(.horizontal, 12).frame(height: 40)
+                        }.buttonStyle(HardwareButtonStyle(p: p, radius: 20)).accessibilityIdentifier("poly-third")
+                    }.padding(.top, 12)
+                }.padding(16)
+                    .background { HardwareKeySurface(p: p, radius: 24).allowsHitTesting(false) }
             }
         }.onDisappear { model.endSoundPreview() }
+    }
+    private var seam: some View {
+        Rectangle().fill(p.edge.opacity(0.55)).frame(height: 0.5)
+            .overlay(alignment: .bottom) { Rectangle().fill(p.light).frame(height: 0.5).offset(y: 0.5) }
     }
     private func configure(_ a: Int, _ b: Int, third: Int? = nil) {
         model.endSoundPreview()
@@ -90,8 +106,9 @@ struct PolyrhythmPanel: View {
         let third = model.rhythm.polyrhythmThird == nil ? nil : c
         let selected = model.rhythm.crossCount > 0 && upper == a && lower == b && model.rhythm.polyrhythmThird == third
         return Button { configure(a, b, third: third) } label: {
-            Text(third.map { "\(a):\(b):\($0)" } ?? "\(a):\(b)").font(.system(size: 17, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 44)
-        }.buttonStyle(HardwareButtonStyle(p: p, charcoal: selected))
+            Text(third.map { "\(a):\(b):\($0)" } ?? "\(a):\(b)").font(.system(size: 17, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 40)
+                .foregroundStyle(selected ? p.body : p.ink).background(selected ? p.ink : .clear)
+        }.buttonStyle(.plain)
             .accessibilityIdentifier("polyrhythm-\(a)-\(b)")
             .accessibilityAddTraits(selected ? .isSelected : [])
     }
@@ -100,15 +117,15 @@ struct PolyrhythmPanel: View {
         let color = PolyrhythmRings.color(index)
         return HStack(spacing: 6) {
                 Text(["A", "B", "C"][index]).font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white).frame(width: 22, height: 22)
+                    .foregroundStyle(.white).frame(width: 28, height: 28)
                     .background(color, in: Circle())
                 Button { soundLane = index } label: {
                     HStack {
                         Text(instrument(index).title).font(.system(size: 14, weight: .medium)).lineLimit(2)
                         Image(systemName: "chevron.down").font(.caption2)
                         Spacer(minLength: 0)
-                    }.padding(.horizontal, 7).frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                }.buttonStyle(HardwareButtonStyle(p: p, radius: 8)).accessibilityIdentifier("poly-lane-\(index)")
+                    }.padding(.horizontal, 2).frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier("poly-lane-\(index)")
             HStack(spacing: 0) {
                 Button { changeCount(index, count - 1) } label: {
                     Image(systemName: "minus").frame(width: 44, height: 44).contentShape(Rectangle())
@@ -120,7 +137,7 @@ struct PolyrhythmPanel: View {
                     Image(systemName: "plus").frame(width: 44, height: 44).contentShape(Rectangle())
                 }.disabled(count >= 12).accessibilityIdentifier("poly-plus-\(index)")
             }.buttonStyle(.plain)
-                .background { HardwareKeySurface(p: p, radius: 9) }
+                .background { HardwareKeySurface(p: p, radius: 22) }
                 Button {
                     if index == 0 { model.rhythm.polyrhythmPrimaryMuted = !muted }
                     else if index == 1 { model.rhythm.polyrhythmSecondaryMuted = !muted }
@@ -132,6 +149,6 @@ struct PolyrhythmPanel: View {
                     .accessibilityIdentifier("poly-mute-\(index)")
                     .accessibilityLabel("Mute " + ["A", "B", "C"][index])
                     .accessibilityValue(muted ? "Muted" : "Audible")
-        }.padding(.vertical, 3)
+        }.padding(.vertical, 14)
     }
 }
