@@ -2,6 +2,39 @@ import XCTest
 @testable import TheMetronome
 
 final class RedesignTests: XCTestCase {
+    func testThreeVoicesAndReferenceHaveIdenticalCycle() throws {
+        var r = Rhythm(); r.bpm = 60; r.polyrhythmPrimary = 3; r.crossRhythm = 2
+        r.polyrhythmThird = 4; r.polyrhythmTempoIsSecondary = true
+        for reference in 0...2 {
+            r.polyrhythmReference = reference
+            let clock = SampleClock(rate: 4800); clock.reset(r)
+            var hits = [[Int](), [Int](), [Int]()]
+            for frame in 0..<9600 {
+                if let (e, strength) = clock.advance() {
+                    if strength > 0 { hits[0].append(frame) }
+                    if e.crossStrength > 0 { hits[1].append(frame) }
+                    if e.thirdStrength > 0 { hits[2].append(frame) }
+                }
+            }
+            XCTAssertEqual(hits, [[0,3200,6400], [0,4800], [0,2400,4800,7200]])
+            XCTAssertEqual(r.polyDisplayTempo, [90.0,60.0,120.0][reference])
+        }
+        r.polyrhythmReference = 0; r.setPolyTempo(90)
+        XCTAssertEqual(r.polySeconds, 2, accuracy: 0.00001)
+        XCTAssertEqual(try JSONDecoder().decode(Rhythm.self, from: JSONEncoder().encode(r)), r)
+        for a in 1...12 { for b in 1...12 { for c in 1...12 {
+            r.polyrhythmPrimary = a; r.crossRhythm = b; r.polyrhythmThird = c
+            XCTAssertEqual(r.clockDivisions % a, 0); XCTAssertEqual(r.clockDivisions % b, 0); XCTAssertEqual(r.clockDivisions % c, 0)
+        } } }
+    }
+    func testSilentBarPatternAndRampRestart() {
+        var r = Rhythm(); r.audibleBars = 3; r.silentBars = 1; r.silentBarMask = 5
+        XCTAssertEqual((0..<8).map { r.isSilentBar($0) }, [true,false,true,false,true,false,true,false])
+        r.ramp = true; r.start = 72; r.end = 90; r.increment = 5; r.every = 1
+        let clock = SampleClock(rate: 600); clock.reset(r)
+        clock.skip(seconds: 40); XCTAssertEqual(clock.tempo, 90)
+        clock.reset(r); XCTAssertEqual(clock.advance()?.0.bpm, 72)
+    }
     func testPolyrhythmTempoRefersToBAndMutePreservesVisualClock() throws {
         var r = Rhythm(); r.bpm = 60; r.polyrhythmPrimary = 3; r.crossRhythm = 2
         r.polyrhythmTempoIsSecondary = true

@@ -24,14 +24,14 @@ struct LiveModeHome: View {
                     } else {
                         if !model.setlists.isEmpty {
                             heading("Setlists", id: "live-all-setlists") { openSetlist(nil, .browse) }
-                            catalog.frame(height: min(238, max(76, contentHeight > 0 ? contentHeight : CGFloat(model.setlists.count) * 76 + 16)))
+                            catalog.frame(height: min(168, max(76, contentHeight > 0 ? contentHeight : CGFloat(model.setlists.count) * 76 + 16)))
                                 .liveScreen(p)
                         }
                         heading("Songs", id: "live-all-songs") { open(.songLibrary) }
                         if songs.isEmpty {
                             Text("No songs yet.").foregroundStyle(p.muted).padding(20).frame(maxWidth: .infinity).insetPanel(p)
                         } else {
-                            songCatalog.frame(height: min(208, CGFloat(songs.count) * 76 + 20)).liveScreen(p)
+                            songCatalog.frame(height: min(168, CGFloat(songs.count) * 76 + 20)).liveScreen(p)
                         }
                         if model.setlists.isEmpty {
                             Button { openSetlist(nil, .create) } label: {
@@ -54,10 +54,6 @@ struct LiveModeHome: View {
     }
     private var welcome: some View {
         VStack(spacing: 24) {
-            VStack(spacing: 12) {
-                Text("Ready?").font(InstrumentType.display(68))
-                HStack(spacing: 22) { ForEach(1...4, id: \.self) { n in Text("\(n)").font(.system(size: 18, weight: n == 1 ? .bold : .regular)).foregroundStyle(n == 1 ? p.ink : p.muted) } }
-            }.frame(maxWidth: .infinity).padding(.vertical, 28).insetPanel(p)
             Text("Choose your songs. Then just play.").font(.system(size: 19, weight: .medium)).multilineTextAlignment(.center)
             HStack(spacing: 12) {
                 Button { openSetlist(nil, .create) } label: { Label("New setlist", systemImage: "text.badge.plus").frame(maxWidth: .infinity, minHeight: 60) }
@@ -73,7 +69,8 @@ struct LiveModeHome: View {
                 model.loadStandaloneSong(song.id)
                 recentSongOpen = true
             } label: {
-                HStack {
+                HStack(spacing: 12) {
+                    Image(systemName: "music.note").font(.system(size: 21)).foregroundStyle(p.muted).frame(width: 25)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(verbatim: song.name).font(.system(size: 17, weight: .semibold)).lineLimit(2).multilineTextAlignment(.leading)
                         Text("\(song.rhythm.bpm) BPM · \(song.rhythm.beats)/\(song.rhythm.denominator)").font(.system(size: 13)).foregroundStyle(p.muted)
@@ -92,6 +89,7 @@ struct LiveModeHome: View {
                     onContentHeight: { if abs(contentHeight - $0) > 0.5 { contentHeight = $0 } }, row: { _, list in
             Button { SetlistRecency.touch(list.id); openSetlist(list.id, .browse) } label: {
                 HStack(spacing: 12) {
+                    Image(systemName: "folder").font(.system(size: 21)).foregroundStyle(p.muted).frame(width: 25)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(verbatim: list.name).font(.system(size: 17, weight: .semibold)).lineLimit(2).multilineTextAlignment(.leading)
                         Text(L10n.format(list.songs.count == 1 ? "%d song" : "%d songs", list.songs.count))

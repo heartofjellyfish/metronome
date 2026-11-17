@@ -526,3 +526,10 @@
 "Create a setlist" = "Create a setlist";
 
 "Choose mode" = "Choose mode";
+
+"Add voice C" = "Add voice C";
+"Remove voice C" = "Remove voice C";
+"Third instrument" = "Third instrument";
+"Choose a song. Follow the beat." = "Choose a song. Follow the beat.";
+"Tap a bar to silence it. Keep time until the click returns." = "Tap a bar to silence it. Keep time until the click returns.";
+"Tempo reference" = "Tempo reference";

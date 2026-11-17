@@ -526,3 +526,10 @@
 "Create a setlist" = "세트리스트 만들기";
 
 "Choose mode" = "모드 선택";
+
+"Add voice C" = "파트 C 추가";
+"Remove voice C" = "파트 C 제거";
+"Third instrument" = "세 번째 음색";
+"Choose a song. Follow the beat." = "곡을 고르고 박자를 따라가세요.";
+"Tap a bar to silence it. Keep time until the click returns." = "마디를 눌러 음소거하세요. 클릭이 돌아올 때까지 박자를 유지하세요.";
+"Tempo reference" = "템포 기준";

@@ -53,6 +53,9 @@ final class MetronomeAudio {
         let acoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
         // Independent voice pools: the upper rhythm must not choke the lower lane's hi-hat.
         // Both share the already-decoded sample library.
+        let thirdAcoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
+        var thirdVoices = (ClickVoice(), ClickVoice(), ClickVoice(), ClickVoice())
+        var thirdVoiceIndex = 0
         let crossAcoustic = AcousticRenderer(library: acousticLibrary!, takeSeed: UInt64.random(in: .min ... .max))
         let clock = saved?.clock.copy(atRate: rate) ?? SampleClock(rate: rate)
         var resumeReference: TimeInterval?
@@ -134,8 +137,20 @@ final class MetronomeAudio {
                             crossVoiceIndex += 1
                         } else { crossAcoustic.chokeHats(); crossAcoustic.trigger(sound: sound, strength: event.crossStrength, gainScale: 0.7) }
                     }
+                    if event.thirdStrength > 0 && clock.rhythm.polyrhythmThirdMuted != true {
+                        let sound = clock.rhythm.thirdPulseSound
+                        if [1, 16].contains(sound) {
+                            switch thirdVoiceIndex % 4 {
+                            case 0: thirdVoices.0.trigger(sound: sound, strength: event.thirdStrength, gainScale: 0.7)
+                            case 1: thirdVoices.1.trigger(sound: sound, strength: event.thirdStrength, gainScale: 0.7)
+                            case 2: thirdVoices.2.trigger(sound: sound, strength: event.thirdStrength, gainScale: 0.7)
+                            default: thirdVoices.3.trigger(sound: sound, strength: event.thirdStrength, gainScale: 0.7)
+                            }
+                            thirdVoiceIndex += 1
+                        } else { thirdAcoustic.chokeHats(); thirdAcoustic.trigger(sound: sound, strength: event.thirdStrength, gainScale: 0.7) }
+                    }
                 }
-                let sample = voices.0.sample(rate: rate) + voices.1.sample(rate: rate) + voices.2.sample(rate: rate) + voices.3.sample(rate: rate) + crossVoices.0.sample(rate: rate) + crossVoices.1.sample(rate: rate) + crossVoices.2.sample(rate: rate) + crossVoices.3.sample(rate: rate) + acoustic.sample(rate: rate) + crossAcoustic.sample(rate: rate)
+                let sample = voices.0.sample(rate: rate) + voices.1.sample(rate: rate) + voices.2.sample(rate: rate) + voices.3.sample(rate: rate) + crossVoices.0.sample(rate: rate) + crossVoices.1.sample(rate: rate) + crossVoices.2.sample(rate: rate) + crossVoices.3.sample(rate: rate) + acoustic.sample(rate: rate) + crossAcoustic.sample(rate: rate) + thirdAcoustic.sample(rate: rate) + thirdVoices.0.sample(rate: rate) + thirdVoices.1.sample(rate: rate) + thirdVoices.2.sample(rate: rate) + thirdVoices.3.sample(rate: rate)
                 for buffer in audioBuffers { buffer.mData?.assumingMemoryBound(to: Float.self)[frame] = sample }
             }
             timeline.renderedThrough = bufferStart + Double(count) / rate
@@ -188,6 +203,7 @@ struct SongLibraryStore: Codable {
 
 @MainActor
 final class MetronomeModel: ObservableObject {
+    var trainingBaseline: Rhythm?
     @Published var rhythm: Rhythm { didSet { audio.mailbox.set(playbackRhythm); save(); if playing { updateNowPlaying() } } }
     @Published var keepLiveScreenAwake = true {
         didSet {
@@ -491,6 +507,7 @@ final class MetronomeModel: ObservableObject {
             songLibrary = []; setlists = []; activeSetlistID = nil; selectedSongID = nil; rhythm = Rhythm()
         }
         if ProcessInfo.processInfo.arguments.contains("--organization-ui-test") {
+            for route in ["ramp", "gap", "polyrhythm"] { defaults.removeObject(forKey: "training-" + route) }
             songLibrary = []; presets = []; setlists = []; selectedPresetID = nil; selectedSongID = nil; activeSetlistID = nil; rhythm = Rhythm()
         }
         if ProcessInfo.processInfo.arguments.contains("--reference") { rhythm = Rhythm() }
@@ -765,7 +782,7 @@ final class MetronomeModel: ObservableObject {
         if resume { start() }
     }
     private func save() {
-        var stored = rhythm
+        var stored = trainingBaseline ?? rhythm
         if let id = liveTempoSongID, selectedSongID == id, let song = currentSong { stored.bpm = song.rhythm.bpm }
         if let data = try? JSONEncoder().encode(stored) { UserDefaults.standard.set(data, forKey: "rhythm") }
         if let data = try? JSONEncoder().encode(presets) { UserDefaults.standard.set(data, forKey: "presets") }

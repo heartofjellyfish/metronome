@@ -49,6 +49,8 @@ struct InstrumentPanel: View {
     let close: () -> Void
     let initialSetlistID: UUID?
     @State private var kind: InstrumentPanelKind
+    @State private var originalRhythm: Rhythm?
+    @State private var trainingKind: InstrumentPanelKind?
     @State private var selected: Int
     @State private var customMeter = false
     @State private var polyrhythmSoundLane: Int?
@@ -106,7 +108,7 @@ struct InstrumentPanel: View {
                     HStack(alignment: .center) {
                         if showsBack { navigationKey }
                         VStack(alignment: .leading, spacing: 7) {
-                            Text(divisionEditing ? L10n.text("Customize rhythm") : polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : "Second instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
+                            Text(divisionEditing ? L10n.text("Customize rhythm") : polyrhythmSoundLane == nil ? kind.title : L10n.text(polyrhythmSoundLane == 0 ? "First instrument" : polyrhythmSoundLane == 1 ? "Second instrument" : "Third instrument")).font(.system(size: 22, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 5)
                         if !showsBack { navigationKey }
@@ -116,14 +118,7 @@ struct InstrumentPanel: View {
                         VStack(spacing: 10) {
                             PolyrhythmRings(model: model, upper: model.rhythm.polyrhythmPrimary ?? 3,
                                 lower: model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2, p: p)
-                            Button { returnRoutes.append(.polyrhythm); kind = .tempo } label: {
-                                HStack {
-                                    Text(L10n.text("B tempo")).font(.system(size: 14, weight: .medium))
-                                    Spacer()
-                                    Text("\(polyrhythmDisplayTempo) BPM").monospacedDigit()
-                                    Image(systemName: "chevron.right").font(.caption)
-                                }.padding(.horizontal, 14).frame(height: 44)
-                            }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-tempo")
+
                         }.padding(.horizontal, 23).padding(.top, 16)
                     }
                     ScrollViewReader { proxy in
@@ -134,8 +129,12 @@ struct InstrumentPanel: View {
                             .onChange(of: divisionEditing) { _, _ in proxy.scrollTo("panel-top", anchor: .top) }
                     }
                     if hasTransport {
+                        if kind == .polyrhythm {
+                            polyTransport.padding(.horizontal, 23).padding(.bottom, 18)
+                        } else {
                         SettingsPlaybackBar(model: model, p: p, identifier: [.ramp, .gap, .polyrhythm, .practice].contains(kind) ? "practice-transport" : "settings-transport")
                             .padding(.horizontal, 23).padding(.bottom, 18)
+                        }
                     }
                 }
                 .frame(maxWidth: 460)
@@ -149,9 +148,64 @@ struct InstrumentPanel: View {
             }.foregroundStyle(p.ink)
         }.transition(.identity)
             .preferredColorScheme(model.dark ? .dark : .light)
+            .onAppear { beginTraining(kind) }
+            .onDisappear { finishTraining() }
+    }
+    private var polyTransport: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Button { returnRoutes.append(.polyrhythm); kind = .tempo } label: {
+                    HStack(spacing: 5) {
+                        Text(model.rhythm.polyDisplayTempo.formatted(.number.precision(.fractionLength(0...1))) + " BPM").monospacedDigit()
+                        Image(systemName: "pencil").font(.caption)
+                    }.frame(minHeight: 44).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier("poly-tempo")
+                HStack(spacing: 5) {
+                    ForEach(0..<model.rhythm.polyCounts.count, id: \.self) { lane in
+                        Button { model.rhythm.polyrhythmReference = lane } label: {
+                            Text(["A", "B", "C"][lane]).font(.system(size: 13, weight: .bold))
+                                .frame(width: 44, height: 32).contentShape(Rectangle())
+                                .background(model.rhythm.polyReference == lane ? PolyrhythmRings.color(lane) : p.muted.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+                                .foregroundStyle(model.rhythm.polyReference == lane ? .white : p.ink)
+                        }.buttonStyle(.plain).accessibilityIdentifier("poly-reference-\(lane)")
+                    }
+                }.accessibilityLabel("Tempo reference")
+            }
+            Button { model.endSoundPreview(); model.toggle() } label: {
+                TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity, minHeight: 58)
+            }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("practice-transport")
+        }.padding(.top, 10)
+    }
+    private func beginTraining(_ route: InstrumentPanelKind) {
+        guard [.ramp, .gap, .polyrhythm].contains(route), originalRhythm == nil else { return }
+        originalRhythm = model.rhythm; model.trainingBaseline = model.rhythm; trainingKind = route
+        model.stop()
+        var value = model.rhythm
+        if let data = UserDefaults.standard.data(forKey: "training-" + route.rawValue), let saved = try? JSONDecoder().decode(Rhythm.self, from: data) {
+            value.start = saved.start; value.end = saved.end; value.every = saved.every; value.increment = saved.increment
+            value.audibleBars = saved.audibleBars; value.silentBars = saved.silentBars; value.silentBarMask = saved.silentBarMask
+            value.polyrhythmPrimary = saved.polyrhythmPrimary; value.polyrhythmStoredSecondary = saved.polyrhythmStoredSecondary
+            value.polyrhythmThird = saved.polyrhythmThird; value.polyrhythmReference = saved.polyrhythmReference
+            value.polyrhythmCycleSeconds = saved.polyrhythmCycleSeconds
+            value.polyrhythmPrimarySound = saved.polyrhythmPrimarySound; value.polyrhythmSecondarySound = saved.polyrhythmSecondarySound; value.polyrhythmThirdSound = saved.polyrhythmThirdSound
+            value.polyrhythmPrimaryMuted = saved.polyrhythmPrimaryMuted; value.polyrhythmSecondaryMuted = saved.polyrhythmSecondaryMuted; value.polyrhythmThirdMuted = saved.polyrhythmThirdMuted
+        }
+        value.ramp = route == .ramp; value.gap = route == .gap
+        value.crossRhythm = route == .polyrhythm ? (value.polyrhythmStoredSecondary ?? 2) : nil
+        if route == .polyrhythm {
+            value.polyrhythmPrimary = value.polyrhythmPrimary ?? 3
+            value.polyrhythmTempoIsSecondary = true
+        }
+        model.rhythm = value
+    }
+    private func finishTraining() {
+        guard let originalRhythm, let trainingKind else { return }
+        if let data = try? JSONEncoder().encode(model.rhythm) { UserDefaults.standard.set(data, forKey: "training-" + trainingKind.rawValue) }
+        model.stop(); model.trainingBaseline = nil; model.rhythm = originalRhythm
+        self.originalRhythm = nil; self.trainingKind = nil
     }
     private var polyrhythmDisplayTempo: Int {
-        model.bpm * (model.rhythm.crossCount > 0 && model.rhythm.polyrhythmTempoIsSecondary != true ? model.rhythm.crossCount : 1)
+        Int(model.rhythm.polyDisplayTempo.rounded())
     }
     private var hasTransport: Bool { [.division, .meter, .practice, .ramp, .gap, .polyrhythm, .sounds, .presets, .countIn, .every, .increment].contains(kind) }
     private var compactPanelHeight: CGFloat {
@@ -167,8 +221,8 @@ struct InstrumentPanel: View {
                 case .start: model.rhythm.start = value
                 case .end: model.rhythm.end = value
                 default:
-                    if returnRoutes.last == .polyrhythm { model.rhythm.polyrhythmTempoIsSecondary = true }
-                    model.setBPM(value)
+                    if returnRoutes.last == .polyrhythm { model.rhythm.setPolyTempo(value) }
+                    else { model.setBPM(value) }
                 }
                 dismiss()
             }.id(kind)
@@ -225,7 +279,6 @@ struct InstrumentPanel: View {
     private var practicePanel: some View { PracticeControls(model: model, open: navigate) }
     private var rampPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
-            switchRow("Tempo ramp", value: $model.rhythm.ramp)
             RampDisplay(model: model, p: p)
             HStack(spacing: 13) {
                 numberWell("START", value: model.rhythm.start) { navigate(.start) }
@@ -241,16 +294,17 @@ struct InstrumentPanel: View {
     }
     private var gapPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
-            switchRow("Silent bars", value: $model.rhythm.gap)
             SilentBarsDisplay(model: model, p: p)
+                .onChange(of: model.rhythm.audibleBars) { _, _ in model.rhythm.silentBarMask = nil }
+                .onChange(of: model.rhythm.silentBars) { _, _ in model.rhythm.silentBarMask = nil }
             VStack(spacing: 18) {
                 stepper("SOUND BARS", value: $model.rhythm.audibleBars, range: 1...16)
                 stepper("SILENT BARS", value: $model.rhythm.silentBars, range: 1...16)
             }
-            Text("The click takes a break. You keep playing.").font(.system(size: 14)).foregroundStyle(p.muted)
+            Text("Tap a bar to silence it. Keep time until the click returns.").font(.system(size: 14)).foregroundStyle(p.muted)
         }
     }
-    private func navigate(_ route: InstrumentPanelKind) { returnRoutes.append(kind); kind = route }
+    private func navigate(_ route: InstrumentPanelKind) { beginTraining(route); returnRoutes.append(kind); kind = route }
     private var presetPanel: some View {
         VStack(alignment: .leading, spacing: 21) {
             VStack(alignment: .leading, spacing: 8) {
@@ -363,7 +417,7 @@ struct InstrumentPanel: View {
     }
     // Live comparison keeps context; a stopped one-off choice returns to the instrument.
     private func finishLiveSelection() { if !model.playing { dismiss() } }
-    private func dismiss() { model.endSoundPreview(); if divisionEditing { divisionEditing = false; return }; if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
+    private func dismiss() { model.endSoundPreview(); if divisionEditing { divisionEditing = false; return }; if polyrhythmSoundLane != nil { polyrhythmSoundLane = nil; return }; if let previous = returnRoutes.popLast() { if previous == .practice { finishTraining() }; kind = previous; return }; naming = false; if kind == .audio { model.error = nil }; close() }
     private func commitButton(_ title: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
         PanelCommitButton(title: title, enabled: enabled, p: p, action: action)
     }

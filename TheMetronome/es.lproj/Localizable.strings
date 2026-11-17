@@ -526,3 +526,10 @@
 "Create a setlist" = "Crear repertorio";
 
 "Choose mode" = "Elegir modo";
+
+"Add voice C" = "Añadir voz C";
+"Remove voice C" = "Quitar voz C";
+"Third instrument" = "Tercer instrumento";
+"Choose a song. Follow the beat." = "Elige una canción. Sigue el ritmo.";
+"Tap a bar to silence it. Keep time until the click returns." = "Toca un compás para silenciarlo. Mantén el ritmo hasta que vuelva el clic.";
+"Tempo reference" = "Referencia de tempo";

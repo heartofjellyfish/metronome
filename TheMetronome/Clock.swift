@@ -108,6 +108,22 @@ struct Rhythm: Codable, Equatable {
     var polyrhythmSecondarySound: Int?
     // Optional fields preserve the timing of older saved presets until explicitly reconfigured.
     var polyrhythmTempoIsSecondary: Bool?
+    var polyrhythmThird: Int?
+    var polyrhythmThirdSound: Int?
+    var polyrhythmThirdMuted: Bool?
+    var polyrhythmReference: Int?
+    var polyrhythmCycleSeconds: Double?
+    var silentBarMask: Int?
+    var thirdPulseSound: Int { validPulseSound(polyrhythmThirdSound, fallback: .rim) }
+    var polyCounts: [Int] { [polyrhythmPrimary ?? 3, crossRhythm ?? polyrhythmStoredSecondary ?? 2] + (polyrhythmThird.map { [$0] } ?? []) }
+    var polyReference: Int { min(polyCounts.count - 1, max(0, polyrhythmReference ?? 1)) }
+    var polySeconds: Double { polyrhythmCycleSeconds ?? (60 * Double(polyrhythmCycleBeats) / Double(bpm)) }
+    var polyDisplayTempo: Double { 60 * Double(polyCounts[polyReference]) / polySeconds }
+    mutating func setPolyTempo(_ value: Int) { polyrhythmCycleSeconds = 60 * Double(polyCounts[polyReference]) / Double(value) }
+    func isSilentBar(_ index: Int) -> Bool {
+        let slot = index % max(1, audibleBars + silentBars)
+        return silentBarMask.map { $0 & (1 << slot) != 0 } ?? (slot >= audibleBars)
+    }
     var polyrhythmPrimaryMuted: Bool?
     var polyrhythmSecondaryMuted: Bool?
     var polyrhythmCycleBeats: Int { crossCount > 0 && polyrhythmTempoIsSecondary == true ? crossCount : 1 }
@@ -124,9 +140,12 @@ struct Rhythm: Codable, Equatable {
     var swingRatio: Double { subdivision.isMultiple(of: 2) ? min(0.75, max(0.5, swing ?? 0.5)) : 0.5 }
     var clockDivisions: Int {
         guard crossCount > 0 else { return subdivision }
-        var a = clockBaseCount, b = crossCount
-        while b != 0 { let r = a % b; a = b; b = r }
-        return clockBaseCount / a * crossCount
+        func lcm(_ lhs: Int, _ rhs: Int) -> Int {
+            var a = lhs, b = rhs
+            while b != 0 { let r = a % b; a = b; b = r }
+            return lhs / a * rhs
+        }
+        return lcm(lcm(clockBaseCount, crossCount), polyrhythmThird ?? 1)
     }
     var divisionSummary: String {
         if swingRatio > 0.5 { return L10n.format("Swing %d%%", Int((swingRatio * 100).rounded())) }
@@ -203,9 +222,11 @@ struct Rhythm: Codable, Equatable {
             let valid = mask & ((1 << subdivision) - 1)
             divisionMask = valid == 0 || valid == (1 << subdivision) - 1 ? nil : valid
         }
-        if let crossRhythm, !(2...9).contains(crossRhythm) { self.crossRhythm = nil }
-        if let polyrhythmStoredSecondary { self.polyrhythmStoredSecondary = min(9, max(2, polyrhythmStoredSecondary)) }
-        if let polyrhythmPrimary { self.polyrhythmPrimary = min(8, max(2, polyrhythmPrimary)) }
+        if let crossRhythm, !(1...12).contains(crossRhythm) { self.crossRhythm = nil }
+        if let polyrhythmStoredSecondary { self.polyrhythmStoredSecondary = min(12, max(1, polyrhythmStoredSecondary)) }
+        if let polyrhythmPrimary { self.polyrhythmPrimary = min(12, max(1, polyrhythmPrimary)) }
+        if let polyrhythmThird { self.polyrhythmThird = min(12, max(1, polyrhythmThird)) }
+        if let seconds = polyrhythmCycleSeconds, !seconds.isFinite || seconds <= 0 { polyrhythmCycleSeconds = nil }
         if let swing { self.swing = swing.isFinite && subdivision.isMultiple(of: 2) ? min(0.75, max(0.5, swing)) : nil }
         accents = Array((accents + Array(repeating: 1, count: 12)).prefix(12)).map { min(2, max(0, $0)) }
         if let grouping, !Self.groupingOptions(beats).contains(grouping) { self.grouping = nil }
@@ -229,6 +250,7 @@ struct ClockEvent {
     let silent: Bool
     var gainScale: Float = 1
     var hitInterval: Double = .infinity
+    var thirdStrength: Int = 0
     var crossStrength: Int = 0
     var cyclePosition: Double = 0
 }
@@ -314,11 +336,12 @@ final class SampleClock {
                 tempo = direction > 0 ? min(rhythm.end, next) : max(rhythm.end, next)
             }
         }
-        let silent = !counting && rhythm.gap && practiceBar % (rhythm.audibleBars + rhythm.silentBars) >= rhythm.audibleBars
-        let interval = 60 * Double(rhythm.polyrhythmCycleBeats) / Double(tempo * rhythm.clockDivisions)
+        let silent = !counting && rhythm.gap && rhythm.isSilentBar(practiceBar)
+        let cycle = rhythm.crossCount > 0 ? rhythm.polySeconds : 60 / Double(tempo)
+        let interval = cycle / Double(rhythm.clockDivisions)
         let swingScale = rhythm.crossCount == 0 ? (tick.isMultiple(of: 2) ? rhythm.swingRatio * 2 : (1 - rhythm.swingRatio) * 2) : 1
         framesUntilTick += rate * interval * swingScale
-        let mainStrength = rhythm.beatStrength(beat, counting: counting)
+        let mainStrength = rhythm.crossCount > 0 ? 2 : rhythm.beatStrength(beat, counting: counting)
         let position = tick % rhythm.clockDivisions
         let step = rhythm.clockDivisions / rhythm.clockBaseCount
         let baseHit = position % step == 0 && (rhythm.crossCount > 0 || rhythm.enabledMask & (1 << (position / step)) != 0)
@@ -329,7 +352,8 @@ final class SampleClock {
         let gainScale: Float = strength == 0 ? 0 : !rhythm.followsMeter ? 1
             : (rhythm.crossCount > 0 ? 1 : rhythm.subdivisionGainScale(beat: beat, division: position / step, counting: counting)) * variation
         let lower = crossHit && !silent && mainStrength > 0 ? (primary ? 2 : 1) : 0
-        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, crossStrength: lower, cyclePosition: Double(position) / Double(rhythm.clockDivisions)), strength)
+        let third = rhythm.crossCount > 0 && rhythm.polyrhythmThird != nil && position % (rhythm.clockDivisions / max(1, rhythm.polyrhythmThird ?? 1)) == 0 && !silent ? (primary ? 2 : 1) : 0
+        return (ClockEvent(beat: beat, bar: practiceBar, bpm: tempo, countIn: counting, silent: silent, gainScale: gainScale, hitInterval: interval * swingScale, thirdStrength: third, crossStrength: lower, cyclePosition: Double(position) / Double(rhythm.clockDivisions)), strength)
     }
 }
 

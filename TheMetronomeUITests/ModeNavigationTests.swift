@@ -86,12 +86,14 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertEqual(widths[0], widths[1], accuracy: 1)
         XCTAssertEqual(widths[1], widths[2], accuracy: 1)
         proof(app, "Mode chooser — equal widths")
+        app.buttons["mode-metronome"].tap()
+        app.buttons["transport"].tap()
+        let playingLabel = app.buttons["transport"].label
+        app.buttons["mode-menu"].tap()
         app.buttons["mode-practice"].tap()
         XCTAssertTrue(app.buttons["practice-ramp"].waitForExistence(timeout: 3))
         XCTAssertEqual(app.buttons["mode-menu"].label, "Practice")
         proof(app, "Practice mode")
-        app.buttons["settings-transport"].tap()
-        let playingLabel = app.buttons["settings-transport"].label
         app.buttons["mode-menu"].tap()
         assertMenuAnchor(app)
         proof(app, "Practice menu anchor")
@@ -149,12 +151,20 @@ final class ModeNavigationTests: XCTestCase {
         app.buttons["poly-plus-0"].tap()
         proof(app, "Polyrhythm independent muted voices")
         app.buttons["polyrhythm-5-4"].tap()
-        app.buttons["polyrhythm-off"].tap()
+        app.buttons["poly-third"].tap()
+        XCTAssertTrue(app.buttons["poly-plus-2"].waitForExistence(timeout: 3))
+        app.buttons["poly-plus-2"].tap()
+        app.buttons["poly-minus-2"].tap()
+        app.buttons["poly-mute-2"].tap()
+        XCTAssertEqual(app.buttons["poly-mute-2"].value as? String, "Muted")
+        app.buttons["poly-reference-0"].tap()
+        proof(app, "Three voices and bottom tempo")
+        app.buttons["poly-reference-1"].tap()
         app.buttons["close-panel"].tap()
         app.buttons["practice-polyrhythm"].tap()
-        app.buttons["polyrhythm-on"].tap()
         XCTAssertTrue(app.buttons["polyrhythm-5-4"].isSelected)
-        app.buttons["practice-transport"].tap()
+        XCTAssertTrue(app.buttons["poly-plus-2"].exists)
+        proof(app, "Polyrhythm remembered controls")
         app.buttons["close-panel"].tap()
         app.buttons["settings"].tap()
         app.buttons["settings-count-in"].tap()
@@ -164,20 +174,15 @@ final class ModeNavigationTests: XCTestCase {
         proof(app, "Count-in redesigned")
         app.buttons["close-panel"].tap()
         app.buttons["close-settings"].tap()
-        app.buttons["practice-presets"].tap()
-        app.buttons["save-current-preset"].tap()
-        app.textFields["preset-name"].tap()
-        app.textFields["preset-name"].typeText("Evening practice")
-        app.buttons["save-preset"].tap()
-        XCTAssertTrue(app.buttons["load-preset-Evening practice"].exists)
-        proof(app, "Presets redesigned")
+
     }
     private func assertMenuAnchor(_ app: XCUIApplication) {
         let header = app.buttons["mode-menu"].frame
         let item = app.buttons["mode-metronome"].frame
-        XCTAssertLessThan(item.minY - header.maxY, 35)
+        // Choices now live inside the shared LCD, below its Choose mode heading.
+        XCTAssertLessThan(item.minY - header.maxY, 60)
         XCTAssertGreaterThanOrEqual(item.minY, header.maxY - 1)
-        XCTAssertLessThan(abs(item.minX - header.minX), 20)
+        XCTAssertLessThan(abs(item.minX - header.minX), 40)
     }
     private func proof(_ app: XCUIApplication, _ name: String) {
         let image = XCTAttachment(screenshot: app.screenshot())

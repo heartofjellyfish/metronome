@@ -24,7 +24,9 @@ struct MetronomeView: View {
                 if mode == .metronome { instrumentFace }
                 else {
                     VStack(spacing: 0) {
-                        modeHeader.frame(height: 38)
+                        modeHeader.frame(height: 38).offset(y: -4)
+                        landingDisplay.frame(width: 365, height: 144).padding(.top, 4)
+                        Spacer().frame(height: 12)
                         if mode == .live {
                             LiveModeHome(model: model, open: present) { id, action in
                                 modesOpen = false
@@ -44,14 +46,10 @@ struct MetronomeView: View {
                         ZStack(alignment: .topLeading) {
                             Color.black.opacity(0.001)
                                 .onTapGesture { modesOpen = false }
-                            if mode == .metronome {
-                                modeMenu.position(x: 207, y: 114)
-                            } else {
-                                modeMenu.padding(.top, 40).padding(.leading, 14)
-                            }
+                            modeMenu.position(x: 207, y: 114)
                             Button { modesOpen = false } label: {
                                 ModeTriggerLabel(mode: mode, expanded: true)
-                            }.buttonStyle(.plain).padding(.leading, 24).offset(y: mode == .metronome ? -7 : -3)
+                            }.buttonStyle(.plain).padding(.leading, 24).offset(y: -7)
                                 .accessibilityIdentifier("mode-menu-close")
                         }
                     }
@@ -93,8 +91,31 @@ struct MetronomeView: View {
             }.accessibilityLabel("Settings").accessibilityIdentifier("settings")
         }.padding(.horizontal, 24).foregroundStyle(p.ink)
     }
+    private var landingDisplay: some View {
+        Group {
+            if mode == .live {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Ready?").font(InstrumentType.display(58))
+                    Text("Choose a song. Follow the beat.").font(.system(size: 15)).foregroundStyle(p.muted)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading).padding(.horizontal, 25)
+            } else {
+                HStack(alignment: .center, spacing: 20) {
+                    Button { present(.tempo) } label: {
+                        Text(String(model.bpm)).font(InstrumentType.display(100)).monospacedDigit()
+                    }.buttonStyle(.plain).accessibilityIdentifier("practice-tempo")
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("BPM").technical(14, spacing: 2)
+                        HStack(spacing: 14) {
+                            Button { present(.meter) } label: { Text("\(model.rhythm.beats)/\(model.rhythm.denominator)").font(InstrumentType.value(22)) }
+                            Button { present(.division) } label: { RhythmScore(rhythm: model.rhythm, color: p.ink).frame(width: 42, height: 30) }
+                        }.buttonStyle(.plain)
+                    }
+                }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.horizontal, 24)
+            }
+        }.frame(width: 365, height: 144).insetPanel(p).foregroundStyle(p.ink).opacity(modesOpen ? 0 : 1)
+    }
     private var modeMenu: some View {
-        ModeChooser(current: mode, p: p, embedded: mode == .metronome) { choice in
+        ModeChooser(current: mode, p: p, embedded: true) { choice in
             model.endSoundPreview()
             mode = choice
             modesOpen = false
