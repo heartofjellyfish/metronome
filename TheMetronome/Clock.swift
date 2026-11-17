@@ -253,6 +253,13 @@ struct ClockEvent {
     var thirdStrength: Int = 0
     var crossStrength: Int = 0
     var cyclePosition: Double = 0
+    var renderTime: TimeInterval = 0
+    var cycleDuration: Double = 1
+
+    func continuousCycle(at time: TimeInterval) -> Double {
+        guard renderTime > 0, cycleDuration > 0 else { return cyclePosition }
+        return (cyclePosition + max(0, time - renderTime) / cycleDuration).truncatingRemainder(dividingBy: 1)
+    }
 }
 
 /// Driven by audio sample frames, never a UI timer. Owned exclusively by the render thread.

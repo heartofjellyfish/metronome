@@ -2,6 +2,14 @@ import XCTest
 @testable import TheMetronome
 
 final class RedesignTests: XCTestCase {
+    func testContinuousNeedleInterpolatesAudioTimeAndWraps() {
+        var e = ClockEvent(beat: 0, bar: 0, bpm: 90, countIn: false, silent: false)
+        e.cyclePosition = 0.75; e.renderTime = 100; e.cycleDuration = 2
+        XCTAssertEqual(e.continuousCycle(at: 100.25), 0.875, accuracy: 0.00001)
+        XCTAssertEqual(e.continuousCycle(at: 100.5), 0, accuracy: 0.00001)
+        XCTAssertEqual(e.continuousCycle(at: 99.9), 0.75, accuracy: 0.00001)
+    }
+
     func testThreeVoicesAndReferenceHaveIdenticalCycle() throws {
         var r = Rhythm(); r.bpm = 60; r.polyrhythmPrimary = 3; r.crossRhythm = 2
         r.polyrhythmThird = 4; r.polyrhythmTempoIsSecondary = true

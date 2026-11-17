@@ -68,10 +68,18 @@ struct PolyrhythmRings: View {
     let lower: Int
     let p: InstrumentPalette
     var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.playing)) { _ in
         Canvas { context, size in
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let outer = min(size.width, size.height) / 2 - 18
-            let phase = model.playing && model.rhythm.crossCount > 0 ? model.event?.cyclePosition : nil
+            let phase = model.playing && model.rhythm.crossCount > 0 ? model.event?.continuousCycle(at: ProcessInfo.processInfo.systemUptime) : nil
+            // One revolution is the shared cycle. The same hand serves every voice.
+            if let phase {
+                let angle = phase * 2 * Double.pi - Double.pi / 2
+                var hand = Path(); hand.move(to: center)
+                hand.addLine(to: CGPoint(x: center.x + cos(angle) * (outer + 7), y: center.y + sin(angle) * (outer + 7)))
+                context.stroke(hand, with: .color(p.ink.opacity(0.85)), style: StrokeStyle(lineWidth: 1.3, lineCap: .round))
+            }
             for lane in 0..<model.rhythm.polyCounts.count {
                 let count = model.rhythm.polyCounts[lane]
                 let radius = outer * (lane == 0 ? 1 : lane == 1 ? 0.70 : 0.40)
@@ -80,16 +88,29 @@ struct PolyrhythmRings: View {
                     let position = Double(index) / Double(count)
                     let angle = position * 2 * Double.pi - Double.pi/2
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
-                    let lit = phase.map { min(count - 1, Int(($0 * Double(count) + 0.0001).rounded(.down))) == index } ?? false
+                    let elapsed = phase.map { ($0 - position + 1).truncatingRemainder(dividingBy: 1) * (model.event?.cycleDuration ?? model.rhythm.polySeconds) }
+                    let decay = min(0.22, (model.event?.cycleDuration ?? model.rhythm.polySeconds) / Double(count) * 0.65)
+                    let intensity = elapsed.map { max(0, 1 - $0 / decay) } ?? 0
+                    let accent = Color(hex: lane == 0 ? 0xE07326 : lane == 1 ? 0x22988B : 0x9376BC)
+                    if intensity > 0 {
+                        var arc = Path()
+                        arc.addArc(center: center, radius: radius, startAngle: .radians(angle - 0.16), endAngle: .radians(angle + 0.16), clockwise: false)
+                        context.stroke(arc, with: .color(accent.opacity(intensity)), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    }
                     let radius: CGFloat = 6.5
                     let rect = CGRect(x: point.x-radius, y: point.y-radius, width: radius*2, height: radius*2)
                     context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.2)), with: .color(.black.opacity(0.20)))
                     context.fill(Path(ellipseIn: rect), with: .linearGradient(
-                        Gradient(colors: lit ? [Color(hex: 0xFFF9E7), Color(hex: 0xE8DDC5)] : [Self.color(lane).opacity(0.82), Self.color(lane)]),
+                        Gradient(colors: [Self.color(lane).opacity(0.82), Self.color(lane)]),
                         startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
+                    context.fill(Path(ellipseIn: rect), with: .color(accent.opacity(intensity)))
                 }
             }
-            context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: " : ")).font(InstrumentType.value(model.rhythm.polyrhythmThird == nil ? 25 : 12)).foregroundColor(p.ink), at: center)
+            if phase != nil {
+                context.fill(Path(ellipseIn: CGRect(x: center.x - 3, y: center.y - 3, width: 6, height: 6)), with: .color(p.ink))
+            }
+            context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: " : ")).font(InstrumentType.value(17)).foregroundColor(p.ink), at: CGPoint(x: 0, y: 0), anchor: .topLeading)
+        }
         }.frame(height: 154).padding(14).insetPanel(p, radius: 16)
             .accessibilityLabel(L10n.format("%d over %d", upper, lower)).accessibilityIdentifier("polyrhythm-rings")
     }

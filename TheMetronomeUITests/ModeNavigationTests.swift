@@ -126,6 +126,19 @@ final class ModeNavigationTests: XCTestCase {
         app.buttons["live-all-songs"].tap()
         XCTAssertTrue(app.buttons["library-new-song"].waitForExistence(timeout: 3))
     }
+    func testPolyrhythmNeedleVisualProof() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "--mode-practice", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["practice-polyrhythm"].waitForExistence(timeout: 8))
+        app.buttons["practice-polyrhythm"].tap()
+        app.buttons["practice-transport"].tap()
+        proof(app, "Track pulse running 1")
+        proof(app, "Track pulse running 2")
+        app.buttons["poly-mute-0"].tap()
+        proof(app, "Track pulse muted voice")
+        app.buttons["practice-transport"].tap()
+    }
     func testPolyrhythmStackedCardsAndTempoReference() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "--mode-practice", "-AppleLanguages", "(en)"]

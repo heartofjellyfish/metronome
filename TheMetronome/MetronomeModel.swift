@@ -109,7 +109,10 @@ final class MetronomeAudio {
                     clock.update(restore); restoreAfterAudition = nil
                 }
                 if let (event, strength) = clock.advance() {
-                    latest = event; serial += 1
+                    var timedEvent = event
+                    timedEvent.renderTime = bufferStart + Double(frame) / rate
+                    timedEvent.cycleDuration = clock.rhythm.polySeconds
+                    latest = timedEvent; serial += 1
                     if strength > 0 && !(clock.rhythm.crossCount > 0 && clock.rhythm.polyrhythmPrimaryMuted == true) {
                         voices.0.chokeHat(); voices.1.chokeHat(); voices.2.chokeHat(); voices.3.chokeHat()
                         acoustic.chokeHats()
