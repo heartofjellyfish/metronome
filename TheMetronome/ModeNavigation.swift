@@ -119,26 +119,21 @@ struct ModeChooser: View {
         let selected = mode == current
         let foreground = selected ? Color(hex: 0xF2EDDF) : p.ink
         return Button { select(mode) } label: {
-            HStack(spacing: compact ? 16 : 22) {
+            HStack(alignment: .center, spacing: compact ? 12 : 16) {
                 ModeIllustration(mode: mode, ink: foreground)
-                    .frame(width: compact ? 68 : 80, height: compact ? 82 : 100)
+                    .frame(width: compact ? 60 : 72, height: compact ? 82 : 100)
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 8) {
-                        Text(mode.title).font(.system(size: compact ? 23 : 27, weight: .bold))
-                            .lineLimit(1).minimumScaleFactor(0.8)
-                        Spacer(minLength: 0)
-                        if selected {
-                            VStack(spacing: 4) {
-                                Image(systemName: "checkmark").font(.system(size: 22, weight: .semibold))
-                                Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
-                                    .lineLimit(1).minimumScaleFactor(0.8)
-                            }.frame(width: 48).accessibilityHidden(true)
-                        }
-                    }
+                    Text(mode.title).font(.system(size: compact ? 23 : 25, weight: .bold))
+                        .lineLimit(1).minimumScaleFactor(0.8)
                     Text(L10n.text(mode.summary)).font(.system(size: compact ? 14 : 16))
                         .foregroundStyle(foreground.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
-                }
-            }.padding(.horizontal, compact ? 18 : 24)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 5) {
+                    Image(systemName: "checkmark").font(.system(size: 22, weight: .semibold))
+                    Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                }.frame(width: 48).opacity(selected ? 1 : 0).accessibilityHidden(true)
+            }.padding(.horizontal, compact ? 18 : 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .foregroundStyle(foreground)
                 .background {
