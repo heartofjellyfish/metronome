@@ -73,16 +73,22 @@ struct PolyrhythmPanel: View {
         return HStack(spacing: 8) {
             Text(index == 0 ? "A" : "B").font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white).frame(width: 26, height: 30).background(color, in: RoundedRectangle(cornerRadius: 6))
+            HStack(spacing: 0) {
             Button { configure(index == 0 ? count - 1 : upper, index == 1 ? count - 1 : lower) } label: {
                 Image(systemName: "minus").frame(width: 34, height: 44)
             }.disabled(count <= 2).accessibilityIdentifier("poly-minus-\(index)")
-            Text("\(count)").font(InstrumentType.value(24)).monospacedDigit().frame(width: 22)
+            Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 23)
+            Text("\(count)").font(InstrumentType.value(24)).monospacedDigit().frame(width: 30)
+            Rectangle().fill(p.edge.opacity(0.6)).frame(width: 0.5, height: 23)
             Button { configure(index == 0 ? count + 1 : upper, index == 1 ? count + 1 : lower) } label: {
                 Image(systemName: "plus").frame(width: 34, height: 44)
             }.disabled(count >= (index == 0 ? 8 : 9)).accessibilityIdentifier("poly-plus-\(index)")
+            }.buttonStyle(.plain).padding(.horizontal, 2).background(RoundedRectangle(cornerRadius: 9).fill(p.top).shadow(color: .black.opacity(0.18), radius: 2, y: 2)).overlay(RoundedRectangle(cornerRadius: 9).stroke(p.light, lineWidth: 1))
             Button { soundLane = index } label: {
+                HStack(spacing: 4) {
                 Text(instrument(index).title).font(.system(size: 13, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                Image(systemName: "chevron.down").font(.system(size: 9))
+                }.padding(.horizontal, 7).frame(maxWidth: .infinity, minHeight: 44)
                     .overlay(alignment: .bottom) { Capsule().fill(color).frame(width: 20, height: 2).padding(.bottom, 5) }
             }.accessibilityIdentifier("poly-lane-\(index)")
             Button {

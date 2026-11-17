@@ -77,7 +77,12 @@ struct PolyrhythmRings: View {
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
                     let lit = phase.map { abs($0-position) < 0.001 } ?? false
                     let rect = CGRect(x: point.x-6, y: point.y-6, width: 12, height: 12)
-                    context.fill(Path(ellipseIn: rect), with: .color(Self.color(lane).opacity(lit ? 1 : 0.55)))
+                    context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.5)), with: .color(.black.opacity(0.20)))
+                    context.fill(Path(ellipseIn: rect), with: .linearGradient(
+                        Gradient(colors: [Self.color(lane).opacity(lit ? 1 : 0.8), Self.color(lane)]),
+                        startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
+                    context.stroke(Path(ellipseIn: rect.insetBy(dx: 0.5, dy: 0.5)), with: .color(.white.opacity(lit ? 0.7 : 0.28)), lineWidth: 0.7)
+                    context.fill(Path(ellipseIn: CGRect(x: point.x-3, y: point.y-4, width: 4, height: 2)), with: .color(.white.opacity(lit ? 0.65 : 0.28)))
                 }
             }
             context.draw(Text("\(upper) : \(lower)").font(InstrumentType.value(25)).foregroundColor(p.ink), at: center)
