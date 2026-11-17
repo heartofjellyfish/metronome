@@ -13,19 +13,15 @@ struct PolyrhythmPanel: View {
             else {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(L10n.text("Rhythm")).font(.system(size: 20, weight: .semibold)).padding(.bottom, 12)
-                    HStack(spacing: 0) {
+                    HStack(spacing: 5) {
                         ratio(3, 2, 4)
-                        Divider()
                         ratio(4, 3, 5)
-                        Divider()
                         Button { expanded.toggle() } label: {
-                            Text(L10n.text("More")).font(.system(size: 15, weight: .medium))
+                            HStack(spacing: 5) { Text(L10n.text("More")); Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2) }.font(.system(size: 15, weight: .medium))
                                 .frame(maxWidth: .infinity, minHeight: 40)
-                        }.buttonStyle(.plain).accessibilityIdentifier("poly-more")
-                    }.frame(height: 40)
-                        .background(p.bottom)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(p.edge.opacity(0.7), lineWidth: 0.7))
+                        }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: false)).accessibilityIdentifier("poly-more")
+                    }.padding(5)
+                        .background { HardwareKeySurface(p: p, radius: 15, pressed: true) }
                     if expanded {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                             ratio(5, 4, 3); ratio(5, 3, 2); ratio(7, 4, 3); ratio(7, 5, 3)
@@ -107,8 +103,7 @@ struct PolyrhythmPanel: View {
         let selected = model.rhythm.crossCount > 0 && upper == a && lower == b && model.rhythm.polyrhythmThird == third
         return Button { configure(a, b, third: third) } label: {
             Text(third.map { "\(a):\(b):\($0)" } ?? "\(a):\(b)").font(.system(size: 17, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 40)
-                .foregroundStyle(selected ? p.body : p.ink).background(selected ? p.ink : .clear)
-        }.buttonStyle(.plain)
+        }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: selected))
             .accessibilityIdentifier("polyrhythm-\(a)-\(b)")
             .accessibilityAddTraits(selected ? .isSelected : [])
     }

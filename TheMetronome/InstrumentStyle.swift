@@ -350,3 +350,20 @@ struct KeyboardGestures: UIViewRepresentable {
     func makeUIView(context: Context) -> Observer { Observer() }
     func updateUIView(_ view: Observer, context: Context) {}
 }
+
+struct InstrumentSelectionButtonStyle: ButtonStyle {
+    let p: InstrumentPalette
+    let selected: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(selected ? Color(hex: 0xF5F0E2) : p.ink)
+            .background {
+                if selected || configuration.isPressed {
+                    HardwareKeySurface(p: p, charcoal: selected, radius: 10, pressed: true)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+}

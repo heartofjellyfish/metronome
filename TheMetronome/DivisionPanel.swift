@@ -55,7 +55,7 @@ struct DivisionPanel: View {
             Text(L10n.text(title)).font(.system(size: 16, weight: .semibold))
                 .lineLimit(1).minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity, minHeight: 48)
-        }.buttonStyle(DivisionModeButtonStyle(p: p, selected: selected))
+        }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: selected))
             .accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
     }
     private var equalDivisions: some View {
@@ -194,19 +194,3 @@ struct DivisionPanel: View {
 }
 
 /// One shared housing distinguishes the mode rocker from the separate family keys.
-private struct DivisionModeButtonStyle: ButtonStyle {
-    let p: InstrumentPalette
-    let selected: Bool
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(selected ? Color(hex: 0xF5F0E2) : p.ink)
-            .background {
-                if selected || configuration.isPressed {
-                    HardwareKeySurface(p: p, charcoal: selected, radius: 10, pressed: true)
-                }
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-            .offset(y: configuration.isPressed ? 1 : 0)
-            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
-    }
-}
