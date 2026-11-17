@@ -77,30 +77,22 @@ struct PolyrhythmRings: View {
         Canvas { context, size in
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let outer = min(size.width, size.height) / 2 - 18
-            // One revolution is the shared cycle. The same hand serves every voice.
-            if let phase {
-                let angle = phase * 2 * Double.pi - Double.pi / 2
-                var hand = Path(); hand.move(to: center)
-                hand.addLine(to: CGPoint(x: center.x + cos(angle) * (outer + 7), y: center.y + sin(angle) * (outer + 7)))
-                context.stroke(hand, with: .color(p.ink.opacity(0.85)), style: StrokeStyle(lineWidth: 1.3, lineCap: .round))
-            }
             for lane in 0..<model.rhythm.polyCounts.count {
                 let count = model.rhythm.polyCounts[lane]
                 let radius = outer * (lane == 0 ? 1 : lane == 1 ? 0.70 : 0.40)
                 context.stroke(Path(ellipseIn: CGRect(x: center.x-radius, y: center.y-radius, width: radius*2, height: radius*2)), with: .color(p.muted.opacity(0.35)), lineWidth: 1)
+                let accent = Color(hex: lane == 0 ? 0xE07326 : lane == 1 ? 0x22988B : 0x9376BC)
+                // Phase wraps at twelve: the whole accumulated track resets together.
+                if let phase, phase > 0 {
+                    var swept = Path()
+                    swept.addArc(center: center, radius: radius, startAngle: .degrees(-90), endAngle: .degrees(phase * 360 - 90), clockwise: false)
+                    context.stroke(swept, with: .color(accent), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                }
                 for index in 0..<count {
                     let position = Double(index) / Double(count)
                     let angle = position * 2 * Double.pi - Double.pi/2
                     let point = CGPoint(x: center.x + cos(angle)*radius, y: center.y + sin(angle)*radius)
-                    let elapsed = phase.map { ($0 - position + 1).truncatingRemainder(dividingBy: 1) * (model.event?.cycleDuration ?? model.rhythm.polySeconds) }
-                    let decay = min(0.22, (model.event?.cycleDuration ?? model.rhythm.polySeconds) / Double(count) * 0.65)
-                    let intensity = elapsed.map { max(0, 1 - $0 / decay) } ?? 0
-                    let accent = Color(hex: lane == 0 ? 0xE07326 : lane == 1 ? 0x22988B : 0x9376BC)
-                    if intensity > 0 {
-                        var arc = Path()
-                        arc.addArc(center: center, radius: radius, startAngle: .radians(angle - 0.16), endAngle: .radians(angle + 0.16), clockwise: false)
-                        context.stroke(arc, with: .color(accent.opacity(intensity)), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    }
+                    let intensity: Double = phase.map { $0 >= position ? 1 : 0 } ?? 0
                     let radius: CGFloat = 6.5
                     let rect = CGRect(x: point.x-radius, y: point.y-radius, width: radius*2, height: radius*2)
                     context.fill(Path(ellipseIn: rect.offsetBy(dx: 0, dy: 1.2)), with: .color(.black.opacity(0.20)))
@@ -110,8 +102,28 @@ struct PolyrhythmRings: View {
                     context.fill(Path(ellipseIn: rect), with: .color(accent.opacity(intensity)))
                 }
             }
-            if phase != nil {
-                context.fill(Path(ellipseIn: CGRect(x: center.x - 3, y: center.y - 3, width: 6, height: 6)), with: .color(p.ink))
+            if let phase {
+                let angle = phase * 2 * Double.pi - Double.pi / 2
+                let direction = CGVector(dx: cos(angle), dy: sin(angle))
+                let side = CGVector(dx: -direction.dy, dy: direction.dx)
+                func point(_ length: CGFloat, _ width: CGFloat = 0) -> CGPoint {
+                    CGPoint(x: center.x + direction.dx * length + side.dx * width,
+                            y: center.y + direction.dy * length + side.dy * width)
+                }
+                // B: tapered graphite needle, short counterweight and a quiet bevel.
+                var hand = Path()
+                hand.move(to: point(-9, 0.9)); hand.addLine(to: point(0, 1.5))
+                hand.addLine(to: point(outer + 7, 0)); hand.addLine(to: point(0, -1.5))
+                hand.addLine(to: point(-9, -0.9)); hand.closeSubpath()
+                context.drawLayer { shadow in
+                    shadow.addFilter(.shadow(color: .black.opacity(0.2), radius: 0.8, x: 0, y: 1))
+                    shadow.fill(hand, with: .color(p.ink))
+                }
+                var bevel = Path(); bevel.move(to: point(-8, -0.4)); bevel.addLine(to: point(outer + 5))
+                context.stroke(bevel, with: .color(p.light.opacity(0.25)), lineWidth: 0.45)
+                let hub = CGRect(x: center.x - 3.3, y: center.y - 3.3, width: 6.6, height: 6.6)
+                context.fill(Path(ellipseIn: hub), with: .color(p.ink))
+                context.stroke(Path(ellipseIn: hub.insetBy(dx: 0.6, dy: 0.6)), with: .color(p.light.opacity(0.25)), lineWidth: 0.5)
             }
             context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: " : ")).font(InstrumentType.value(17)).foregroundColor(p.ink), at: CGPoint(x: 0, y: 0), anchor: .topLeading)
         }
