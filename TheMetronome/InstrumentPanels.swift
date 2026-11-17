@@ -120,7 +120,7 @@ struct InstrumentPanel: View {
                             PolyrhythmRings(model: model, upper: model.rhythm.polyrhythmPrimary ?? 3,
                                 lower: model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2, p: p)
 
-                        }.padding(.horizontal, 23).padding(.top, 16)
+                        }.padding(.horizontal, 23).padding(.top, 16).padding(.bottom, 12)
                     }
                     ScrollViewReader { proxy in
                         ScrollView {

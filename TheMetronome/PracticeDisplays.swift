@@ -128,10 +128,22 @@ struct PolyrhythmRings: View {
                 context.stroke(Path(ellipseIn: hub.insetBy(dx: 0.6, dy: 0.6)), with: .color(p.light.opacity(0.25)), lineWidth: 0.5)
             }
             if phase == nil {
-                context.draw(Text(model.rhythm.polyCounts.map(String.init).joined(separator: ":")).font(InstrumentType.value(model.rhythm.polyCounts.count == 3 ? 18 : 20)).foregroundColor(p.ink), at: center)
+                let threeVoices = model.rhythm.polyCounts.count == 3
+                let label = context.resolve(Text(model.rhythm.polyCounts.map(String.init).joined(separator: ":"))
+                    .font(InstrumentType.value(threeVoices ? 14 : 20)).foregroundColor(p.ink))
+                let measured = label.measure(in: CGSize(width: 200, height: 40))
+                // Fit even 12:11:10 inside the innermost orbit with room for its beads.
+                let available = outer * (threeVoices ? 0.40 : 0.70) * 2 - 18
+                let scale = min(1, available / max(measured.width, 1))
+                context.drawLayer { layer in
+                    layer.translateBy(x: center.x, y: center.y)
+                    layer.scaleBy(x: scale, y: scale)
+                    layer.draw(label, at: .zero)
+                }
             }
         }
         }.frame(height: 154).padding(14).insetPanel(p, radius: 16)
+            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(p.edge.opacity(0.55), lineWidth: 0.75) }
             .accessibilityLabel(L10n.format("%d over %d", upper, lower)).accessibilityIdentifier("polyrhythm-rings")
     }
 }

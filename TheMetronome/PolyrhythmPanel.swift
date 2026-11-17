@@ -93,19 +93,16 @@ struct PolyrhythmPanel: View {
                         }.padding(.top, 27).padding(.bottom, 14).frame(maxWidth: .infinity)
                             .overlay(alignment: .topLeading) { LED(on: selected, size: 8).padding(13) }
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-sound-\(sound.rawValue)")
-                        .accessibilityAddTraits(selected ? .isSelected : [])
-                }
+                            }
             }
         }
     }
     private func ratio(_ a: Int, _ b: Int, _ c: Int) -> some View {
         let third = model.rhythm.polyrhythmThird == nil ? nil : c
-        let selected = model.rhythm.crossCount > 0 && upper == a && lower == b && model.rhythm.polyrhythmThird == third
         return Button { configure(a, b, third: third) } label: {
             Text(third.map { "\(a):\(b):\($0)" } ?? "\(a):\(b)").font(.system(size: 17, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 40)
-        }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: selected))
+        }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: false))
             .accessibilityIdentifier("polyrhythm-\(a)-\(b)")
-            .accessibilityAddTraits(selected ? .isSelected : [])
     }
     private func lane(_ count: Int, index: Int) -> some View {
         let muted = index == 0 ? model.rhythm.polyrhythmPrimaryMuted == true : index == 1 ? model.rhythm.polyrhythmSecondaryMuted == true : model.rhythm.polyrhythmThirdMuted == true
