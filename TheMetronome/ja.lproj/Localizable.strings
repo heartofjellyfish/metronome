@@ -536,8 +536,8 @@
 
 "More" = "その他";
 
-"Set a tempo. Start playing." = "テンポを決めて、演奏開始。";
+"Tempo, meter & subdivisions" = "テンポ・拍子・細分";
 
-"Build speed. Train your timing." = "速度とリズム感を鍛える。";
+"Tempo ramps, silent bars & polyrhythm" = "テンポアップ・無音小節・ポリリズム";
 
-"Your songs. Your setlists." = "曲とセットリストをここに。";
+"Songs, setlists & visual beats" = "曲・セットリスト・拍の表示";

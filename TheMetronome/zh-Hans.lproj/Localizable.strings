@@ -536,8 +536,8 @@
 
 "More" = "更多";
 
-"Set a tempo. Start playing." = "设好速度，开始演奏。";
+"Tempo, meter & subdivisions" = "速度、拍号与细分";
 
-"Build speed. Train your timing." = "循序提速，练稳节奏。";
+"Tempo ramps, silent bars & polyrhythm" = "渐进提速、静音小节、复节奏";
 
-"Your songs. Your setlists." = "你的歌曲，你的歌单。";
+"Songs, setlists & visual beats" = "歌曲、歌单与大拍号提示";

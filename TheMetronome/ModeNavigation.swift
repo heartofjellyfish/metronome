@@ -128,7 +128,11 @@ struct ModeChooser: View {
                             .lineLimit(1).minimumScaleFactor(0.8)
                         Spacer(minLength: 0)
                         if selected {
-                            Image(systemName: "checkmark").font(.system(size: 18, weight: .semibold))
+                            VStack(spacing: 4) {
+                                Image(systemName: "checkmark").font(.system(size: 22, weight: .semibold))
+                                Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
+                                    .lineLimit(1).minimumScaleFactor(0.8)
+                            }.frame(width: 48).accessibilityHidden(true)
                         }
                     }
                     Text(L10n.text(mode.summary)).font(.system(size: compact ? 14 : 16))
@@ -159,9 +163,9 @@ private struct ModeRowStyle: ButtonStyle {
 private extension InstrumentMode {
     var summary: String {
         switch self {
-        case .metronome: "Set a tempo. Start playing."
-        case .practice: "Build speed. Train your timing."
-        case .live: "Your songs. Your setlists."
+        case .metronome: "Tempo, meter & subdivisions"
+        case .practice: "Tempo ramps, silent bars & polyrhythm"
+        case .live: "Songs, setlists & visual beats"
         }
     }
 }
