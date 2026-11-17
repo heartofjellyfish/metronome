@@ -7,7 +7,13 @@ final class RedesignTests: XCTestCase {
         e.cyclePosition = 0.75; e.renderTime = 100; e.cycleDuration = 2
         XCTAssertEqual(e.continuousCycle(at: 100.25), 0.875, accuracy: 0.00001)
         XCTAssertEqual(e.continuousCycle(at: 100.5), 0, accuracy: 0.00001)
-        XCTAssertEqual(e.continuousCycle(at: 99.9), 0.75, accuracy: 0.00001)
+        XCTAssertEqual(e.continuousCycle(at: 99.9), 0.70, accuracy: 0.00001)
+        var upcoming = e; upcoming.renderTime = 100.5; upcoming.cyclePosition = 0
+        // Swapping to a future audio anchor must not change the displayed phase.
+        for frame in 0..<120 {
+            let time = 100 + Double(frame) / 60
+            XCTAssertEqual(e.continuousCycle(at: time), upcoming.continuousCycle(at: time), accuracy: 0.00001)
+        }
     }
 
     func testThreeVoicesAndReferenceHaveIdenticalCycle() throws {

@@ -68,11 +68,15 @@ struct PolyrhythmRings: View {
     let lower: Int
     let p: InstrumentPalette
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.playing)) { _ in
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.playing)) { timeline in
+        // Capture the scheduled frame time outside Canvas. Reading uptime only inside
+        // Canvas lets SwiftUI reuse its drawing between audio-event updates.
+        let frameTime = ProcessInfo.processInfo.systemUptime + timeline.date.timeIntervalSinceNow
+        let event = model.event
+        let phase = model.playing && model.rhythm.crossCount > 0 ? event?.continuousCycle(at: frameTime) : nil
         Canvas { context, size in
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let outer = min(size.width, size.height) / 2 - 18
-            let phase = model.playing && model.rhythm.crossCount > 0 ? model.event?.continuousCycle(at: ProcessInfo.processInfo.systemUptime) : nil
             // One revolution is the shared cycle. The same hand serves every voice.
             if let phase {
                 let angle = phase * 2 * Double.pi - Double.pi / 2

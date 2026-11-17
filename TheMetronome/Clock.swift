@@ -258,7 +258,10 @@ struct ClockEvent {
 
     func continuousCycle(at time: TimeInterval) -> Double {
         guard renderTime > 0, cycleDuration > 0 else { return cyclePosition }
-        return (cyclePosition + max(0, time - renderTime) / cycleDuration).truncatingRemainder(dividingBy: 1)
+        // Audio buffers can publish an upcoming tick. Extrapolate backwards too:
+        // clamping to that tick would repeatedly freeze/jump the sweep.
+        let position = (cyclePosition + (time - renderTime) / cycleDuration).truncatingRemainder(dividingBy: 1)
+        return position < 0 ? position + 1 : position
     }
 }
 
