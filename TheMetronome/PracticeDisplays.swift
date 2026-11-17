@@ -66,6 +66,7 @@ struct PolyrhythmRings: View {
     @ObservedObject var model: MetronomeModel
     let upper: Int
     let lower: Int
+    var displayHeight: CGFloat = 154
     let p: InstrumentPalette
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.playing)) { timeline in
@@ -142,7 +143,7 @@ struct PolyrhythmRings: View {
                 }
             }
         }
-        }.frame(height: 154).padding(14).insetPanel(p, radius: 16)
+        }.frame(height: displayHeight).padding(14).insetPanel(p, radius: 16)
             .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(p.edge.opacity(0.55), lineWidth: 0.75) }
             .accessibilityLabel(L10n.format("%d over %d", upper, lower)).accessibilityIdentifier("polyrhythm-rings")
     }

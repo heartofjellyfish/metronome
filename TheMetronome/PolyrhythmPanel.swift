@@ -22,12 +22,7 @@ struct PolyrhythmPanel: View {
                         }.buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: false)).accessibilityIdentifier("poly-more")
                     }.padding(5)
                         .background { HardwareKeySurface(p: p, radius: 15, pressed: true) }
-                    if expanded {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                            ratio(5, 4, 3); ratio(5, 3, 2); ratio(7, 4, 3); ratio(7, 5, 3)
-                        }.padding(.top, 10)
-                    }
-                    seam.padding(.top, 20)
+                    seam.padding(.top, 12)
                     lane(upper, index: 0)
                     seam
                     lane(lower, index: 1)
@@ -47,9 +42,18 @@ struct PolyrhythmPanel: View {
                             }.font(.system(size: 14, weight: .medium)).padding(.horizontal, 12).frame(height: 40)
                         }.buttonStyle(HardwareButtonStyle(p: p, radius: 20)).accessibilityIdentifier("poly-third")
                     }.padding(.top, 12)
-                }.padding(16)
+                }.padding(12)
                     .background { HardwareKeySurface(p: p, radius: 24).allowsHitTesting(false) }
             }
+        }.sheet(isPresented: $expanded) {
+            VStack(spacing: 16) {
+                HStack { Text(L10n.text("Rhythm")).font(.headline); Spacer()
+                    Button { expanded = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("poly-more-close")
+                }
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ratio(3, 2, 4); ratio(4, 3, 5); ratio(5, 4, 3); ratio(5, 3, 2); ratio(7, 4, 3); ratio(7, 5, 3)
+                }
+            }.padding(24).presentationDetents([.height(300)]).presentationBackground(p.body)
         }.onDisappear { model.endSoundPreview() }
     }
     private var seam: some View {
@@ -141,6 +145,6 @@ struct PolyrhythmPanel: View {
                     .accessibilityIdentifier("poly-mute-\(index)")
                     .accessibilityLabel("Mute " + ["A", "B", "C"][index])
                     .accessibilityValue(muted ? "Muted" : "Audible")
-        }.padding(.vertical, 14)
+        }.padding(.vertical, 8)
     }
 }

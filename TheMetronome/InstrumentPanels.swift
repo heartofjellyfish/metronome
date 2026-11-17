@@ -113,15 +113,20 @@ struct InstrumentPanel: View {
                         }
                         Spacer(minLength: 5)
                         if !showsBack { navigationKey }
-                    }.padding(23)
+                    }.padding(.horizontal, 23).padding(.vertical, kind == .polyrhythm ? 12 : 23)
                     Rectangle().fill(p.edge.opacity(0.45)).frame(height: 0.5).padding(.horizontal, 23)
                     if kind == .polyrhythm && polyrhythmSoundLane == nil {
                         VStack(spacing: 10) {
                             PolyrhythmRings(model: model, upper: model.rhythm.polyrhythmPrimary ?? 3,
-                                lower: model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2, p: p)
+                                lower: model.rhythm.crossRhythm ?? model.rhythm.polyrhythmStoredSecondary ?? 2,
+                                displayHeight: max(100, min(154, geometry.size.height - 540)), p: p)
 
                         }.padding(.horizontal, 23).padding(.top, 16).padding(.bottom, 12)
                     }
+                    if kind == .polyrhythm && polyrhythmSoundLane == nil {
+                        content.padding(.horizontal, 23)
+                        Spacer(minLength: 4)
+                    } else {
                     ScrollViewReader { proxy in
                         ScrollView {
                             content.padding(23).id("panel-top")
@@ -129,9 +134,10 @@ struct InstrumentPanel: View {
                         }.clipped().scrollBounceBehavior(.basedOnSize).id("\(kind.rawValue)-\(polyrhythmSoundLane ?? -1)")
                             .onChange(of: divisionEditing) { _, _ in proxy.scrollTo("panel-top", anchor: .top) }
                     }
+                    }
                     if hasTransport {
                         if kind == .polyrhythm {
-                            polyTransport.padding(.horizontal, 23).padding(.bottom, 18)
+                            polyTransport.padding(.horizontal, 23).padding(.bottom, 12)
                         } else {
                         SettingsPlaybackBar(model: model, p: p, identifier: [.ramp, .gap, .polyrhythm, .practice].contains(kind) ? "practice-transport" : "settings-transport")
                             .padding(.horizontal, 23).padding(.bottom, 18)
@@ -155,6 +161,26 @@ struct InstrumentPanel: View {
     private var polyTransport: some View {
         VStack(spacing: 10) {
             Rectangle().fill(p.edge.opacity(0.6)).frame(height: 0.5)
+            HStack(spacing: 12) {
+                HStack(spacing: 0) {
+                    Button { choosingPolyReference = false; returnRoutes.append(.polyrhythm); kind = .tempo } label: {
+                        Text(model.rhythm.polyDisplayTempo.formatted(.number.precision(.fractionLength(0...1))) + " BPM")
+                            .font(.system(size: 18, weight: .medium)).monospacedDigit()
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("poly-tempo")
+                    Button { choosingPolyReference.toggle() } label: {
+                        Circle().fill(PolyrhythmRings.color(model.rhythm.polyReference)).frame(width: 12, height: 12)
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("poly-reference-picker")
+                        .accessibilityLabel(L10n.text("Tempo reference"))
+                        .accessibilityValue(["A", "B", "C"][model.rhythm.polyReference])
+                }
+                Button { choosingPolyReference = false; model.endSoundPreview(); model.toggle() } label: {
+                    TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity, minHeight: 48)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("practice-transport")
+            }
+        }.padding(.top, 8)
+            .overlay(alignment: .bottomLeading) {
             if choosingPolyReference {
                 HStack(spacing: 10) {
                     ForEach(0..<model.rhythm.polyCounts.count, id: \.self) { lane in
@@ -171,26 +197,10 @@ struct InstrumentPanel: View {
                             .accessibilityAddTraits(model.rhythm.polyReference == lane ? .isSelected : [])
                     }
                 }
+                    .padding(10).background { HardwareKeySurface(p: p, radius: 14) }
+                    .offset(y: -64)
             }
-            HStack(spacing: 12) {
-                HStack(spacing: 0) {
-                    Button { choosingPolyReference = false; returnRoutes.append(.polyrhythm); kind = .tempo } label: {
-                        Text(model.rhythm.polyDisplayTempo.formatted(.number.precision(.fractionLength(0...1))) + " BPM")
-                            .font(.system(size: 18, weight: .medium)).monospacedDigit()
-                            .frame(minHeight: 44).contentShape(Rectangle())
-                    }.buttonStyle(.plain).accessibilityIdentifier("poly-tempo")
-                    Button { choosingPolyReference.toggle() } label: {
-                        Circle().fill(PolyrhythmRings.color(model.rhythm.polyReference)).frame(width: 12, height: 12)
-                            .frame(width: 44, height: 44).contentShape(Rectangle())
-                    }.buttonStyle(.plain).accessibilityIdentifier("poly-reference-picker")
-                        .accessibilityLabel(L10n.text("Tempo reference"))
-                        .accessibilityValue(["A", "B", "C"][model.rhythm.polyReference])
-                }
-                Button { choosingPolyReference = false; model.endSoundPreview(); model.toggle() } label: {
-                    TransportGlyph(playing: model.transportActive).frame(maxWidth: .infinity, minHeight: 58)
-                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("practice-transport")
             }
-        }.padding(.top, 10)
     }
     private func beginTraining(_ route: InstrumentPanelKind) {
         guard [.ramp, .gap, .polyrhythm].contains(route), originalRhythm == nil else { return }
