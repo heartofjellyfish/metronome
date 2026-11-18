@@ -4,7 +4,7 @@
   "date": "2026-11-18",
   "archive": "/tmp/metronome-1.0.3-85.xcarchive",
   "upload": "succeeded",
-  "status": "processing",
+  "status": "Submitted for Review",
   "previousVersion": "1.0.2 (83)",
   "changes": [
     "Keep Screen Awake fix previously verified by user on physical iPhone",
@@ -17,7 +17,21 @@
     "SwipeClearsLiveHistoryWithoutDeletingSongOrStoppingPlayback passed",
     "Ready screenshot inspected",
     "Debug device build succeeded",
-    "Installed successfully on iPhone 14 Pro"
+    "Installed successfully on iPhone 14 Pro",
+    "Launched successfully on connected iPhone"
   ],
-  "releaseMode": "Automatically release after approval"
+  "releaseMode": "Automatically release after approval",
+  "submissionURL": "https://appstoreconnect.apple.com/apps/6819347521/distribution/reviewsubmissions/details/7f94351c-a016-422b-89ca-985699eedee3",
+  "confirmation": "1 Item Submitted",
+  "localizedWhatsNew": [
+    "en-US",
+    "zh-Hans",
+    "zh-Hant",
+    "fr-FR",
+    "de-DE",
+    "ja",
+    "ko",
+    "pt-BR",
+    "es-ES"
+  ]
 }
