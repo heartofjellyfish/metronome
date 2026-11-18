@@ -97,15 +97,26 @@ struct ModeChooser: View {
                     VStack(spacing: 0) {
                         ForEach(InstrumentMode.allCases) { mode in
                             row(mode, compact: compact).frame(height: rowHeight)
-                            if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
+                            if mode != .live {
+                                VStack(spacing: 0) {
+                                    Rectangle().fill(p.edge.opacity(0.55)).frame(height: 0.5)
+                                    Rectangle().fill(p.light).frame(height: 0.5)
+                                }.padding(.horizontal, 6)
+                            }
                         }
-                    }.padding(.horizontal, 22)
+                    }.padding(6).insetPanel(p, radius: 18)
+                        .padding(.horizontal, 22)
                         .padding(.top, 12)
                         .padding(.bottom, 46)
                 }.frame(maxWidth: 450)
                     .background { InstrumentBody(p: p).clipShape(ModeMenuShape()) }
-                    .overlay { ModeMenuShape().stroke(p.light.opacity(0.65), lineWidth: 1) }
-                    .shadow(color: .black.opacity(0.14), radius: 10, y: 6)
+                    .overlay {
+                        ModeMenuShape().stroke(LinearGradient(colors: [p.light, p.light.opacity(0.3), p.edge.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 2)
+                            .padding(1)
+                    }
+                    .compositingGroup()
+                    .shadow(color: .black.opacity(0.24), radius: 2, y: 3)
+                    .shadow(color: .black.opacity(0.18), radius: 10, y: 7)
                     .padding(.horizontal, 16)
                     .padding(.top, 0)
             }
@@ -136,8 +147,7 @@ struct ModeChooser: View {
                 .foregroundStyle(foreground)
                 .background {
                     if selected {
-                        LinearGradient(colors: [Color(hex: 0x343731), Color(hex: 0x262923)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            .overlay(MaterialGrain().opacity(0.045).blendMode(.overlay))
+                        HardwareKeySurface(p: p, charcoal: true, radius: 12, pressed: false)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12))
