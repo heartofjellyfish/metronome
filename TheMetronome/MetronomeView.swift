@@ -128,8 +128,13 @@ struct MetronomeView: View {
     private var modeMenu: some View {
         ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
             model.endSoundPreview()
-            mode = choice
-            modesOpen = false
+            // Selecting enters immediately; only cancellation folds the chooser away.
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                mode = choice
+                modesOpen = false
+            }
         }
     }
     private var instrumentFace: some View {
