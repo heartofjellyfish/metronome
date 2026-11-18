@@ -1,0 +1,23 @@
+{
+  "version": "1.0.3",
+  "build": "85",
+  "date": "2026-11-18",
+  "archive": "/tmp/metronome-1.0.3-85.xcarchive",
+  "upload": "succeeded",
+  "status": "processing",
+  "previousVersion": "1.0.2 (83)",
+  "changes": [
+    "Keep Screen Awake fix previously verified by user on physical iPhone",
+    "Mode navigation and lighter transitions",
+    "Consistent catalog viewport edges",
+    "Swipe left to clear Live history without deleting songs or stopping playback"
+  ],
+  "validation": [
+    "ScreenAwakeAcrossPlaybackAndSceneTransitions passed",
+    "SwipeClearsLiveHistoryWithoutDeletingSongOrStoppingPlayback passed",
+    "Ready screenshot inspected",
+    "Debug device build succeeded",
+    "Installed successfully on iPhone 14 Pro"
+  ],
+  "releaseMode": "Automatically release after approval"
+}

@@ -1,6 +1,27 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
+    func testSwipeClearsLiveHistoryWithoutDeletingSongOrStoppingPlayback() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["live-tab-songs"].waitForExistence(timeout: 8))
+        app.buttons["live-tab-songs"].tap()
+        let song = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch
+        song.tap()
+        app.buttons["performance-play"].tap()
+        app.buttons["close-performance"].tap()
+        app.buttons["live-last-played"].swipeLeft()
+        XCTAssertFalse(app.buttons["live-last-played"].exists)
+        XCTAssertTrue(app.staticTexts["Ready?"].exists)
+        XCTAssertTrue(song.exists)
+        proof(app, "Live — cleared history, Ready")
+        song.tap()
+        XCTAssertEqual(app.buttons["performance-play"].label, "Stop metronome")
+        app.buttons["performance-play"].tap()
+        app.buttons["close-performance"].tap()
+        XCTAssertTrue(app.buttons["live-last-played"].exists)
+    }
     func testCatalogViewportEdges() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "--mode-live", "-AppleLanguages", "(en)"]

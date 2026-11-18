@@ -10,6 +10,7 @@ struct LiveModeHome: View {
     @State private var recentSongOpen = false
     @State private var standalone = true
     @State private var songsTab = false
+    @GestureState private var historySwipe: CGFloat = 0
     @AppStorage("lastPlayedLiveSongID") private var lastPlayedID = ""
     @AppStorage("lastPlayedLiveSetlistID") private var lastSetlistID = ""
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
@@ -23,7 +24,22 @@ struct LiveModeHome: View {
     }
     var body: some View {
         VStack(spacing: 18) {
-            resumeDisplay.frame(height: 144).insetPanel(p)
+            resumeDisplay
+                .offset(x: historySwipe)
+                .frame(height: 144)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .insetPanel(p, radius: 16)
+                .highPriorityGesture(DragGesture(minimumDistance: 16)
+                    .updating($historySwipe) { value, state, _ in
+                        guard recentSong != nil, abs(value.translation.width) > abs(value.translation.height) else { return }
+                        state = min(0, value.translation.width)
+                    }
+                    .onEnded { value in
+                        guard recentSong != nil, value.translation.width < -65,
+                              abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                        clearHistory()
+                    })
+                .accessibilityAction(named: Text(L10n.text("Clear history"))) { clearHistory() }
             VStack(spacing: 0) {
                 HStack(spacing: 5) {
                     tab("Setlists", songs: false)
@@ -103,8 +119,15 @@ struct LiveModeHome: View {
                     Text(L10n.text(songs.isEmpty ? "Add a song. Build your setlist." : "Choose a song. Follow the beat."))
                         .font(.system(size: 15)).foregroundStyle(p.muted)
                 }.padding(22).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("live-ready")
             }
         }
+    }
+    private func clearHistory() {
+        // Clear the opened fallback too, otherwise the same card immediately reappears.
+        model.clearRecentSongHistory()
+        lastPlayedID = ""
+        lastSetlistID = ""
     }
     private var songCatalog: some View {
         CatalogList(items: songs, p: p, bookmarks: bookmarks, page: "live-songs", compactMargins: true, swipeActions: { song in

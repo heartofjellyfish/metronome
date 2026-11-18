@@ -450,6 +450,10 @@ final class MetronomeModel: ObservableObject {
         let ids = UserDefaults.standard.stringArray(forKey: "recentSongIDs") ?? []
         return ids.compactMap { id in songLibrary.first { $0.id.uuidString == id } }
     }
+    func clearRecentSongHistory() {
+        objectWillChange.send()
+        UserDefaults.standard.removeObject(forKey: "recentSongIDs")
+    }
     func loadSong(_ input: SavedPreset, from target: UUID? = nil) {
         guard let song = songLibrary.first(where: { $0.id == input.id }) else { return }
         if let target {
