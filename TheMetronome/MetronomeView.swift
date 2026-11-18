@@ -96,7 +96,7 @@ struct MetronomeView: View {
                         .onAppear {
                             let token = modeTransitionID
                             // Resolve focus early while the curtain finishes opening.
-                            withAnimation(.easeInOut(duration: 0.60)) {
+                            withAnimation(.linear(duration: 0.40)) {
                                 modeRevealBlur = 0
                             }
                             withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.80), completionCriteria: .removed) {
@@ -181,7 +181,7 @@ struct MetronomeView: View {
                 curtainOpen = false
                 curtainOpacity = 1
                 curtainVisible = true
-                modeRevealBlur = 8
+                modeRevealBlur = 3
                 enter()
             }
         }

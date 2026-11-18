@@ -39,7 +39,7 @@ struct LiveModeHome: View {
                     } else {
                         if model.setlists.isEmpty { emptyCatalog } else { catalog }
                     }
-                }.frame(maxWidth: .infinity, maxHeight: .infinity).liveScreen(p)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity).catalogScreen(p)
             }.frame(maxHeight: .infinity)
             HStack {
                 Text(L10n.format(songsTab ? (songs.count == 1 ? "%d song" : "%d songs") : (model.setlists.count == 1 ? "%d setlist" : "%d setlists"), songsTab ? songs.count : model.setlists.count))
@@ -150,20 +150,6 @@ struct LiveModeHome: View {
 
 }
 
-private extension View {
-    func liveScreen(_ p: InstrumentPalette) -> some View {
-        self.mask {
-            VStack(spacing: 0) {
-                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 10)
-                Color.black
-                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 22)
-            }
-        }.clipShape(RoundedRectangle(cornerRadius: 16)).insetPanel(p, radius: 16)
-            .overlay(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 16).stroke(p.edge.opacity(0.2), lineWidth: 1).padding(2).allowsHitTesting(false)
-            }
-    }
-}
 
 enum LiveSetlistAction { case browse, create, edit, delete }
 enum SetlistRecency {

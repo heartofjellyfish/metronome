@@ -1,6 +1,26 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
+    func testCatalogViewportEdges() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--nine-song-setlist-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["live-all-setlists"].waitForExistence(timeout: 8))
+        proof(app, "Viewport — Live setlists")
+        app.buttons["live-all-setlists"].tap()
+        app.collectionViews.firstMatch.swipeUp()
+        proof(app, "Viewport — All setlists bottom")
+        app.buttons["close-panel"].tap()
+        app.buttons["live-tab-songs"].tap()
+        app.collectionViews.firstMatch.swipeUp()
+        proof(app, "Viewport — Live songs bottom")
+        app.buttons["live-all-songs"].tap()
+        app.collectionViews.firstMatch.swipeUp()
+        app.collectionViews.firstMatch.swipeUp()
+        proof(app, "Viewport — All songs bottom")
+        app.buttons["library-start-editing"].tap()
+        proof(app, "Viewport — All songs editing bottom")
+    }
     func testModalChooserPreservesPlayback() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]

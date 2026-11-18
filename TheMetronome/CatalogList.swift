@@ -505,6 +505,21 @@ struct CatalogList<Item: Identifiable, Row: View, Above: View, Below: View>: UIV
 extension CatalogList {
     /// The bezel belongs to the viewport. Scrolling moves its contents only.
     func screen() -> some View {
-        clipShape(RoundedRectangle(cornerRadius: 16)).insetPanel(p, radius: 16)
+        catalogScreen(p)
+    }
+}
+
+extension View {
+    func catalogScreen(_ p: InstrumentPalette) -> some View {
+        self.mask {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 10)
+                Color.black
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 22)
+            }
+        }.clipShape(RoundedRectangle(cornerRadius: 16)).insetPanel(p, radius: 16)
+            .overlay(alignment: .bottom) {
+                RoundedRectangle(cornerRadius: 16).stroke(p.edge.opacity(0.2), lineWidth: 1).padding(2).allowsHitTesting(false)
+            }
     }
 }
