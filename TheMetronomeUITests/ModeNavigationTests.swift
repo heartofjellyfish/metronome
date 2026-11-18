@@ -233,6 +233,49 @@ final class ModeNavigationTests: XCTestCase {
         app.buttons["close-settings"].tap()
 
     }
+    func testReleaseAuditLiveLibraryAndSetlist() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        func tap(_ id: String) {
+            let button = app.buttons[id].firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 5), id)
+            button.tap()
+        }
+        tap("live-all-songs")
+        proof(app, "Audit — song library browse")
+        app.buttons["library-open-Gossip"].swipeLeft()
+        tap("swipe-library-delete-Gossip")
+        tap("Cancel")
+        tap("library-start-editing")
+        tap("library-edit-Gossip")
+        proof(app, "Audit — song editor")
+        tap("cancel-song")
+        tap("cancel-library")
+        tap("library-open-Gossip")
+        tap("performance-play")
+        proof(app, "Audit — standalone playing")
+        tap("performance-play")
+        tap("close-performance")
+        tap("close-panel")
+        tap("live-all-setlists")
+        tap("setlist-Saturday")
+        tap("edit-setlist")
+        proof(app, "Audit — editing setlist")
+        tap("add-song")
+        proof(app, "Audit — batch song selection")
+        tap("cancel-picking-songs")
+        tap("cancel-setlist")
+        tap("song-Gossip")
+        proof(app, "Audit — setlist song ready")
+        tap("performance-play")
+        tap("performance-next")
+        XCTAssertEqual(app.buttons["performance-play"].label, "Stop metronome")
+        tap("performance-play")
+        tap("close-performance")
+    }
+
     private func assertMenuAnchor(_ app: XCUIApplication) {
         let rows = ["metronome", "practice", "live"].map { app.buttons["mode-\($0)"].frame }
         XCTAssertTrue(app.buttons["mode-menu-close"].isHittable)
