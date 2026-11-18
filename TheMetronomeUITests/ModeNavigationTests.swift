@@ -52,7 +52,7 @@ final class ModeNavigationTests: XCTestCase {
         proof(app, "Live — songs tab")
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
         app.buttons["close-performance"].tap()
-        XCTAssertTrue(app.staticTexts["Recently opened"].exists, "Opening alone must not count as played")
+        XCTAssertTrue(app.staticTexts["Last opened"].exists, "Opening alone must not count as played")
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
         app.buttons["performance-play"].tap()
         app.buttons["performance-play"].tap()

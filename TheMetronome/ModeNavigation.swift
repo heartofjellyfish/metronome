@@ -84,7 +84,7 @@ struct ModeChooser: View {
     var body: some View {
         GeometryReader { geo in
             let compact = geo.size.width < 390
-            let rowHeight = min(CGFloat(148), max(120, (geo.size.height - 138) / 3))
+            let rowHeight = min(CGFloat(140), max(120, (geo.size.height - 136) / 3))
             ZStack(alignment: .topLeading) {
                 Color.black.opacity(0.38).ignoresSafeArea().onTapGesture(perform: close).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 0) {
@@ -92,15 +92,16 @@ struct ModeChooser: View {
                         HStack(spacing: 12) {
                             Text(L10n.text("Modes")).technical(13, spacing: 2)
                             Image(systemName: "chevron.up").font(.system(size: 11, weight: .medium))
-                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).frame(width: 150, height: 52)
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).frame(width: 150, height: 48)
                     }.buttonStyle(.plain).accessibilityIdentifier("mode-menu-close").accessibilityLabel(L10n.text("Close"))
                     VStack(spacing: 0) {
                         ForEach(InstrumentMode.allCases) { mode in
                             row(mode, compact: compact).frame(height: rowHeight)
                             if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
                         }
-                    }.clipShape(RoundedRectangle(cornerRadius: 18)).insetPanel(p, radius: 18)
-                        .padding(18).padding(.top, 4)
+                    }.padding(.horizontal, 26)
+                        .padding(.top, 12)
+                        .padding(.bottom, 46)
                 }.frame(maxWidth: 450)
                     .background { InstrumentBody(p: p).clipShape(ModeMenuShape()) }
                     .overlay { ModeMenuShape().stroke(p.light.opacity(0.65), lineWidth: 1) }
@@ -129,8 +130,8 @@ struct ModeChooser: View {
                     Image(systemName: "checkmark").font(.system(size: 22, weight: .semibold))
                     Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
                         .lineLimit(1).minimumScaleFactor(0.8)
-                }.frame(width: 40).opacity(selected ? 1 : 0).accessibilityHidden(true)
-            }.padding(.horizontal, compact ? 14 : 18)
+                }.frame(width: selected ? 40 : 0).opacity(selected ? 1 : 0).accessibilityHidden(true)
+            }.padding(.horizontal, compact ? 10 : 14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .foregroundStyle(foreground)
                 .background {
@@ -139,6 +140,7 @@ struct ModeChooser: View {
                             .overlay(MaterialGrain().opacity(0.045).blendMode(.overlay))
                     }
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .contentShape(Rectangle())
         }.buttonStyle(ModeRowStyle())
             .accessibilityIdentifier("mode-\(mode.rawValue)")
@@ -150,12 +152,12 @@ private struct ModeMenuShape: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()
         p.move(to: CGPoint(x: 20, y: 0))
-        p.addLine(to: CGPoint(x: 138, y: 0))
-        p.addQuadCurve(to: CGPoint(x: 158, y: 20), control: CGPoint(x: 158, y: 0))
-        p.addLine(to: CGPoint(x: 158, y: 34))
-        p.addQuadCurve(to: CGPoint(x: 174, y: 50), control: CGPoint(x: 158, y: 50))
-        p.addLine(to: CGPoint(x: r.width - 22, y: 50))
-        p.addQuadCurve(to: CGPoint(x: r.width, y: 72), control: CGPoint(x: r.width, y: 50))
+        p.addLine(to: CGPoint(x: 126, y: 0))
+        p.addQuadCurve(to: CGPoint(x: 146, y: 20), control: CGPoint(x: 146, y: 0))
+        p.addLine(to: CGPoint(x: 146, y: 36))
+        p.addQuadCurve(to: CGPoint(x: 158, y: 48), control: CGPoint(x: 146, y: 48))
+        p.addLine(to: CGPoint(x: r.width - 22, y: 48))
+        p.addQuadCurve(to: CGPoint(x: r.width, y: 70), control: CGPoint(x: r.width, y: 48))
         p.addLine(to: CGPoint(x: r.width, y: r.height - 22))
         p.addQuadCurve(to: CGPoint(x: r.width - 22, y: r.height), control: CGPoint(x: r.width, y: r.height))
         p.addLine(to: CGPoint(x: 22, y: r.height))

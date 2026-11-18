@@ -89,7 +89,7 @@ struct LiveModeHome: View {
                 } label: {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(L10n.text(hasPlaybackHistory ? "Last played" : "Recently opened")).font(.system(size: 12)).foregroundStyle(p.muted)
+                            Text(L10n.text(hasPlaybackHistory ? "Last played" : "Last opened")).font(.system(size: 12)).foregroundStyle(p.muted)
                             Text(verbatim: song.name).font(.system(size: 25, weight: .semibold)).lineLimit(2).multilineTextAlignment(.leading)
                             Text("\(song.rhythm.bpm) BPM · \(song.rhythm.beats)/\(song.rhythm.denominator)").font(.system(size: 13)).foregroundStyle(p.muted)
                         }
