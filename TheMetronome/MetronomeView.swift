@@ -15,6 +15,8 @@ struct MetronomeView: View {
     @State private var settings = false
     @State private var mode: InstrumentMode = .metronome
     @State private var modesOpen = false
+    @State private var selectingMode = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var panel: InstrumentPanelKind?
     @State private var liveListRoute: LiveListRoute?
     private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var songID: UUID? = nil; var action: LiveSetlistAction }
@@ -24,7 +26,8 @@ struct MetronomeView: View {
     var body: some View {
         GeometryReader { geometry in
             let scale = min(geometry.size.width / 414, geometry.size.height / 774)
-            Group {
+            ZStack(alignment: .top) {
+              Group {
                 if mode == .metronome { instrumentFace }
                 else {
                     VStack(spacing: 0) {
@@ -43,7 +46,8 @@ struct MetronomeView: View {
                         }
                     }
                 }
-            }
+              }.id(mode).transition(.opacity)
+            }.animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: mode)
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
@@ -62,10 +66,10 @@ struct MetronomeView: View {
                             modeMenu.frame(width: 414, height: 774, alignment: .top)
                                 .scaleEffect(scale, anchor: .top)
                                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-                                .transition(.modifier(active: ModeUnfold(progress: 0), identity: ModeUnfold(progress: 1))).zIndex(1)
+                                .transition(selectingMode ? .opacity : .modifier(active: ModeUnfold(progress: 0), identity: ModeUnfold(progress: 1))).zIndex(1)
                         }
                     }.allowsHitTesting(modesOpen)
-                        .animation(.easeInOut(duration: 0.24), value: modesOpen)
+                        .animation(reduceMotion ? nil : (selectingMode ? .easeOut(duration: 0.12) : .easeInOut(duration: 0.24)), value: modesOpen)
                 }
             }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
@@ -91,7 +95,7 @@ struct MetronomeView: View {
     }
     private var modeHeader: some View {
         HStack(spacing: 12) {
-            Button { modesOpen.toggle() } label: {
+            Button { selectingMode = false; modesOpen.toggle() } label: {
                 ModeTriggerLabel(mode: mode, expanded: modesOpen)
             }.buttonStyle(.plain).accessibilityIdentifier("mode-menu")
                 .accessibilityLabel(mode.title)
@@ -128,10 +132,9 @@ struct MetronomeView: View {
     private var modeMenu: some View {
         ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
             model.endSoundPreview()
-            // Selecting enters immediately; only cancellation folds the chooser away.
-            var transaction = Transaction(animation: nil)
-            transaction.disablesAnimations = true
-            withTransaction(transaction) {
+            // Selection dissolves directly into the destination, never folds away.
+            selectingMode = true
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.12)) {
                 mode = choice
                 modesOpen = false
             }
