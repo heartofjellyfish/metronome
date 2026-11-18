@@ -99,13 +99,13 @@ struct ModeChooser: View {
                             row(mode, compact: compact).frame(height: rowHeight)
                             if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
                         }
-                    }.padding(.horizontal, 26)
+                    }.padding(.horizontal, 22)
                         .padding(.top, 12)
                         .padding(.bottom, 46)
                 }.frame(maxWidth: 450)
                     .background { InstrumentBody(p: p).clipShape(ModeMenuShape()) }
                     .overlay { ModeMenuShape().stroke(p.light.opacity(0.65), lineWidth: 1) }
-                    .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
+                    .shadow(color: .black.opacity(0.14), radius: 10, y: 6)
                     .padding(.horizontal, 16)
                     .padding(.top, 0)
             }
@@ -150,20 +150,21 @@ struct ModeChooser: View {
 
 private struct ModeMenuShape: Shape {
     func path(in r: CGRect) -> Path {
+        // One continuous thin shell: compact title tab, tight shoulder, quiet corners.
         var p = Path()
-        p.move(to: CGPoint(x: 20, y: 0))
-        p.addLine(to: CGPoint(x: 126, y: 0))
-        p.addQuadCurve(to: CGPoint(x: 146, y: 20), control: CGPoint(x: 146, y: 0))
-        p.addLine(to: CGPoint(x: 146, y: 36))
-        p.addQuadCurve(to: CGPoint(x: 158, y: 48), control: CGPoint(x: 146, y: 48))
-        p.addLine(to: CGPoint(x: r.width - 22, y: 48))
-        p.addQuadCurve(to: CGPoint(x: r.width, y: 70), control: CGPoint(x: r.width, y: 48))
-        p.addLine(to: CGPoint(x: r.width, y: r.height - 22))
-        p.addQuadCurve(to: CGPoint(x: r.width - 22, y: r.height), control: CGPoint(x: r.width, y: r.height))
-        p.addLine(to: CGPoint(x: 22, y: r.height))
-        p.addQuadCurve(to: CGPoint(x: 0, y: r.height - 22), control: CGPoint(x: 0, y: r.height))
-        p.addLine(to: CGPoint(x: 0, y: 20))
-        p.addQuadCurve(to: CGPoint(x: 20, y: 0), control: .zero)
+        p.move(to: CGPoint(x: 14, y: 0))
+        p.addLine(to: CGPoint(x: 132, y: 0))
+        p.addQuadCurve(to: CGPoint(x: 146, y: 14), control: CGPoint(x: 146, y: 0))
+        p.addLine(to: CGPoint(x: 146, y: 40))
+        p.addQuadCurve(to: CGPoint(x: 154, y: 48), control: CGPoint(x: 146, y: 48))
+        p.addLine(to: CGPoint(x: r.width - 14, y: 48))
+        p.addQuadCurve(to: CGPoint(x: r.width, y: 62), control: CGPoint(x: r.width, y: 48))
+        p.addLine(to: CGPoint(x: r.width, y: r.height - 14))
+        p.addQuadCurve(to: CGPoint(x: r.width - 14, y: r.height), control: CGPoint(x: r.width, y: r.height))
+        p.addLine(to: CGPoint(x: 14, y: r.height))
+        p.addQuadCurve(to: CGPoint(x: 0, y: r.height - 14), control: CGPoint(x: 0, y: r.height))
+        p.addLine(to: CGPoint(x: 0, y: 14))
+        p.addQuadCurve(to: CGPoint(x: 14, y: 0), control: .zero)
         p.closeSubpath()
         return p
     }
