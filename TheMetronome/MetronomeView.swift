@@ -28,7 +28,7 @@ struct MetronomeView: View {
                 if mode == .metronome { instrumentFace }
                 else {
                     VStack(spacing: 0) {
-                        modeHeader.frame(height: 38).offset(y: -4)
+                        modeHeader.frame(height: 48)
                         if mode != .live { landingDisplay.frame(width: 365, height: 144).padding(.top, 4) }
                         Spacer().frame(height: 12)
                         if mode == .live {
@@ -47,12 +47,11 @@ struct MetronomeView: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
+                .overlay { if modesOpen { modeMenu.zIndex(10) } }
+                .animation(.easeInOut(duration: 0.24), value: modesOpen)
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
-            .overlay {
-                if modesOpen { modeMenu.zIndex(10) }
-            }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
@@ -85,7 +84,7 @@ struct MetronomeView: View {
             Button { modesOpen = false; settings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
             }.accessibilityLabel("Settings").accessibilityIdentifier("settings")
-        }.padding(.horizontal, 24).foregroundStyle(p.ink)
+        }.padding(.horizontal, 16).foregroundStyle(p.ink)
     }
     private var landingDisplay: some View {
         Group {
@@ -119,7 +118,7 @@ struct MetronomeView: View {
     }
     private var instrumentFace: some View {
         ZStack(alignment: .topLeading) {
-            modeHeader.frame(width: 414, height: 38).position(x: 207, y: 15)
+            modeHeader.frame(width: 414, height: 48).position(x: 207, y: 24)
 
             Button { present(.tempo) } label: {
                 HStack(alignment: .center, spacing: 28) {
