@@ -700,6 +700,10 @@ final class MetronomeModel: ObservableObject {
         previewTimer?.invalidate()
         do {
             try audio.start(playbackRhythm, resuming: resuming || needsManualResume, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; needsManualResume = false; lastSerial = 0; event = nil
+            if let song = currentSong {
+                UserDefaults.standard.set(song.id.uuidString, forKey: "lastPlayedLiveSongID")
+                UserDefaults.standard.set(activeSetlistID?.uuidString, forKey: "lastPlayedLiveSetlistID")
+            }
             updateScreenAwake()
             displayTimer = Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshBeat() }

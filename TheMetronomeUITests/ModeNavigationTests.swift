@@ -1,7 +1,7 @@
 import XCTest
 
 final class ModeNavigationTests: XCTestCase {
-    func testFullScreenChooserPreservesPlayback() {
+    func testModalChooserPreservesPlayback() {
         let app = XCUIApplication()
         app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
         app.launch()
@@ -10,15 +10,15 @@ final class ModeNavigationTests: XCTestCase {
         let tempoLabel = app.buttons["tempoDisplay"].label
         let transport = app.buttons["transport"].frame
         app.buttons["mode-menu"].tap()
-        XCTAssertFalse(app.buttons["tempoDisplay"].exists)
+        XCTAssertLessThan(app.buttons["mode-live"].frame.maxY - app.buttons["mode-metronome"].frame.minY, screen.height * 0.8)
         for name in ["metronome", "practice", "live"] {
             let frame = app.buttons["mode-\(name)"].frame
             XCTAssertTrue(screen.contains(frame))
         }
         XCTAssertTrue(app.buttons["mode-metronome"].isSelected)
-        proof(app, "Full-screen modes — Metronome selected")
-        // First tap outside consumes the gesture, including taps over playback.
-        app.buttons["mode-menu-close"].tap()
+        proof(app, "Modal modes — Metronome selected")
+        // The dimmed backdrop dismisses without activating controls behind it.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.1)).tap()
         XCTAssertTrue(app.buttons["tempoDisplay"].exists)
         XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
         XCTAssertEqual(app.buttons["transport"].frame, transport)
@@ -38,30 +38,45 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
         app.buttons["transport"].tap()
     }
-    func testRefinedModeJourneys() {
+    func testLiveTabsAndRecentPlayback() {
+        continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--many-setlists", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
         app.launch()
-        XCTAssertTrue(app.buttons["live-all-setlists"].waitForExistence(timeout: 8))
-        XCTAssertFalse(app.buttons["live-new-setlist"].exists)
-        XCTAssertFalse(app.buttons["live-tool-pedal"].exists)
-        proof(app, "Live two recessed lists")
-        let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-setlist-"))
-        let first = rows.firstMatch.identifier
-        rows.firstMatch.swipeUp()
-        XCTAssertNotEqual(rows.firstMatch.identifier, first)
-        let song = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch
-        song.tap()
-        XCTAssertTrue(app.buttons["performance-play"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.buttons["performance-next"].exists)
+        XCTAssertTrue(app.buttons["live-tab-setlists"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["live-tab-setlists"].isSelected)
+        XCTAssertFalse(app.buttons["live-last-played"].exists)
+        proof(app, "Live — setlists, no history")
+        app.buttons["live-tab-songs"].tap()
+        XCTAssertTrue(app.buttons["live-tab-songs"].isSelected)
+        proof(app, "Live — songs tab")
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
         app.buttons["close-performance"].tap()
+        XCTAssertFalse(app.buttons["live-last-played"].exists, "Opening alone must not count as played")
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
+        app.buttons["performance-play"].tap()
+        app.buttons["performance-play"].tap()
+        app.buttons["close-performance"].tap()
+        XCTAssertTrue(app.buttons["live-last-played"].waitForExistence(timeout: 3))
+        proof(app, "Live — last played")
+        app.buttons["live-last-played"].tap()
+        XCTAssertEqual(app.buttons["performance-play"].label, "Start metronome")
+        app.buttons["close-performance"].tap()
+        app.buttons["live-tab-setlists"].tap()
+        XCTAssertTrue(app.buttons["live-tab-setlists"].isSelected)
+    }
+    func testLiveEmptyTabs() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["live-tab-setlists"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["No setlists yet."].exists)
+        proof(app, "Live — first use setlists")
+        app.buttons["live-tab-songs"].tap()
+        XCTAssertTrue(app.staticTexts["No songs yet."].exists)
+        proof(app, "Live — first use songs")
         app.buttons["live-all-songs"].tap()
         XCTAssertTrue(app.buttons["library-new-song"].waitForExistence(timeout: 3))
-        app.buttons["close-panel"].tap()
-        app.buttons["mode-menu"].tap()
-        app.buttons["mode-practice"].tap()
-        XCTAssertFalse(app.buttons["practice-countIn"].exists)
-        proof(app, "Three focused practice tools")
     }
     func testRepeatedModeSwitchingPreservesTransport() {
         let app = XCUIApplication()
@@ -243,6 +258,7 @@ final class ModeNavigationTests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 5), id)
             button.tap()
         }
+        tap("live-tab-songs")
         tap("live-all-songs")
         proof(app, "Audit — song library browse")
         app.buttons["library-open-Gossip"].swipeLeft()
@@ -259,6 +275,7 @@ final class ModeNavigationTests: XCTestCase {
         tap("performance-play")
         tap("close-performance")
         tap("close-panel")
+        tap("live-tab-setlists")
         tap("live-all-setlists")
         tap("setlist-Saturday")
         tap("edit-setlist")

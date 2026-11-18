@@ -29,7 +29,7 @@ struct MetronomeView: View {
                 else {
                     VStack(spacing: 0) {
                         modeHeader.frame(height: 38).offset(y: -4)
-                        landingDisplay.frame(width: 365, height: 144).padding(.top, 4)
+                        if mode != .live { landingDisplay.frame(width: 365, height: 144).padding(.top, 4) }
                         Spacer().frame(height: 12)
                         if mode == .live {
                             LiveModeHome(model: model, open: present) { id, action in
@@ -75,7 +75,7 @@ struct MetronomeView: View {
     private var modeHeader: some View {
         HStack(spacing: 12) {
             Button { modesOpen.toggle() } label: {
-                ModeTriggerLabel(mode: mode, expanded: modesOpen).opacity(modesOpen ? 0 : 1)
+                ModeTriggerLabel(mode: mode, expanded: modesOpen)
             }.buttonStyle(.plain).accessibilityIdentifier("mode-menu")
                 .accessibilityLabel(mode.title)
                 .accessibilityValue(L10n.text(modesOpen ? "Collapse" : "Expand"))
@@ -106,7 +106,7 @@ struct MetronomeView: View {
                     }
                 }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.horizontal, 24)
             }
-        }.frame(width: 365, height: 144).insetPanel(p).foregroundStyle(p.ink).opacity(modesOpen ? 0 : 1)
+        }.frame(width: 365, height: 144).insetPanel(p).foregroundStyle(p.ink)
     }
     private var modeMenu: some View {
         ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
@@ -119,7 +119,6 @@ struct MetronomeView: View {
         ZStack(alignment: .topLeading) {
             modeHeader.frame(width: 414, height: 38).position(x: 207, y: 15)
 
-            if !modesOpen {
             Button { present(.tempo) } label: {
                 HStack(alignment: .center, spacing: 28) {
                     Text(String(model.bpm))
@@ -145,7 +144,6 @@ struct MetronomeView: View {
                 }.padding(.horizontal, 35).frame(width: 365, height: 144).insetPanel(p)
             }.buttonStyle(.plain).position(x: 207, y: 114)
                 .accessibilityLabel(L10n.format("Tempo, %d BPM. Tap to enter a value", model.bpm)).accessibilityIdentifier("tempoDisplay")
-            }
 
             if !model.soundEnabled && !modesOpen {
                 Button { model.soundEnabled = true } label: {
@@ -153,10 +151,8 @@ struct MetronomeView: View {
                 }.position(x: 310, y: 65).accessibilityLabel("Turn sound on").accessibilityIdentifier("home-muted")
             }
 
-            if !modesOpen {
             PedalDisplayStatus(pedal: model.pedal, p: p) { present(.pedal) }
                 .frame(width: 44, height: 44).position(x: 365, y: 65)
-            }
 
             SectionLabel(text: "01  PULSE", p: p).frame(width: 360).position(x: 207, y: 206)
             beatKeys.frame(width: 360, height: 86).position(x: 207, y: 269)

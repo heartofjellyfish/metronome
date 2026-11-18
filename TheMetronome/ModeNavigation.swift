@@ -75,42 +75,39 @@ struct ModeTriggerLabel: View {
     }
 }
 
-/// Full-screen chooser. Opening and dismissing are navigation only: audio keeps running.
+/// Compact modal; the underlying instrument remains visible and keeps playing.
 struct ModeChooser: View {
     let current: InstrumentMode
     let p: InstrumentPalette
     let close: () -> Void
     let select: (InstrumentMode) -> Void
     var body: some View {
-        GeometryReader { geometry in
-            let compact = geometry.size.height < 650
-            let margin: CGFloat = geometry.size.width < 360 ? 16 : 24
-            VStack(spacing: compact ? 22 : 32) {
+        ZStack {
+            Color.black.opacity(0.38).ignoresSafeArea()
+                .onTapGesture(perform: close)
+                .accessibilityHidden(true)
+            VStack(spacing: 18) {
                 HStack {
-                    Text(L10n.text("Modes")).font(.system(size: compact ? 32 : 40, weight: .bold)).accessibilityAddTraits(.isHeader)
+                    Text(L10n.text("Modes")).font(.system(size: 24, weight: .semibold))
+                        .accessibilityAddTraits(.isHeader)
                     Spacer()
                     Button(action: close) {
-                        Image(systemName: "xmark").font(.system(size: 23, weight: .regular)).frame(width: 48, height: 48)
+                        Image(systemName: "xmark").font(.system(size: 18)).frame(width: 44, height: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
                         .accessibilityLabel(L10n.text("Close")).accessibilityIdentifier("mode-menu-close")
-                }.padding(.horizontal, 8)
+                }
                 VStack(spacing: 0) {
                     ForEach(InstrumentMode.allCases) { mode in
-                        row(mode, compact: compact)
-                        if mode != .live {
-                            Rectangle().fill(p.light).frame(height: 1)
-                        }
+                        row(mode, compact: true).frame(height: 112)
+                        if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
                     }
-                }.clipShape(RoundedRectangle(cornerRadius: 23))
-                    .insetPanel(p, radius: 23)
-
-            }
-            .padding(.horizontal, margin)
-            .padding(.top, compact ? 20 : 52)
-            .padding(.bottom, compact ? 28 : 60)
-            .frame(maxWidth: 620).frame(maxWidth: .infinity, maxHeight: .infinity)
+                }.clipShape(RoundedRectangle(cornerRadius: 17)).insetPanel(p, radius: 17)
+            }.padding(20).frame(maxWidth: 390)
+                .background { InstrumentBody(p: p).clipShape(RoundedRectangle(cornerRadius: 26)) }
+                .overlay { RoundedRectangle(cornerRadius: 26).stroke(p.light.opacity(0.7), lineWidth: 1) }
+                .shadow(color: .black.opacity(0.25), radius: 24, y: 12)
+                .padding(18)
         }.foregroundStyle(p.ink)
-            .background { InstrumentBody(p: p).ignoresSafeArea() }
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isModal)
             .accessibilityAction(.escape, close)
@@ -121,19 +118,19 @@ struct ModeChooser: View {
         return Button { select(mode) } label: {
             HStack(alignment: .center, spacing: compact ? 12 : 16) {
                 ModeIllustration(mode: mode, ink: foreground)
-                    .frame(width: compact ? 60 : 72, height: compact ? 82 : 100)
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(mode.title).font(.system(size: compact ? 23 : 25, weight: .bold))
+                    .frame(width: compact ? 40 : 72, height: compact ? 58 : 100)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(mode.title).font(.system(size: compact ? 18 : 25, weight: .bold))
                         .lineLimit(1).minimumScaleFactor(0.8)
-                    Text(L10n.text(mode.summary)).font(.system(size: compact ? 14 : 16))
+                    Text(L10n.text(mode.summary)).font(.system(size: compact ? 12 : 16))
                         .foregroundStyle(foreground.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 VStack(spacing: 5) {
                     Image(systemName: "checkmark").font(.system(size: 22, weight: .semibold))
                     Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
                         .lineLimit(1).minimumScaleFactor(0.8)
-                }.frame(width: 48).opacity(selected ? 1 : 0).accessibilityHidden(true)
-            }.padding(.horizontal, compact ? 18 : 20)
+                }.frame(width: 40).opacity(selected ? 1 : 0).accessibilityHidden(true)
+            }.padding(.horizontal, compact ? 12 : 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .foregroundStyle(foreground)
                 .background {
