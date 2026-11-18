@@ -89,13 +89,12 @@ struct ModeChooser: View {
             let compact = geo.size.width < 390
             let rowHeight = min(CGFloat(140), max(120, (geo.size.height - 136) / 3))
             ZStack(alignment: .topLeading) {
-                Color.black.opacity(0.38).ignoresSafeArea().onTapGesture(perform: close).accessibilityHidden(true).transition(.opacity)
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: close) {
                         HStack(spacing: 12) {
                             Text(L10n.text("Modes")).technical(13, spacing: 2)
                             Image(systemName: "chevron.up").font(.system(size: 11, weight: .medium))
-                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).frame(width: 146, height: 48)
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).frame(width: 146, height: 48).contentShape(Rectangle())
                     }.buttonStyle(.plain).accessibilityIdentifier("mode-menu-close").accessibilityLabel(L10n.text("Close"))
                     VStack(spacing: 0) {
                         ForEach(InstrumentMode.allCases) { mode in
@@ -120,7 +119,6 @@ struct ModeChooser: View {
                     .compositingGroup()
                     .shadow(color: .black.opacity(0.24), radius: 2, y: 3)
                     .shadow(color: .black.opacity(0.18), radius: 10, y: 7)
-                    .transition(.modifier(active: ModeUnfold(progress: 0), identity: ModeUnfold(progress: 1)))
                     .padding(.horizontal, 16)
                     .padding(.top, 0)
             }
@@ -218,7 +216,7 @@ struct ModeLanding: View {
 }
 
 /// Reveal the panel from its stationary title cap; never scale text or key surfaces.
-private struct ModeUnfold: AnimatableModifier {
+struct ModeUnfold: AnimatableModifier {
     var progress: CGFloat
     var animatableData: CGFloat { get { progress } set { progress = newValue } }
     func body(content: Content) -> some View {

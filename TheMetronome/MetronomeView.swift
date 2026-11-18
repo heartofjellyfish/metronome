@@ -47,11 +47,27 @@ struct MetronomeView: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
-                .overlay { if modesOpen { modeMenu.zIndex(10) } }
-                .animation(.easeInOut(duration: 0.24), value: modesOpen)
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+            .overlay {
+                GeometryReader { geometry in
+                    let scale = min(geometry.size.width / 414, geometry.size.height / 774)
+                    ZStack(alignment: .top) {
+                        if modesOpen {
+                            Color.black.opacity(0.38).ignoresSafeArea()
+                                .onTapGesture { modesOpen = false }
+                                .accessibilityIdentifier("mode-backdrop")
+                                .transition(.opacity).zIndex(0)
+                            modeMenu.frame(width: 414, height: 774, alignment: .top)
+                                .scaleEffect(scale, anchor: .top)
+                                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+                                .transition(.modifier(active: ModeUnfold(progress: 0), identity: ModeUnfold(progress: 1))).zIndex(1)
+                        }
+                    }.allowsHitTesting(modesOpen)
+                        .animation(.easeInOut(duration: 0.24), value: modesOpen)
+                }
+            }
             .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }

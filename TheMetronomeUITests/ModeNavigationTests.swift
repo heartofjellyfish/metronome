@@ -38,6 +38,27 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
         app.buttons["transport"].tap()
     }
+    func testModeAnchorAndRepeatedDismissal() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--organization-ui-test", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["mode-menu"].waitForExistence(timeout: 8))
+        for mode in ["live", "practice", "metronome"] {
+            let anchor = app.buttons["mode-menu"].frame
+            for _ in 0..<3 {
+                app.buttons["mode-menu"].tap()
+                let expanded = app.buttons["mode-menu-close"].frame
+                XCTAssertEqual(anchor.minX, expanded.minX, accuracy: 1)
+                XCTAssertEqual(anchor.minY, expanded.minY, accuracy: 1)
+                XCTAssertEqual(anchor.width, expanded.width, accuracy: 1)
+                XCTAssertEqual(anchor.height, expanded.height, accuracy: 1)
+                app.buttons["mode-menu-close"].tap()
+            }
+            app.buttons["mode-menu"].tap()
+            proof(app, "Mode anchor — " + mode)
+            app.buttons["mode-" + mode].tap()
+        }
+    }
     func testLiveTabsAndRecentPlayback() {
         continueAfterFailure = false
         let app = XCUIApplication()
