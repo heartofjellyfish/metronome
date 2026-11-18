@@ -93,7 +93,7 @@ struct MetronomeView: View {
                         .id(modeTransitionID)
                         .onAppear {
                             let token = modeTransitionID
-                            withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.32), completionCriteria: .removed) {
+                            withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.48), completionCriteria: .removed) {
                                 curtainOpen = true
                             } completion: {
                                 guard modeTransitionID == token else { return }
