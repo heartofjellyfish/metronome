@@ -82,47 +82,47 @@ struct ModeChooser: View {
     let close: () -> Void
     let select: (InstrumentMode) -> Void
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.38).ignoresSafeArea()
-                .onTapGesture(perform: close)
-                .accessibilityHidden(true)
-            VStack(spacing: 18) {
-                HStack {
-                    Text(L10n.text("Modes")).font(.system(size: 24, weight: .semibold))
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer()
+        GeometryReader { geo in
+            let compact = geo.size.width < 390
+            let rowHeight = min(CGFloat(148), max(120, (geo.size.height - 138) / 3))
+            ZStack(alignment: .topLeading) {
+                Color.black.opacity(0.38).ignoresSafeArea().onTapGesture(perform: close).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 0) {
                     Button(action: close) {
-                        Image(systemName: "xmark").font(.system(size: 18)).frame(width: 44, height: 44)
-                    }.buttonStyle(HardwareButtonStyle(p: p, radius: 11))
-                        .accessibilityLabel(L10n.text("Close")).accessibilityIdentifier("mode-menu-close")
-                }
-                VStack(spacing: 0) {
-                    ForEach(InstrumentMode.allCases) { mode in
-                        row(mode, compact: true).frame(height: 112)
-                        if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
-                    }
-                }.clipShape(RoundedRectangle(cornerRadius: 17)).insetPanel(p, radius: 17)
-            }.padding(20).frame(maxWidth: 390)
-                .background { InstrumentBody(p: p).clipShape(RoundedRectangle(cornerRadius: 26)) }
-                .overlay { RoundedRectangle(cornerRadius: 26).stroke(p.light.opacity(0.7), lineWidth: 1) }
-                .shadow(color: .black.opacity(0.25), radius: 24, y: 12)
-                .padding(18)
+                        HStack(spacing: 12) {
+                            Text(L10n.text("Modes")).technical(13, spacing: 2)
+                            Image(systemName: "chevron.up").font(.system(size: 11, weight: .medium))
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).frame(width: 150, height: 52)
+                    }.buttonStyle(.plain).accessibilityIdentifier("mode-menu-close").accessibilityLabel(L10n.text("Close"))
+                    VStack(spacing: 0) {
+                        ForEach(InstrumentMode.allCases) { mode in
+                            row(mode, compact: compact).frame(height: rowHeight)
+                            if mode != .live { Rectangle().fill(p.light).frame(height: 1) }
+                        }
+                    }.clipShape(RoundedRectangle(cornerRadius: 18)).insetPanel(p, radius: 18)
+                        .padding(18).padding(.top, 4)
+                }.frame(maxWidth: 450)
+                    .background { InstrumentBody(p: p).clipShape(ModeMenuShape()) }
+                    .overlay { ModeMenuShape().stroke(p.light.opacity(0.65), lineWidth: 1) }
+                    .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 0)
+            }
         }.foregroundStyle(p.ink)
-            .accessibilityElement(children: .contain)
-            .accessibilityAddTraits(.isModal)
+            .accessibilityElement(children: .contain).accessibilityAddTraits(.isModal)
             .accessibilityAction(.escape, close)
     }
     private func row(_ mode: InstrumentMode, compact: Bool) -> some View {
         let selected = mode == current
         let foreground = selected ? Color(hex: 0xF2EDDF) : p.ink
         return Button { select(mode) } label: {
-            HStack(alignment: .center, spacing: compact ? 12 : 16) {
+            HStack(alignment: .center, spacing: compact ? 13 : 14) {
                 ModeIllustration(mode: mode, ink: foreground)
-                    .frame(width: compact ? 40 : 72, height: compact ? 58 : 100)
+                    .frame(width: compact ? 44 : 52, height: compact ? 66 : 76)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(mode.title).font(.system(size: compact ? 18 : 25, weight: .bold))
+                    Text(mode.title).font(.system(size: compact ? 20 : 22, weight: .bold))
                         .lineLimit(1).minimumScaleFactor(0.8)
-                    Text(L10n.text(mode.summary)).font(.system(size: compact ? 12 : 16))
+                    Text(L10n.text(mode.summary)).font(.system(size: compact ? 13 : 14))
                         .foregroundStyle(foreground.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 VStack(spacing: 5) {
@@ -130,7 +130,7 @@ struct ModeChooser: View {
                     Text(L10n.text("CURRENT")).technical(8, spacing: 1.2)
                         .lineLimit(1).minimumScaleFactor(0.8)
                 }.frame(width: 40).opacity(selected ? 1 : 0).accessibilityHidden(true)
-            }.padding(.horizontal, compact ? 12 : 20)
+            }.padding(.horizontal, compact ? 14 : 18)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .foregroundStyle(foreground)
                 .background {
@@ -146,6 +146,27 @@ struct ModeChooser: View {
     }
 }
 
+private struct ModeMenuShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: 20, y: 0))
+        p.addLine(to: CGPoint(x: 138, y: 0))
+        p.addQuadCurve(to: CGPoint(x: 158, y: 20), control: CGPoint(x: 158, y: 0))
+        p.addLine(to: CGPoint(x: 158, y: 34))
+        p.addQuadCurve(to: CGPoint(x: 174, y: 50), control: CGPoint(x: 158, y: 50))
+        p.addLine(to: CGPoint(x: r.width - 22, y: 50))
+        p.addQuadCurve(to: CGPoint(x: r.width, y: 72), control: CGPoint(x: r.width, y: 50))
+        p.addLine(to: CGPoint(x: r.width, y: r.height - 22))
+        p.addQuadCurve(to: CGPoint(x: r.width - 22, y: r.height), control: CGPoint(x: r.width, y: r.height))
+        p.addLine(to: CGPoint(x: 22, y: r.height))
+        p.addQuadCurve(to: CGPoint(x: 0, y: r.height - 22), control: CGPoint(x: 0, y: r.height))
+        p.addLine(to: CGPoint(x: 0, y: 20))
+        p.addQuadCurve(to: CGPoint(x: 20, y: 0), control: .zero)
+        p.closeSubpath()
+        return p
+    }
+}
+
 private struct ModeRowStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.overlay(Color.black.opacity(configuration.isPressed ? 0.07 : 0)).animation(.easeOut(duration: 0.08), value: configuration.isPressed)
@@ -155,7 +176,7 @@ private struct ModeRowStyle: ButtonStyle {
 private extension InstrumentMode {
     var summary: String {
         switch self {
-        case .metronome: "A classic metronome. Set a tempo and play."
+        case .metronome: "For a quick start. A classic metronome."
         case .practice: "For focused practice. Tempo ramps, silent bars & polyrhythms."
         case .live: "For rehearsals and shows. Setlists, songs, notes & visual beats."
         }

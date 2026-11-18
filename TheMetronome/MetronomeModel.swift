@@ -418,6 +418,11 @@ final class MetronomeModel: ObservableObject {
         activeSetlistID = nil
         loadSong(song)
     }
+    func saveSetlistOrder(_ ids: [UUID]) {
+        var seen = Set<UUID>()
+        let ordered = ids.filter { seen.insert($0).inserted }.compactMap { id in setlists.first { $0.id == id } }
+        setlists = ordered + setlists.filter { !seen.contains($0.id) }
+    }
     func moveSetlist(_ id: UUID, to destination: Int) {
         guard let index = setlists.firstIndex(where: { $0.id == id }),
               setlists.indices.contains(destination), index != destination else { return }

@@ -18,7 +18,7 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["mode-metronome"].isSelected)
         proof(app, "Modal modes — Metronome selected")
         // The dimmed backdrop dismisses without activating controls behind it.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.1)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.94)).tap()
         XCTAssertTrue(app.buttons["tempoDisplay"].exists)
         XCTAssertEqual(app.buttons["tempoDisplay"].label, tempoLabel)
         XCTAssertEqual(app.buttons["transport"].frame, transport)
@@ -52,7 +52,7 @@ final class ModeNavigationTests: XCTestCase {
         proof(app, "Live — songs tab")
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
         app.buttons["close-performance"].tap()
-        XCTAssertFalse(app.buttons["live-last-played"].exists, "Opening alone must not count as played")
+        XCTAssertTrue(app.staticTexts["Recently opened"].exists, "Opening alone must not count as played")
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch.tap()
         app.buttons["performance-play"].tap()
         app.buttons["performance-play"].tap()
@@ -63,6 +63,36 @@ final class ModeNavigationTests: XCTestCase {
         XCTAssertEqual(app.buttons["performance-play"].label, "Start metronome")
         app.buttons["close-performance"].tap()
         app.buttons["live-tab-setlists"].tap()
+        XCTAssertTrue(app.buttons["live-tab-setlists"].isSelected)
+    }
+    func testLiveManagementConsistency() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["--reference", "--light", "--redesign-ui-test", "--many-setlists", "--mode-live", "-AppleLanguages", "(en)"]
+        app.launch()
+        func tap(_ id: String) { XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 5), id); app.buttons[id].tap() }
+        tap("live-tab-songs")
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "live-song-")).firstMatch
+        row.swipeLeft()
+        tap("swipe-library-edit-Gossip")
+        XCTAssertTrue(app.buttons["cancel-song"].waitForExistence(timeout: 3))
+        tap("cancel-song")
+        row.swipeLeft()
+        tap("swipe-library-delete-Gossip")
+        XCTAssertTrue(app.buttons["confirm-delete-library-song"].waitForExistence(timeout: 3))
+        tap("Cancel")
+        tap("live-tab-setlists"); tap("live-all-setlists")
+        XCTAssertTrue(app.textFields["setlist-search"].exists)
+        tap("setlists-start-editing")
+        proof(app, "Manage setlists — edit controls")
+        XCTAssertTrue(app.buttons["edit-setlist-Saturday"].exists)
+        XCTAssertTrue(app.buttons["delete-setlist-Saturday"].exists)
+        tap("cancel-setlists")
+        XCTAssertFalse(app.buttons["delete-setlist-Saturday"].exists)
+        tap("close-panel")
+        app.buttons["live-tab-setlists"].swipeLeft()
+        XCTAssertTrue(app.buttons["live-tab-songs"].isSelected)
+        app.buttons["live-tab-songs"].swipeRight()
         XCTAssertTrue(app.buttons["live-tab-setlists"].isSelected)
     }
     func testLiveEmptyTabs() {

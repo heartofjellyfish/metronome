@@ -17,7 +17,7 @@ struct MetronomeView: View {
     @State private var modesOpen = false
     @State private var panel: InstrumentPanelKind?
     @State private var liveListRoute: LiveListRoute?
-    private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var action: LiveSetlistAction }
+    private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var songID: UUID? = nil; var action: LiveSetlistAction }
     @State private var panelSession = UUID()
     private func present(_ kind: InstrumentPanelKind) { modesOpen = false; panelSession = UUID(); panel = kind }
     var p: InstrumentPalette { InstrumentPalette(dark: model.dark) }
@@ -32,7 +32,9 @@ struct MetronomeView: View {
                         if mode != .live { landingDisplay.frame(width: 365, height: 144).padding(.top, 4) }
                         Spacer().frame(height: 12)
                         if mode == .live {
-                            LiveModeHome(model: model, open: present) { id, action in
+                            LiveModeHome(model: model, open: present, openSong: { id, action in
+                                liveListRoute = LiveListRoute(setlistID: nil, songID: id, action: action)
+                            }) { id, action in
                                 modesOpen = false
                                 liveListRoute = LiveListRoute(setlistID: id, action: action)
                             }
@@ -57,7 +59,7 @@ struct MetronomeView: View {
             }
             .overlay {
                 if let route = liveListRoute {
-                    SetlistPanel(model: model, p: p, initialSetlistID: route.setlistID, startCreating: route.action == .create, initialAction: route.action) { liveListRoute = nil }.id(route.id)
+                    SetlistPanel(model: model, p: p, initialSetlistID: route.setlistID, startInSongLibrary: route.songID != nil, initialSongID: route.songID, startCreating: route.action == .create, initialAction: route.action) { liveListRoute = nil }.id(route.id)
                 }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }

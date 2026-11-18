@@ -6,9 +6,12 @@ struct SetlistPanel: View {
     let p: InstrumentPalette
     let close: () -> Void
     let startInSongLibrary: Bool
+    let directSongAction: Bool
     @State private var browsingSetlistID: UUID?
     @State private var editing = false
     @State private var editingLibrary = false
+    @State private var managingSetlists = false
+    @State private var setlistOrder: [UUID] = []
     @State private var libraryOrder: [UUID] = []
     @State private var creatingList = false
     @State private var listName = ""
@@ -35,9 +38,9 @@ struct SetlistPanel: View {
     @State private var performing = false
     @FocusState private var namingList: Bool
 
-    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, startCreating: Bool = false, initialAction: LiveSetlistAction = .browse, close: @escaping () -> Void) {
-        self.model = model; self.p = p; self.close = close; self.startInSongLibrary = startInSongLibrary
-        _editing = State(initialValue: startCreating || initialAction == .edit)
+    init(model: MetronomeModel, p: InstrumentPalette, initialSetlistID: UUID? = nil, startInSongLibrary: Bool = false, initialSongID: UUID? = nil, startCreating: Bool = false, initialAction: LiveSetlistAction = .browse, close: @escaping () -> Void) {
+        self.model = model; self.p = p; self.close = close; self.startInSongLibrary = startInSongLibrary; self.directSongAction = initialSongID != nil
+        _editing = State(initialValue: startCreating || (!startInSongLibrary && initialAction == .edit))
         _creatingList = State(initialValue: startCreating)
         if let list = model.setlists.first(where: { $0.id == initialSetlistID }) {
             if initialAction == .edit {
@@ -45,6 +48,13 @@ struct SetlistPanel: View {
                 _draftSongIDs = State(initialValue: list.songs.map(\.id))
             }
             if initialAction == .delete { _deletingList = State(initialValue: list) }
+        }
+        if let value = model.songLibrary.first(where: { $0.id == initialSongID }) {
+            if initialAction == .edit { _song = State(initialValue: value) }
+            if initialAction == .delete {
+                _songToDelete = State(initialValue: value)
+                _deletingSong = State(initialValue: true)
+            }
         }
         _browsingSetlistID = State(initialValue: model.setlists.first { $0.id == initialSetlistID }?.id)
     }
@@ -182,7 +192,10 @@ struct SetlistPanel: View {
             }.foregroundStyle(p.ink)
         }
         .onAppear { useCounts = UserDefaults.standard.dictionary(forKey: "performedSetlists") as? [String: Int] ?? [:] }
-        .onChange(of: song?.id) { _, _ in membershipChanges = [:] }
+        .onChange(of: song?.id) { old, new in
+            membershipChanges = [:]
+            if directSongAction && old != nil && new == nil { close() }
+        }
         .overlay { if performing { PerformanceView(model: model, fromSongLibrary: startInSongLibrary, back: { performing = false }) } }
         .sheet(item: $sharing) { value in
             targets(value)
@@ -196,13 +209,14 @@ struct SetlistPanel: View {
                     detail: L10n.text(affected.isEmpty ? "Delete this song from your library?" : "This song will be removed from your library and these setlists."),
                     affectedSetlists: affected,
                     action: "Delete song", identifier: "confirm-delete-library-song",
-                    cancel: { deletingSong = false; songToDelete = nil }) {
+                    cancel: { deletingSong = false; songToDelete = nil; if directSongAction { close() } }) {
                         deletingSong = false
                         songToDelete = nil
                         model.deleteLibrarySong(song.id)
                         if model.songLibrary.isEmpty { editingLibrary = false }
                         draftSongIDs.removeAll { $0 == song.id }
                         self.song = nil
+                        if directSongAction { close() }
                     }
             } else if let value = removingSong, let list = browsedList {
                 deleteConfirmation(name: value.name, detail: L10n.text("Songs stay in your library."),
@@ -285,7 +299,19 @@ struct SetlistPanel: View {
     }
     private var header: some View {
         HStack(spacing: 10) {
-            if editingListRoot || choosingSong || editingLibrary {
+            if atRoot && managingSetlists {
+                Button { managingSetlists = false; setlistOrder = [] } label: {
+                    Label("Cancel", systemImage: "xmark").padding(.horizontal, 10).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("cancel-setlists")
+                Spacer(minLength: 4)
+                Label(L10n.text("Setlists"), systemImage: "folder").font(.system(size: 18, weight: .semibold))
+                Spacer(minLength: 4)
+                Button {
+                    model.saveSetlistOrder(setlistOrder); managingSetlists = false; setlistOrder = []
+                } label: {
+                    Label("Save", systemImage: "checkmark").padding(.horizontal, 10).frame(minHeight: 44)
+                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: true)).accessibilityIdentifier("save-setlists")
+            } else if editingListRoot || choosingSong || editingLibrary {
                 draftHeader
             } else {
                 if browsingDetail {
@@ -293,7 +319,11 @@ struct SetlistPanel: View {
                         Label("All setlists", systemImage: "chevron.left").font(.system(size: 15)).padding(.horizontal, 12).frame(minHeight: 44)
                     }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("choose-setlist")
                 } else {
-                    Text(title).font(.system(size: 22, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 10) {
+                        if startInSongLibrary { BeamedNotesIcon().frame(width: 23, height: 24) }
+                        else { Image(systemName: "folder").font(.system(size: 22)) }
+                        Text(title).font(.system(size: 22, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 Spacer(minLength: 0)
                 // Nested drafts return via Back/Cancel, never bypass the setlist's Save/Cancel.
@@ -440,50 +470,58 @@ struct SetlistPanel: View {
         browsingSetlistID = list.id
     }
     private var setlistBrowser: some View {
-        GeometryReader { space in
-            let gap: CGFloat = 12
-            let footerHeight: CGFloat = 44
-            let available = max(0, space.size.height - 8 - 16 - footerHeight - gap)
-            let contentHeight = shelfHeight > 0 ? shelfHeight : CGFloat(model.setlists.count) * 68 + 16
-            let showsSearch = !model.setlists.isEmpty && (contentHeight > available || searchingLists || !listQuery.isEmpty)
-            VStack(alignment: .trailing, spacing: 0) {
-                if showsSearch {
-                    catalogSearch(library: false).padding(.bottom, 8)
+        VStack(alignment: .trailing, spacing: 12) {
+            catalogSearch(library: false)
+            listLibrary.frame(maxHeight: .infinity)
+            HStack {
+                if !managingSetlists && !model.setlists.isEmpty {
+                    Button {
+                        dismissTextInput(); setlistOrder = model.setlists.map(\.id); managingSetlists = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil").padding(.horizontal, 12).frame(minWidth: 88, minHeight: 44)
+                    }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("setlists-start-editing")
+                } else {
+                    Text(L10n.format(model.setlists.count == 1 ? "%d setlist" : "%d setlists", model.setlists.count))
+                        .font(.subheadline).foregroundStyle(p.muted)
                 }
-                if !model.setlists.isEmpty {
-                    listLibrary
-                        .frame(maxHeight: showsSearch ? .infinity : contentHeight)
-                        .padding(.bottom, gap)
-                }
+                Spacer(minLength: 12)
                 Button { beginEdit(new: true) } label: {
-                    Label("New setlist", systemImage: "plus")
-                        .padding(.horizontal, 14).frame(minWidth: 146, minHeight: footerHeight)
+                    Label("New setlist", systemImage: "plus").padding(.horizontal, 14).frame(minWidth: 146, minHeight: 44)
                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("new-setlist")
-                    .fixedSize(horizontal: false, vertical: true)
-            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
-        }
+            }
+        }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
     }
     private var listLibrary: some View {
         let query = listQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        let lists = model.setlists.filter { query.isEmpty || $0.name.localizedStandardContains(query) }
+        let ordered = managingSetlists ? setlistOrder.compactMap { id in model.setlists.first { $0.id == id } } + model.setlists.filter { !setlistOrder.contains($0.id) } : model.setlists
+        let lists = ordered.filter { query.isEmpty || $0.name.localizedStandardContains(query) }
         let showFrequent = searchingLists && query.isEmpty && model.setlists.count >= 20
-        let move: ((UUID, Int) -> Void)? = query.isEmpty ? { id, index in model.moveSetlist(id, to: index) } : nil
-        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move, swipeActions: { list in
+        let move: ((UUID, Int) -> Void)? = managingSetlists && query.isEmpty ? { id, index in
+            var ids = ordered.map(\.id)
+            guard let old = ids.firstIndex(of: id), ids.indices.contains(index) else { return }
+            ids.remove(at: old); ids.insert(id, at: index); setlistOrder = ids
+        } : nil
+        return CatalogList(items: lists, p: p, bookmarks: bookmarks, page: "setlists", compactMargins: true, move: move, swipeActions: managingSetlists ? nil : { list in
             setlistActions(list, edit: { openList(list); beginEdit(new: false) }, delete: { deletingList = list })
         }, onContentHeight: { if query.isEmpty && !searchingLists && abs(shelfHeight - $0) > 0.5 { shelfHeight = $0 } }, row: { _, list in
             HStack(spacing: 6) {
-                if query.isEmpty { grip("drag-setlist-\(list.name)") }
+                if managingSetlists && query.isEmpty { grip("drag-setlist-\(list.name)") }
                 Button { openList(list) } label: {
                     HStack(spacing: 12) {
+                        Image(systemName: "folder").foregroundStyle(p.muted)
                         VStack(alignment: .leading, spacing: 6) {
                             Text(list.name).font(.headline).multilineTextAlignment(.leading)
                             Text(songCount(list.songs.count)).font(.subheadline).foregroundStyle(p.muted)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted)
+                        if !managingSetlists { Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted) }
                     }.frame(maxWidth: .infinity, minHeight: 58).contentShape(Rectangle())
                 }.buttonStyle(InsetRowButtonStyle(p: p)).accessibilityIdentifier("setlist-\(list.name)")
+                if managingSetlists {
+                    ForEach(setlistActions(list, edit: { openList(list); beginEdit(new: false) }, delete: { deletingList = list })) { action in
+                        CatalogRowActionButton(action: action, p: p)
+                    }
+                }
             }.padding(.horizontal, 12).padding(.vertical, 5)
         }, above: {
             if showFrequent {
@@ -500,7 +538,7 @@ struct SetlistPanel: View {
                     }
                 }
             }
-            if lists.isEmpty && !query.isEmpty { Text("No matches.").foregroundStyle(p.muted) }
+            if lists.isEmpty { Text(L10n.text(query.isEmpty ? "No setlists yet." : "No matches.")).foregroundStyle(p.muted) }
         }, below: { EmptyView() }).screen()
     }
     private func songCount(_ count: Int) -> String { L10n.format(count == 1 ? "%d song" : "%d songs", count) }
@@ -633,15 +671,11 @@ struct SetlistPanel: View {
     }
     /// Browse swipes and edit-mode keys execute the very same action definitions.
     private func libraryActions(_ value: SavedPreset) -> [CatalogRowAction] {
-        [
-            CatalogRowAction(id: "library-edit-" + value.name, title: "Edit", icon: "pencil") {
-                bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value
-            },
-            CatalogRowAction(id: "library-delete-" + value.name, title: "Delete", icon: "trash", destructive: true) {
-                songToDelete = value; deletingSong = true
-            }
-        ]
+        songLibraryActions(value, edit: {
+            bookmarks.prefer(value.id, on: "library"); dismissTextInput(); song = value
+        }, delete: { songToDelete = value; deletingSong = true })
     }
+
     private var managedLibrary: some View {
         // Build memberships once per render, not once per song and search predicate.
         var membership: [UUID: [String]] = [:]
