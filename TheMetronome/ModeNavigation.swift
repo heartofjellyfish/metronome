@@ -227,3 +227,18 @@ struct ModeUnfold: AnimatableModifier {
         }
     }
 }
+
+/// Two rigid charcoal leaves reveal the new instrument from the center outwards.
+struct ModeCurtain: View {
+    let open: Bool
+    var body: some View {
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                Rectangle().fill(LinearGradient(colors: [Color(white: 0.12), Color(white: 0.18)], startPoint: .leading, endPoint: .trailing))
+                    .offset(x: open ? -geometry.size.width / 2 : 0)
+                Rectangle().fill(LinearGradient(colors: [Color(white: 0.18), Color(white: 0.12)], startPoint: .leading, endPoint: .trailing))
+                    .offset(x: open ? geometry.size.width / 2 : 0)
+            }
+        }.clipped()
+    }
+}

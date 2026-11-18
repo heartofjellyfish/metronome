@@ -16,6 +16,10 @@ struct MetronomeView: View {
     @State private var mode: InstrumentMode = .metronome
     @State private var modesOpen = false
     @State private var selectingMode = false
+    @State private var curtainVisible = false
+    @State private var curtainOpacity = 0.0
+    @State private var curtainOpen = false
+    @State private var modeTransitionID = UUID()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var panel: InstrumentPanelKind?
     @State private var liveListRoute: LiveListRoute?
@@ -46,8 +50,8 @@ struct MetronomeView: View {
                         }
                     }
                 }
-              }.id(mode).transition(.opacity)
-            }.animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: mode)
+              }
+            }
                 .accessibilityElement(children: .contain)
                 .accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil)
                 .frame(width: 414, height: 774, alignment: .top)
@@ -82,6 +86,22 @@ struct MetronomeView: View {
                 }
             }
             .onChange(of: model.error) { _, value in if value != nil && !settings { present(.audio) } }
+            .overlay {
+                if curtainVisible {
+                    ModeCurtain(open: curtainOpen).opacity(curtainOpacity)
+                        .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
+                        .id(modeTransitionID)
+                        .onAppear {
+                            let token = modeTransitionID
+                            withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.32), completionCriteria: .removed) {
+                                curtainOpen = true
+                            } completion: {
+                                guard modeTransitionID == token else { return }
+                                curtainVisible = false
+                            }
+                        }
+                }
+            }
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .onAppear {
                 #if DEBUG
@@ -132,11 +152,29 @@ struct MetronomeView: View {
     private var modeMenu: some View {
         ModeChooser(current: mode, p: p, close: { modesOpen = false }) { choice in
             model.endSoundPreview()
-            // Selection dissolves directly into the destination, never folds away.
-            selectingMode = true
-            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.12)) {
-                mode = choice
-                modesOpen = false
+            let token = UUID()
+            modeTransitionID = token
+            let enter = {
+                var transaction = Transaction(animation: nil)
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    selectingMode = true
+                    mode = choice
+                    modesOpen = false
+                }
+            }
+            guard !reduceMotion, choice != mode else {
+                curtainVisible = false
+                enter()
+                return
+            }
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                curtainOpen = false
+                curtainOpacity = 1
+                curtainVisible = true
+                enter()
             }
         }
     }
