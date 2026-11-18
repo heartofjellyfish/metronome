@@ -19,6 +19,7 @@ struct MetronomeView: View {
     @State private var curtainVisible = false
     @State private var curtainOpacity = 0.0
     @State private var curtainOpen = false
+    @State private var modeRevealBlur: CGFloat = 0
     @State private var modeTransitionID = UUID()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var panel: InstrumentPanelKind?
@@ -57,6 +58,7 @@ struct MetronomeView: View {
                 .frame(width: 414, height: 774, alignment: .top)
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+                .blur(radius: modeRevealBlur)
         }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
             .overlay {
                 GeometryReader { geometry in
@@ -93,6 +95,10 @@ struct MetronomeView: View {
                         .id(modeTransitionID)
                         .onAppear {
                             let token = modeTransitionID
+                            // Focus resolves more gradually than the opening leaves.
+                            withAnimation(.easeInOut(duration: 0.80)) {
+                                modeRevealBlur = 0
+                            }
                             withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.80), completionCriteria: .removed) {
                                 curtainOpen = true
                             } completion: {
@@ -165,6 +171,7 @@ struct MetronomeView: View {
             }
             guard !reduceMotion, choice != mode else {
                 curtainVisible = false
+                modeRevealBlur = 0
                 enter()
                 return
             }
@@ -174,6 +181,7 @@ struct MetronomeView: View {
                 curtainOpen = false
                 curtainOpacity = 1
                 curtainVisible = true
+                modeRevealBlur = 8
                 enter()
             }
         }
