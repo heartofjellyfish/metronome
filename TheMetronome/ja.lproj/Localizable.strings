@@ -358,9 +358,7 @@
 "This key is assigned to %@. Move it?" = "このキーは「%@」に割り当て済みです。変更しますか？";
 "Move" = "変更";
 
-/* Performance and shared songs */
-"Perform" = "演奏";
-"Song library" = "曲ライブラリ";
+/* Performance and shared songs */"Song library" = "曲ライブラリ";
 "Changes apply in every setlist." = "変更はすべてのセットリストに反映されます。";
 "Delete this setlist? Songs stay in your library." = "セットリストを削除しますか？曲はライブラリに残ります。";
 "The song stays in your library." = "曲はライブラリに残ります。";
@@ -536,8 +534,8 @@
 
 "More" = "その他";
 
-"Tempo, meter & subdivisions" = "テンポ・拍子・細分";
+"A classic metronome. Set a tempo and play." = "定番のメトロノーム。テンポを決めて演奏。";
 
-"Tempo ramps, silent bars & polyrhythm" = "テンポアップ・無音小節・ポリリズム";
+"For focused practice. Tempo ramps, silent bars & polyrhythms." = "集中練習に。テンポアップ・無音小節・ポリリズム。";
 
-"Songs, setlists & visual beats" = "曲・セットリスト・拍の表示";
+"For rehearsals and shows. Setlists, songs, notes & visual beats." = "リハーサルや本番に。セットリスト・曲・メモ・拍の表示。";

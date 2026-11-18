@@ -358,9 +358,7 @@
 "This key is assigned to %@. Move it?" = "This key is assigned to %@. Move it?";
 "Move" = "Move";
 
-/* Performance and shared songs */
-"Perform" = "Perform";
-"Song library" = "Song library";
+/* Performance and shared songs */"Song library" = "Song library";
 "Changes apply in every setlist." = "Changes apply in every setlist.";
 "Delete this setlist? Songs stay in your library." = "Delete this setlist? Songs stay in your library.";
 "The song stays in your library." = "The song stays in your library.";
@@ -536,8 +534,8 @@
 
 "More" = "More";
 
-"Tempo, meter & subdivisions" = "Tempo, meter & subdivisions";
+"A classic metronome. Set a tempo and play." = "A classic metronome. Set a tempo and play.";
 
-"Tempo ramps, silent bars & polyrhythm" = "Tempo ramps, silent bars & polyrhythm";
+"For focused practice. Tempo ramps, silent bars & polyrhythms." = "For focused practice. Tempo ramps, silent bars & polyrhythms.";
 
-"Songs, setlists & visual beats" = "Songs, setlists & visual beats";
+"For rehearsals and shows. Setlists, songs, notes & visual beats." = "For rehearsals and shows. Setlists, songs, notes & visual beats.";

@@ -358,9 +358,7 @@
 "This key is assigned to %@. Move it?" = "이 키는 %@에 할당되어 있어요. 옮길까요?";
 "Move" = "옮기기";
 
-/* Performance and shared songs */
-"Perform" = "공연";
-"Song library" = "곡 보관함";
+/* Performance and shared songs */"Song library" = "곡 보관함";
 "Changes apply in every setlist." = "변경 사항은 모든 세트리스트에 반영됩니다.";
 "Delete this setlist? Songs stay in your library." = "세트리스트를 삭제할까요? 곡은 보관함에 남습니다.";
 "The song stays in your library." = "곡은 보관함에 남습니다.";
@@ -536,8 +534,8 @@
 
 "More" = "더 보기";
 
-"Tempo, meter & subdivisions" = "템포, 박자표, 세분화";
+"A classic metronome. Set a tempo and play." = "기본에 충실한 메트로놈. 템포를 정하고 연주하세요.";
 
-"Tempo ramps, silent bars & polyrhythm" = "템포 올리기, 무음 마디, 폴리리듬";
+"For focused practice. Tempo ramps, silent bars & polyrhythms." = "집중 연습용. 템포 올리기, 무음 마디, 폴리리듬.";
 
-"Songs, setlists & visual beats" = "곡, 세트리스트, 시각적 박자";
+"For rehearsals and shows. Setlists, songs, notes & visual beats." = "리허설과 공연용. 세트리스트, 곡, 메모, 시각적 박자.";

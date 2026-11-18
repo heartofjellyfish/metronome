@@ -358,9 +358,7 @@
 "This key is assigned to %@. Move it?" = "Esta tecla está atribuída a %@. Reatribuir?";
 "Move" = "Reatribuir";
 
-/* Performance and shared songs */
-"Perform" = "Tocar";
-"Song library" = "Biblioteca de músicas";
+/* Performance and shared songs */"Song library" = "Biblioteca de músicas";
 "Changes apply in every setlist." = "As alterações se aplicam a todas as listas.";
 "Delete this setlist? Songs stay in your library." = "Excluir esta lista? As músicas ficam na biblioteca.";
 "The song stays in your library." = "A música fica na biblioteca.";
@@ -536,8 +534,8 @@
 
 "More" = "Mais";
 
-"Tempo, meter & subdivisions" = "Tempo, compasso e subdivisões";
+"A classic metronome. Set a tempo and play." = "Um metrônomo clássico. Ajuste o tempo e toque.";
 
-"Tempo ramps, silent bars & polyrhythm" = "Tempo progressivo, compassos silenciosos e polirritmia";
+"For focused practice. Tempo ramps, silent bars & polyrhythms." = "Para praticar com foco. Tempo progressivo, compassos silenciosos e polirritmos.";
 
-"Songs, setlists & visual beats" = "Músicas, repertórios e pulsos visuais";
+"For rehearsals and shows. Setlists, songs, notes & visual beats." = "Para ensaios e shows. Repertórios, músicas, notas e pulsos visuais.";

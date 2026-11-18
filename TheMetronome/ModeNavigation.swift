@@ -158,9 +158,9 @@ private struct ModeRowStyle: ButtonStyle {
 private extension InstrumentMode {
     var summary: String {
         switch self {
-        case .metronome: "Tempo, meter & subdivisions"
-        case .practice: "Tempo ramps, silent bars & polyrhythm"
-        case .live: "Songs, setlists & visual beats"
+        case .metronome: "A classic metronome. Set a tempo and play."
+        case .practice: "For focused practice. Tempo ramps, silent bars & polyrhythms."
+        case .live: "For rehearsals and shows. Setlists, songs, notes & visual beats."
         }
     }
 }

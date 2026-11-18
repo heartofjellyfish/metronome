@@ -350,3 +350,4 @@
 - 采用 C 稿的原生矢量图标：机械节拍器轮廓、双圆轨道与实心节点、抽象笔迹曲目纸。复用现有暖灰材质与实体关闭键。
 - 关闭或再点当前模式不改变模式与播放；切换页面保留正在播放的节拍。小屏仍同时展示三个完整选项，不横向滑动或折叠。
 - 模式说明直接列出功能，不用广告语：速度／拍号／细分；渐进提速／静音小节／复节奏；歌曲／歌单／大拍号提示。当前项的对勾下必须保留 Current（本地化），对照 mock 检查细节。
+- 模式名称最终保留 Live／现场（不改 Perform）。入口说明先交代场景再列功能：Metronome — A classic metronome. Set a tempo and play.；Practice — For focused practice. Tempo ramps, silent bars & polyrhythms.；Live — For rehearsals and shows. Setlists, songs, notes & visual beats.

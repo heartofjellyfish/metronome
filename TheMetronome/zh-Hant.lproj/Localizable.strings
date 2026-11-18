@@ -358,9 +358,7 @@
 "This key is assigned to %@. Move it?" = "這個鍵已綁定「%@」，要改綁嗎？";
 "Move" = "改綁";
 
-/* Performance and shared songs */
-"Perform" = "演出";
-"Song library" = "歌曲庫";
+/* Performance and shared songs */"Song library" = "歌曲庫";
 "Changes apply in every setlist." = "修改會同步到所有歌單。";
 "Delete this setlist? Songs stay in your library." = "刪除歌單？歌曲仍保留在曲庫中。";
 "The song stays in your library." = "歌曲仍保留在曲庫中。";
@@ -536,8 +534,8 @@
 
 "More" = "更多";
 
-"Tempo, meter & subdivisions" = "速度、拍號與細分";
+"A classic metronome. Set a tempo and play." = "經典節拍器。設好速度，即刻開拍。";
 
-"Tempo ramps, silent bars & polyrhythm" = "漸進提速、靜音小節、複節奏";
+"For focused practice. Tempo ramps, silent bars & polyrhythms." = "專項練習。漸進提速、靜音小節與複節奏。";
 
-"Songs, setlists & visual beats" = "歌曲、歌單與大拍號提示";
+"For rehearsals and shows. Setlists, songs, notes & visual beats." = "用於排練和演出。歌單、歌曲、備註與大拍號提示。";
