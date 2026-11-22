@@ -16,6 +16,7 @@ struct TunerReferenceControl: View {
     @State private var octave = 4
     @Environment(\.dynamicTypeSize) private var textSize
     private let titleFont = Font.custom("HelveticaNeue-Medium", size: 15, relativeTo: .subheadline)
+    private var targetLabel: String { held.map(TunerPitch.label) ?? tunerText("Auto") }
 
     var body: some View {
         let stacked = textSize.isAccessibilitySize
@@ -27,7 +28,7 @@ struct TunerReferenceControl: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(tunerText("Target note"))
-                    Text(TunerPitch.label(note)).fontWeight(.semibold)
+                    Text(targetLabel).fontWeight(.semibold)
                     Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                 }
                 .padding(.horizontal, 8)
@@ -35,7 +36,7 @@ struct TunerReferenceControl: View {
                 .contentShape(Rectangle())
             }
             .accessibilityLabel(tunerText("Target note"))
-            .accessibilityValue(TunerPitch.label(note))
+            .accessibilityValue(targetLabel)
             .accessibilityIdentifier("tuner-reference-target")
             .popover(isPresented: $pickerOpen, arrowEdge: .bottom) {
                 picker
@@ -73,6 +74,7 @@ struct TunerReferenceControl: View {
             }
             .disabled(!canPlay)
             .accessibilityLabel(tunerText(playing ? "Stop tone" : "Reference tone"))
+            .accessibilityValue(TunerPitch.label(note))
             .accessibilityIdentifier("tuner-reference-play")
         }
         .font(titleFont)
@@ -114,9 +116,9 @@ struct TunerReferenceControl: View {
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: note == pitch))
+                    .buttonStyle(InstrumentSelectionButtonStyle(p: p, selected: held == pitch))
                     .accessibilityLabel(TunerPitch.label(pitch))
-                    .accessibilityAddTraits(note == pitch ? .isSelected : [])
+                    .accessibilityAddTraits(held == pitch ? .isSelected : [])
                     .accessibilityIdentifier("tuner-reference-note-\(pitch)")
                 }
             }

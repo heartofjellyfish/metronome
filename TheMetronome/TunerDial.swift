@@ -13,6 +13,10 @@ struct TunerDial: View {
     private let outerRadius: CGFloat = 161
     private let halfStep = Double.pi / 12
     private var centered: Bool { reading?.state == .centered }
+    private var centeredDirection: String? {
+        guard centered, let reading, abs(reading.cents) > 3 else { return nil }
+        return reading.cents < 0 ? IntonationState.flat.label : IntonationState.sharp.label
+    }
     private var sustainProgress: Double { min(1, (reading?.centeredDuration ?? 0) / 2.5) }
     private var displayNote: Int? { reading?.note }
     private var target: Int? { (targetNote ?? displayNote).map { ($0 % 12 + 12) % 12 } }
@@ -82,8 +86,8 @@ struct TunerDial: View {
             }
             func boundary(at angle: Double, emphasized: Bool = false) {
                 let line = Path { path in
-                    path.move(to: point(at: angle, radius: innerRadius - (emphasized ? 2 : 0), center: center))
-                    path.addLine(to: point(at: angle, radius: outerRadius + (emphasized ? 2 : 0), center: center))
+                    path.move(to: point(at: angle, radius: innerRadius, center: center))
+                    path.addLine(to: point(at: angle, radius: outerRadius, center: center))
                 }
                 ctx.stroke(line, with: .color(emphasized ? p.ink : p.muted.opacity(0.48)), lineWidth: emphasized ? 1.15 : 0.55)
             }
@@ -94,7 +98,8 @@ struct TunerDial: View {
                 let fixed = angle(for: target)
                 if let reading {
                     // Every 100 cents advances by one pitch sector.
-                    let measured = fixed + reading.displayedCents * (2 * halfStep / 100)
+                    let offset = max(-50, min(50, reading.cents))
+                    let measured = fixed + offset * (2 * halfStep / 100)
                     let tint = p.tuningTint(reading.state)
                     let shape = sector(at: measured, center: center, radius: outerRadius)
                     ctx.fill(shape, with: .color(tint.opacity(centered ? 0.24 : 0.47)))
@@ -128,10 +133,11 @@ struct TunerDial: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(displayNote.map(TunerPitch.label) ?? "—")
             if let reading, !centered {
-                let value = showDirection ? tunerText(status) + " · " + reading.signedCents : reading.signedCents
+                let cents = TunerReading.formatCents(reading.cents)
+                let value = showDirection ? tunerText(status) + " · " + cents : cents
                 Text(value).font(InstrumentType.value(15)).monospacedDigit().foregroundStyle(p.ink)
                     .accessibilityLabel(tunerText(status))
-                    .accessibilityValue(reading.signedCents)
+                    .accessibilityValue(cents)
                     .accessibilityIdentifier("tuner-chromatic-intonation")
             } else {
                 HStack(spacing: 5) {
@@ -139,10 +145,18 @@ struct TunerDial: View {
                         Image(systemName: "checkmark").font(.system(size: 13, weight: .semibold))
                             .accessibilityHidden(true)
                     }
-                    Text(tunerText(status)).font(InstrumentType.value(15)).lineLimit(1)
+                    Text(tunerText(centeredDirection ?? status)).lineLimit(1)
+                        .accessibilityLabel(centeredDirection.map { tunerText(status) + ", " + tunerText($0) } ?? tunerText(status))
                         .accessibilityValue(centered ? sustainProgress.formatted(.percent.precision(.fractionLength(0))) : "")
                         .accessibilityIdentifier("tuner-chromatic-intonation")
-                }.foregroundStyle(centered ? p.tuningGreen : p.muted)
+                    if centered, let reading {
+                        Text("·").accessibilityHidden(true)
+                        Text(TunerReading.formatCents(reading.cents)).monospacedDigit()
+                            .accessibilityIdentifier("tuner-chromatic-cents")
+                    }
+                }
+                .foregroundStyle(centered ? p.tuningGreen : p.muted)
+                .font(InstrumentType.value(15))
             }
         }
     }

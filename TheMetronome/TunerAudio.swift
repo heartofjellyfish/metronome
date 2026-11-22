@@ -9,12 +9,15 @@ private final class PitchInput {
     private var window: [Float] = []
     private let windowDuration: Double
     private let measuresLevel: Bool
+    private let chromatic: Bool
     private var nextSample: AVAudioFramePosition?
+    private var lastPitch: Double?
     private let signposter = OSSignposter(subsystem: Bundle.main.bundleIdentifier ?? "TheMetronome", category: "Tuner")
 
-    init(windowDuration: Double, measuresLevel: Bool) {
+    init(windowDuration: Double, measuresLevel: Bool, chromatic: Bool) {
         self.windowDuration = windowDuration
         self.measuresLevel = measuresLevel
+        self.chromatic = chromatic
     }
 
     func consume(_ buffer: AVAudioPCMBuffer, at time: AVAudioTime, receive: @escaping (Double?, Float?) -> Void) {
@@ -25,14 +28,21 @@ private final class PitchInput {
         let sample = time.isSampleTimeValid ? time.sampleTime : nil
         queue.async { [self] in
             defer { available.signal() }
-            if let sample, let nextSample, sample != nextSample { window.removeAll(keepingCapacity: true) }
+            if let sample, let nextSample, sample != nextSample {
+                window.removeAll(keepingCapacity: true)
+                lastPitch = nil
+            }
             nextSample = sample.map { $0 + AVAudioFramePosition(samples.count) }
-            let size = Int(rate * windowDuration)
+            let duration = chromatic ? TunerPitch.chromaticWindowDuration(after: lastPitch) : windowDuration
+            let size = Int(rate * duration)
+            let capacity = Int(rate * (chromatic ? TunerPitch.chromaticWindowDuration(after: 0) : windowDuration))
             window.append(contentsOf: samples)
             guard window.count >= size else { return }
-            window.removeFirst(window.count - size)
+            if window.count > capacity { window.removeFirst(window.count - capacity) }
             let interval = signposter.beginInterval("Pitch analysis")
-            let pitch = TunerPitch.detect(window, sampleRate: rate)
+            let analyzed = window.count == size ? window : Array(window.suffix(size))
+            let pitch = TunerPitch.detect(analyzed, sampleRate: rate)
+            if chromatic { lastPitch = pitch }
             let level = measuresLevel ? TunerPitch.tailLevel(window, sampleRate: rate) : nil
             signposter.endInterval("Pitch analysis", interval)
             receive(pitch, level)
@@ -95,6 +105,7 @@ final class TunerAudio: ObservableObject {
     var reference = 440
     var response = TunerResponse.balanced
     var tracksPlucks = false
+    var isChromatic = false
 
     func ownsGraph(_ object: Any?) -> Bool {
         guard let engine, let changedGraph = object as? AVAudioEngine else { return false }
@@ -139,10 +150,10 @@ final class TunerAudio: ObservableObject {
             let sampleCount = 3 + Int(min(5, max(0, sustain ?? 0)) * 10)
             for step in 0..<sampleCount {
                 _ = tracker.read(hz: pitch, reference: reference, targets: targets, held: held,
-                                 time: Double(step) * 0.1, response: response)
+                                 time: Double(step) * 0.1, response: response, chromatic: isChromatic)
             }
             reading = tracker.read(hz: pitch, reference: reference, targets: targets, held: held,
-                                   time: Double(sampleCount) * 0.1, response: response)
+                                   time: Double(sampleCount) * 0.1, response: response, chromatic: isChromatic)
             return true
         }
         return false
@@ -203,7 +214,8 @@ final class TunerAudio: ObservableObject {
                 guard format.sampleRate > 0 && format.channelCount > 0 else { stop(); status = .unavailable; return }
                 // More periods per observation reduce bass and cello flutter on acoustic input.
                 let tracksBass = (held ?? .max) <= 36 || targets.contains { $0 <= 36 }
-                let analysis = PitchInput(windowDuration: tracksBass ? 0.144 : 0.096, measuresLevel: !targets.isEmpty)
+                let analysis = PitchInput(windowDuration: tracksBass ? 0.144 : 0.096,
+                                          measuresLevel: !targets.isEmpty, chromatic: isChromatic)
                 let sampleRate = format.sampleRate
                 let receive: (Double?, Float?) -> Void = { [weak self] hz, level in
                     Task { @MainActor in
@@ -211,7 +223,8 @@ final class TunerAudio: ObservableObject {
                         let now = ProcessInfo.processInfo.systemUptime
                         let next = self.tracker.read(hz: hz, reference: self.reference, targets: self.targets,
                                                      held: self.held, time: now, response: self.response,
-                                                     pluckLevel: level, guardsPluckHarmonics: self.tracksPlucks)
+                                                     pluckLevel: level, guardsPluckHarmonics: self.tracksPlucks,
+                                                     chromatic: self.isChromatic)
                         #if DEBUG
                         if self.tracePitch, let hz, let next,
                            self.reading?.note != next.note || self.reading?.state != next.state {

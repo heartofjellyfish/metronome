@@ -1267,11 +1267,15 @@ final class TunerUITests: XCTestCase {
     }
 
     func testDialStates() {
-        for (cents, label) in [("-32","Flat"),("-8","Almost · flat"),("0","In tune"),("8","Almost · sharp"),("32","Sharp")] {
+        for (cents, label) in [("-32", "Flat"), ("-11", "Almost · flat"), ("-10", "In tune, Flat"),
+                               ("0", "In tune"), ("10", "In tune, Sharp"), ("11", "Almost · sharp"), ("32", "Sharp")] {
             let app = XCUIApplication()
             app.launchArguments = ["--light","--mode-tuner","--tuner-test-cents=" + cents,"-AppleLanguages","(en)","-tuner.profile","Chromatic","-tuner.reference","440"]
             app.launch()
             XCTAssertTrue(app.staticTexts[label].waitForExistence(timeout: 5))
+            if abs(Int(cents) ?? 0) == 10 {
+                XCTAssertEqual(app.staticTexts["tuner-chromatic-cents"].label, cents == "10" ? "+10¢" : "−10¢")
+            }
             proof(app, "Dial " + cents)
             app.terminate()
         }
@@ -1323,6 +1327,8 @@ final class TunerUITests: XCTestCase {
         let play = app.buttons["tuner-reference-play"]
         let done = app.buttons["tuner-reference-done"]
         XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertEqual(target.value as? String, "Auto")
+        XCTAssertEqual(play.value as? String, "A4")
         XCTAssertEqual(play.label, "Reference tone")
         proof(app, "Reference tone stopped")
         openReferenceOctaveFour(app)
@@ -1355,13 +1361,16 @@ final class TunerUITests: XCTestCase {
         play.tap()
         XCTAssertEqual(play.label, "Reference tone")
         XCTAssertTrue(app.staticTexts["tuner-chromatic-intonation"].waitForExistence(timeout: 3))
-        XCTAssertEqual(app.staticTexts["tuner-chromatic-intonation"].value as? String, "+8¢")
+        XCTAssertEqual(app.staticTexts["tuner-chromatic-intonation"].label, "In tune, Sharp")
+        XCTAssertEqual(app.staticTexts["tuner-chromatic-cents"].label, "+8¢")
         target.tap()
         app.buttons["tuner-reference-auto"].tap()
         XCTAssertTrue(app.buttons["tuner-reference-auto"].isSelected)
+        XCTAssertFalse(app.buttons["tuner-reference-note-70"].isSelected)
         done.tap()
         XCTAssertTrue(app.buttons["tuner-dial-note-9"].isSelected)
-        XCTAssertEqual(target.value as? String, "A♯4")
+        XCTAssertEqual(target.value as? String, "Auto")
+        XCTAssertEqual(play.value as? String, "A4")
     }
 
     func testTunerSilentBackgroundStopsReferenceAndRestoresListening() {
@@ -1377,6 +1386,35 @@ final class TunerUITests: XCTestCase {
         app.activate()
         XCTAssertTrue(app.staticTexts["Play a note"].waitForExistence(timeout: 5))
         XCTAssertEqual(play.label, "Reference tone")
+    }
+
+    func testChromaticSelectionOnDarkCompactScreen() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--dark", "--mode-tuner", "--tuner-instrument=Chromatic",
+                               "--tuner-test-cents=0", "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        app.launch()
+
+        let target = app.buttons["tuner-reference-target"]
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.isHittable)
+        XCTAssertTrue(app.buttons["tuner-reference-play"].isHittable)
+        proof(app, "Dark chromatic dial")
+        openReferenceOctaveFour(app)
+
+        for note in [70, 71, 69] {
+            let pitch = app.buttons["tuner-reference-note-\(note)"]
+            XCTAssertTrue(pitch.isHittable)
+            XCTAssertGreaterThanOrEqual(pitch.frame.height, 44)
+            pitch.tap()
+            XCTAssertTrue(pitch.isSelected)
+        }
+        proof(app, "Dark target note picker")
+        app.buttons["tuner-reference-done"].tap()
+        XCTAssertEqual(target.value as? String, "A4")
+        XCTAssertTrue(app.buttons["tuner-dial-note-9"].isSelected)
+        app.buttons["tuner-instruments"].tap()
+        XCTAssertTrue(app.buttons["tuner-profile-Chromatic"].isSelected)
+        proof(app, "Dark Chromatic instrument tile")
     }
 
     func testTunerInputStatesAreDistinct() {

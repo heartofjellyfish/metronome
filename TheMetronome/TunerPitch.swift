@@ -39,6 +39,12 @@ enum TunerPitch {
         return rms
     }
 
+    static func chromaticWindowDuration(after hz: Double?) -> Double {
+        // A longer window separates the broad correlation peak of bass notes
+        // without averaging away the movement of sung or higher notes.
+        (hz ?? .infinity) < 70 ? 0.144 : 0.096
+    }
+
     // YIN's normalized difference function rejects aperiodic input. Refine the
     // selected lag at the original sample rate for short, high-note periods.
     static func detect(_ samples: [Float], sampleRate: Double) -> Double? {
@@ -198,7 +204,12 @@ struct TunerReading {
 
     var displayedCents: Double { state == .centered ? 0 : max(-50, min(50, cents)) }
     var signedCents: String {
-        String(format: "%+.0f¢", state == .centered ? 0 : cents).replacingOccurrences(of: "-", with: "−")
+        Self.formatCents(state == .centered ? 0 : cents)
+    }
+
+    static func formatCents(_ cents: Double) -> String {
+        let value = cents.rounded()
+        return value == 0 ? "0¢" : String(format: "%+.0f¢", value).replacingOccurrences(of: "-", with: "−")
     }
 }
 
@@ -218,6 +229,7 @@ struct TunerTracker {
     private var lastLevel: Float?
     private var confirmedPluck: Int?
     private var stringRecheck = TunerStringRecheck()
+    private var chromaticCenter = ChromaticCenter()
 
     mutating func reset(preservingEnvelope: Bool = false) {
         resetReading()
@@ -232,10 +244,11 @@ struct TunerTracker {
         centeredSince = nil
         lastValidAt = nil
         lastCenteredSampleAt = nil
+        chromaticCenter = ChromaticCenter()
     }
     mutating func read(hz: Double?, reference: Int, targets: [Int], held: Int?, time: TimeInterval,
                        response: TunerResponse = .balanced, pluckLevel: Float? = nil,
-                       guardsPluckHarmonics: Bool = true) -> TunerReading? {
+                       guardsPluckHarmonics: Bool = true, chromatic: Bool = false) -> TunerReading? {
         if let pluckLevel { stringRecheck.measure(level: pluckLevel, at: time) }
         if let pluckLevel, guardsPluckHarmonics {
             if pluckLevel <= 0.0012 && (lastValidAt.map { time - $0 >= 0.10 } ?? true) {
@@ -253,7 +266,7 @@ struct TunerTracker {
         guard let hz, hz.isFinite, hz > 0 else { return missingSample(at: time) }
         let exact = TunerPitch.fractionalNote(hz, reference: reference)
         let nearest = targets.min(by: { abs(Double($0) - exact) < abs(Double($1) - exact) })
-        if let held {
+        if let held, !chromatic {
             if Self.isUpperPartial(hz, of: held, reference: reference) {
                 // A held string needs a measured fundamental, not just a
                 // plausible higher partial that sends the needle to its stop.
@@ -279,6 +292,14 @@ struct TunerTracker {
         let gain = min(0.76, 0.26 + error / 37)
         let weight = 1 - pow(1 - gain * response.damping, min(1.2, elapsed / 0.024))
         let cents = prior + (raw - prior) * weight
+        if chromatic {
+            if !same { chromaticCenter = ChromaticCenter() }
+            let center = chromaticCenter.observe(raw, at: time, response: response)
+            let state: IntonationState = center.locked ? .centered : Self.uncenteredState(cents)
+            let value = TunerReading(hz: hz, note: note, cents: cents, state: state, centeredDuration: center.duration)
+            previous = value
+            return value
+        }
         // Display smoothing must not turn a pitch passing through zero into a confirmation.
         let withinEntry = abs(raw) <= 3 && abs(cents) <= 3
         if !same || !withinEntry { centeredSince = nil }
@@ -286,7 +307,7 @@ struct TunerTracker {
         let locked = (same && previous?.state == .centered && abs(cents) <= 5 && abs(raw) <= 5)
             || centeredSince.map { time - $0 >= response.dwell } == true
         if locked, pluckLevel != nil, guardsPluckHarmonics { confirmedPluck = note }
-        let state: IntonationState = locked ? .centered : (abs(cents) <= 3 ? .settling : cents < -12 ? .flat : cents > 12 ? .sharp : cents < 0 ? .nearFlat : .nearSharp)
+        let state: IntonationState = locked ? .centered : Self.uncenteredState(cents)
         let duration: TimeInterval
         if locked, same, let previous, previous.state == .centered {
             duration = previous.centeredDuration + (lastCenteredSampleAt.map { max(0, time - $0) } ?? 0)
@@ -302,6 +323,10 @@ struct TunerTracker {
         return value
     }
 
+    private static func uncenteredState(_ cents: Double) -> IntonationState {
+        abs(cents) <= 3 ? .settling : cents < -12 ? .flat : cents > 12 ? .sharp : cents < 0 ? .nearFlat : .nearSharp
+    }
+
     private static func isUpperPartial(_ hz: Double, of note: Int, reference: Int) -> Bool {
         let ratio = hz / TunerPitch.frequency(note, reference: reference)
         let harmonic = ratio.rounded()
@@ -311,6 +336,7 @@ struct TunerTracker {
     private mutating func missingSample(at time: TimeInterval) -> TunerReading? {
         centeredSince = nil
         lastCenteredSampleAt = nil
+        chromaticCenter.pause()
         if var previous, let lastValidAt, time - lastValidAt < 0.10 {
             // A momentary dropout may hold the picture, but cannot confirm a string.
             previous.isFresh = false
@@ -319,6 +345,90 @@ struct TunerTracker {
         }
         resetReading()
         return nil
+    }
+}
+
+// Confirmation for sustained pitch. Keep the live cents estimate separate so a
+// natural vibrato can confirm without freezing or zeroing the measured offset.
+private struct ChromaticCenter {
+    private static let entryOffset = 10.5
+    private static let exitOffset = 12.0
+
+    private struct Sample {
+        let time: TimeInterval
+        let cents: Double
+    }
+
+    private var samples: [Sample] = []
+    private var locked = false
+    private var duration: TimeInterval = 0
+    private var awaySince: TimeInterval?
+    private var lastStableAt: TimeInterval?
+    private var lastOnCenterAt: TimeInterval?
+
+    mutating func observe(_ cents: Double, at time: TimeInterval, response: TunerResponse) -> (locked: Bool, duration: TimeInterval) {
+        let start = time - response.dwell
+        if let last = samples.last, time <= last.time { return (locked, duration) }
+        samples.append(Sample(time: time, cents: cents))
+        while samples.count > 1 && samples[1].time <= start { samples.removeFirst() }
+
+        // Integrate by time, since audio callbacks need not arrive at a fixed interval.
+        var sum = 0.0
+        var squareSum = 0.0
+        var peak = abs(cents)
+        var variation = 0.0
+        var firstCents: Double?
+        for (earlier, later) in zip(samples, samples.dropFirst()) {
+            let clippedStart = max(start, earlier.time)
+            let fraction = (clippedStart - earlier.time) / (later.time - earlier.time)
+            let first = earlier.cents + (later.cents - earlier.cents) * fraction
+            let span = later.time - clippedStart
+            sum += (first + later.cents) * 0.5 * span
+            let last = later.cents
+            squareSum += (first * first + first * last + last * last) * span / 3
+            peak = max(peak, abs(first), abs(later.cents))
+            variation += abs(later.cents - first)
+            if firstCents == nil { firstCents = first }
+        }
+        let fullWindow = samples.count >= 3 && samples[0].time <= start
+        let mean = sum / response.dwell
+        // Measure steadiness around the sung pitch, independently of its tuning offset.
+        let spread = sqrt(max(0, squareSum / response.dwell - mean * mean))
+        let drift = abs(cents - (firstCents ?? cents))
+        let gliding = drift > 5 && drift > variation * 0.75
+        let onCenter = fullWindow && abs(mean) < Self.entryOffset && spread <= 6.5 && peak <= 17 && !gliding
+        if locked {
+            let unstable = fullWindow && (abs(mean) >= Self.exitOffset || spread > 8.5)
+            if fullWindow && !unstable && abs(cents) <= 18 { lastStableAt = time }
+            if unstable || abs(cents) > 18 {
+                awaySince = awaySince ?? time
+            } else {
+                awaySince = nil
+            }
+            let driftingAway = awaySince.map { time - $0 >= 0.10 } ?? false
+            let noStableWindow = lastStableAt.map { time - $0 > response.dwell + 0.16 } ?? false
+            if driftingAway || noStableWindow {
+                locked = false
+                duration = 0
+            }
+        } else if onCenter {
+            locked = true
+            awaySince = nil
+            lastStableAt = time
+        }
+        if locked && onCenter {
+            if let lastOnCenterAt { duration += time - lastOnCenterAt }
+            lastOnCenterAt = time
+        } else {
+            lastOnCenterAt = nil
+        }
+        return (locked, duration)
+    }
+
+    mutating func pause() {
+        samples.removeAll(keepingCapacity: true)
+        awaySince = nil
+        lastOnCenterAt = nil
     }
 }
 

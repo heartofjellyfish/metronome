@@ -186,6 +186,12 @@ struct TunerView: View {
     }
     private var concertNote: Int? { audio.reading?.note ?? held }
     private var referenceNote: Int { TunerReferenceControl.noteRange.contains(toneNote) ? toneNote : 69 }
+    private var chromaticReferenceNote: Int {
+        if let held { return held }
+        if audio.status == .listening, let reading = audio.reading,
+           reading.isFresh, TunerReferenceControl.noteRange.contains(reading.note) { return reading.note }
+        return referenceNote
+    }
     private var eligible: Bool { exposed && sheet == nil && scenePhase == .active && !model.playing && !model.interrupted }
     private var statusLabel: String {
         if model.playing { return "Click playing" }
@@ -258,10 +264,14 @@ struct TunerView: View {
             }
             if profile == .chromatic {
                 Spacer(minLength: 0)
-                TunerReferenceControl(p: p, note: referenceNote, held: held, playing: audio.status == .tone,
+                TunerReferenceControl(p: p, note: chromaticReferenceNote, held: held, playing: audio.status == .tone,
                                       canPlay: eligible, pickerOpen: $referencePickerOpen, choose: chooseReference) {
                     if audio.status == .tone { begin() }
-                    else { audio.tone(note: referenceNote) }
+                    else {
+                        let pitch = chromaticReferenceNote
+                        toneNote = pitch
+                        audio.tone(note: pitch)
+                    }
                 }
             }
         }
@@ -773,6 +783,7 @@ struct TunerView: View {
     }
     private func syncTarget(refreshPreview: Bool = true) {
         audio.reference = reference; audio.response = response; audio.targets = wireNotes.filter { $0 >= 0 }; audio.held = held
+        audio.isChromatic = profile == .chromatic
         audio.clearReading(preservingEnvelope: true)
         audio.tracksPlucks = ["Guitar & bass", "Plucked strings"].contains(profile.family)
             || ["Sitar", "Yangqin", "Guzheng", "Guqin", "Koto", "Shamisen", "Oud · Arabic"].contains(profile.instrumentName)

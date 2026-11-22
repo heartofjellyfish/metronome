@@ -411,6 +411,105 @@ final class TunerTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(read(880, at: 1.15)).centeredDuration, 0)
     }
 
+    func testChromaticSungPitchConfirmsThroughVibratoButRejectsAGlideAndOffset() {
+        let rate = 48_000.0
+        let hop = 1024
+        func track(_ centsAt: (Double) -> Double) -> [(Double, TunerReading)] {
+            var phase = 0.0
+            let audio: [Float] = (0..<Int(rate * 2.6)).map { index in
+                let time = Double(index) / rate
+                phase += 2 * .pi * 220 * pow(2, centsAt(time) / 1200) / rate
+                return Float(0.05 * (sin(phase) + 0.36 * sin(phase * 2) + 0.14 * sin(phase * 3)))
+            }
+            var tracker = TunerTracker()
+            let window = Int(rate * 0.096)
+            return stride(from: hop, through: audio.count, by: hop).compactMap { end in
+                guard end >= window else { return nil }
+                let time = Double(end) / rate
+                let measured = TunerPitch.detect(Array(audio[(end - window)..<end]), sampleRate: rate)
+                guard let reading = tracker.read(hz: measured, reference: 440, targets: [], held: nil,
+                                                 time: time, chromatic: true) else { return nil }
+                return (time, reading)
+            }
+        }
+
+        let singer = track { sin($0 * 2 * .pi * 5.5) * 6 }
+        let green = singer.filter { $0.1.state == .centered }
+        XCTAssertGreaterThan(green.count, singer.count * 9 / 10)
+        XCTAssertLessThan(green.first?.0 ?? .infinity, 0.38)
+        XCTAssertTrue(singer.allSatisfy { $0.1.note == 57 })
+        XCTAssertGreaterThan(green.last?.1.centeredDuration ?? 0, 2)
+        XCTAssertTrue(green.contains { abs($0.1.cents) > 1 })
+
+        for offset in [-10.0, -9, 9, 10] {
+            let samples = track { _ in offset }
+            let settled = samples.filter { $0.0 >= 0.4 }
+            XCTAssertFalse(settled.isEmpty)
+            XCTAssertTrue(settled.allSatisfy { $0.1.state == .centered && abs($0.1.cents - offset) < 0.4 })
+        }
+
+        for samples in [track { -43 + 65 * $0 }, track { 15 + sin($0 * 2 * .pi * 5.5) * 4 },
+                        track { 22 * sin($0 * 2 * .pi * 5.5) }] {
+            XCTAssertFalse(samples.contains { $0.1.state == .centered })
+        }
+
+        let brieflySharp = track { (1..<1.064).contains($0) ? 9 : 0 }
+        XCTAssertTrue(brieflySharp.filter { $0.0 >= 0.5 }.allSatisfy { $0.1.state == .centered })
+
+        let nearLimit = track { $0 < 0.6 ? 9 : 10.5 + 3 * sin($0 * 2 * .pi * 5.5) }
+        XCTAssertTrue(nearLimit.filter { $0.0 >= 0.5 }.allSatisfy { $0.1.state == .centered })
+
+        var guitar = TunerTracker()
+        for frame in 0...24 {
+            let lowE = TunerPitch.frequency(40, reference: 440) * pow(2, 9.0 / 1200)
+            XCTAssertNotEqual(guitar.read(hz: lowE, reference: 440, targets: [40], held: 40,
+                                           time: Double(frame) * 0.024)?.state, .centered)
+        }
+
+        let wideVibrato = track { $0 < 1 ? 0 : 24 * sin($0 * 2 * .pi * 5.5) }
+        XCTAssertTrue(wideVibrato.contains { $0.0 < 1 && $0.1.state == .centered })
+        XCTAssertFalse(wideVibrato.contains { $0.0 > 1.4 && $0.1.state == .centered })
+
+        let drifting = track { $0 < 1 ? 0 : -14 }
+        XCTAssertTrue(drifting.contains { $0.0 < 1 && $0.1.state == .centered })
+        XCTAssertFalse(drifting.contains { $0.0 > 1.34 && $0.1.state == .centered })
+    }
+
+    func testChromaticReportsMeasuredOffsetWhenTargetIsLockedToAnotherOctave() throws {
+        var tracker = TunerTracker()
+        func read(_ hz: Double?, _ time: Double, held: Int? = nil) throws -> TunerReading {
+            try XCTUnwrap(tracker.read(hz: hz, reference: 442, targets: [], held: held,
+                                      time: time, chromatic: true))
+        }
+        for frame in 0...15 { _ = try read(442, Double(frame) * 0.024, held: 69) }
+        XCTAssertEqual(try read(442, 0.384, held: 69).state, .centered)
+        XCTAssertFalse(try read(nil, 0.43, held: 69).isFresh)
+        XCTAssertNil(tracker.read(hz: nil, reference: 442, targets: [], held: 69, time: 0.51, chromatic: true))
+        let octave = try read(884, 0.56, held: 69)
+        XCTAssertEqual(octave.note, 69)
+        XCTAssertEqual(octave.cents, 1200, accuracy: 0.001)
+        XCTAssertEqual(octave.state, .sharp)
+        let auto = try read(884, 0.584)
+        XCTAssertEqual(auto.note, 81)
+        XCTAssertEqual(auto.state, .settling)
+        XCTAssertEqual(auto.centeredDuration, 0)
+    }
+
+    func testChromaticConfirmationExpiresWhenIntermittentSamplesLoseThePitchCenter() {
+        var tracker = TunerTracker()
+        for frame in 0...20 {
+            _ = tracker.read(hz: 440, reference: 440, targets: [], held: nil,
+                             time: Double(frame) * 0.024, chromatic: true)
+        }
+        let sharp = 440 * pow(2, 12.0 / 1200)
+        for frame in 21...48 {
+            let reading = tracker.read(hz: frame.isMultiple(of: 3) ? nil : sharp, reference: 440,
+                                       targets: [], held: nil, time: Double(frame) * 0.024, chromatic: true)
+            if frame == 21 { XCTAssertEqual(reading?.state, .centered) }
+            if frame > 40 { XCTAssertNotEqual(reading?.state, .centered) }
+        }
+    }
+
     func testDropoutAndPitchCrossingCannotCompleteAString() {
         var tracker = TunerTracker()
         func read(_ cents: Double?, _ time: Double) -> TunerReading? {
