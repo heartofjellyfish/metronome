@@ -1,9 +1,52 @@
 import SwiftUI
 
 enum InstrumentMode: String, CaseIterable, Identifiable {
-    case metronome, practice, live
+    case metronome, practice, live, tuner
     var id: String { rawValue }
-    var title: String { L10n.text(self == .metronome ? "Metronome" : self == .practice ? "Practice" : "Live") }
+    var title: String {
+        switch self {
+        case .metronome: L10n.text("Metronome")
+        case .practice: L10n.text("Practice")
+        case .live: L10n.text("Live")
+        case .tuner: tunerText("Tuner")
+        }
+    }
+}
+
+enum SessionMemory {
+    static let preferenceKey = "rememberLastSetup"
+    static let modeKey = "lastInstrumentMode"
+    static let tunerSetupKey = "tuner.instrumentSetups"
+    static let enabledByDefault = true
+
+    static func initialMode() -> InstrumentMode {
+        if let launchOverride { return launchOverride }
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: preferenceKey) as? Bool ?? enabledByDefault else { return .metronome }
+        return defaults.string(forKey: modeKey).flatMap(InstrumentMode.init(rawValue:)) ?? .metronome
+    }
+
+    static func saveMode(_ mode: InstrumentMode) {
+        guard launchOverride == nil else { return }
+        UserDefaults.standard.set(mode.rawValue, forKey: modeKey)
+    }
+
+    static func clearSelections() {
+        UserDefaults.standard.removeObject(forKey: modeKey)
+        UserDefaults.standard.removeObject(forKey: tunerSetupKey)
+    }
+
+    private static let launchOverride: InstrumentMode? = {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        for mode in [InstrumentMode.live, .tuner, .practice, .metronome] {
+            if arguments.contains("--mode-" + mode.rawValue) { return mode }
+        }
+        let fixtures = ["--reference", "--organization-ui-test", "--stage-ui-test", "--redesign-ui-test", "--pedal-ui-test"]
+        if fixtures.contains(where: arguments.contains) { return .metronome }
+        #endif
+        return nil
+    }()
 }
 
 /// Vector silhouettes share the same optical box in every mode.
@@ -36,6 +79,14 @@ struct ModeIllustration: View {
                 context.fill(Path(CGRect(x:55,y:41,width:8,height:9)),with:.color(ink))
                 line([CGPoint(x:27,y:86),CGPoint(x:25,y:91)],width:6,color:ink)
                 line([CGPoint(x:71,y:86),CGPoint(x:73,y:91)],width:6,color:ink)
+            case .tuner:
+                let ring = CGRect(x: 11, y: 11, width: 78, height: 78)
+                context.stroke(Path(ellipseIn: ring), with: .color(ink), lineWidth: 2.5)
+                for i in 0..<12 {
+                    let a = Double(i) * .pi / 6
+                    line([CGPoint(x: 50+sin(a)*32,y: 50-cos(a)*32),CGPoint(x: 50+sin(a)*36,y: 50-cos(a)*36)],width: 2,color: ink)
+                }
+                line([CGPoint(x: 46,y: 66),CGPoint(x: 60,y: 28)],width: 3,color: ink)
             case .practice:
                 for inset in [CGFloat(12), CGFloat(25)] {
                     context.stroke(Path(ellipseIn: CGRect(x:inset,y:inset,width:100-2*inset,height:100-2*inset)),with:.color(ink),lineWidth:1.8)
@@ -87,7 +138,7 @@ struct ModeChooser: View {
     var body: some View {
         GeometryReader { geo in
             let compact = geo.size.width < 390
-            let rowHeight = min(CGFloat(140), max(120, (geo.size.height - 136) / 3))
+            let rowHeight = min(CGFloat(112), (geo.size.height - 136) / CGFloat(InstrumentMode.allCases.count))
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 0) {
                     Button(action: close) {
@@ -99,7 +150,7 @@ struct ModeChooser: View {
                     VStack(spacing: 0) {
                         ForEach(InstrumentMode.allCases) { mode in
                             row(mode, compact: compact).frame(height: rowHeight)
-                            if mode != .live {
+                            if mode != InstrumentMode.allCases.last {
                                 VStack(spacing: 0) {
                                     Rectangle().fill(p.edge.opacity(0.55)).frame(height: 0.5)
                                     Rectangle().fill(p.light).frame(height: 0.5)
@@ -191,6 +242,7 @@ private struct ModeRowStyle: ButtonStyle {
 private extension InstrumentMode {
     var summary: String {
         switch self {
+        case .tuner: tunerText("Tune by ear or follow the dial.")
         case .metronome: "For a quick start. A classic metronome."
         case .practice: "For focused practice. Tempo ramps, silent bars & polyrhythms."
         case .live: "For rehearsals and shows. Setlists, songs, notes & visual beats."

@@ -144,8 +144,10 @@
 "REAL DRUMS / HATS & PERCUSSION" = "BATERIA / PRATOS E PERCUSSÃO";
 "RIDE" = "RIDE";
 "RIMSHOT" = "RIMSHOT";
+"Remember last setup" = "Lembrar os últimos ajustes";
 "Remove all assignments" = "Remover todas as atribuições";
 "Remove assignment" = "Remover atribuição";
+"Restores your last mode, tuner instrument, and each instrument’s tuning." = "Restaura o último modo, o último instrumento do afinador e a afinação de cada instrumento.";
 "Resume on the same beat timeline" = "Retomar a sequência rítmica";
 "Return key" = "Enter";
 "Right arrow" = "Seta direita";
@@ -558,3 +560,6 @@
 "Last opened" = "Aberto recentemente";
 
 "Clear history" = "Limpar histórico";
+"Button finish" = "Estilo dos botões";
+"Raised" = "Relevo";
+"Flat finish" = "Plano";

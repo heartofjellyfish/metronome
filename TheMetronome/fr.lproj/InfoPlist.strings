@@ -1,1 +1,2 @@
 "NSBluetoothAlwaysUsageDescription" = "Connectez une pédale MIDI Bluetooth pour contrôler le métronome au pied.";
+"NSMicrophoneUsageDescription" = "L’accordeur utilise le micro pour mesurer la hauteur des notes de votre instrument.";

@@ -1,1 +1,2 @@
 "NSBluetoothAlwaysUsageDescription" = "Verbinde ein Bluetooth-MIDI-Pedal, um das Metronom mit dem Fuß zu steuern.";
+"NSMicrophoneUsageDescription" = "Das Stimmgerät nutzt das Mikrofon, um die Tonhöhe deines Instruments zu messen.";

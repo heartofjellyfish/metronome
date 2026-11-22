@@ -23,3 +23,9 @@
 # App aesthetics and marketing preferences
 
 - Before creating or revising App visuals, screenshots or marketing copy, read `AppStore/brand-preferences.md` and follow the user’s recorded preferences.
+
+# Tuner design and catalog
+
+- Before changing a tuner page or its controls, read [Tuner page standards](Design/Tuner/page-standards.md). Use the guzheng and guitar references when reviewing illustration, alignment, and completion feedback.
+- Before changing supported instruments, discovery, or presets, read [Instrument catalog plan](Design/Tuner/instrument-catalog-plan.md). It distinguishes current support, proposed changes, and candidates. Preserve existing instrument and preset IDs when reorganizing.
+- Follow the [tuner release scope](Design/Tuner/release-scope.md) for the App Store update and parallel session boundaries.

@@ -1,1 +1,2 @@
 "NSBluetoothAlwaysUsageDescription" = "Bluetooth MIDI 페달을 연결하여 발로 메트로놈을 조작합니다.";
+"NSMicrophoneUsageDescription" = "악기의 음높이를 측정하기 위해 마이크를 사용합니다.";

@@ -487,7 +487,7 @@ final class MetronomeModel: ObservableObject {
         if let data = try? JSONEncoder().encode(store) { UserDefaults.standard.set(data, forKey: "songLibraryStore") }
     }
     @Published var tapCount = 0
-    private var audio = MetronomeAudio()
+    private lazy var audio = MetronomeAudio()
     private var displayTimer: Timer?
     private var tapTempo = TapTempo()
     private var observers: [NSObjectProtocol] = []
@@ -564,7 +564,10 @@ final class MetronomeModel: ObservableObject {
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
             let reason = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
             if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
-                Task { @MainActor in self?.stop() }
+                Task { @MainActor in
+                    guard let self, self.transportActive || self.previewTimer != nil else { return }
+                    self.stop()
+                }
             }
         })
         observers.append(NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: nil, queue: .main) { [weak self] _ in
@@ -576,11 +579,22 @@ final class MetronomeModel: ObservableObject {
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                self.stop(); self.audio = MetronomeAudio()
-                self.error = L10n.text("Audio output changed. Press play to continue.")
+                if self.transportActive || self.previewTimer != nil {
+                    self.stop()
+                    self.error = L10n.text("Audio output changed. Press play to continue.")
+                }
+                self.audio = MetronomeAudio()
             }
         })
         pedal.perform = { [weak self] action in self?.performPedal(action) }
+    }
+    deinit {
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
+        for (command, token) in remoteTargets { command.removeTarget(token) }
+    }
+
+    private func installRemoteCommands() {
+        guard remoteTargets.isEmpty else { return }
         let center = MPRemoteCommandCenter.shared()
         register(center.playCommand, code: 0, label: "PLAY / PAUSE", explicitPlaying: true) { $0.start() }
         register(center.pauseCommand, code: 0, label: "PLAY / PAUSE", explicitPlaying: false) { $0.stop() }
@@ -588,10 +602,6 @@ final class MetronomeModel: ObservableObject {
         register(center.stopCommand, code: 1, label: "STOP") { $0.stop() }
         register(center.nextTrackCommand, code: 2, label: "NEXT") { $0.performPedal(.next) }
         register(center.previousTrackCommand, code: 3, label: "PREVIOUS") { $0.performPedal(.previous) }
-    }
-    deinit {
-        for observer in observers { NotificationCenter.default.removeObserver(observer) }
-        for (command, token) in remoteTargets { command.removeTarget(token) }
     }
     private func register(_ command: MPRemoteCommand, code: Int, label: String, explicitPlaying: Bool? = nil, fallback: @escaping @MainActor (MetronomeModel) -> Void) {
         command.isEnabled = true
@@ -657,7 +667,8 @@ final class MetronomeModel: ObservableObject {
         if type == AVAudioSession.InterruptionType.began.rawValue {
             guard !interrupted else { return }
             interrupted = true; resumeAfterInterruption = playing
-            audio.suspend(); playing = false
+            if playing || previewTimer != nil { audio.suspend() }
+            playing = false
             displayTimer?.invalidate(); displayTimer = nil; previewTimer?.invalidate()
             updateScreenAwake()
             updateNowPlaying()
@@ -704,8 +715,10 @@ final class MetronomeModel: ObservableObject {
         return L10n.text(transportActive ? "Stop metronome" : "Start metronome")
     }
     func toggle() { (playing || resumeAfterInterruption) ? stop() : start() }
+    var releaseTunerAudio: (() -> Void)?
     func start(resuming: Bool = false) {
         guard !playing, !interrupted else { return }
+        releaseTunerAudio?()
         previewTimer?.invalidate()
         do {
             try audio.start(playbackRhythm, resuming: resuming || needsManualResume, exclusive: !pedal.bindings.isEmpty, audible: soundEnabled); playing = true; needsManualResume = false; lastSerial = 0; event = nil
@@ -744,7 +757,9 @@ final class MetronomeModel: ObservableObject {
     }
     func cycleAccent(_ index: Int) { rhythm.accents[index] = (rhythm.displayedAccent(index) + 1) % 3; tickFeedback() }
     func endSoundPreview() {
+        guard playing || previewTimer != nil else { return }
         previewTimer?.invalidate()
+        previewTimer = nil
         audio.mailbox.preview(nil)
         if !playing && !interrupted && !needsManualResume { audio.stop() }
     }
@@ -801,6 +816,7 @@ final class MetronomeModel: ObservableObject {
         if let data = try? JSONEncoder().encode(presets) { UserDefaults.standard.set(data, forKey: "presets") }
     }
     private func updateNowPlaying() {
+        installRemoteCommands()
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [MPMediaItemPropertyTitle: currentSong?.name ?? presets.first(where: { $0.id == selectedPresetID })?.name ?? "metronome, just cleaner", MPMediaItemPropertyArtist: "\(bpm) BPM · \(rhythm.beats)/\(rhythm.denominator)", MPNowPlayingInfoPropertyIsLiveStream: true, MPNowPlayingInfoPropertyPlaybackRate: playing ? 1.0 : 0.0]
     }
 }

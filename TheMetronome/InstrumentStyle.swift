@@ -1,6 +1,15 @@
 import SwiftUI
 import UIKit
 
+enum ControlSkin: String {
+    case sculpted, flat
+    static let preference = "appearance.controlSkin"
+}
+
+extension EnvironmentValues {
+    @Entry var controlSkin: ControlSkin = .sculpted
+}
+
 struct InstrumentPalette {
     var dark: Bool
     var body: Color { Color(hex: dark ? 0x343635 : 0xE5E0D5) }
@@ -43,28 +52,47 @@ struct HardwareButtonStyle: ButtonStyle {
     var charcoal = false
     var green = false
     var radius: CGFloat = 10
+    var shallow = false
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(green ? Color(hex: 0x243326) : charcoal ? Color(hex: 0xF5F0E2) : p.ink)
             // Press/release animates the hardware, not replacement text or symbols.
             // A glyph may still own its explicit animation (the transport contour).
             .transaction { $0.animation = nil }
-            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed).id("\(p.dark)-\(charcoal)-\(green)") }
+            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed, shallow: shallow).id("\(p.dark)-\(charcoal)-\(green)") }
             .offset(y: configuration.isPressed ? 1.6 : 0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }
 
 struct HardwareKeySurface: View {
+    @Environment(\.controlSkin) private var skin
     let p: InstrumentPalette
     var charcoal = false
     var green = false
     var radius: CGFloat = 10
     var pressed = false
+    var shallow = false
     private var r: CGFloat { max(4, radius) }
     private var dark: Bool { !green && (charcoal || p.dark) }
     var body: some View {
         let outline = RoundedRectangle(cornerRadius: r, style: .continuous)
+        if skin == .flat {
+            let colors = green ? [Color(hex: 0xAFC7A1), Color(hex: 0x8DA97D)]
+                : charcoal ? [Color(hex: 0x484943), Color(hex: 0x373833)] : [p.top, p.body]
+            outline.fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay { outline.strokeBorder(p.light, lineWidth: 0.8) }
+                .shadow(color: .black.opacity(pressed ? 0.1 : 0.27), radius: pressed ? 0.5 : 2, y: pressed ? 0 : 2)
+        } else if shallow {
+            outline.fill(LinearGradient(colors: [p.top, p.body], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay { outline.strokeBorder(LinearGradient(colors: [p.light, p.edge.opacity(0.24)], startPoint: .top, endPoint: .bottom), lineWidth: 0.7) }
+                .shadow(color: .black.opacity(pressed ? 0.08 : 0.18), radius: 2, y: pressed ? 0 : 2)
+        } else {
+            sculptedFace(outline)
+        }
+    }
+
+    private func sculptedFace(_ outline: RoundedRectangle) -> some View {
         ZStack {
             // A narrow contact seam, not a thick extruded shelf beneath the key.
             outline.fill(dark ? Color(hex: 0x0A0C0B) : Color(hex: 0x9A9587))

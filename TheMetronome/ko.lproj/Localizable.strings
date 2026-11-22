@@ -144,8 +144,10 @@
 "REAL DRUMS / HATS & PERCUSSION" = "실제 드럼 / 심벌과 타악기";
 "RIDE" = "라이드";
 "RIMSHOT" = "림샷";
+"Remember last setup" = "마지막 설정 기억";
 "Remove all assignments" = "모든 할당 해제";
 "Remove assignment" = "할당 해제";
+"Restores your last mode, tuner instrument, and each instrument’s tuning." = "마지막 모드와 튜너 악기, 악기별 튜닝을 복원합니다.";
 "Resume on the same beat timeline" = "기존 박자 흐름으로 복귀";
 "Return key" = "Enter 키";
 "Right arrow" = "오른쪽 화살표";
@@ -558,3 +560,6 @@
 "Last opened" = "최근 연 곡";
 
 "Clear history" = "기록 지우기";
+"Button finish" = "버튼 질감";
+"Raised" = "입체";
+"Flat finish" = "평면";

@@ -4,7 +4,13 @@ import SwiftUI
 struct TheMetronomeApp: App {
     @StateObject private var model = MetronomeModel()
     @Environment(\.scenePhase) private var scenePhase
+    #if DEBUG
+    @AppStorage(ControlSkin.preference) private var previewSkin = ControlSkin.sculpted
+    #endif
     var body: some Scene { WindowGroup { MetronomeView(model: model).background(KeyboardGestures()).preferredColorScheme(model.dark ? .dark : .light)
+        #if DEBUG
+        .environment(\.controlSkin, previewSkin)
+        #endif
         .onAppear { model.updateScreenScenePhase(scenePhase) }
         .onChange(of: scenePhase) { _, phase in model.updateScreenScenePhase(phase) }
     } }
@@ -13,7 +19,10 @@ struct TheMetronomeApp: App {
 struct MetronomeView: View {
     @ObservedObject var model: MetronomeModel
     @State private var settings = false
-    @State private var mode: InstrumentMode = .metronome
+    @State private var visibleTunerInstrument: TunerInstrumentSelection?
+    @State private var tunerPanel: TunerView.Panel?
+    @State private var mode = SessionMemory.initialMode()
+    @AppStorage(SessionMemory.preferenceKey) private var rememberLastSetup = SessionMemory.enabledByDefault
     @State private var modesOpen = false
     @State private var selectingMode = false
     @State private var curtainVisible = false
@@ -37,9 +46,13 @@ struct MetronomeView: View {
                 else {
                     VStack(spacing: 0) {
                         modeHeader.frame(height: 48)
-                        if mode != .live { landingDisplay.frame(width: 365, height: 144).padding(.top, 4) }
+                        if mode == .practice { landingDisplay.frame(width: 365, height: 144).padding(.top, 4) }
                         Spacer().frame(height: 12)
-                        if mode == .live {
+                        if mode == .tuner {
+                            TunerView(p: p, model: model, sheet: $tunerPanel,
+                                      exposed: !curtainVisible && !settings && !modesOpen && panel == nil,
+                                      rememberLastSetup: rememberLastSetup)
+                        } else if mode == .live {
                             LiveModeHome(model: model, open: present, openSong: { id, action in
                                 liveListRoute = LiveListRoute(setlistID: nil, songID: id, action: action)
                             }) { id, action in
@@ -59,7 +72,11 @@ struct MetronomeView: View {
                 .scaleEffect(scale, anchor: .top)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
                 .blur(radius: modeRevealBlur)
-        }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background { InstrumentBody(p: p).ignoresSafeArea() }
+        }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background {
+            if mode == .tuner, let visibleTunerInstrument, visibleTunerInstrument.profile != .chromatic, !p.dark {
+                LinearGradient(colors: [Color(hex: 0xF6F0E7), Color(hex: 0xF2EBE2)], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+            } else { InstrumentBody(p: p).ignoresSafeArea() }
+        }.onPreferenceChange(TunerInstrumentPreference.self) { visibleTunerInstrument = $0 }
             .overlay {
                 GeometryReader { geometry in
                     let scale = min(geometry.size.width / 414, geometry.size.height / 774)
@@ -78,7 +95,10 @@ struct MetronomeView: View {
                         .animation(reduceMotion ? nil : (selectingMode ? .easeOut(duration: 0.12) : .easeInOut(duration: 0.24)), value: modesOpen)
                 }
             }
-            .fullScreenCover(isPresented: $settings) { SettingsView(model: model) }
+            .fullScreenCover(isPresented: $settings) {
+                SettingsView(model: model, tunerSettings: mode == .tuner,
+                             rememberLastSetup: Binding(get: { rememberLastSetup }, set: setRememberLastSetup))
+            }
             .overlay {
                 if let panel { InstrumentPanel(model: model, kind: panel, initialSetlistID: panel == .setlists ? model.activeSetlistID : nil) { self.panel = nil }.id(panelSession) }
             }
@@ -95,9 +115,10 @@ struct MetronomeView: View {
                         .id(modeTransitionID)
                         .onAppear {
                             let token = modeTransitionID
-                            // Resolve focus early while the curtain finishes opening.
-                            withAnimation(.linear(duration: 0.40)) {
-                                modeRevealBlur = 0
+                            if modeRevealBlur > 0 {
+                                withAnimation(.linear(duration: 0.40)) {
+                                    modeRevealBlur = 0
+                                }
                             }
                             withAnimation(.timingCurve(0.22, 0.75, 0.22, 1, duration: 0.80), completionCriteria: .removed) {
                                 curtainOpen = true
@@ -112,13 +133,17 @@ struct MetronomeView: View {
             .onAppear {
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--modes") { modesOpen = true }
-                if ProcessInfo.processInfo.arguments.contains("--mode-practice") { mode = .practice }
-                if ProcessInfo.processInfo.arguments.contains("--mode-live") { mode = .live }
                 if ProcessInfo.processInfo.arguments.contains("--settings") { settings = true }
                 if let route = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--panel=") }), let kind = InstrumentPanelKind(rawValue: String(route.dropFirst(8))) { present(kind) }
                 #endif
             }
     }
+    private func setRememberLastSetup(_ enabled: Bool) {
+        rememberLastSetup = enabled
+        if enabled { SessionMemory.saveMode(mode) }
+        else { SessionMemory.clearSelections() }
+    }
+
     private var modeHeader: some View {
         HStack(spacing: 12) {
             Button { selectingMode = false; modesOpen.toggle() } label: {
@@ -127,6 +152,14 @@ struct MetronomeView: View {
                 .accessibilityLabel(mode.title)
                 .accessibilityValue(L10n.text(modesOpen ? "Collapse" : "Expand"))
             Spacer(minLength: 8)
+            if mode == .tuner, let instrument = visibleTunerInstrument {
+                Button { tunerPanel = .library } label: {
+                    TunerInstrumentIcon(profile: instrument.profile, layout: instrument.layout, p: p)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityLabel(tunerText(instrument.profile.instrumentName))
+                    .accessibilityValue(instrument.layout.flatMap { $0.options.isEmpty ? nil : tunerText($0.title) } ?? "")
+                    .accessibilityIdentifier("tuner-instruments")
+            }
             Button { modesOpen = false; settings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)
             }.accessibilityLabel("Settings").accessibilityIdentifier("settings")
@@ -166,6 +199,7 @@ struct MetronomeView: View {
                 withTransaction(transaction) {
                     selectingMode = true
                     mode = choice
+                    if rememberLastSetup { SessionMemory.saveMode(choice) }
                     modesOpen = false
                 }
             }
@@ -181,7 +215,8 @@ struct MetronomeView: View {
                 curtainOpen = false
                 curtainOpacity = 1
                 curtainVisible = true
-                modeRevealBlur = 3
+                // The tuner can render its sharp face behind the curtain while audio waits.
+                modeRevealBlur = choice == .tuner ? 0 : 3
                 enter()
             }
         }

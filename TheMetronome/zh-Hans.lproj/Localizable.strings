@@ -144,8 +144,10 @@
 "REAL DRUMS / HATS & PERCUSSION" = "真实鼓声 / 镲片与打击乐";
 "RIDE" = "叮叮镲";
 "RIMSHOT" = "边击";
+"Remember last setup" = "记住上次使用";
 "Remove all assignments" = "解除全部绑定";
 "Remove assignment" = "解除绑定";
+"Restores your last mode, tuner instrument, and each instrument’s tuning." = "恢复上次使用的模式和乐器，并记住每件乐器的调弦。";
 "Resume on the same beat timeline" = "沿原来的拍点继续";
 "Return key" = "回车键";
 "Right arrow" = "右方向键";
@@ -558,3 +560,6 @@
 "Last opened" = "上次打开";
 
 "Clear history" = "清除记录";
+"Button finish" = "按键质感";
+"Raised" = "凸起";
+"Flat finish" = "扁平";

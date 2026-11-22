@@ -1,0 +1,270 @@
+Tuner|调音器|調音器|チューナー|튜너|Accordeur|Stimmgerät|Afinador|Afinador
+Tune by ear or follow the dial.|听参考音，或看表盘调音。|聽參考音，或看錶盤調音。|基準音またはメーターで調律。|기준음이나 다이얼로 조율하세요.|Accordez à l’oreille ou au cadran.|Nach Gehör oder mit Skala stimmen.|Afina de oído o con el dial.|Afine de ouvido ou pelo mostrador.
+Chromatic|半音调音|半音調音|クロマチック|크로매틱|Chromatique|Chromatisch|Cromático|Cromático
+All notes|全部音符|全部音符|すべての音|모든 음|Toutes les notes|Alle Töne|Todas las notas|Todas as notas
+Flat|偏低|偏低|低い|낮음|Trop bas|Zu tief|Bajo|Baixo
+Sharp|偏高|偏高|高い|높음|Trop haut|Zu hoch|Alto|Alto
+Almost · flat|快准了 · 略低|快準了 · 略低|やや低い|약간 낮음|Un peu bas|Etwas tief|Un poco bajo|Um pouco baixo
+Almost · sharp|快准了 · 略高|快準了 · 略高|やや高い|약간 높음|Un peu haut|Etwas hoch|Un poco alto|Um pouco alto
+Settling|接近零点|接近零點|安定待ち|안정화 중|Stabilisation|Stabilisiert sich|Estabilizando|Estabilizando
+In tune|已调准|已調準|合っています|정확함|Juste|Gestimmt|Afinado|Afinado
+Play a note|奏一个音|奏一個音|音を鳴らす|음을 연주하세요|Jouez une note|Ton spielen|Toca una nota|Toque uma nota
+Play target note|奏目标音|奏目標音|指定音を鳴らす|목표 음을 연주하세요|Jouez la note cible|Zielton spielen|Toca la nota objetivo|Toque a nota alvo
+Click playing|节拍播放中|節拍播放中|クリック再生中|박자 재생 중|Métronome actif|Metronom läuft|Metrónomo activo|Metrônomo ativo
+Interrupted|音频已中断|音訊已中斷|中断中|중단됨|Interrompu|Unterbrochen|Interrumpido|Interrompido
+Microphone off|麦克风未启用|麥克風未啟用|マイクがオフ|마이크 꺼짐|Micro désactivé|Mikrofon aus|Micrófono apagado|Microfone desligado
+Input unavailable|输入不可用|輸入無法使用|入力できません|입력 불가|Entrée indisponible|Kein Eingang|Entrada no disponible|Entrada indisponível
+Microphone access|麦克风权限|麥克風權限|マイクの許可|마이크 권한|Accès au micro|Mikrofonzugriff|Acceso al micrófono|Acesso ao microfone
+Pause click to tune|暂停节拍并调音|暫停節拍並調音|クリックを止めて調律|박자 정지 후 조율|Arrêter le clic pour accorder|Klick zum Stimmen stoppen|Pausar el clic para afinar|Pausar o clique para afinar
+Open Settings|打开设置|開啟設定|設定を開く|설정 열기|Ouvrir les réglages|Einstellungen öffnen|Abrir ajustes|Abrir ajustes
+Retry microphone|重试麦克风|重試麥克風|マイクを再試行|마이크 다시 시도|Réessayer le micro|Mikrofon erneut starten|Reintentar micrófono|Tentar microfone de novo
+Reference pitch|基准音高|基準音高|基準ピッチ|기준 음높이|Diapason|Kammerton|Tono de referencia|Afinação de referência
+Lock target|锁定目标|鎖定目標|目標を固定|목표음 고정|Verrouiller la note|Zielton halten|Fijar nota|Fixar nota
+Release target|解除锁定|解除鎖定|目標の固定を解除|목표음 고정 해제|Déverrouiller la note|Zielton freigeben|Liberar nota|Soltar nota
+Reference tone|参考音|參考音|基準音|기준음|Son de référence|Referenzton|Tono de referencia|Tom de referência
+Stop tone|停止参考音|停止參考音|基準音を停止|기준음 정지|Arrêter le son|Ton stoppen|Detener tono|Parar tom
+Auto|自动|自動|自動|자동|Auto|Auto|Auto|Auto
+Hold|锁定音名|鎖定音名|音名固定|음 고정|Fixer|Ton halten|Fijar|Fixar
+Note names for transposing instruments|移调乐器的音名|移調樂器的音名|移調楽器の音名|이조 악기의 음 이름|Notes des instruments transpositeurs|Tonnamen für transponierende Instrumente|Notas para instrumentos transpositores|Notas de instrumentos transpositores
+For B♭ clarinet, alto sax, piccolo and similar instruments. Written pitch is the note on your score. Concert pitch is what you hear. Choose which one appears in large type.|适用于降 B 单簧管、中音萨克斯、短笛等。记谱音是谱上的音名，实音是听到的音。选中的音名用大字显示，另一个放在下方。|適用於降 B 單簧管、中音薩克斯風、短笛等。記譜音是譜上的音名，實音是聽到的音。選擇要放大顯示的音名，另一個會顯示在下方。|B♭クラリネット、アルトサックス、ピッコロなどが対象です。記譜音は楽譜上の音名、実音は鳴っている音の名前です。大きく表示する方を選べます。|B♭ 클라리넷, 알토 색소폰, 피콜로 등에 적용됩니다. 기보음은 악보에 적힌 음이고, 실음은 실제 들리는 음입니다. 크게 표시할 음을 고르세요.|Pour la clarinette en si♭, le sax alto, le piccolo et les instruments similaires. La note écrite est celle de la partition. La note réelle est celle que vous entendez. Choisissez la note à afficher en grand.|Für B♭-Klarinette, Altsaxofon, Piccolo und ähnliche Instrumente. Der notierte Ton steht in den Noten. Der klingende Ton ist der Ton, den Sie hören. Wählen Sie, welcher Ton groß angezeigt wird.|Para clarinete en si♭, saxo alto, flautín e instrumentos similares. La nota escrita es la de la partitura. La nota real es la que suena. Elige cuál se muestra en grande.|Para clarinete em si♭, sax alto, flautim e instrumentos semelhantes. A nota escrita é a da partitura. A nota real é a que você ouve. Escolha qual aparece em destaque.
+Written first|记谱音优先|記譜音優先|記譜音を優先|기보음 우선|Note écrite en grand|Notierter Ton zuerst|Priorizar nota escrita|Priorizar nota escrita
+Concert first|实音优先|實音優先|実音を優先|실음 우선|Note réelle en grand|Klingender Ton zuerst|Priorizar nota real|Priorizar nota real
+Written pitch|记谱音|記譜音|記譜音|기보음|Note écrite|Notierter Ton|Nota escrita|Nota escrita
+Concert pitch|实音|實音|実音|실음|Note réelle|Klingender Ton|Nota real|Nota real
+Create tuning|新建定弦|新增定弦|調弦を作成|튜닝 만들기|Créer un accordage|Stimmung erstellen|Crear afinación|Criar afinação
+Instruments|乐器|樂器|楽器|악기|Instruments|Instrumente|Instrumentos|Instrumentos
+Enter string notes in playing order, with octaves.|按弦序填写音名和八度，例如 D2 A2 D3 G3 B3 E4。|按弦序填寫音名和八度，例如 D2 A2 D3 G3 B3 E4。|弦の順に音名とオクターブを入力。|현 순서대로 음과 옥타브를 입력하세요.|Saisissez les notes et octaves dans l’ordre des cordes.|Saitentöne mit Oktave in Reihenfolge eingeben.|Introduce las notas y octavas en orden de cuerda.|Insira as notas e oitavas na ordem das cordas.
+Search instruments|搜索乐器|搜尋樂器|楽器を検索|악기 검색|Rechercher un instrument|Instrumente suchen|Buscar instrumentos|Buscar instrumentos
+No instruments|未找到乐器|找不到樂器|楽器がありません|악기 없음|Aucun instrument|Keine Instrumente|Sin instrumentos|Nenhum instrumento
+Guitar & bass|吉他与贝斯|吉他與貝斯|ギター・ベース|기타 및 베이스|Guitares et basses|Gitarre und Bass|Guitarras y bajos|Guitarras e baixos
+Bowed strings|弓弦乐器|弓弦樂器|擦弦楽器|찰현악기|Cordes frottées|Streichinstrumente|Cuerda frotada|Cordas friccionadas
+Plucked strings|拨弦乐器|撥弦樂器|撥弦楽器|발현악기|Cordes pincées|Zupfinstrumente|Cuerda pulsada|Cordas dedilhadas
+Woodwinds|木管乐器|木管樂器|木管楽器|목관악기|Bois|Holzbläser|Viento madera|Madeiras
+Brass|铜管乐器|銅管樂器|金管楽器|금관악기|Cuivres|Blechbläser|Viento metal|Metais
+Keys & reeds|键盘与簧片|鍵盤與簧片|鍵盤・リード|건반 및 리드|Claviers et anches|Tasten und Zungen|Teclados y lengüetas|Teclas e palhetas
+Pitched percussion|有音高打击乐|有音高打擊樂|有音程打楽器|유율 타악기|Percussions mélodiques|Melodisches Schlagwerk|Percusión afinada|Percussão melódica
+Chinese instruments|中国民乐|中國民樂|中国の楽器|중국 악기|Instruments chinois|Chinesische Instrumente|Instrumentos chinos|Instrumentos chineses
+World instruments|民族乐器|民族樂器|民族楽器|민속 악기|Instruments du monde|Weltinstrumente|Instrumentos del mundo|Instrumentos do mundo
+Voice|人声|人聲|声|목소리|Voix|Stimme|Voz|Voz
+Custom tuning|自定义定弦|自訂定弦|カスタム調弦|사용자 튜닝|Accordage personnel|Eigene Stimmung|Afinación personalizada|Afinação personalizada
+Name|名称|名稱|名前|이름|Nom|Name|Nombre|Nome
+Guitar|吉他|吉他|ギター|기타|Guitare|Gitarre|Guitarra|Guitarra
+Guitar · Drop D|吉他 · 降 D|吉他 · 降 D|ギター · ドロップ D|기타 · 드롭 D|Guitare · Drop D|Gitarre · Drop D|Guitarra · Drop D|Guitarra · Drop D
+Guitar · DADGAD|吉他 · DADGAD|吉他 · DADGAD|ギター · DADGAD|기타 · DADGAD|Guitare · DADGAD|Gitarre · DADGAD|Guitarra · DADGAD|Guitarra · DADGAD
+7-string guitar|七弦吉他|七弦吉他|7弦ギター|7현 기타|Guitare 7 cordes|7-saitige Gitarre|Guitarra de 7 cuerdas|Guitarra de 7 cordas
+12-string guitar|十二弦吉他|十二弦吉他|12弦ギター|12현 기타|Guitare 12 cordes|12-saitige Gitarre|Guitarra de 12 cuerdas|Guitarra de 12 cordas
+8-string guitar|八弦吉他|八弦吉他|8弦ギター|8현 기타|Guitare 8 cordes|8-saitige Gitarre|Guitarra de 8 cuerdas|Guitarra de 8 cordas
+Baritone guitar|上低音吉他|上低音吉他|バリトンギター|바리톤 기타|Guitare baryton|Baritongitarre|Guitarra barítona|Guitarra barítono
+Electric bass|电贝斯|電貝斯|エレキベース|일렉트릭 베이스|Basse électrique|E-Bass|Bajo eléctrico|Baixo elétrico
+Bass|贝斯|貝斯|ベース|베이스|Basse|Bass|Bajo|Baixo
+5-string bass|五弦贝斯|五弦貝斯|5弦ベース|5현 베이스|Basse 5 cordes|5-saitiger Bass|Bajo de 5 cuerdas|Baixo de 5 cordas
+6-string bass|六弦贝斯|六弦貝斯|6弦ベース|6현 베이스|Basse 6 cordes|6-saitiger Bass|Bajo de 6 cuerdas|Baixo de 6 cordas
+Violin|小提琴|小提琴|バイオリン|바이올린|Violon|Violine|Violín|Violino
+Viola|中提琴|中提琴|ビオラ|비올라|Alto|Bratsche|Viola|Viola
+Cello|大提琴|大提琴|チェロ|첼로|Violoncelle|Cello|Violonchelo|Violoncelo
+Double bass|低音提琴|低音提琴|コントラバス|콘트라베이스|Contrebasse|Kontrabass|Contrabajo|Contrabaixo
+Ukulele|尤克里里|尤克里里|ウクレレ|우쿨렐레|Ukulélé|Ukulele|Ukelele|Ukulele
+Ukulele · low G|尤克里里 · 低 G|尤克里里 · 低 G|ウクレレ · Low G|우쿨렐레 · 낮은 G|Ukulélé · sol grave|Ukulele · tiefes G|Ukelele · sol grave|Ukulele · sol grave
+Baritone|上低音|上低音|バリトン|바리톤|Baryton|Bariton|Barítono|Barítono
+Baritone ukulele|上低音尤克里里|上低音尤克里里|バリトンウクレレ|바리톤 우쿨렐레|Ukulélé baryton|Baritonukulele|Ukelele barítono|Ukulele barítono
+Mandolin|曼陀林|曼陀林|マンドリン|만돌린|Mandoline|Mandoline|Mandolina|Bandolim
+Mandola|中音曼陀林|中音曼陀林|マンドラ|만돌라|Mandole|Mandola|Mandola|Mandola
+5-string banjo|五弦班卓琴|五弦班卓琴|5弦バンジョー|5현 밴조|Banjo 5 cordes|5-saitiges Banjo|Banjo de 5 cuerdas|Banjo de 5 cordas
+Harp|竖琴|豎琴|ハープ|하프|Harpe|Harfe|Arpa|Harpa
+Lyre|里拉琴|里拉琴|リラ|리라|Lyre|Leier|Lira|Lira
+Dulcimer|达尔西默琴|達爾西默琴|ダルシマー|덜시머|Dulcimer|Dulcimer|Dulcémele|Dulcimer
+Flute|长笛|長笛|フルート|플루트|Flûte|Flöte|Flauta|Flauta
+Piccolo|短笛|短笛|ピッコロ|피콜로|Piccolo|Piccolo|Flautín|Flautim
+Oboe|双簧管|雙簧管|オーボエ|오보에|Hautbois|Oboe|Oboe|Oboé
+English horn|英国管|英國管|イングリッシュホルン|잉글리시 호른|Cor anglais|Englischhorn|Corno inglés|Corne inglês
+Bassoon|巴松管|巴松管|ファゴット|바순|Basson|Fagott|Fagot|Fagote
+Recorder|竖笛|豎笛|リコーダー|리코더|Flûte à bec|Blockflöte|Flauta dulce|Flauta doce
+B♭ clarinet|降 B 调单簧管|降 B 調單簧管|B♭クラリネット|B♭ 클라리넷|Clarinette en si♭|B-Klarinette|Clarinete en si♭|Clarinete em si♭
+A clarinet|A 调单簧管|A 調單簧管|Aクラリネット|A 클라리넷|Clarinette en la|A-Klarinette|Clarinete en la|Clarinete em lá
+Bass clarinet|低音单簧管|低音單簧管|バスクラリネット|베이스 클라리넷|Clarinette basse|Bassklarinette|Clarinete bajo|Clarinete baixo
+Soprano sax|高音萨克斯|高音薩克斯|ソプラノサックス|소프라노 색소폰|Sax soprano|Sopransaxofon|Saxo soprano|Sax soprano
+Alto sax|中音萨克斯|中音薩克斯|アルトサックス|알토 색소폰|Sax alto|Altsaxofon|Saxo alto|Sax alto
+Tenor sax|次中音萨克斯|次中音薩克斯|テナーサックス|테너 색소폰|Sax ténor|Tenorsaxofon|Saxo tenor|Sax tenor
+Baritone sax|上低音萨克斯|上低音薩克斯|バリトンサックス|바리톤 색소폰|Sax baryton|Baritonsaxofon|Saxo barítono|Sax barítono
+B♭ trumpet|降 B 调小号|降 B 調小號|B♭トランペット|B♭ 트럼펫|Trompette en si♭|B-Trompete|Trompeta en si♭|Trompete em si♭
+C trumpet|C 调小号|C 調小號|Cトランペット|C 트럼펫|Trompette en ut|C-Trompete|Trompeta en do|Trompete em dó
+Flugelhorn|柔音号|柔音號|フリューゲルホルン|플뤼겔호른|Bugle|Flügelhorn|Fliscorno|Flugelhorn
+Horn in F|F 调圆号|F 調圆號|Fホルン|F 호른|Cor en fa|Horn in F|Trompa en fa|Trompa em fá
+Cornet in B♭|降 B 调短号|降 B 調短號|B♭コルネット|B♭ 코넷|Cornet en si♭|B-Kornett|Corneta en si♭|Cornetim em si♭
+Trombone|长号|長號|トロンボーン|트롬본|Trombone|Posaune|Trombón|Trombone
+Euphonium|上低音号|上低音號|ユーフォニアム|유포니움|Euphonium|Euphonium|Bombardino|Eufônio
+Tuba|大号|大號|チューバ|튜바|Tuba|Tuba|Tuba|Tuba
+Piano|钢琴|鋼琴|ピアノ|피아노|Piano|Klavier|Piano|Piano
+Keyboard|键盘|鍵盤|キーボード|키보드|Clavier|Keyboard|Teclado|Teclado
+Organ|管风琴|管風琴|オルガン|오르간|Orgue|Orgel|Órgano|Órgão
+Accordion|手风琴|手風琴|アコーディオン|아코디언|Accordéon|Akkordeon|Acordeón|Acordeão
+Harmonica|口琴|口琴|ハーモニカ|하모니카|Harmonica|Mundharmonika|Armónica|Gaita
+Timpani|定音鼓|定音鼓|ティンパニ|팀파니|Timbales|Pauken|Timbales|Tímpanos
+Marimba|马林巴|馬林巴|マリンバ|마림바|Marimba|Marimba|Marimba|Marimba
+Vibraphone|颤音琴|顫音琴|ビブラフォン|비브라폰|Vibraphone|Vibrafon|Vibráfono|Vibrafone
+Xylophone|木琴|木琴|木琴|실로폰|Xylophone|Xylofon|Xilófono|Xilofone
+Glockenspiel|钟琴|鐘琴|鉄琴|글로켄슈필|Glockenspiel|Glockenspiel|Glockenspiel|Glockenspiel
+Steel pan|钢鼓|鋼鼓|スティールパン|스틸팬|Steelpan|Steelpan|Tambor de acero|Tambor de aço
+Handpan|手碟|手碟|ハンドパン|핸드팬|Handpan|Handpan|Handpan|Handpan
+Kalimba|拇指琴|拇指琴|カリンバ|칼림바|Kalimba|Kalimba|Kalimba|Kalimba
+Erhu|二胡|二胡|二胡|얼후|Erhu|Erhu|Erhu|Erhu
+Pipa|琵琶|琵琶|琵琶|비파|Pipa|Pipa|Pipa|Pipa
+Guzheng|古筝|古箏|古筝|구정|Guzheng|Guzheng|Guzheng|Guzheng
+Guqin|古琴|古琴|古琴|구친|Guqin|Guqin|Guqin|Guqin
+Yangqin|扬琴|揚琴|揚琴|양금|Yangqin|Yangqin|Yangqin|Yangqin
+Dizi|笛子|笛子|笛子|디즈|Dizi|Dizi|Dizi|Dizi
+Xiao|箫|簫|簫|샤오|Xiao|Xiao|Xiao|Xiao
+Sheng|笙|笙|笙|셩|Sheng|Sheng|Sheng|Sheng
+Suona|唢呐|嗩吶|嗩吶|쑤오나|Suona|Suona|Suona|Suona
+Koto|日本筝|日本箏|箏|고토|Koto|Koto|Koto|Koto
+Shamisen|三味线|三味線|三味線|샤미센|Shamisen|Shamisen|Shamisen|Shamisen
+Shakuhachi|尺八|尺八|尺八|샤쿠하치|Shakuhachi|Shakuhachi|Shakuhachi|Shakuhachi
+Sitar|西塔琴|西塔琴|シタール|시타르|Sitar|Sitar|Sitar|Sitar
+Oud · Arabic|乌德琴 · 阿拉伯定弦|烏德琴 · 阿拉伯定弦|ウード · アラブ式|우드 · 아랍식|Oud · arabe|Oud · arabisch|Laúd árabe|Oud · árabe
+Standard tuning|标准调弦|標準調弦|標準チューニング|표준 튜닝|Accordage standard|Standardstimmung|Afinación estándar|Afinação padrão
+More instruments|更多乐器|更多樂器|その他の楽器|더 많은 악기|Autres instruments|Weitere Instrumente|Más instrumentos|Mais instrumentos
+%d strings|%d 弦|%d 弦|%d 弦|%d현|%d cordes|%d Saiten|%d cuerdas|%d cordas
+Expanded|已展开|已展開|展開済み|펼침|Développé|Erweitert|Expandido|Expandido
+Collapsed|已收起|已收起|折りたたみ済み|접힘|Réduit|Eingeklappt|Contraído|Recolhido
+Headstock styles|琴头样式|琴頭樣式|ヘッド形状|헤드 모양|Formes de tête|Kopfformen|Formas del clavijero|Formatos do headstock
+Headstock layout|弦轴布局|弦軸配置|ペグの配置|튜닝 페그 배열|Disposition des mécaniques|Anordnung der Mechaniken|Disposición de clavijas|Disposição das tarraxas
+4 in line|单排四钮|單排四鈕|片側4連|한 줄 4개|4 en ligne|4 in Reihe|4 en línea|4 em linha
+6 in line|单排六钮|單排六鈕|片側6連|한 줄 6개|6 en ligne|6 in Reihe|6 en línea|6 em linha
+7 in line|单排七钮|單排七鈕|片側7連|한 줄 7개|7 en ligne|7 in Reihe|7 en línea|7 em linha
+Headless|无头琴|無頭琴|ヘッドレス|헤드리스|Sans tête|Headless|Sin pala|Sem cabeça
+Tuning response|指针响应|指針響應|チューナーの反応|튜너 반응|Réponse de l’accordeur|Stimmreaktion|Respuesta del afinador|Resposta do afinador
+Balanced|均衡|均衡|バランス|균형|Équilibrée|Ausgewogen|Equilibrada|Equilibrada
+Steady|平稳|平穩|安定|안정|Stable|Ruhig|Estable|Estável
+In-tune feedback|调准振动|調準震動|チューニング完了の触覚|튜닝 완료 진동|Retour haptique à l’accord|Vibration bei korrekter Stimmung|Vibración al afinar|Vibração ao afinar
+Increase reference pitch|提高基准音|提高基準音|基準ピッチを上げる|기준 음높이 높이기|Augmenter le diapason|Kammerton erhöhen|Subir tono de referencia|Aumentar tom de referência
+Decrease reference pitch|降低基准音|降低基準音|基準ピッチを下げる|기준 음높이 낮추기|Baisser le diapason|Kammerton senken|Bajar tono de referencia|Reduzir tom de referência
+Half step down|降半音|降半音|半音下げ|반음 내림|Un demi-ton plus bas|Halbton tiefer|Medio tono abajo|Meio tom abaixo
+Whole step down|降全音|降全音|全音下げ|온음 내림|Un ton plus bas|Ganzton tiefer|Un tono abajo|Um tom abaixo
+Double drop D|双降 D|雙降 D|ダブルドロップ D|더블 드롭 D|Double drop D|Double Drop D|Doble drop D|Drop D duplo
+All fourths|全四度|全四度|完全四度|완전 4도|Tout en quartes|Quartenstimmung|Por cuartas|Em quartas
+New standard|新标准|新標準|ニュー・スタンダード|뉴 스탠더드|Nouveau standard|New Standard|Nuevo estándar|Novo padrão
+Cross tuning|交叉调弦|交叉調弦|クロスチューニング|크로스 튜닝|Accord croisé|Kreuzstimmung|Afinación cruzada|Afinação cruzada
+Solo tuning|独奏调弦|獨奏調弦|ソロ調弦|독주 조율|Accord solo|Solostimmung|Afinación solista|Afinação solo
+Reference notes|参考音列表|參考音列表|基準音の一覧|기준음 목록|Notes de référence|Referenztöne|Notas de referencia|Notas de referência
+Hirajōshi|平调子|平調子|平調子|히라조시|Hirajōshi|Hirajōshi|Hirajōshi|Hirajōshi
+Honchōshi|本调子|本調子|本調子|혼초시|Honchōshi|Honchōshi|Honchōshi|Honchōshi
+Niagari|二上调|二上調|二上り|니아가리|Niagari|Niagari|Niagari|Niagari
+Sansagari|三下调|三下調|三下り|산사가리|Sansagari|Sansagari|Sansagari|Sansagari
+Standard|标准|標準|標準|표준|Standard|Standard|Estándar|Padrão
+Low G|低音 G|低音 G|ロー G|로우 G|Sol grave|Tiefes G|Sol grave|Sol grave
+Nashville|纳什维尔|納什維爾|ナッシュビル|내슈빌|Nashville|Nashville|Nashville|Nashville
+D tuning|D 调弦|D 調弦|D チューニング|D 튜닝|Accordage en ré|D-Stimmung|Afinación en re|Afinação em ré
+High C|高音 C|高音 C|ハイ C|높은 C|Do aigu|Hohes C|Do agudo|Dó agudo
+Low C|低音 C|低音 C|ロー C|낮은 C|Do grave|Tiefes C|Do grave|Dó grave
+Low B♭|低音 B♭|低音 B♭|ロー B♭|낮은 B♭|Si♭ grave|Tiefes B♭|Si♭ grave|Si♭ grave
+High F|高音 F|高音 F|ハイ F|높은 F|Fa aigu|Hohes F|Fa agudo|Fá agudo
+Sawmill|Sawmill 调弦|Sawmill 調弦|ソーミル|소밀|Sawmill|Sawmill|Sawmill|Sawmill
+Double C|双 C|雙 C|ダブル C|더블 C|Double do|Doppel-C|Doble do|Dó duplo
+Hirajōshi, low first string|平调子 · 低第一弦|平調子 · 低第一弦|平調子・一の絃を低く|히라조시 · 낮은 첫 줄|Hirajōshi · première corde grave|Hirajōshi · tiefe erste Saite|Hirajōshi · primera cuerda grave|Hirajōshi · primeira corda grave
+A standard|A 标准|A 標準|A スタンダード|A 표준|A standard|A Standard|A estándar|A padrão
+B standard|B 标准|B 標準|B スタンダード|B 표준|B standard|B Standard|B estándar|B padrão
+C standard|C 标准|C 標準|C スタンダード|C 표준|C standard|C Standard|C estándar|C padrão
+Drop A|降 A|降 A|ドロップ A|드롭 A|Drop A|Drop A|Drop A|Drop A
+Drop B|降 B|降 B|ドロップ B|드롭 B|Drop B|Drop B|Drop B|Drop B
+Drop C|降 C|降 C|ドロップ C|드롭 C|Drop C|Drop C|Drop C|Drop C
+Drop C♯|降 C♯|降 C♯|ドロップ C♯|드롭 C♯|Drop C♯|Drop C♯|Drop C♯|Drop C♯
+Drop D|降 D|降 D|ドロップ D|드롭 D|Drop D|Drop D|Drop D|Drop D
+Drop E|降 E|降 E|ドロップ E|드롭 E|Drop E|Drop E|Drop E|Drop E
+Drop G|降 G|降 G|ドロップ G|드롭 G|Drop G|Drop G|Drop G|Drop G
+Drop G♯|降 G♯|降 G♯|ドロップ G♯|드롭 G♯|Drop G♯|Drop G♯|Drop G♯|Drop G♯
+Open A|开放 A|開放 A|オープン A|오픈 A|A ouvert|Offenes A|A abierto|A aberto
+Open C|开放 C|開放 C|オープン C|오픈 C|C ouvert|Offenes C|C abierto|C aberto
+Open C minor|开放 C 小调|開放 C 小調|オープン C マイナー|오픈 C 단조|C mineur ouvert|Offenes C-Moll|C menor abierto|C menor aberto
+Open D|开放 D|開放 D|オープン D|오픈 D|D ouvert|Offenes D|D abierto|D aberto
+Open D minor|开放 D 小调|開放 D 小調|オープン D マイナー|오픈 D 단조|D mineur ouvert|Offenes D-Moll|D menor abierto|D menor aberto
+Open E|开放 E|開放 E|オープン E|오픈 E|E ouvert|Offenes E|E abierto|E aberto
+Open G|开放 G|開放 G|オープン G|오픈 G|G ouvert|Offenes G|G abierto|G aberto
+Open G minor|开放 G 小调|開放 G 小調|オープン G マイナー|오픈 G 단조|G mineur ouvert|Offenes G-Moll|G menor abierto|G menor aberto
+Common tunings|常用定弦|常用定弦|よく使うチューニング|자주 쓰는 튜닝|Accordages courants|Gängige Stimmungen|Afinaciones comunes|Afinações comuns
+Drop tunings|降弦定弦|降弦定弦|ドロップチューニング|드롭 튜닝|Accordages drop|Drop-Stimmungen|Afinaciones drop|Afinações drop
+Open tunings|开放式定弦|開放式定弦|オープンチューニング|오픈 튜닝|Accordages ouverts|Offene Stimmungen|Afinaciones abiertas|Afinações abertas
+Other tunings|其他定弦|其他定弦|その他のチューニング|기타 튜닝|Autres accordages|Weitere Stimmungen|Otras afinaciones|Outras afinações
+Common notes|常用音|常用音|よく使う音|자주 쓰는 음|Notes courantes|Gängige Töne|Notas comunes|Notas comuns
+Other note|其他音|其他音|その他の音|다른 음|Autre note|Anderer Ton|Otra nota|Outra nota
+Note set|音组|音組|音のセット|음 세트|Groupe de notes|Tongruppe|Grupo de notas|Grupo de notas
+Note with octave|音名和八度|音名和八度|音名とオクターブ|음 이름과 옥타브|Note avec octave|Ton mit Oktave|Nota con octava|Nota com oitava
+Use note|锁定音高|鎖定音高|この音を使う|이 음 사용|Choisir la note|Ton wählen|Elegir nota|Escolher nota
+C major, 17 keys|C 大调 · 17 键|C 大調 · 17 鍵|ハ長調・17キー|다장조 · 17키|Do majeur · 17 lames|C-Dur · 17 Zungen|Do mayor · 17 teclas|Dó maior · 17 teclas
+Half step up|升半音|升半音|半音上げ|반음 올림|Un demi-ton plus haut|Halbton höher|Medio tono arriba|Meio tom acima
+High G|高 G|高 G|ハイ G|하이 G|Sol aigu|Hohes G|Sol agudo|Sol agudo
+High D|高 D|高 D|ハイ D|하이 D|Ré aigu|Hohes D|Re agudo|Ré agudo
+Low D|低 D|低 D|ロー D|로우 D|Ré grave|Tiefes D|Re grave|Ré grave
+Fifths|五度定弦|五度定弦|五度調弦|5도 튜닝|En quintes|Quintstimmung|Por quintas|Em quintas
+Bach Suite No. 5|巴赫第五组曲|巴赫第五組曲|バッハ第5組曲|바흐 모음곡 5번|Suite nº 5 de Bach|Bachs Suite Nr. 5|Suite n.º 5 de Bach|Suíte nº 5 de Bach
+Kodály Sonata|柯达伊奏鸣曲|柯達伊奏鳴曲|コダーイのソナタ|코다이 소나타|Sonate de Kodály|Kodálys Sonate|Sonata de Kodály|Sonata de Kodály
+Mozart scordatura|莫扎特特殊定弦|莫札特特殊定弦|モーツァルトの変則調弦|모차르트 변칙 조율|Scordatura de Mozart|Mozarts Skordatur|Scordatura de Mozart|Scordatura de Mozart
+Cross tuning in G|G 调交叉定弦|G 調交叉定弦|G クロスチューニング|G 크로스 튜닝|Accordage croisé en sol|Kreuzstimmung in G|Afinación cruzada en sol|Afinação cruzada em sol
+Cajun|卡津定弦|卡津定弦|ケイジャン|케이준|Cajun|Cajun|Cajún|Cajun
+Calico|Calico 定弦|Calico 定弦|キャリコ|캘리코|Calico|Calico|Calico|Calico
+Low A D tuning|D 定弦 · 低 A|D 定弦 · 低 A|D チューニング・ロー A|D 튜닝 · 로우 A|Accordage en ré · la grave|D-Stimmung · tiefes A|Afinación en re · la grave|Afinação em ré · lá grave
+B♭ tuning|B♭ 定弦|B♭ 定弦|B♭ チューニング|B♭ 튜닝|Accordage en si♭|B♭-Stimmung|Afinación en si♭|Afinação em si♭
+Open D with A drone|开放 D · A 持续音弦|開放 D · A 持續音弦|オープン D・ドローン弦 A|오픈 D · 드론 현 A|Ré ouvert · bourdon en la|Offenes D · Bordunsaite A|Re abierto · bordón en la|Ré aberto · bordão em lá
+DADGAD down a whole step|DADGAD 降全音|DADGAD 降全音|DADGAD 全音下げ|DADGAD 온음 내림|DADGAD un ton plus bas|DADGAD einen Ganzton tiefer|DADGAD un tono abajo|DADGAD um tom abaixo
+Orkney|奥克尼定弦|奧克尼定弦|オークニー|오크니|Orkney|Orkney|Orcadas|Orkney
+Zhengdiao|正调|正調|正調|정조|Zhengdiao|Zhengdiao|Zhengdiao|Zhengdiao
+Ruibin diao|蕤宾调|蕤賓調|蕤賓調|유빈조|Ruibin diao|Ruibin diao|Ruibin diao|Ruibin diao
+Manjiao diao|慢角调|慢角調|慢角調|만각조|Manjiao diao|Manjiao diao|Manjiao diao|Manjiao diao
+Hirajōshi in C|C 调平调子|C 調平調子|C の平調子|C 히라조시|Hirajōshi en do|Hirajōshi in C|Hirajōshi en do|Hirajōshi em dó
+Hirajōshi in E|E 调平调子|E 調平調子|E の平調子|E 히라조시|Hirajōshi en mi|Hirajōshi in E|Hirajōshi en mi|Hirajōshi em mi
+Honchōshi in D|D 调本调子|D 調本調子|D の本調子|D 혼조시|Honchōshi en ré|Honchōshi in D|Honchōshi en re|Honchōshi em ré
+Niagari in D|D 调二上|D 調二上|D の二上り|D 니아가리|Niagari en ré|Niagari in D|Niagari en re|Niagari em ré
+Sansagari in D|D 调三下|D 調三下|D の三下り|D 산사가리|Sansagari en ré|Sansagari in D|Sansagari en re|Sansagari em ré
+E-to-E|E 至 E|E 至 E|E から E|E에서 E|De mi à mi|Von E bis E|De mi a mi|De mi a mi
+B♭ standard|B♭ 标准|B♭ 標準|B♭ スタンダード|B♭ 표준|B♭ standard|B♭ Standard|B♭ estándar|B♭ padrão
+D♭ standard|D♭ 标准|D♭ 標準|D♭ スタンダード|D♭ 표준|D♭ standard|D♭ Standard|D♭ estándar|D♭ padrão
+Drop B♭|降 B♭|降 B♭|ドロップ B♭|드롭 B♭|Drop B♭|Drop B♭|Drop B♭|Drop B♭
+Drop F♯|降 F♯|降 F♯|ドロップ F♯|드롭 F♯|Drop F♯|Drop F♯|Drop F♯|Drop F♯
+Open E♭|开放 E♭|開放 E♭|オープン E♭|오픈 E♭|E♭ ouvert|Offenes E♭|E♭ abierto|E♭ aberto
+Open D♭|开放 D♭|開放 D♭|オープン D♭|오픈 D♭|D♭ ouvert|Offenes D♭|D♭ abierto|D♭ aberto
+Open E minor|开放 E 小调|開放 E 小調|オープン E マイナー|오픈 E 단조|E mineur ouvert|Offenes E-Moll|E menor abierto|E menor aberto
+Open A minor|开放 A 小调|開放 A 小調|オープン A マイナー|오픈 A 단조|A mineur ouvert|Offenes A-Moll|A menor abierto|A menor aberto
+A major pentatonic|A 大调五声音阶|A 大調五聲音階|A メジャーペンタトニック|A 장조 펜타토닉|Pentatonique de la majeur|A-Dur-Pentatonik|Pentatónica de la mayor|Pentatônica de lá maior
+C major pentatonic|C 大调五声音阶|C 大調五聲音階|C メジャーペンタトニック|C 장조 펜타토닉|Pentatonique de do majeur|C-Dur-Pentatonik|Pentatónica de do mayor|Pentatônica de dó maior
+D major pentatonic|D 大调五声音阶|D 大調五聲音階|D メジャーペンタトニック|D 장조 펜타토닉|Pentatonique de ré majeur|D-Dur-Pentatonik|Pentatónica de re mayor|Pentatônica de ré maior
+F major pentatonic|F 大调五声音阶|F 大調五聲音階|F メジャーペンタトニック|F 장조 펜타토닉|Pentatonique de fa majeur|F-Dur-Pentatonik|Pentatónica de fa mayor|Pentatônica de fá maior
+G major pentatonic|G 大调五声音阶|G 大調五聲音階|G メジャーペンタトニック|G 장조 펜타토닉|Pentatonique de sol majeur|G-Dur-Pentatonik|Pentatónica de sol mayor|Pentatônica de sol maior
+Target note|目标音|目標音|目標音|목표음|Note cible|Zielton|Nota objetivo|Nota-alvo
+Auto-detect notes|自动识别音高|自動辨識音高|音を自動検出|음 자동 감지|Détection automatique|Töne automatisch erkennen|Detectar notas automáticamente|Detectar notas automaticamente
+Stop|停止|停止|停止|정지|Arrêter|Stopp|Detener|Parar
+Octave|八度|八度|オクターブ|옥타브|Octave|Oktave|Octava|Oitava
+Lower octave|降低八度|降低八度|1オクターブ下げる|한 옥타브 낮추기|Octave inférieure|Eine Oktave tiefer|Octava inferior|Oitava abaixo
+Higher octave|升高八度|升高八度|1オクターブ上げる|한 옥타브 높이기|Octave supérieure|Eine Oktave höher|Octava superior|Oitava acima
+Pluck a string|拨一根弦|撥一根弦|弦を1本はじく|현 하나를 뜯어 보세요|Pincez une corde|Eine Saite anzupfen|Pulsa una cuerda|Dedilhe uma corda
+Play an open string|奏一根空弦|奏一根空弦|開放弦を鳴らす|개방현을 연주하세요|Jouez une corde à vide|Eine leere Saite spielen|Toca una cuerda al aire|Toque uma corda solta
+Play a long note|吹一个长音|吹一個長音|音を長く伸ばす|한 음을 길게 연주하세요|Tenez une note|Einen langen Ton spielen|Sostén una nota|Sustente uma nota
+Sing a note|唱一个音|唱一個音|音を1つ歌う|한 음을 불러 보세요|Chantez une note|Einen Ton singen|Canta una nota|Cante uma nota
+Strike the drum|敲一下鼓面|敲一下鼓面|鼓面をたたく|북면을 쳐 보세요|Frappez la timbale|Die Pauke anschlagen|Golpea el timbal|Toque o tímpano
+Strike a note|敲一个音|敲一個音|音を1つ打つ|한 음을 쳐 보세요|Frappez une note|Einen Ton anschlagen|Golpea una nota|Percuta uma nota
+Tap a note|轻敲一个音|輕敲一個音|音を1つ軽くたたく|한 음을 가볍게 두드리세요|Tapez une note|Ein Tonfeld leicht antippen|Toca una nota con la mano|Toque uma nota com a mão
+Pluck a tine|拨一根音簧|撥一根音簧|キーを1本はじく|건반 하나를 튕겨 보세요|Pincez une lamelle|Eine Klangzunge anzupfen|Pulsa una lámina|Dedilhe uma lâmina
+Play one key|按一个琴键|按一個琴鍵|鍵盤を1つ押す|건반 하나를 누르세요|Jouez une touche|Eine Taste spielen|Toca una tecla|Toque uma tecla
+Drum size|鼓面尺寸|鼓面尺寸|太鼓のサイズ|드럼 크기|Diamètre du fût|Paukengröße|Tamaño del timbal|Tamanho do tímpano
+Layout|音阶布局|音階配置|音階の配列|음계 배열|Disposition|Tonanordnung|Distribución de notas|Disposição das notas
+C diatonic|C 调十孔口琴|C 調十孔口琴|C調ダイアトニック|C 다이아토닉|Diatonique en do|Diatonisch in C|Diatónica en do|Diatônica em dó
+Pitch checks|音高检查|音高檢查|音高チェック|음높이 확인|Contrôle des hauteurs|Tonhöhe prüfen|Comprobación de afinación|Verificação de afinação
+Tune one string at a time within each pair.|每组两根弦请逐根调。|每組兩根弦請逐根調。|各組の弦を1本ずつ調弦します。|각 줄 쌍을 한 줄씩 조율하세요.|Accordez séparément les deux cordes de chaque paire.|Jede Saite eines Paares einzeln stimmen.|Afina las dos cuerdas de cada par por separado.|Afine separadamente as duas cordas de cada par.
+Treble bridge|高音码|高音碼|高音駒|고음 브리지|Chevalet aigu|Diskantsteg|Puente agudo|Cavalete agudo
+Upper tenor bridge|上中音码|上中音碼|上中音駒|상중음 브리지|Chevalet médium supérieur|Oberer Mittelsteg|Puente medio alto|Cavalete médio superior
+Tenor bridge|中音码|中音碼|中音駒|중음 브리지|Chevalet médium|Mittelsteg|Puente medio|Cavalete médio
+Lower tenor bridge|下中音码|下中音碼|下中音駒|하중음 브리지|Chevalet médium inférieur|Unterer Mittelsteg|Puente medio bajo|Cavalete médio inferior
+Bass bridge|低音码|低音碼|低音駒|저음 브리지|Chevalet grave|Basssteg|Puente grave|Cavalete grave
+Sa = C♯ · 11 taraf|Sa = C♯ · 11 根共鸣弦|Sa = C♯ · 11 根共鳴弦|Sa = C♯ · 共鳴弦11本|Sa = C♯ · 공명현 11개|Sa = C♯ · 11 cordes sympathiques|Sa = C♯ · 11 Resonanzsaiten|Sa = C♯ · 11 cuerdas simpáticas|Sa = C♯ · 11 cordas simpáticas
+Grouped|分组|分組|グループ|그룹별|Par groupes|Gruppiert|Por grupos|Por grupos
+All strings|全部|全部|すべて|모든 현|Toutes les cordes|Alle Saiten|Todas las cuerdas|Todas as cordas
+High register|高音|高音|高音域|고음역|Aigu|Hoch|Agudo|Agudo
+Middle register|中音|中音|中音域|중음역|Médium|Mittel|Medio|Médio
+Low register|低音|低音|低音域|저음역|Grave|Tief|Grave|Grave
+High|高音|高音|高音|고음|Aigu|Hoch|Agudo|Agudo
+Middle|中音|中音|中音|중음|Médium|Mittel|Medio|Médio
+Low|低音|低音|低音|저음|Grave|Tief|Grave|Grave
+Playing strings|主弦|主弦|演奏弦|연주현|Cordes de jeu|Spielsaiten|Cuerdas de toque|Cordas de toque
+Sympathetic strings|共鸣弦|共鳴弦|共鳴弦|공명현|Cordes sympathiques|Resonanzsaiten|Cuerdas simpáticas|Cordas simpáticas
+String %d|第 %d 弦|第 %d 弦|第 %d 弦|%d번 현|Corde %d|Saite %d|Cuerda %d|Corda %d
+Sympathetic string %d|共鸣弦 %d|共鳴弦 %d|共鳴弦 %d|공명현 %d번|Corde sympathique %d|Resonanzsaite %d|Cuerda simpática %d|Corda simpática %d
+%d / %d in tune|%d / %d 已调准|%d / %d 已調準|%d / %d 調弦済み|%d / %d 튜닝 완료|%d / %d accordées|%d / %d gestimmt|%d / %d afinadas|%d / %d afinadas
+Choose a string|请选择弦位|請選擇弦位|弦を選択|현 선택|Choisir une corde|Saite auswählen|Elige una cuerda|Escolha uma corda

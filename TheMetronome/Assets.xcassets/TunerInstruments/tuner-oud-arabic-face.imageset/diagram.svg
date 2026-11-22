@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="252" height="374" viewBox="0 0 252 374" fill="none" stroke="#27251f" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke-width="1.7" d="M69 366V311Q69 299 59 270C48 230 69 163 74 103Q76 79 74 53C72 20 96 6 126 6S180 20 178 53Q176 79 178 103C183 163 204 230 193 270Q183 299 183 311V366Z"/>
+  <path stroke-width="1.2" d="M80 309Q70 275 67 250C66 212 82 147 84 102Q87 77 85 54C84 30 103 17 126 17S168 30 167 54Q165 77 168 102C170 147 186 212 185 250Q182 275 172 309"/>
+  <rect x="69" y="309" width="114" height="8" rx="2" stroke-width="1.2"/>
+  <ellipse cx="32" cy="263" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M44 261H57M44 265H57M47 261v4"/>
+  <path stroke-width=".62" d="M57 261.5H75.55M57 264.5H75.55"/>
+  <path stroke-width=".82" d="M78.15 264.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L79 309V366"/>
+  <ellipse cx="32" cy="225" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M44 223H57M44 227H57M47 223v4"/>
+  <path stroke-width=".62" d="M57 223.5H82.70M57 226.5H82.70"/>
+  <path stroke-width=".82" d="M85.30 226.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L89 309V366"/>
+  <ellipse cx="37" cy="187" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M49 185H62M49 189H62M52 185v4"/>
+  <path stroke-width=".62" d="M62 185.5H83.85M62 188.5H83.85"/>
+  <path stroke-width=".82" d="M86.45 188.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L93 309V366"/>
+  <ellipse cx="45" cy="149" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M57 147H70M57 151H70M60 147v4"/>
+  <path stroke-width=".62" d="M70 147.5H91.00M70 150.5H91.00"/>
+  <path stroke-width=".82" d="M93.60 150.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L103 309V366"/>
+  <ellipse cx="48" cy="111" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M60 109H73M60 113H73M63 109v4"/>
+  <path stroke-width=".62" d="M73 109.5H92.15M73 112.5H92.15"/>
+  <path stroke-width=".82" d="M94.75 112.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L107 309V366"/>
+  <ellipse cx="50" cy="73" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M62 71H75M62 75H75M65 71v4"/>
+  <path stroke-width=".62" d="M75 71.5H101.30M75 74.5H101.30"/>
+  <path stroke-width=".82" d="M103.90 74.5q0.6 -3 -1.1 -3q-1.55 0 -1.5 3L119 309V366"/>
+  <ellipse cx="202" cy="92" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M190 90H177M190 94H177M187 90v4"/>
+  <path stroke-width=".62" d="M177 90.5H139.28M177 93.5H139.28"/>
+  <path stroke-width=".82" d="M136.68 93.5q-0.6 -3 1.1 -3q1.55 0 1.5 3L123 309V366"/>
+  <ellipse cx="205" cy="130" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M193 128H180M193 132H180M190 128v4"/>
+  <path stroke-width=".62" d="M180 128.5H147.43M180 131.5H147.43"/>
+  <path stroke-width=".82" d="M144.83 131.5q-0.6 -3 1.1 -3q1.55 0 1.5 3L134 309V366"/>
+  <ellipse cx="211" cy="168" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M199 166H186M199 170H186M196 166v4"/>
+  <path stroke-width=".62" d="M186 166.5H148.57M186 169.5H148.57"/>
+  <path stroke-width=".82" d="M145.97 169.5q-0.6 -3 1.1 -3q1.55 0 1.5 3L138 309V366"/>
+  <ellipse cx="217" cy="206" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M205 204H192M205 208H192M202 204v4"/>
+  <path stroke-width=".62" d="M192 204.5H156.72M192 207.5H156.72"/>
+  <path stroke-width=".82" d="M154.12 207.5q-0.6 -3 1.1 -3q1.55 0 1.5 3L149 309V366"/>
+  <ellipse cx="220" cy="244" rx="12" ry="8" stroke-width="1.45"/>
+  <path stroke-width="1.15" d="M208 242H195M208 246H195M205 242v4"/>
+  <path stroke-width=".62" d="M195 242.5H157.88M195 245.5H157.88"/>
+  <path stroke-width=".82" d="M155.28 245.5q-0.6 -3 1.1 -3q1.55 0 1.5 3L153 309V366"/>
+</svg>

@@ -10,6 +10,8 @@
 	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Connect a Bluetooth MIDI pedal to control the metronome hands-free.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The tuner uses the microphone to measure the pitch of your instrument.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

@@ -144,8 +144,10 @@
 "REAL DRUMS / HATS & PERCUSSION" = "生のドラム / シンバル・打楽器";
 "RIDE" = "ライド";
 "RIMSHOT" = "リムショット";
+"Remember last setup" = "前回の設定を記憶";
 "Remove all assignments" = "すべての割り当てを解除";
 "Remove assignment" = "割り当てを解除";
+"Restores your last mode, tuner instrument, and each instrument’s tuning." = "前回のモードとチューナーの楽器、楽器ごとの調弦を復元します。";
 "Resume on the same beat timeline" = "元の拍の流れに復帰";
 "Return key" = "Return";
 "Right arrow" = "右矢印";
@@ -558,3 +560,6 @@
 "Last opened" = "最近開いた曲";
 
 "Clear history" = "履歴を消去";
+"Button finish" = "ボタンの質感";
+"Raised" = "立体";
+"Flat finish" = "フラット";

@@ -144,8 +144,10 @@
 "REAL DRUMS / HATS & PERCUSSION" = "Real drums / hats & percussion";
 "RIDE" = "Ride";
 "RIMSHOT" = "Rimshot";
+"Remember last setup" = "Remember last setup";
 "Remove all assignments" = "Remove all assignments";
 "Remove assignment" = "Remove assignment";
+"Restores your last mode, tuner instrument, and each instrument’s tuning." = "Restores your last mode, tuner instrument, and each instrument’s tuning.";
 "Resume on the same beat timeline" = "Resume on the same beat timeline";
 "Return key" = "Return key";
 "Right arrow" = "Right arrow";
@@ -558,3 +560,6 @@
 "Last opened" = "Last opened";
 
 "Clear history" = "Clear history";
+"Button finish" = "Button finish";
+"Raised" = "Raised";
+"Flat finish" = "Flat";
