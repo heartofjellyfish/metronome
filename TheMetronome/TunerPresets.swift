@@ -134,6 +134,8 @@ enum TunerPresets {
             ("Sawmill", [67,50,55,60,62]), ("Open D", [66,50,54,57,62]),
             ("Open C", [67,48,55,60,64]), ("Open D with A drone", [69,50,54,57,62]),
         ],
+        "Morin khuur": [("F3–B♭3", [53,58])],
+        "Large sanxian": [("D2–A2–D3", [38,45,50])],
         "Erhu": [
             ("Whole step down", [60,67]), ("Half step down", [61,68]),
             ("Half step up", [63,70]),
@@ -149,12 +151,16 @@ enum TunerPresets {
             ("Hirajōshi, low first string", [50,55,57,58,62,63,67,69,70,74,75,79,81]),
             ("Hirajōshi in C", [60,53,55,56,60,61,65,67,68,72,73,77,79]),
             ("Hirajōshi in E", [64,57,59,60,64,65,69,71,72,76,77,81,83]),
+            ("Kumoijōshi", [62,55,56,60,62,63,67,68,72,74,75,79,81]),
         ],
         "Shamisen": [
             ("Niagari", [48,55,60]), ("Sansagari", [48,53,58]),
             ("Honchōshi in D", [50,55,62]), ("Niagari in D", [50,57,62]), ("Sansagari in D", [50,55,60]),
         ],
         "Oud · Arabic": [("High F", [41,45,50,55,60,65]), ("Low D", [38,41,45,50,55,60])],
+        "Oud · Turkish": [("Low D–A", [38,45,47,52,57,62])],
+        "Bağlama": [("Bağlama düzeni · B", [59,57,52])],
+        "Setar": [("C–F", [48,60,53,60]), ("D bass & drone", [50,62,55,60])],
         "Sitar": [
             ("Sa = C", TunerSitar.cSharp.map { $0 - 1 }),
             ("Sa = D", TunerSitar.cSharp.map { $0 + 1 }),

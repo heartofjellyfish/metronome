@@ -12,13 +12,21 @@ struct TunerInstrumentIcon: View {
                 Image(systemName: "circle.dotted").font(.system(size: 25))
             } else if profile.instrumentName == "Guzheng" {
                 TunerGuzhengArtwork.pickerIcon(p, selected: selected)
+            } else if TunerRuanHeadstock.forInstrument(profile.instrumentID) != nil {
+                TunerRuanHeadstock.pickerIcon(p, selected: selected)
+            } else if let headstock = TunerChineseHeadstock.forInstrument(profile.instrumentID, stringCount: profile.strings.count) {
+                headstock.pickerIcon(p, selected: selected)
+            } else if profile.family == TunerProfile.middleEasternFamily,
+                      let headstock = TunerRegionalHeadstock.forInstrument(profile.instrumentID, stringCount: profile.strings.count) {
+                headstock.middleEasternPickerIcon(p, selected: selected)
             } else if let layout {
                 layout.pickerIcon(p, selected: selected)
             } else if profile.family == "Custom tuning" {
                 Image(systemName: TunerProfile.icon(profile.family)).font(.system(size: 18))
             } else {
-                let pickerAsset = UIImage(named: profile.diagramName + "-picker")
-                let artwork = pickerAsset.map(Image.init(uiImage:)) ?? Image(profile.diagramName)
+                let name = profile.diagramName
+                let pickerAsset = UIImage(named: name + "-picker")
+                let artwork = pickerAsset.map(Image.init(uiImage:)) ?? Image(name)
                 artwork.renderingMode(.template).resizable().scaledToFit().frame(width: 35, height: 32)
             }
         }
@@ -58,7 +66,7 @@ struct TunerLibrary: View {
         Family("Bass", ["Bass", "5-string bass", "6-string bass"]),
         Family("Bowed strings", ["Violin", "Viola", "Cello", "Double bass"]),
         Family("Plucked strings", ["5-string banjo", "Mandolin"]),
-        Family("Woodwinds", ["B♭ clarinet"] + TunerProfile.catalog
+        Family("Woodwinds", ["B♭ clarinet"] + TunerProfile.availableCatalog
             .filter { $0.family == "Woodwinds" && $0.id != "B♭ clarinet" }.map(\.id))
     ]
 
@@ -66,8 +74,14 @@ struct TunerLibrary: View {
         guard !["Guitar & bass", "Bowed strings", "Plucked strings", "Woodwinds", "Custom tuning"].contains(family) else {
             return nil
         }
-        let instruments = TunerProfile.catalog.filter { $0.family == family && $0.title == $0.instrumentName }
+        let instruments = TunerProfile.availableCatalog.filter { $0.family == family && $0.title == $0.instrumentName }
         return Family(family, instruments.map(\.id))
+    }
+
+    private static let availableFamilies = (families + additionalFamilies).filter { family in
+        family.id == "Chromatic" || family.quick.contains { id in
+            TunerProfile.availableCatalog.contains { $0.id == id }
+        }
     }
 
     private var parsed: [Int]? { TunerProfile.parseNotes(customNotes) }
@@ -87,7 +101,7 @@ struct TunerLibrary: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                        ForEach(Self.families + Self.additionalFamilies) { family in
+                        ForEach(Self.availableFamilies) { family in
                             if family.id != Self.families.first?.id { divider }
                             familyRow(family).id("family-" + family.id)
                         }
@@ -109,7 +123,8 @@ struct TunerLibrary: View {
                 .padding(5)
                 .insetPanel(p, radius: 15)
                 .onAppear {
-                    if let family = Self.additionalFamilies.first(where: { $0.quick.contains(selected) }) {
+                    if TunerProfile.showsExtendedCatalog,
+                       let family = Self.additionalFamilies.first(where: { $0.quick.contains(selected) }) {
                         proxy.scrollTo("family-" + family.id, anchor: .center)
                     } else if custom.contains(where: { $0.id == selected }) {
                         proxy.scrollTo("family-Custom tuning", anchor: .bottom)
@@ -205,7 +220,7 @@ struct TunerLibrary: View {
     private func profiles(_ ids: [String]) -> [TunerProfile] {
         ids.compactMap { id in
             if id == TunerProfile.chromatic.id { return .chromatic }
-            return TunerProfile.catalog.first { $0.id == id }
+            return TunerProfile.availableCatalog.first { $0.id == id }
         }
     }
 

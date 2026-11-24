@@ -23,10 +23,13 @@ struct TunerProfile: Identifiable, Equatable, Codable {
 
     static let chromatic = TunerProfile("Chromatic", "")
     static let chineseFamily = "Chinese instruments"
+    static let japaneseFamily = "Japanese instruments"
+    static let middleEasternFamily = "Middle East"
     static let families = ["Guitar & bass", "Bowed strings", "Plucked strings", "Woodwinds", "Brass",
-                           "Keys & reeds", "Pitched percussion", chineseFamily, "World instruments", "Voice", "Custom tuning"]
+                           "Keys & reeds", "Pitched percussion", chineseFamily, japaneseFamily, middleEasternFamily,
+                           "World instruments", "Voice", "Custom tuning"]
     static let icons = ["guitars", "music.quarternote.3", "guitars.fill", "wind", "music.note",
-                        "pianokeys", "tuningfork", "music.note", "globe", "mic", "slider.horizontal.3"]
+                        "pianokeys", "tuningfork", "music.note", "music.note", "music.note", "globe", "mic", "slider.horizontal.3"]
     static func icon(_ family: String) -> String {
         families.firstIndex(of: family).map { icons[$0] } ?? "circle.dotted"
     }
@@ -66,14 +69,38 @@ struct TunerProfile: Identifiable, Equatable, Codable {
             .init("Erhu", chinese, [62,69]), .init("Yangqin", chinese), .init("Pipa", chinese, [45,50,52,57]),
             .init("Guzheng", chinese, [86,83,81,78,76,74,71,69,66,64,62,59,57,54,52,50,47,45,42,40,38]),
             .init("Guqin", chinese, [36,38,41,43,45,48,50]),
+            .init("Morin khuur", chinese, [55,60]), .init("Liuqin", chinese, [55,62,67,74]),
+            .init("Gaohu", chinese, [67,74]), .init("Zhonghu", chinese, [55,62]),
+            .init("Large sanxian", chinese, [43,50,55]), .init("Dombra", chinese, [50,55]),
             .init("Dizi", world), .init("Xiao", world), .init("Sheng", world), .init("Suona", world),
-            .init("Koto", world, [62,55,57,58,62,63,67,69,70,74,75,79,81]),
-            .init("Shamisen", world, [48,53,60]), .init("Shakuhachi", world), .init("Sitar", world, TunerSitar.cSharp),
-            .init("Oud · Arabic", world, [36,41,45,50,55,60]),
+            .init("Koto", japaneseFamily, [62,55,57,58,62,63,67,69,70,74,75,79,81]),
+            .init("Shamisen", japaneseFamily, [48,53,60]), .init("Shakuhachi", world), .init("Sitar", world, TunerSitar.cSharp),
+            .init("Oud · Arabic", middleEasternFamily, [36,41,45,50,55,60]),
+            .init("Oud · Turkish", middleEasternFamily, [37,42,47,52,57,62]),
+            .init("Bağlama", middleEasternFamily, [57,55,50]),
+            .init("Setar", middleEasternFamily, [48,60,55,60]),
             .init("Voice", "Voice")
-        ]
+        ] + TunerRuanHeadstock.profiles
         return instruments + TunerPresets.alternates(for: instruments)
     }()
+
+    static let releaseInstrumentIDs: Set<String> = [
+        "Guitar", "7-string guitar", "12-string guitar",
+        "Bass", "5-string bass", "6-string bass", "Ukulele", "Baritone ukulele",
+        "Violin", "Viola", "Cello", "Double bass", "5-string banjo", "Mandolin"
+    ]
+
+    static let releaseCatalog = catalog.filter { releaseInstrumentIDs.contains($0.instrumentID) }
+
+    static let showsExtendedCatalog: Bool = {
+        #if DEBUG
+        !ProcessInfo.processInfo.arguments.contains("--tuner-release-catalog")
+        #else
+        false
+        #endif
+    }()
+
+    static let availableCatalog = showsExtendedCatalog ? catalog : releaseCatalog
 
     static func parseNotes(_ text: String, maximumCount: Int = 24, range: ClosedRange<Int> = 20...108) -> [Int]? {
         let tokens = text.uppercased().replacingOccurrences(of: "♯", with: "#")
@@ -103,10 +130,12 @@ func tunerText(_ key: String) -> String {
 extension TunerProfile {
     var instrumentName: String { presetInstrument ?? title }
     var instrumentID: String { family == "Custom tuning" ? id : instrumentName }
+    var isHuqin: Bool { ["Erhu", "Gaohu", "Zhonghu"].contains(instrumentID) }
+    var prefersFlatStringNotes: Bool { ["Morin khuur", "Koto", "Shamisen"].contains(instrumentID) }
 
     func playingPrompt(hasStrings: Bool) -> String {
         if hasStrings {
-            return family == "Bowed strings" || instrumentName == "Erhu" ? "Play an open string" : "Pluck a string"
+            return family == "Bowed strings" || isHuqin || instrumentID == "Morin khuur" ? "Play an open string" : "Pluck a string"
         }
         switch instrumentName {
         case "Voice": return "Sing a note"
@@ -126,8 +155,10 @@ extension TunerProfile {
 
     var tuningHint: String? {
         switch instrumentName {
-        case "12-string guitar", "Mandolin", "Mandola":
+        case "12-string guitar", "Mandolin", "Mandola", "Oud · Arabic", "Oud · Turkish":
             return "Tune one string at a time within each pair."
+        case "Bağlama":
+            return "Short-neck saz. Pluck one string at a time, including the octave strings."
         default:
             return nil
         }
@@ -146,7 +177,8 @@ extension TunerProfile {
 
     var tuningArtworkName: String {
         switch family {
-        case "Woodwinds", "Brass", "Keys & reeds", "Pitched percussion", Self.chineseFamily, "World instruments", "Voice":
+        case "Woodwinds", "Brass", "Keys & reeds", "Pitched percussion", Self.chineseFamily, Self.japaneseFamily,
+             Self.middleEasternFamily, "World instruments", "Voice":
             return diagramName + "-face"
         case "Plucked strings" where ["Harp", "Lyre", "Dulcimer"].contains(instrumentName):
             return diagramName + "-face"
@@ -163,10 +195,14 @@ extension TunerProfile {
     var tuningName: String {
         if let presetName { return presetName }
         switch id {
+        case "Morin khuur": return "G3–C4"
         case "Guzheng": return "D major pentatonic"
         case "Guqin": return "Zhengdiao"
         case "Koto": return "Hirajōshi"
         case "Shamisen": return "Honchōshi"
+        case "Oud · Turkish": return "Bolahenk"
+        case "Bağlama": return "Bağlama düzeni · A"
+        case "Setar": return "C–G"
         case "Sitar": return "Sa = C♯"
         case "5-string banjo": return "Open G"
         case "Ukulele": return "High G"

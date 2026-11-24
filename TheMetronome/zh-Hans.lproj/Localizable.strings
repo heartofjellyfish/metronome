@@ -66,6 +66,10 @@
 "Connect pedal" = "连接踏板";
 "Could not connect MIDI. Try again." = "MIDI 连接失败，请重试。";
 "DARK" = "深色";
+"COLOR" = "颜色";
+"DESIGN" = "设计";
+"Relief" = "浮雕";
+"Flat" = "扁平";
 "DELETE" = "删除";
 "DELETE THIS PRESET?" = "删除这个预设？";
 "DIVISION" = "细分";

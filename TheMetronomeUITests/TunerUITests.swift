@@ -262,9 +262,67 @@ final class TunerUITests: XCTestCase {
         XCTAssertTrue(a.isSelected)
     }
 
+    func testDesignAndColorCanChangeIndependentlyAndPersist() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Violin",
+                               "--tuner-test-cents=0", "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        app.launch()
+
+        let selectedString = app.buttons["tuner-string-1"]
+        XCTAssertTrue(selectedString.waitForExistence(timeout: 5))
+        selectedString.tap()
+        XCTAssertEqual(selectedString.value as? String, "In tune")
+        openAppearanceSettings(in: app)
+
+        let relief = app.buttons["skin-sculpted"]
+        let flat = app.buttons["skin-flat"]
+        let light = app.buttons["theme-light"]
+        let dark = app.buttons["theme-dark"]
+        relief.tap()
+        XCTAssertTrue(relief.isSelected)
+        XCTAssertTrue(light.isSelected)
+
+        dark.tap()
+        XCTAssertTrue(dark.isSelected)
+        XCTAssertTrue(relief.isSelected)
+        flat.tap()
+        XCTAssertTrue(flat.isSelected)
+        XCTAssertTrue(dark.isSelected)
+        light.tap()
+        XCTAssertTrue(light.isSelected)
+        XCTAssertTrue(flat.isSelected)
+        proof(app, "Independent color and design controls")
+
+        app.buttons["close-settings"].tap()
+        XCTAssertTrue(selectedString.waitForExistence(timeout: 5))
+        XCTAssertEqual(selectedString.value as? String, "In tune")
+        proof(app, "Flat violin retains completed string")
+
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--light" }
+        app.launch()
+        XCTAssertTrue(selectedString.waitForExistence(timeout: 5))
+        openAppearanceSettings(in: app)
+        XCTAssertTrue(flat.isSelected)
+        XCTAssertTrue(light.isSelected)
+        relief.tap()
+        app.buttons["close-settings"].tap()
+        XCTAssertTrue(selectedString.waitForExistence(timeout: 5))
+        proof(app, "Relief violin after returning from settings")
+    }
+
+    private func openAppearanceSettings(in app: XCUIApplication) {
+        app.buttons["settings"].tap()
+        let scroll = app.scrollViews["settings-scroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 5))
+        let flat = app.buttons["skin-flat"]
+        for _ in 0..<3 where !flat.isHittable { scroll.swipeUp() }
+        XCTAssertTrue(flat.isHittable)
+    }
+
     func testTuningPresetComparisonKeepsPlaybackAndPickerActive() {
         let app = XCUIApplication()
-        app.launchArguments = ["--light", "--tuner-instrument=Guitar", "-AppleLanguages", "(en)"]
+        app.launchArguments = ["--light", "--mode-metronome", "--tuner-instrument=Guitar", "-AppleLanguages", "(en)"]
         app.launch()
         app.buttons["transport"].tap()
         app.buttons["mode-menu"].tap()
@@ -339,17 +397,94 @@ final class TunerUITests: XCTestCase {
         proof(app, "Pipa note labels at the pegs and retained marks")
     }
 
+    func testChineseHeadstocksAndMorinKhuurAlternateTuning() {
+        let app = XCUIApplication()
+        let cases = [
+            ("Morin khuur", ["2, G3", "1, C4"]),
+            ("Liuqin", ["4, G3", "3, D4", "2, G4", "1, D5"]),
+            ("Gaohu", ["1, G4", "2, D5"]),
+            ("Zhonghu", ["1, G3", "2, D4"]),
+            ("Large sanxian", ["3, G2", "2, D3", "1, G3"]),
+            ("Dombra", ["2, D3", "1, G3"]),
+        ]
+        for (instrument, labels) in cases {
+            app.launchArguments = ["--mode-tuner", "--light", "--tuner-instrument=" + instrument,
+                                   "--tuner-test-cents=0", "--tuner-test-silent", "-AppleLanguages", "(en)"]
+            app.launch()
+            let strings = labels.indices.map { app.buttons["tuner-string-\($0)"] }
+            XCTAssertTrue(strings[0].waitForExistence(timeout: 5), instrument)
+            XCTAssertEqual(strings.map(\.label), labels)
+            if instrument == "Morin khuur" {
+                XCTAssertGreaterThan(strings[0].frame.midX, strings[1].frame.midX)
+                app.buttons["tuner-tuning"].tap()
+                let alternate = app.buttons["tuning-Morin khuur · F3–B♭3"]
+                XCTAssertTrue(alternate.waitForExistence(timeout: 5))
+                alternate.tap()
+                XCTAssertEqual(strings[0].label, "2, F3")
+                XCTAssertEqual(strings[1].label, "1, B♭3")
+            }
+            for string in strings.reversed() {
+                XCTAssertTrue(string.isHittable, instrument)
+                string.tap()
+                XCTAssertEqual(string.value as? String, "In tune", instrument)
+            }
+            XCTAssertTrue(strings.allSatisfy { $0.value as? String == "In tune" }, instrument)
+            proof(app, instrument + " all strings tuned")
+            app.terminate()
+        }
+    }
+
+    func testRuanHeadstocksMatchTheirFourOpenStrings() {
+        let app = XCUIApplication()
+        let tunings = [
+            ("Zhongruan", ["G2", "D3", "G3", "D4"]),
+            ("Daruan", ["D2", "A2", "D3", "A3"]),
+            ("Xiaoruan", ["D3", "A3", "D4", "A4"]),
+            ("Gaoyinruan", ["G3", "D4", "G4", "D5"]),
+            ("Diyinruan", ["G1", "D2", "G2", "D3"]),
+        ]
+        for (instrument, pitches) in tunings {
+            app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=" + instrument,
+                                   "--tuner-test-cents=0", "-AppleLanguages", "(en)"]
+            app.launch()
+            let strings = (0..<4).map { app.buttons["tuner-string-\($0)"] }
+            XCTAssertTrue(strings[0].waitForExistence(timeout: 5))
+            XCTAssertEqual(strings.map(\.label), pitches.enumerated().map { "\(4 - $0.offset), \($0.element)" })
+            XCTAssertLessThan(strings[0].frame.midX, strings[3].frame.midX)
+            XCTAssertGreaterThan(strings[0].frame.midY, strings[1].frame.midY)
+            XCTAssertGreaterThan(strings[3].frame.midY, strings[2].frame.midY)
+            XCTAssertTrue(app.buttons["tuner-tuning"].isHittable)
+
+            if instrument == "Zhongruan" {
+                proof(app, "Ruan - open strings")
+                for index in [0, 2, 1, 3] {
+                    XCTAssertTrue(strings[index].isHittable)
+                    strings[index].tap()
+                    XCTAssertEqual(strings[index].value as? String, "In tune")
+                    if index == 2 {
+                        XCTAssertEqual(strings[0].value as? String, "In tune")
+                        XCTAssertNotEqual(strings[1].value as? String, "In tune")
+                        proof(app, "Ruan - two confirmed strings")
+                    }
+                }
+                XCTAssertTrue(strings.allSatisfy { $0.value as? String == "In tune" })
+                proof(app, "Ruan - complete")
+            }
+            app.terminate()
+        }
+    }
+
     func testRegionalHeadstocksKeepTunedStrings() {
         let app = XCUIApplication()
-        for (instrument, lastIndex) in [("Erhu", 1), ("Shamisen", 2), ("Oud · Arabic", 5)] {
+        for (instrument, lastIndex) in [("Erhu", 1), ("Shamisen", 2), ("Oud · Arabic", 5), ("Oud · Turkish", 5)] {
             app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=\(instrument)",
-                                   "--tuner-test-cents=0", "-AppleLanguages", "(en)"]
+                                   "--tuner-test-cents=0", "--tuner-test-silent", "-AppleLanguages", "(en)"]
             app.launch()
             let first = app.buttons["tuner-string-0"]
             let last = app.buttons["tuner-string-\(lastIndex)"]
             XCTAssertTrue(first.waitForExistence(timeout: 5))
             // Tap the peg side of the region before using the note label for the next string.
-            if instrument == "Oud · Arabic" {
+            if lastIndex == 5 {
                 app.buttons["tuner-course-5-wire-0"].tap()
                 XCTAssertNotEqual(last.value as? String, "In tune")
                 app.buttons["tuner-course-5-wire-1"].tap()
@@ -378,6 +513,75 @@ final class TunerUITests: XCTestCase {
             }
             app.terminate()
         }
+    }
+
+    func testMiddleEasternPickerAndBaglamaOctaves() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Oud · Arabic", "--tuner-test-cents=0",
+                               "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        app.launch()
+        let picker = app.buttons["tuner-instruments"]
+        picker.tap()
+        let lane = app.scrollViews["tuner-lane-Middle East"]
+        let turkish = lane.buttons["tuner-profile-Oud · Turkish"]
+        let baglama = lane.buttons["tuner-profile-Bağlama"]
+        let setar = lane.buttons["tuner-profile-Setar"]
+        XCTAssertTrue(turkish.waitForExistence(timeout: 5))
+        XCTAssertTrue(turkish.isHittable)
+        XCTAssertTrue(baglama.isHittable)
+        XCTAssertTrue(setar.isHittable)
+        proof(app, "Middle East picker")
+        turkish.tap()
+        XCTAssertEqual(app.buttons["tuner-string-0"].label, "6, C♯2")
+        picker.tap()
+        baglama.tap()
+        let course = app.buttons["tuner-string-0"]
+        let lowA = app.buttons["tuner-course-0-wire-0"]
+        let highA = app.buttons["tuner-course-0-wire-1"]
+        let lowD = app.buttons["tuner-course-2-wire-0"]
+        let highD = app.buttons["tuner-course-2-wire-1"]
+        let otherD = app.buttons["tuner-course-2-wire-2"]
+        XCTAssertTrue(course.waitForExistence(timeout: 5))
+        XCTAssertEqual(lowA.label, "A2, 1")
+        XCTAssertEqual(highA.label, "A3, 2")
+        XCTAssertEqual(lowD.label, "D3, 1")
+        XCTAssertEqual(highD.label, "D4, 2")
+        lowA.tap()
+        XCTAssertEqual(lowA.value as? String, "In tune")
+        XCTAssertNotEqual(highA.value as? String, "In tune")
+        XCTAssertNotEqual(course.value as? String, "In tune")
+        course.tap()
+        XCTAssertEqual(course.value as? String, "In tune")
+        lowD.tap()
+        highD.tap()
+        XCTAssertEqual(highD.value as? String, "In tune")
+        XCTAssertNotEqual(otherD.value as? String, "In tune")
+        XCTAssertEqual(course.value as? String, "In tune")
+        proof(app, "Baglama independent octave wires")
+        otherD.tap()
+        XCTAssertEqual(app.buttons["tuner-string-2"].value as? String, "In tune")
+        app.buttons["tuner-tuning"].tap()
+        let b = app.buttons["tuning-Bağlama · Bağlama düzeni · B"]
+        XCTAssertTrue(b.waitForExistence(timeout: 5))
+        b.tap()
+        XCTAssertEqual(lowA.label, "B2, 1")
+        XCTAssertEqual(otherD.label, "E4, 3")
+        XCTAssertNotEqual(course.value as? String, "In tune")
+
+        picker.tap()
+        setar.tap()
+        let drone = app.buttons["tuner-string-1"]
+        let melody = app.buttons["tuner-string-3"]
+        XCTAssertTrue(drone.waitForExistence(timeout: 5))
+        XCTAssertEqual(drone.label, "3, C4")
+        XCTAssertEqual(melody.label, "1, C4")
+        drone.tap()
+        XCTAssertEqual(drone.value as? String, "In tune")
+        XCTAssertNotEqual(melody.value as? String, "In tune")
+        melody.tap()
+        XCTAssertEqual(drone.value as? String, "In tune")
+        XCTAssertEqual(melody.value as? String, "In tune")
+        proof(app, "Setar independent unisons")
     }
 
     func testGuzhengCanReachAllThreeRowsWithoutScrolling() {
@@ -474,7 +678,7 @@ final class TunerUITests: XCTestCase {
     func testKotoUnisonStringsAreIndependentTargets() {
         let app = XCUIApplication()
         app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Koto", "--tuner-test-cents=0",
-                               "-AppleLanguages", "(en)"]
+                               "--tuner-test-silent", "-AppleLanguages", "(en)"]
         app.launch()
         let first = app.buttons["tuner-string-0"]
         let fifth = app.buttons["tuner-string-4"]
@@ -489,7 +693,48 @@ final class TunerUITests: XCTestCase {
         fifth.tap()
         XCTAssertEqual(first.value as? String, "In tune")
         XCTAssertEqual(fifth.value as? String, "In tune")
+        XCTAssertTrue(fifth.isSelected)
+        XCTAssertTrue(app.staticTexts["tuner-current-string"].label.contains("String 5"))
         proof(app, "Koto numbered unisons")
+
+        app.buttons["tuner-tuning"].tap()
+        let kumoi = app.buttons["tuning-Koto · Kumoijōshi"]
+        XCTAssertTrue(kumoi.waitForExistence(timeout: 5))
+        kumoi.tap()
+        XCTAssertEqual(app.buttons["tuner-string-2"].label, "3, A♭3")
+        XCTAssertEqual(app.buttons["tuner-string-3"].label, "4, C4")
+    }
+
+    func testJapaneseInstrumentRowAndShamisenTunings() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Shamisen", "--tuner-test-cents=0",
+                               "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        app.launch()
+        let picker = app.buttons["tuner-instruments"]
+        picker.tap()
+        let lane = app.scrollViews["tuner-lane-Japanese instruments"]
+        let shamisen = lane.buttons["tuner-profile-Shamisen"]
+        let koto = lane.buttons["tuner-profile-Koto"]
+        XCTAssertTrue(shamisen.waitForExistence(timeout: 5))
+        XCTAssertTrue(shamisen.isHittable)
+        XCTAssertTrue(koto.isHittable)
+        proof(app, "Japanese instruments picker")
+        koto.tap()
+        XCTAssertTrue(app.buttons["tuner-string-12"].waitForExistence(timeout: 5))
+        picker.tap()
+        shamisen.tap()
+        XCTAssertTrue(app.buttons["tuner-string-2"].waitForExistence(timeout: 5))
+        let tuning = app.buttons["tuner-tuning"]
+        tuning.tap()
+        let niagari = app.buttons["tuning-Shamisen · Niagari"]
+        XCTAssertTrue(niagari.waitForExistence(timeout: 5))
+        niagari.tap()
+        XCTAssertEqual(app.buttons["tuner-string-1"].label, "2, G3")
+        tuning.tap()
+        let sansagari = app.buttons["tuning-Shamisen · Sansagari"]
+        XCTAssertTrue(sansagari.waitForExistence(timeout: 5))
+        sansagari.tap()
+        XCTAssertEqual(app.buttons["tuner-string-2"].label, "3, B♭3")
     }
 
     func testStringArtworkStaysGreenAndOutlineFinishesLast() throws {
@@ -669,11 +914,26 @@ final class TunerUITests: XCTestCase {
         lane.buttons["tuner-profile-Pipa"].tap()
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'tuner-string-'")).count, 4)
         picker.tap()
-        lane.swipeLeft()
-        let guqin = lane.buttons["tuner-profile-Guqin"]
-        XCTAssertTrue(guqin.isHittable)
-        guqin.tap()
+        func reveal(_ instrument: String) -> XCUIElement {
+            let tile = lane.buttons["tuner-profile-" + instrument]
+            for _ in 0..<8 where !tile.isHittable {
+                let start = lane.coordinate(withNormalizedOffset: CGVector(dx: 0.76, dy: 0.5))
+                let end = lane.coordinate(withNormalizedOffset: CGVector(dx: 0.49, dy: 0.5))
+                start.press(forDuration: 0.12, thenDragTo: end)
+            }
+            XCTAssertTrue(tile.isHittable, instrument)
+            return tile
+        }
+        reveal("Guqin").tap()
         XCTAssertTrue(app.buttons["tuner-string-6"].waitForExistence(timeout: 5))
+        picker.tap()
+        reveal("Dombra").tap()
+        let first = app.buttons["tuner-string-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        XCTAssertEqual(first.label, "2, D3")
+        picker.tap()
+        XCTAssertTrue(lane.buttons["tuner-profile-Dombra"].isHittable)
+        proof(app, "Chinese instruments reopened on Dombra")
     }
 
     func testInstrumentSetupSurvivesSwitchingAndRelaunch() {
@@ -899,7 +1159,7 @@ final class TunerUITests: XCTestCase {
                 pickInstrument(instrument, layout: alternative, in: app)
                 let alternateKey = app.buttons["tuner-layout-" + alternative]
                 XCTAssertEqual(app.buttons["tuner-string-2"].value as? String, "In tune")
-                for index in [count - 1, 1, count / 2] {
+                for index in [count - 1, 1, count / 2, 0] {
                     let string = app.buttons["tuner-string-\(index)"]
                     let left = instrument == "Guitar" || index < count / 2
                     string.coordinate(withNormalizedOffset: CGVector(dx: left ? 0.68 : 0.32, dy: 0.5)).tap()
@@ -1160,9 +1420,11 @@ final class TunerUITests: XCTestCase {
         app.buttons["tuner-instruments"].tap()
         pickInstrument("7-string guitar", layout: "inlineGuitarSeven", in: app)
         XCTAssertEqual(app.buttons["tuner-string-1"].value as? String, "In tune")
-        for index in [6, 5, 4] {
-            app.buttons["tuner-string-\(index)"].tap()
-            XCTAssertEqual(app.buttons["tuner-string-\(index)"].value as? String, "In tune")
+        for index in [6, 5, 4, 0] {
+            let peg = app.buttons["tuner-string-\(index)"]
+            peg.tap()
+            XCTAssertTrue(peg.isSelected)
+            XCTAssertEqual(peg.value as? String, "In tune")
         }
         proof(app, "7-string inline headstock")
         app.buttons["tuner-instruments"].tap()
@@ -1181,9 +1443,12 @@ final class TunerUITests: XCTestCase {
             let second = app.buttons["tuner-string-\(index + 1)"]
             first.tap()
             XCTAssertEqual(first.value as? String, "In tune")
+            XCTAssertTrue(first.isSelected)
             XCTAssertNotEqual(second.value as? String, "In tune")
             second.tap()
             XCTAssertEqual(second.value as? String, "In tune")
+            XCTAssertTrue(second.isSelected)
+            XCTAssertFalse(first.isSelected)
             XCTAssertEqual(first.value as? String, "In tune")
         }
         app.buttons["tuner-string-7"].tap()
@@ -1217,6 +1482,26 @@ final class TunerUITests: XCTestCase {
         app.buttons["tuner-instruments"].tap()
         app.buttons["tuner-profile-5-string bass"].tap()
         XCTAssertEqual(app.buttons["tuner-string-0"].value as? String, "In tune")
+    }
+
+    func testMandolinDetunedSecondWireKeepsFirstWireConfirmed() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Mandolin", "--tuner-test-cents=0",
+                               "--tuner-test-replay=flat", "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        app.launch()
+        let course = app.buttons["tuner-string-0"]
+        let first = app.buttons["tuner-course-0-wire-0"]
+        let second = app.buttons["tuner-course-0-wire-1"]
+        XCTAssertTrue(course.waitForExistence(timeout: 5))
+
+        course.tap()
+        XCTAssertEqual(first.value as? String, "In tune")
+        course.tap()
+        XCTAssertTrue(second.isSelected)
+        XCTAssertEqual(first.value as? String, "In tune")
+        XCTAssertNotEqual(second.value as? String, "In tune")
+        XCTAssertNotEqual(course.value as? String, "In tune")
+        proof(app, "First wire confirmed, second wire flat")
     }
 
     func testExpandedPresetsAndCustomTuningCanBeReopened() {
@@ -1267,8 +1552,8 @@ final class TunerUITests: XCTestCase {
     }
 
     func testDialStates() {
-        for (cents, label) in [("-32", "Flat"), ("-11", "Almost · flat"), ("-10", "In tune, Flat"),
-                               ("0", "In tune"), ("10", "In tune, Sharp"), ("11", "Almost · sharp"), ("32", "Sharp")] {
+        for (cents, label) in [("-32", "Raise pitch"), ("-11", "Raise pitch"), ("-10", "In tune · Flat"),
+                               ("0", "In tune"), ("10", "In tune · Sharp"), ("11", "Lower pitch"), ("32", "Lower pitch")] {
             let app = XCUIApplication()
             app.launchArguments = ["--light","--mode-tuner","--tuner-test-cents=" + cents,"-AppleLanguages","(en)","-tuner.profile","Chromatic","-tuner.reference","440"]
             app.launch()
@@ -1280,6 +1565,35 @@ final class TunerUITests: XCTestCase {
             app.terminate()
         }
     }
+    func testReleasePickerShowsTheLaunchInstrumentsAndFallsBackFromAnExtendedProfile() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Guzheng",
+                               "--tuner-release-catalog", "--tuner-test-cents=0", "--tuner-test-silent",
+                               "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["tuner-chromatic-intonation"].waitForExistence(timeout: 5))
+        app.buttons["tuner-instruments"].tap()
+        let chromatic = app.buttons["tuner-profile-Chromatic"]
+        XCTAssertTrue(chromatic.waitForExistence(timeout: 5))
+        XCTAssertTrue(chromatic.isSelected)
+        let list = app.scrollViews["tuner-instrument-list"]
+        XCTAssertTrue(list.exists)
+        for profile in ["Guitar", "7-string guitar", "12-string guitar", "Ukulele", "Baritone ukulele",
+                        "Bass", "5-string bass", "6-string bass", "Violin", "Viola", "Cello", "Double bass",
+                        "5-string banjo", "Mandolin"] {
+            XCTAssertTrue(list.buttons["tuner-profile-" + profile].exists, profile)
+        }
+        list.swipeUp()
+        for profile in ["Guzheng", "Erhu", "Flute", "B♭ clarinet", "Piano", "Timpani", "Sitar"] {
+            XCTAssertFalse(list.buttons["tuner-profile-" + profile].exists, profile)
+        }
+        proof(app, "First release instrument list")
+        list.buttons["tuner-profile-Mandolin"].tap()
+        XCTAssertTrue(app.buttons["tuner-string-0"].waitForExistence(timeout: 5))
+        app.buttons["tuner-instruments"].tap()
+        XCTAssertTrue(app.buttons["tuner-profile-Mandolin"].isSelected)
+    }
+
     func testChromaticLibraryTile() {
         let app = XCUIApplication()
         app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Chromatic",
@@ -1317,75 +1631,71 @@ final class TunerUITests: XCTestCase {
         }
     }
 
-    func testChromaticTargetAndReferenceToneStayTogether() {
+    func testChromaticPitchStabilizationPersistsAcrossSettingsAndRelaunch() {
         let app = XCUIApplication()
-        app.launchArguments = ["--light", "--mode-tuner", "--tuner-test-cents=8", "--tuner-test-silent",
-                               "-AppleLanguages", "(en)"]
+        app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Chromatic",
+                               "--tuner-test-cents=10", "-AppleLanguages", "(en)"]
         app.launch()
+        let settings = app.buttons["settings"]
+        let close = app.buttons["close-settings"]
+        let stabilization = app.switches["tuner-pitch-stabilization"]
 
-        let target = app.buttons["tuner-reference-target"]
-        let play = app.buttons["tuner-reference-play"]
-        let done = app.buttons["tuner-reference-done"]
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
-        XCTAssertEqual(target.value as? String, "Auto")
-        XCTAssertEqual(play.value as? String, "A4")
-        XCTAssertEqual(play.label, "Reference tone")
-        proof(app, "Reference tone stopped")
-        openReferenceOctaveFour(app)
-        app.buttons["tuner-reference-note-70"].tap()
-        XCTAssertTrue(app.buttons["tuner-reference-note-70"].isSelected)
-        app.buttons["tuner-reference-note-71"].tap()
-        XCTAssertTrue(app.buttons["tuner-reference-note-71"].isSelected)
-        proof(app, "Reference note picker")
-        done.tap()
-        XCTAssertEqual(target.value as? String, "B4")
-        XCTAssertEqual(play.label, "Reference tone")
-        XCTAssertTrue(app.buttons["tuner-dial-note-11"].isSelected)
-
-        play.tap()
-        XCTAssertEqual(play.label, "Stop tone")
-        XCTAssertTrue(app.staticTexts["—"].exists)
-        proof(app, "Reference tone playing")
-        target.tap()
-        XCTAssertTrue(app.buttons["tuner-reference-note-71"].isSelected)
-        for note in [69, 70] {
-            let pitch = app.buttons["tuner-reference-note-\(note)"]
-            pitch.tap()
-            XCTAssertTrue(pitch.isSelected)
-            XCTAssertTrue(done.exists)
+        XCTAssertTrue(app.staticTexts["tuner-chromatic-cents"].waitForExistence(timeout: 5))
+        settings.tap()
+        XCTAssertTrue(stabilization.waitForExistence(timeout: 4))
+        if stabilization.value as? String == "0" { stabilization.tap() }
+        for value in ["0", "1", "0"] {
+            stabilization.tap()
+            XCTAssertEqual(stabilization.value as? String, value)
         }
-        done.tap()
-        XCTAssertEqual(target.value as? String, "A♯4")
-        XCTAssertEqual(play.label, "Stop tone")
+        proof(app, "Chromatic pitch stabilization off")
+        close.tap()
+        XCTAssertTrue(app.staticTexts["tuner-chromatic-cents"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["tuner-chromatic-cents"].label, "+10¢")
 
-        play.tap()
-        XCTAssertEqual(play.label, "Reference tone")
-        XCTAssertTrue(app.staticTexts["tuner-chromatic-intonation"].waitForExistence(timeout: 3))
-        XCTAssertEqual(app.staticTexts["tuner-chromatic-intonation"].label, "In tune, Sharp")
-        XCTAssertEqual(app.staticTexts["tuner-chromatic-cents"].label, "+8¢")
-        target.tap()
-        app.buttons["tuner-reference-auto"].tap()
-        XCTAssertTrue(app.buttons["tuner-reference-auto"].isSelected)
-        XCTAssertFalse(app.buttons["tuner-reference-note-70"].isSelected)
-        done.tap()
-        XCTAssertTrue(app.buttons["tuner-dial-note-9"].isSelected)
-        XCTAssertEqual(target.value as? String, "Auto")
-        XCTAssertEqual(play.value as? String, "A4")
+        settings.tap()
+        XCTAssertEqual(stabilization.value as? String, "0")
+        app.terminate()
+        app.launch()
+        settings.tap()
+        XCTAssertTrue(stabilization.waitForExistence(timeout: 4))
+        XCTAssertEqual(stabilization.value as? String, "0")
+        stabilization.tap()
+        XCTAssertEqual(stabilization.value as? String, "1")
+        proof(app, "Chromatic pitch stabilization on")
     }
 
-    func testTunerSilentBackgroundStopsReferenceAndRestoresListening() {
+    func testChromaticTracksNotesWithoutAHiddenTarget() {
         let app = XCUIApplication()
-        app.launchArguments = ["--mode-tuner", "--tuner-test-silent", "-AppleLanguages", "(en)"]
+        for (offset, note, label, cents) in [("-24", "A4", "Raise pitch", "−24¢"),
+                                             ("107", "A♯4", "In tune · Sharp", "+7¢"),
+                                             ("324", "C5", "Lower pitch", "+24¢")] {
+            app.launchArguments = ["--light", "--mode-tuner", "--tuner-instrument=Chromatic",
+                                   "--tuner-test-cents=" + offset, "--tuner-test-silent", "-AppleLanguages", "(en)"]
+            app.launch()
+            let amount = app.staticTexts["tuner-chromatic-cents"]
+            let guidance = app.staticTexts["tuner-chromatic-intonation"]
+            XCTAssertTrue(amount.waitForExistence(timeout: 5))
+            XCTAssertEqual(amount.label, cents)
+            XCTAssertEqual(guidance.label, label)
+            let pitch = app.descendants(matching: .any).matching(identifier: "tuner-chromatic-pitch").firstMatch
+            XCTAssertEqual(pitch.label, note)
+            XCTAssertFalse(app.buttons["tuner-reference-target"].exists)
+            XCTAssertFalse(app.buttons["tuner-reference-play"].exists)
+            app.terminate()
+        }
+    }
+
+    func testTunerSilentBackgroundRestoresListening() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--mode-tuner", "--tuner-instrument=Chromatic", "--tuner-test-silent", "-AppleLanguages", "(en)"]
         app.launch()
-        let play = app.buttons["tuner-reference-play"]
         XCTAssertTrue(app.staticTexts["Play a note"].waitForExistence(timeout: 5))
-        play.tap()
-        XCTAssertEqual(play.label, "Stop tone")
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: 5))
         app.activate()
         XCTAssertTrue(app.staticTexts["Play a note"].waitForExistence(timeout: 5))
-        XCTAssertEqual(play.label, "Reference tone")
+        XCTAssertFalse(app.staticTexts["tuner-chromatic-cents"].exists)
     }
 
     func testChromaticSelectionOnDarkCompactScreen() {
@@ -1393,25 +1703,11 @@ final class TunerUITests: XCTestCase {
         app.launchArguments = ["--dark", "--mode-tuner", "--tuner-instrument=Chromatic",
                                "--tuner-test-cents=0", "--tuner-test-silent", "-AppleLanguages", "(en)"]
         app.launch()
-
-        let target = app.buttons["tuner-reference-target"]
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
-        XCTAssertTrue(target.isHittable)
-        XCTAssertTrue(app.buttons["tuner-reference-play"].isHittable)
+        let readout = app.staticTexts["tuner-chromatic-intonation"]
+        XCTAssertTrue(readout.waitForExistence(timeout: 5))
+        XCTAssertEqual(readout.label, "In tune")
+        XCTAssertTrue(app.frame.contains(readout.frame))
         proof(app, "Dark chromatic dial")
-        openReferenceOctaveFour(app)
-
-        for note in [70, 71, 69] {
-            let pitch = app.buttons["tuner-reference-note-\(note)"]
-            XCTAssertTrue(pitch.isHittable)
-            XCTAssertGreaterThanOrEqual(pitch.frame.height, 44)
-            pitch.tap()
-            XCTAssertTrue(pitch.isSelected)
-        }
-        proof(app, "Dark target note picker")
-        app.buttons["tuner-reference-done"].tap()
-        XCTAssertEqual(target.value as? String, "A4")
-        XCTAssertTrue(app.buttons["tuner-dial-note-9"].isSelected)
         app.buttons["tuner-instruments"].tap()
         XCTAssertTrue(app.buttons["tuner-profile-Chromatic"].isSelected)
         proof(app, "Dark Chromatic instrument tile")
@@ -1477,7 +1773,6 @@ final class TunerUITests: XCTestCase {
         app.activate()
         XCTAssertTrue(inputReady(app, allowUnavailable: false).waitForExistence(timeout: 8))
         XCTAssertFalse(app.staticTexts["Microphone off"].exists)
-        XCTAssertEqual(app.buttons["tuner-reference-play"].label, "Reference tone")
         proof(app, "Microphone restored from Settings")
         #endif
     }
@@ -1485,11 +1780,11 @@ final class TunerUITests: XCTestCase {
     func testReadoutDirectionIsAccessibleInBothFinishes() {
         let app = XCUIApplication()
         for (profile, identifier, finish, detune, spoken, value) in [
-            ("Chromatic", "tuner-chromatic-intonation", "--light", "-28", "Flat", "−28¢"),
-            ("Chromatic", "tuner-chromatic-intonation", "--dark", "28", "Sharp", "+28¢"),
+            ("Chromatic", "tuner-chromatic-intonation", "--light", "-28", "Raise pitch", "−28¢"),
+            ("Chromatic", "tuner-chromatic-intonation", "--dark", "28", "Lower pitch", "+28¢"),
             ("Chromatic", "tuner-chromatic-intonation", "--dark", "0", "In tune", nil),
             ("Guitar", "tuner-needle-meter", "--dark", "-28", "Flat", "−28¢"),
-            ("Guitar", "tuner-needle-meter", "--light", "0", "In tune", "+0¢"),
+            ("Guitar", "tuner-needle-meter", "--light", "0", "In tune", "0¢"),
             ("Guitar", "tuner-needle-meter", "--light", "28", "Sharp", "+28¢")
         ] {
             app.launchArguments = [finish, "--mode-tuner", "--tuner-instrument=" + profile,
@@ -1500,22 +1795,6 @@ final class TunerUITests: XCTestCase {
             XCTAssertTrue(meter.waitForExistence(timeout: 5))
             XCTAssertEqual(meter.label, spoken)
             if let value { XCTAssertEqual(meter.value as? String, value) }
-            if profile == "Chromatic" {
-                let target = app.buttons["tuner-reference-target"]
-                let play = app.buttons["tuner-reference-play"]
-                XCTAssertTrue(target.isHittable && play.isHittable)
-                XCTAssertGreaterThanOrEqual(target.frame.height, 44)
-                XCTAssertLessThanOrEqual(play.frame.maxX, app.frame.maxX - 10)
-                if finish == "--dark", detune == "28" {
-                    openReferenceOctaveFour(app)
-                    let note = app.buttons["tuner-reference-note-69"]
-                    XCTAssertTrue(note.isHittable)
-                    note.tap()
-                    XCTAssertTrue(note.isSelected)
-                    proof(app, "Target picker at the current type size")
-                    app.buttons["tuner-reference-done"].tap()
-                }
-            }
             proof(app, profile + " " + finish.dropFirst(2) + " " + spoken)
             app.terminate()
         }
@@ -1546,10 +1825,14 @@ final class TunerUITests: XCTestCase {
                     let first = app.buttons["tuner-course-\(index)-wire-0"]
                     let second = app.buttons["tuner-course-\(index)-wire-1"]
                     XCTAssertEqual(first.value as? String, "In tune")
+                    XCTAssertTrue(first.isSelected)
                     XCTAssertNotEqual(second.value as? String, "In tune")
                     XCTAssertNotEqual(key.value as? String, "In tune")
                     if index == 0 { proof(app, "Mandolin first wire only") }
-                    second.tap()
+                    // The course label advances to its unfinished wire. Both pegs are also direct targets.
+                    if index.isMultiple(of: 2) { key.tap() } else { second.tap() }
+                    XCTAssertTrue(second.isSelected)
+                    XCTAssertFalse(first.isSelected)
                 }
                 let tuned = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "In tune"), object: key)
                 XCTAssertEqual(XCTWaiter.wait(for: [tuned], timeout: 4), .completed)
@@ -1572,20 +1855,12 @@ final class TunerUITests: XCTestCase {
         if let layout { app.buttons["tuner-layout-" + layout].tap() }
     }
 
-    private func openReferenceOctaveFour(_ app: XCUIApplication) {
-        let target = app.buttons["tuner-reference-target"]
-        let octave = Int((target.value as? String)?.suffix(1) ?? "") ?? 4
-        target.tap()
-        let step = app.buttons[octave > 4 ? "Lower octave" : "Higher octave"]
-        for _ in 0..<abs(octave - 4) { step.tap() }
-    }
-
     private func microphonePermissionAlert() -> XCUIElement {
         XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts["kTCCServiceMicrophone-alert"].firstMatch
     }
 
     private func inputReady(_ app: XCUIApplication, allowUnavailable: Bool = true) -> XCUIElement {
-        var states = ["Play a note", "Flat", "Sharp", "In tune", "Almost · flat", "Almost · sharp", "Settling"]
+        var states = ["Play a note", "Raise pitch", "Lower pitch", "In tune", "Settling"]
         if allowUnavailable { states.append("Input unavailable") }
         return app.staticTexts.matching(NSPredicate(format: "label IN %@", states)).firstMatch
     }

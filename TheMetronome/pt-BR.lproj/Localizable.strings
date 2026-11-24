@@ -66,6 +66,10 @@
 "Connect pedal" = "Conectar pedal";
 "Could not connect MIDI. Try again." = "Não foi possível conectar o MIDI. Tente novamente.";
 "DARK" = "ESCURO";
+"COLOR" = "COR";
+"DESIGN" = "DESIGN";
+"Relief" = "Relevo";
+"Flat" = "Plano";
 "DELETE" = "EXCLUIR";
 "DELETE THIS PRESET?" = "EXCLUIR ESTA PREDEFINIÇÃO?";
 "DIVISION" = "SUBDIVISÃO";

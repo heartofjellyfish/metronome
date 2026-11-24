@@ -12,6 +12,8 @@
 	<string>Connect a Bluetooth MIDI pedal to control the metronome hands-free.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>The tuner uses the microphone to measure the pitch of your instrument.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>The tuner uses your device’s tilt to move the reflection on its glass dial.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

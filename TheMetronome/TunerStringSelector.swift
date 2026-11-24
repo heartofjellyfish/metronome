@@ -181,6 +181,7 @@ struct TunerStringTarget: View {
     let numberSize: CGFloat
     let emphasizeSelection: Bool
     let accessibilityName: String?
+    let prefersFlats: Bool
     let select: () -> Void
 
     var body: some View {
@@ -195,7 +196,7 @@ struct TunerStringTarget: View {
                         .foregroundStyle(p.ink.opacity(0.68))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: 0) {
-                    Text(TunerPitch.name(pitch)).font(InstrumentType.value(17))
+                    Text(TunerPitch.name(pitch, flats: prefersFlats)).font(InstrumentType.value(17))
                     Text(String(TunerPitch.octave(pitch))).font(InstrumentType.value(11))
                 }
             }
@@ -216,7 +217,7 @@ struct TunerStringTarget: View {
             .contentShape(Rectangle())
         }.buttonStyle(.plain)
             .foregroundStyle(drawing.color(for: index))
-            .accessibilityLabel((accessibilityName ?? "\(index + 1)") + ", " + TunerPitch.label(pitch))
+            .accessibilityLabel((accessibilityName ?? "\(index + 1)") + ", " + TunerPitch.label(pitch, flats: prefersFlats))
             .accessibilityValue(tuned ? tunerText("In tune") : "")
             .accessibilityIdentifier("tuner-string-\(index)")
             .accessibilityAddTraits(selected ? .isSelected : [])

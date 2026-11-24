@@ -1,3 +1,5 @@
+Lower pitch|调低|調低|音を下げる|음을 낮추세요|Baissez la note|Ton tiefer stimmen|Baja el tono|Baixe o tom
+Raise pitch|调高|調高|音を上げる|음을 높이세요|Montez la note|Ton höher stimmen|Sube el tono|Suba o tom
 Tuner|调音器|調音器|チューナー|튜너|Accordeur|Stimmgerät|Afinador|Afinador
 Tune by ear or follow the dial.|听参考音，或看表盘调音。|聽參考音，或看錶盤調音。|基準音またはメーターで調律。|기준음이나 다이얼로 조율하세요.|Accordez à l’oreille ou au cadran.|Nach Gehör oder mit Skala stimmen.|Afina de oído o con el dial.|Afine de ouvido ou pelo mostrador.
 Chromatic|半音调音|半音調音|クロマチック|크로매틱|Chromatique|Chromatisch|Cromático|Cromático
@@ -268,3 +270,29 @@ String %d|第 %d 弦|第 %d 弦|第 %d 弦|%d번 현|Corde %d|Saite %d|Cuerda %d
 Sympathetic string %d|共鸣弦 %d|共鳴弦 %d|共鳴弦 %d|공명현 %d번|Corde sympathique %d|Resonanzsaite %d|Cuerda simpática %d|Corda simpática %d
 %d / %d in tune|%d / %d 已调准|%d / %d 已調準|%d / %d 調弦済み|%d / %d 튜닝 완료|%d / %d accordées|%d / %d gestimmt|%d / %d afinadas|%d / %d afinadas
 Choose a string|请选择弦位|請選擇弦位|弦を選択|현 선택|Choisir une corde|Saite auswählen|Elige una cuerda|Escolha uma corda
+Zhongruan|中阮|中阮|中阮|중완|Zhongruan|Zhongruan|Zhongruan|Zhongruan
+Daruan|大阮|大阮|大阮|대완|Daruan|Daruan|Daruan|Daruan
+Xiaoruan|小阮|小阮|小阮|소완|Xiaoruan|Xiaoruan|Xiaoruan|Xiaoruan
+Gaoyinruan|高音阮|高音阮|高音阮|고음완|Gaoyinruan|Gaoyinruan|Gaoyinruan|Gaoyinruan
+Diyinruan|低音阮|低音阮|低音阮|저음완|Diyinruan|Diyinruan|Diyinruan|Diyinruan
+Morin khuur|马头琴|馬頭琴|馬頭琴|마두금|Morin khuur|Morin khuur|Morin khuur|Morin khuur
+Liuqin|柳琴|柳琴|柳琴|류금|Liuqin|Liuqin|Liuqin|Liuqin
+Gaohu|高胡|高胡|高胡|가오후|Gaohu|Gaohu|Gaohu|Gaohu
+Zhonghu|中胡|中胡|中胡|중후|Zhonghu|Zhonghu|Zhonghu|Zhonghu
+Large sanxian|大三弦|大三弦|大三弦|대삼현|Grand sanxian|Große Sanxian|Sanxian grande|Sanxian grande
+Dombra|冬不拉|冬不拉|ドンブラ|돔브라|Dombra|Dombra|Dombra|Dombra
+Japanese instruments|日本乐器|日本樂器|日本の楽器|일본 악기|Instruments japonais|Japanische Instrumente|Instrumentos japoneses|Instrumentos japoneses
+Kumoijōshi|云井调子|雲井調子|雲井調子|구모이조시|Kumoijōshi|Kumoijōshi|Kumoijōshi|Kumoijōshi
+Middle East|中东乐器|中東樂器|中東の楽器|중동 악기|Moyen-Orient|Naher Osten|Oriente Medio|Oriente Médio
+Oud · Turkish|乌德琴 · 土耳其定弦|烏德琴 · 土耳其定弦|ウード · トルコ式|우드 · 튀르키예식|Oud · turc|Oud · türkisch|Laúd turco|Oud · turco
+Bağlama|巴格拉马|巴格拉馬|バーラマ|바을라마|Bağlama|Bağlama|Bağlama|Bağlama
+Bolahenk|Bolahenk|Bolahenk|ボラヘンク|Bolahenk|Bolahenk|Bolahenk|Bolahenk|Bolahenk
+Low D–A|低音 D–A|低音 D–A|低音 D–A|저음 D–A|Graves ré–la|Tiefes D–A|Graves re–la|Graves ré–lá
+Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A|Bağlama düzeni · A
+Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B|Bağlama düzeni · B
+Short-neck saz. Pluck one string at a time, including the octave strings.|短颈萨兹琴。请逐根拨弦，包括每组的八度弦。|短頸薩茲琴。請逐根撥弦，包括每組的八度弦。|短棹のサズです。オクターブ弦も含め、1本ずつ弾いてください。|짧은 목의 사즈입니다. 옥타브 현을 포함해 한 줄씩 튕기세요.|Saz à manche court. Pincez une corde à la fois, y compris les cordes à l’octave.|Kurzhals-Saz. Zupfe jede Saite einzeln, auch die Oktavsaiten.|Saz de mástil corto. Pulsa una cuerda a la vez, incluidas las de octava.|Saz de braço curto. Toque uma corda por vez, incluindo as cordas de oitava.
+Enter one note per course, for example A3 G3 D3. The tuner adds the octave strings.|每组输入一个音，例如 A3 G3 D3。调音器会补上八度弦。|每組輸入一個音，例如 A3 G3 D3。調音器會補上八度弦。|各組の音を1つずつ入力します。例は A3 G3 D3 です。オクターブ弦は自動で追加されます。|줄 묶음마다 음 하나를 입력하세요. 예시는 A3 G3 D3입니다. 옥타브 현은 자동으로 추가됩니다.|Saisissez une note par groupe, par exemple A3 G3 D3. L’accordeur ajoute les cordes à l’octave.|Gib pro Saitengruppe einen Ton ein, etwa A3 G3 D3. Das Stimmgerät ergänzt die Oktavsaiten.|Introduce una nota por grupo, por ejemplo A3 G3 D3. El afinador añade las cuerdas de octava.|Insira uma nota por grupo, por exemplo A3 G3 D3. O afinador inclui as cordas de oitava.
+Setar|波斯塞塔尔琴|波斯塞塔爾琴|セタール|세타르|Setâr|Setar|Setar persa|Setar persa
+C–G|C–G|C–G|C–G|C–G|Do–sol|C–G|Do–sol|Dó–sol
+C–F|C–F|C–F|C–F|C–F|Do–fa|C–F|Do–fa|Dó–fá
+D bass & drone|D 低音弦与共鸣弦|D 低音弦與共鳴弦|D の低音弦とドローン弦|D 베이스 및 드론 현|Basse et bourdon en ré|Bass und Bordun in D|Bajo y bordón en re|Baixo e bordão em ré

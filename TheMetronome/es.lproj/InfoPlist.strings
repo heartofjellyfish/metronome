@@ -1,2 +1,3 @@
 "NSBluetoothAlwaysUsageDescription" = "Conecta un pedal MIDI Bluetooth para controlar el metrónomo con el pie.";
 "NSMicrophoneUsageDescription" = "El afinador utiliza el micrófono para medir el tono de tu instrumento.";
+"NSMotionUsageDescription" = "El afinador usa la inclinación del dispositivo para mover el reflejo en el cristal de la esfera.";

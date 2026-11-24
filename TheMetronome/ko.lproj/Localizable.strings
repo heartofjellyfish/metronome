@@ -66,6 +66,10 @@
 "Connect pedal" = "페달 연결";
 "Could not connect MIDI. Try again." = "MIDI에 연결하지 못했습니다. 다시 시도하세요.";
 "DARK" = "어둡게";
+"COLOR" = "색상";
+"DESIGN" = "디자인";
+"Relief" = "입체";
+"Flat" = "평면";
 "DELETE" = "삭제";
 "DELETE THIS PRESET?" = "이 프리셋을 삭제할까요?";
 "DIVISION" = "세분음";

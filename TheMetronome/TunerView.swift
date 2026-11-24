@@ -32,6 +32,7 @@ struct TunerView: View {
     let rememberLastSetup: Bool
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
+    @Environment(\.controlSkin) private var design
     @StateObject private var audio = TunerAudio()
     @State private var profileID: String = {
         #if DEBUG
@@ -45,17 +46,16 @@ struct TunerView: View {
     @AppStorage("tuner.custom") private var customData = Data()
     @AppStorage("tuner.written") private var written = true
     @AppStorage("tuner.response") private var response = TunerResponse.balanced
+    @AppStorage("tuner.stabilizeChromaticPitch") private var stabilizeChromaticPitch = false
     @AppStorage("tuner.confirmation") private var confirmation = true
     @State private var confirmedNote: Int?
     @State private var held: Int?
-    @AppStorage("tuner.referenceToneNote") private var toneNote = 69
-    @State private var referencePickerOpen = false
     enum Panel: String, Identifiable { case library, tuning, wireNote; var id: Self { self } }
 
     private var custom: [TunerProfile] { (try? JSONDecoder().decode([TunerProfile].self, from: customData)) ?? [] }
     private var profile: TunerProfile {
         if profileID == TunerProfile.chromatic.id { return .chromatic }
-        return TunerProfile.catalog.first { $0.id == profileID } ?? custom.first { $0.id == profileID } ?? .chromatic
+        return TunerProfile.availableCatalog.first { $0.id == profileID } ?? custom.first { $0.id == profileID } ?? .chromatic
     }
     @AppStorage("tuner.instrumentTunings") private var savedTuningData = Data()
     @AppStorage(SessionMemory.tunerSetupKey) private var savedSetupData = Data()
@@ -105,8 +105,8 @@ struct TunerView: View {
                 return Array(repeating: pitch, count: course.wires.count)
             }
         }
-        guard let ranges = headstock?.wireRanges ?? regionalHeadstock?.wireRanges else { return strings }
-        return zip(strings, ranges).flatMap { note, wires in Array(repeating: note, count: wires.count) }
+        if let headstock { return headstock.physicalPitches(for: strings) }
+        return regionalHeadstock?.physicalPitches(for: strings) ?? strings
     }
 
     private func preferredLayout(for profile: TunerProfile) -> TunerHeadstock? {
@@ -134,7 +134,7 @@ struct TunerView: View {
         return min(3, (strings.count + stringColumns - 1) / stringColumns)
     }
     private var zither: TunerZither? {
-        TunerZither.forInstrument(profile.instrumentName, stringCount: strings.count)
+        TunerZither.forInstrument(profile.instrumentName, strings: strings)
     }
     private var showsGuzheng: Bool {
         profile.instrumentName == "Guzheng" && strings.count == TunerGuzhengArtwork.stringCount
@@ -170,6 +170,10 @@ struct TunerView: View {
     }
 
     private func stringName(in groups: [TunerStringGroup]) -> String? {
+        if zither?.isKoto == true {
+            return activeString.map { String(format: tunerText("String %d"), $0 + 1) }
+                ?? (audio.reading == nil ? nil : tunerText("Choose a string"))
+        }
         guard !groups.isEmpty else { return nil }
         if let index = activeString, let group = groups.first(where: { $0.wires.contains(index) }) {
             return group.stringName(for: index)
@@ -180,18 +184,12 @@ struct TunerView: View {
     private var notation: TunerPitchNotation {
         TunerPitchNotation(writtenOffset: profile.writtenOffset, prefersWritten: written)
     }
+    private var showsRelief: Bool { design == .sculpted && headstock?.supportsRelief == true }
     private var stringDrawing: TunerStringDrawing {
         TunerStringDrawing(palette: p, liveState: audio.reading?.state, active: activeString,
-                           completed: completed, stringCount: wireNotes.count)
+                           completed: completed, stringCount: wireNotes.count, relief: showsRelief)
     }
     private var concertNote: Int? { audio.reading?.note ?? held }
-    private var referenceNote: Int { TunerReferenceControl.noteRange.contains(toneNote) ? toneNote : 69 }
-    private var chromaticReferenceNote: Int {
-        if let held { return held }
-        if audio.status == .listening, let reading = audio.reading,
-           reading.isFresh, TunerReferenceControl.noteRange.contains(reading.note) { return reading.note }
-        return referenceNote
-    }
     private var eligible: Bool { exposed && sheet == nil && scenePhase == .active && !model.playing && !model.interrupted }
     private var statusLabel: String {
         if model.playing { return "Click playing" }
@@ -209,26 +207,30 @@ struct TunerView: View {
     var body: some View {
         let groups = stringGroups
         let selector = groupedStringTargets(groups)
+        let chromaticStyle = ChromaticDialStyle.current(dark: p.dark)
         VStack(spacing: 14) {
             if profile == .chromatic { Spacer(minLength: 0) }
             if profile == .chromatic {
-                TunerDial(p: p, reading: audio.reading,
-                          targetNote: held ?? (audio.status == .tone ? referenceNote : nil), status: statusLabel) { pitch in
-                    let center = concertNote ?? referenceNote
-                    if let next = TunerReferenceControl.noteRange.filter({ $0 % 12 == pitch })
-                        .min(by: { abs($0 - center) < abs($1 - center) }) {
-                        chooseReference(next)
-                    }
-                }
-                .frame(height: 350)
+                TunerDial(style: chromaticStyle, reading: audio.reading, status: statusLabel)
+                    .frame(height: 350)
             } else {
                 if let headstock {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
                                      status: statusLabel, drawing: stringDrawing,
-                                     centerX: headstock == .bass ? 172 : 180, select: selectString)
+                                     centerX: headstock == .bass ? 172 : 180, select: selectString) {
+                        tuningSelector
+                    }
+                } else if let headstock = TunerChineseHeadstock.forInstrument(instrumentID, stringCount: strings.count) {
+                    StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
+                                     status: statusLabel, drawing: stringDrawing, prefersFlats: profile.prefersFlatStringNotes,
+                                     select: selectString) { EmptyView() }
+                } else if let headstock = TunerRuanHeadstock.forInstrument(instrumentID, stringCount: strings.count) {
+                    StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
+                                     status: statusLabel, drawing: stringDrawing, select: selectString) { EmptyView() }
                 } else if let headstock = regionalHeadstock {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
-                                     status: statusLabel, drawing: stringDrawing, select: selectString)
+                                     status: statusLabel, drawing: stringDrawing, prefersFlats: profile.prefersFlatStringNotes,
+                                     select: selectString) { EmptyView() }
                 } else if showsGuzheng {
                     TunerGuzhengFace(p: p, note: concertNote, reading: audio.reading, status: statusLabel,
                                      strings: strings, drawing: stringDrawing, groups: groups,
@@ -250,7 +252,7 @@ struct TunerView: View {
                         else if !strings.isEmpty { stringTargets }
                     }
                 }
-                tuningSelector
+                if !showsRelief { tuningSelector }
             }
             if model.playing || audio.status == .denied || audio.status == .unavailable {
                 Button {
@@ -264,20 +266,11 @@ struct TunerView: View {
             }
             if profile == .chromatic {
                 Spacer(minLength: 0)
-                TunerReferenceControl(p: p, note: chromaticReferenceNote, held: held, playing: audio.status == .tone,
-                                      canPlay: eligible, pickerOpen: $referencePickerOpen, choose: chooseReference) {
-                    if audio.status == .tone { begin() }
-                    else {
-                        let pitch = chromaticReferenceNote
-                        toneNote = pitch
-                        audio.tone(note: pitch)
-                    }
-                }
             }
         }
         .foregroundStyle(p.ink)
         .padding(.horizontal, 22)
-        .padding(.bottom, profile == .chromatic ? 94 : 0)
+        .padding(.bottom, profile == .chromatic ? 32 : 0)
         .preference(key: TunerInstrumentPreference.self,
                     value: .init(profile: profile, layout: preferredLayout(for: profile)))
         .onAppear {
@@ -308,7 +301,7 @@ struct TunerView: View {
             }
             // Equal pitches cannot disambiguate physical strings. Keep an explicit
             // target in that case until the player selects or releases it.
-            if index != nil, selectedString != nil, matches.count == 1 || stringGroups.isEmpty {
+            if index != nil, selectedString != nil, matches.count == 1 {
                 // Resume automatic targeting without discarding the centered reading.
                 selectedString = nil
                 held = nil
@@ -324,10 +317,7 @@ struct TunerView: View {
         .onDisappear { model.releaseTunerAudio = nil; audio.stop() }
         .onChange(of: eligible) { _, active in
             if active { begin() }
-            else {
-                referencePickerOpen = false
-                audio.stop()
-            }
+            else { audio.stop() }
         }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
             .receive(on: DispatchQueue.main)) { note in
@@ -383,14 +373,29 @@ struct TunerView: View {
             title = held.map { instrument + " · " + TunerPitch.label($0 + notation.primaryOffset, flats: true) }
                 ?? instrument
         }
+        let compact = headstock?.supportsRelief == true
         return Button(action: openTuning) {
-            Text(title).font(.system(size: 20)).lineLimit(1).minimumScaleFactor(0.7)
+            Text(title)
+                .font(compact ? InstrumentType.value(16) : .system(size: 20))
+                .foregroundStyle(compact ? p.ink.opacity(0.84) : p.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
                 .overlay(alignment: .trailing) {
-                    Image(systemName: "chevron.down").font(.system(size: 13, weight: .medium))
-                        .padding(.leading, 9).alignmentGuide(.trailing) { $0[.leading] }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: compact ? 8 : 13, weight: .semibold))
+                        .foregroundStyle(compact ? p.muted : p.ink)
+                        .padding(.leading, compact ? 6 : 9)
+                        .alignmentGuide(.trailing) { $0[.leading] }
                         .accessibilityHidden(true)
                 }
-                .padding(.horizontal, 30).frame(minHeight: 44).contentShape(Rectangle())
+                .padding(.horizontal, compact ? 19 : 30)
+                .frame(height: compact ? 29 : 44)
+                .background {
+                    if showsRelief {
+                        HardwareKeySurface(p: p, radius: 7, shallow: true)
+                    }
+                }
+                .frame(minWidth: 44, minHeight: 44, alignment: .top)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(profile.hasStringSetup ? "tuner-tuning" : "tuner-note-options")
@@ -433,7 +438,8 @@ struct TunerView: View {
     private func stringTarget(_ index: Int, pitch: Int, number: Int?, numberSize: CGFloat, drawing: TunerStringDrawing,
                               emphasizeSelection: Bool = false, accessibilityName: String? = nil) -> TunerStringTarget {
         TunerStringTarget(drawing: drawing, index: index, pitch: pitch, number: number, numberSize: numberSize,
-                          emphasizeSelection: emphasizeSelection, accessibilityName: accessibilityName) { selectString(index) }
+                          emphasizeSelection: emphasizeSelection, accessibilityName: accessibilityName,
+                          prefersFlats: profile.prefersFlatStringNotes) { selectString(index) }
     }
 
     private func chooseGuzhengGroup(_ index: Int) {
@@ -536,8 +542,17 @@ struct TunerView: View {
                 return
             }
         }
-        if selectedString == index { releaseTarget() }
-        else { selectedString = index; hold(notes[index]) }
+        if selectedString == index {
+            releaseTarget()
+            return
+        }
+        let pitch = notes[index]
+        // Two physical strings can share a pitch. A ringing tail belongs to the previous target.
+        let samePitchIsRinging = (held == pitch || audio.reading?.note == pitch)
+            && notes.indices.contains { $0 != index && notes[$0] == pitch }
+        selectedString = index
+        held = pitch
+        syncTarget(waitsForStringAttack: samePitchIsRinging)
     }
 
     private func releaseTarget() {
@@ -602,7 +617,7 @@ struct TunerView: View {
 
     private func restoreSetup() {
         guard remembersSetup, let id = setupMemory.lastInstrumentID, id != TunerProfile.chromatic.id,
-              let base = TunerProfile.catalog.first(where: { $0.id == id }) ?? custom.first(where: { $0.id == id })
+              let base = TunerProfile.availableCatalog.first(where: { $0.id == id }) ?? custom.first(where: { $0.id == id })
         else { return }
         applyRememberedSetup(for: base)
     }
@@ -651,6 +666,10 @@ struct TunerView: View {
     private var parsedDraft: [Int]? {
         guard let notes = TunerProfile.parseNotes(draft, maximumCount: 88),
               profile.strings.isEmpty || notes.count == profile.strings.count else { return nil }
+        if regionalHeadstock == .baglama,
+           !TunerRegionalHeadstock.baglama.physicalPitches(for: notes).allSatisfy({ (20...108).contains($0) }) {
+            return nil
+        }
         return notes
     }
 
@@ -735,7 +754,7 @@ struct TunerView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(tunerText(option.tuningName)).font(InstrumentType.value(16))
-                            Text(option.strings.map(TunerPitch.label).joined(separator: "  "))
+                            Text(presetNotes(option))
                                 .font(.caption).monospacedDigit()
                         }
                         Spacer()
@@ -749,9 +768,22 @@ struct TunerView: View {
         }.padding(4).insetPanel(p, radius: 14)
     }
 
+    private func presetNotes(_ option: TunerProfile) -> String {
+        guard option.instrumentName == "Bağlama" else {
+            return option.strings.map { TunerPitch.label($0, flats: option.prefersFlatStringNotes) }.joined(separator: "  ")
+        }
+        let layout = TunerRegionalHeadstock.baglama
+        let wires = layout.physicalPitches(for: option.strings)
+        return layout.wireRanges.map { range in
+            Set(wires[range]).sorted().map(TunerPitch.label).joined(separator: "/")
+        }.joined(separator: "  ")
+    }
+
     private var customTuningEditor: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(tunerText("Enter string notes in playing order, with octaves.")).font(.subheadline)
+            Text(tunerText(regionalHeadstock == .baglama
+                           ? "Enter one note per course, for example A3 G3 D3. The tuner adds the octave strings."
+                           : "Enter string notes in playing order, with octaves.")).font(.subheadline)
             TextField("E2 A2 D3 G3 B3 E4", text: $draft)
                 .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 .padding(12).insetPanel(p, radius: 9)
@@ -770,23 +802,18 @@ struct TunerView: View {
         }
     }
 
-    private func chooseReference(_ pitch: Int?) {
-        if let pitch { toneNote = pitch }
-        held = pitch
-        syncTarget()
-        if let pitch, audio.status == .tone { audio.tone(note: pitch) }
-    }
-
     private func hold(_ pitch: Int) {
         held = pitch
         syncTarget()
     }
-    private func syncTarget(refreshPreview: Bool = true) {
+    private func syncTarget(refreshPreview: Bool = true, waitsForStringAttack: Bool = false) {
         audio.reference = reference; audio.response = response; audio.targets = wireNotes.filter { $0 >= 0 }; audio.held = held
         audio.isChromatic = profile == .chromatic
-        audio.clearReading(preservingEnvelope: true)
+        audio.stabilizeChromaticPitch = stabilizeChromaticPitch
+        audio.clearReading(preservingEnvelope: true, waitsForStringAttack: waitsForStringAttack)
         audio.tracksPlucks = ["Guitar & bass", "Plucked strings"].contains(profile.family)
-            || ["Sitar", "Yangqin", "Guzheng", "Guqin", "Koto", "Shamisen", "Oud · Arabic"].contains(profile.instrumentName)
+            || profile.family == TunerProfile.middleEasternFamily
+            || ["Sitar", "Yangqin", "Guzheng", "Guqin", "Koto", "Shamisen"].contains(profile.instrumentName)
         #if DEBUG
         if refreshPreview, audio.status == .listening { _ = audio.previewReading() }
         #endif

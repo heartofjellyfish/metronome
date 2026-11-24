@@ -1,2 +1,3 @@
 "NSBluetoothAlwaysUsageDescription" = "Bluetooth MIDI 페달을 연결하여 발로 메트로놈을 조작합니다.";
 "NSMicrophoneUsageDescription" = "악기의 음높이를 측정하기 위해 마이크를 사용합니다.";
+"NSMotionUsageDescription" = "기기의 기울기에 따라 튜너의 유리 화면에 비치는 빛을 움직입니다.";

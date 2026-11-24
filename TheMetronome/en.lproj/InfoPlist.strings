@@ -1,2 +1,3 @@
 "NSBluetoothAlwaysUsageDescription" = "Connect a Bluetooth MIDI pedal to control the metronome hands-free.";
 "NSMicrophoneUsageDescription" = "The tuner uses the microphone to measure the pitch of your instrument.";
+"NSMotionUsageDescription" = "The tuner uses your device’s tilt to move the reflection on its glass dial.";

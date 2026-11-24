@@ -26,7 +26,7 @@ struct InstrumentTuningDisplay<Targets: View>: View {
     var body: some View {
         let height = 330 - targetHeight
         let scale = artworkScale
-        let zither = TunerZither.forInstrument(profile.instrumentName, stringCount: strings.count)
+        let zither = TunerZither.forInstrument(profile.instrumentName, strings: strings)
         let showsSitar = profile.instrumentName == "Sitar" && (18...20).contains(strings.count)
         let diagram: (any TunerWireDiagram)? = if let zither {
             zither
@@ -38,12 +38,17 @@ struct InstrumentTuningDisplay<Targets: View>: View {
             nil
         }
         let singleRowZither = zither == .guqin
-        let bounds = CGRect(x: 180 - 168 * scale, y: 310 + height * (1 - scale) / 2 + (singleRowZither ? 5 : 0),
-                            width: 336 * scale, height: height * scale)
+        let isKoto = zither?.isKoto == true
+        let diagramWidth: CGFloat = isKoto ? 348 : 336
+        let verticalOffset: CGFloat = isKoto ? 38 : singleRowZither ? 5 : 0
+        let targetLift: CGFloat = isKoto ? 12 : singleRowZither ? 46 : 0
+        let bounds = CGRect(x: 180 - diagramWidth * scale / 2,
+                            y: 310 + height * (1 - scale) / 2 + verticalOffset,
+                            width: diagramWidth * scale, height: height * scale)
         InstrumentNeedleFace(p: p, note: note, reading: reading, status: status,
-                             prefersFlats: strings.isEmpty,
+                             prefersFlats: strings.isEmpty || profile.prefersFlatStringNotes,
                              notation: notation, showsPitchCheck: strings.isEmpty && !showsYangqin,
-                             stringName: stringName) {
+                             stringName: stringName, showsStringStatus: drawing.active != nil) {
             if let diagram {
                 wireDrawing(diagram, in: bounds)
             } else if let artwork = TunerVectorArtwork.load(profile.tuningArtworkName) {
@@ -63,7 +68,7 @@ struct InstrumentTuningDisplay<Targets: View>: View {
             if targetHeight > 0 {
                 targets()
                     .frame(width: 340)
-                    .position(x: 180, y: 637 - targetHeight / 2 - (singleRowZither ? 46 : 0))
+                    .position(x: 180, y: 637 - targetHeight / 2 - targetLift)
             }
         }
     }

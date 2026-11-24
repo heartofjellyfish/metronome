@@ -66,6 +66,10 @@
 "Connect pedal" = "ペダル接続";
 "Could not connect MIDI. Try again." = "MIDIに接続できませんでした。再試行してください。";
 "DARK" = "ダーク";
+"COLOR" = "配色";
+"DESIGN" = "デザイン";
+"Relief" = "立体";
+"Flat" = "フラット";
 "DELETE" = "削除";
 "DELETE THIS PRESET?" = "このプリセットを削除？";
 "DIVISION" = "細分化";

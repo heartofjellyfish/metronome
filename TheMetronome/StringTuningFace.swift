@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct StringTuningFace<Layout: TunerHeadstockDrawing>: View {
+struct StringTuningFace<Layout: TunerHeadstockDrawing, TuningSelector: View>: View {
     let p: InstrumentPalette
     let layout: Layout
     let strings: [Int]
@@ -9,14 +9,23 @@ struct StringTuningFace<Layout: TunerHeadstockDrawing>: View {
     let status: String
     let drawing: TunerStringDrawing
     var centerX: CGFloat = 180
+    var prefersFlats = false
     let select: (Int) -> Void
+    @ViewBuilder let tuningSelector: () -> TuningSelector
 
     var body: some View {
-        InstrumentNeedleFace(p: p, note: note, reading: reading, status: status) {
-            TunerHeadstockView(p: p, layout: layout, strings: strings, drawing: drawing, select: select)
+        InstrumentNeedleFace(p: p, note: note, reading: reading, status: status, prefersFlats: prefersFlats,
+                             readoutY: drawing.relief ? 212 : 222,
+                             showsReliefScreen: drawing.relief,
+                             faceHeight: drawing.relief ? 684 : 637) {
+            TunerHeadstockView(p: p, layout: layout, strings: strings, drawing: drawing, prefersFlats: prefersFlats, select: select)
                 .frame(width: 360, height: 330)
                 .scaleEffect(1.02)
-                .position(x: centerX, y: 475)
+                .position(x: centerX, y: drawing.relief ? 465 : 475)
+            if drawing.relief {
+                // Keep this control with the headstock when the face scales to fit.
+                tuningSelector().position(x: 180, y: 659)
+            }
         }
     }
 }
@@ -27,15 +36,22 @@ struct TunerStringDrawing {
     let active: Int?
     let completed: Set<Int>
     let stringCount: Int
+    var relief = false
 
-    var outline: Color {
-        let allTuned = stringCount > 0 && (0..<stringCount).allSatisfy(completed.contains)
-        return allTuned ? palette.tuningGreen : palette.ink
-    }
+    var allTuned: Bool { stringCount > 0 && (0..<stringCount).allSatisfy(completed.contains) }
+    var outline: Color { allTuned ? palette.tuningGreen : palette.ink }
+
+    func highlights(_ index: Int) -> Bool { active == index || completed.contains(index) }
 
     func color(for index: Int) -> Color {
         if completed.contains(index) { return palette.tuningGreen }
         return index == active ? palette.tuningTint(liveState) : palette.ink
+    }
+
+    func stringColor(for index: Int) -> Color {
+        if highlights(index) { return color(for: index) }
+        let opacity = relief ? (palette.dark ? 0.58 : 0.56) : 0.78
+        return palette.ink.opacity(opacity)
     }
 
     func isConfirmed(_ wires: Range<Int>) -> Bool { wires.allSatisfy(completed.contains) }
@@ -77,10 +93,12 @@ struct InstrumentNeedleFace<Artwork: View>: View {
     var notation = TunerPitchNotation(writtenOffset: 0, prefersWritten: true)
     var showsPitchCheck = false
     var stringName: String? = nil
+    var showsStringStatus = true
     var readoutScale: CGFloat = 1
     var readoutY: CGFloat = 222
+    var showsReliefScreen = false
+    var faceHeight: CGFloat = 637
     @Environment(\.accessibilityDifferentiateWithoutColor) private var showDirection
-    private let faceHeight: CGFloat = 637
     @ViewBuilder let artwork: () -> Artwork
 
     var body: some View {
@@ -88,6 +106,12 @@ struct InstrumentNeedleFace<Artwork: View>: View {
             let size = geometry.size
             let scale = min(size.width / 360, size.height / faceHeight)
             ZStack {
+                if showsReliefScreen {
+                    Color.clear.frame(width: 342, height: 256)
+                        .insetPanel(p, radius: 19, shallow: true)
+                        .position(x: 180, y: 132)
+                        .accessibilityHidden(true)
+                }
                 Group {
                     if let note {
                         let primary = note + notation.primaryOffset
@@ -126,7 +150,7 @@ struct InstrumentNeedleFace<Artwork: View>: View {
                 if let stringName {
                     HStack(spacing: 6) {
                         Text(stringName)
-                        if let reading {
+                        if showsStringStatus, let reading {
                             Text("·").foregroundStyle(p.muted).accessibilityHidden(true)
                             let pitchStatus = tunerText(reading.state.label)
                             Text(reading.state == .centered ? pitchStatus : pitchStatus + " " + reading.signedCents)

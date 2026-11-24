@@ -7,10 +7,9 @@ struct SettingsView: View {
     @AppStorage("tuner.reference") private var reference = 440
     @AppStorage("tuner.written") private var written = true
     @AppStorage("tuner.response") private var response = TunerResponse.balanced
+    @AppStorage("tuner.stabilizeChromaticPitch") private var stabilizeChromaticPitch = false
     @AppStorage("tuner.confirmation") private var confirmation = true
-    #if DEBUG
-    @AppStorage(ControlSkin.preference) private var previewSkin = ControlSkin.sculpted
-    #endif
+    @AppStorage(ControlSkin.preference) private var design = ControlSkin.sculpted
     @Environment(\.dismiss) private var dismiss
     @State private var panel: InstrumentPanelKind?
     @State private var panelSession = UUID()
@@ -84,6 +83,18 @@ struct SettingsView: View {
                         }
                         VStack(spacing: 16) {
                             SectionLabel(text: "02 GENERAL", p: p)
+                            VStack(spacing: 12) {
+                                HStack(spacing: 14) {
+                                    Text("COLOR").technical(11, spacing: 1.3)
+                                    Spacer(minLength: 0)
+                                    colorKeys.frame(maxWidth: 260).frame(height: 46)
+                                }
+                                HStack(spacing: 14) {
+                                    Text("DESIGN").technical(11, spacing: 1.3)
+                                    Spacer(minLength: 0)
+                                    designKeys.frame(maxWidth: 260).frame(height: 46)
+                                }
+                            }
                             rememberSetupControl
                             ViewThatFits(in: .horizontal) {
                                 HStack {
@@ -108,24 +119,6 @@ struct SettingsView: View {
                                 }
                             }
                         }
-                        HStack(spacing: 14) {
-                            Text("SKIN").technical(11, spacing: 1.3)
-                            Spacer(minLength: 0)
-                            skinKeys.frame(maxWidth: 260).frame(height: 46)
-                        }
-                        #if DEBUG
-                        HStack {
-                            Text("Button finish").technical(11, spacing: 1)
-                            Spacer()
-                            ForEach([ControlSkin.sculpted, .flat], id: \.self) { skin in
-                                Button { previewSkin = skin } label: {
-                                    Text(L10n.text(skin == .sculpted ? "Raised" : "Flat finish")).frame(minWidth: 60, minHeight: 44)
-                                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: previewSkin == skin))
-                                    .accessibilityIdentifier("skin-" + skin.rawValue)
-                                    .accessibilityAddTraits(previewSkin == skin ? .isSelected : [])
-                            }
-                        }
-                        #endif
                     }.padding(.horizontal, 26).padding(.bottom, 24)
                 }.scrollBounceBehavior(.basedOnSize).accessibilityIdentifier("settings-scroll")
             if !tunerSettings {
@@ -176,20 +169,33 @@ struct SettingsView: View {
             Text(tunerText("Tuning response")).font(InstrumentType.value(16))
             tunerSelector(TunerResponse.allCases, selected: response, title: { tunerText($0.title) },
                           id: { "tuner-response-" + $0.rawValue }) { response = $0 }
-            VStack(alignment: .leading, spacing: 8) {
-                Text(tunerText("Note names for transposing instruments"))
-                    .font(InstrumentType.value(16))
-                    .accessibilityAddTraits(.isHeader)
-                Text(tunerText("For B♭ clarinet, alto sax, piccolo and similar instruments. "
-                    + "Written pitch is the note on your score. Concert pitch is what you hear. "
-                    + "Choose which one appears in large type."))
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(isOn: $stabilizeChromaticPitch) {
+                    Text(tunerText("Pitch stabilization")).font(InstrumentType.value(16))
+                }
+                .tint(Color(hex: 0x55764D))
+                .accessibilityIdentifier("tuner-pitch-stabilization")
+                Text(tunerText("Smooths brief pitch wobbles in Chromatic when you sing or play."))
                     .font(.footnote)
                     .foregroundStyle(p.ink.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("tuner-pitch-explanation")
-                tunerSelector([false, true], selected: written,
-                              title: { tunerText($0 ? "Written first" : "Concert first") },
-                              id: { $0 ? "tuner-pitch-written" : "tuner-pitch-concert" }) { written = $0 }
+            }
+            if TunerProfile.showsExtendedCatalog {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(tunerText("Note names for transposing instruments"))
+                        .font(InstrumentType.value(16))
+                        .accessibilityAddTraits(.isHeader)
+                    Text(tunerText("For B♭ clarinet, alto sax, piccolo and similar instruments. "
+                        + "Written pitch is the note on your score. Concert pitch is what you hear. "
+                        + "Choose which one appears in large type."))
+                        .font(.footnote)
+                        .foregroundStyle(p.ink.opacity(0.72))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("tuner-pitch-explanation")
+                    tunerSelector([false, true], selected: written,
+                                  title: { tunerText($0 ? "Written first" : "Concert first") },
+                                  id: { $0 ? "tuner-pitch-written" : "tuner-pitch-concert" }) { written = $0 }
+                }
             }
             Toggle(tunerText("In-tune feedback"), isOn: $confirmation)
                 .tint(Color(hex: 0x55764D))
@@ -226,7 +232,28 @@ struct SettingsView: View {
         }
     }
 
-    private var skinKeys: some View {
+    private var designKeys: some View {
+        HStack(spacing: 9) {
+            ForEach(ControlSkin.allCases, id: \.self) { style in
+                let selected = design == style
+                Button {
+                    design = style
+                    model.tickFeedback()
+                } label: {
+                    Text(L10n.text(style == .sculpted ? "Relief" : "Flat"))
+                        .technical(12, spacing: 0.4).lineLimit(1).minimumScaleFactor(0.7)
+                        .padding(.horizontal, 6)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .buttonStyle(HardwareButtonStyle(p: p, charcoal: selected, radius: 9))
+                .environment(\.controlSkin, style)
+                .accessibilityIdentifier("skin-" + style.rawValue)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+    }
+
+    private var colorKeys: some View {
         HStack(spacing: 9) {
             ForEach(0..<2) { index in
                 let selected = model.dark == (index == 1)

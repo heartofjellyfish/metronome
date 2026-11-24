@@ -5,11 +5,43 @@ import UIKit
 final class TunerTests: XCTestCase {
     func testPiecewiseStringDiagramsMatchThePhysicalLayouts() {
         XCTAssertEqual(TunerHeadstock.mandolin.wireRanges, [0..<2, 2..<4, 4..<6, 6..<8])
+        let mandolinKeys = TunerHeadstock.mandolin.courseKeys
+        let leftKeys = mandolinKeys.prefix(2).flatMap { $0 }
+        let rightKeys = mandolinKeys.suffix(2).flatMap { $0 }
+        XCTAssertEqual(Set(leftKeys.map(\.x)).count, 1)
+        XCTAssertEqual(Set(rightKeys.map(\.x)).count, 1)
+        XCTAssertEqual(leftKeys.map(\.y).sorted(), rightKeys.map(\.y).sorted())
         XCTAssertEqual(TunerRegionalHeadstock.arabicOud.wireRanges, [0..<1, 1..<3, 3..<5, 5..<7, 7..<9, 9..<11])
         XCTAssertEqual(TunerYangqin.courses.count, 47)
         XCTAssertEqual(TunerYangqin.courses.flatMap { Array($0.wires) }, Array(0..<134))
         XCTAssertEqual(TunerYangqin.courses.filter { $0.pitch == nil }.count, 3)
         XCTAssertEqual(TunerSitar.cSharp.count, 20)
+    }
+
+    func testChangingToAUnisonStringWaitsForItsOwnAttack() {
+        let note = 71
+        let hz = TunerPitch.frequency(note, reference: 440)
+        let targets = [note, note]
+        for nextLevel: Float in [0.05, 0.016] {
+            var tracker = TunerTracker()
+            var reading: TunerReading?
+            for step in 0..<16 {
+                reading = tracker.read(hz: hz, reference: 440, targets: targets, held: note,
+                                       time: Double(step) * 0.024, pluckLevel: 0.035)
+            }
+            XCTAssertEqual(reading?.state, .centered)
+            tracker.reset(preservingEnvelope: true, waitsForStringAttack: true)
+            for step in 16..<28 {
+                let level = Float(28 - step) * 0.002
+                XCTAssertNil(tracker.read(hz: hz, reference: 440, targets: targets, held: note,
+                                          time: Double(step) * 0.024, pluckLevel: level))
+            }
+            for step in 28..<44 {
+                reading = tracker.read(hz: hz, reference: 440, targets: targets, held: note,
+                                       time: Double(step) * 0.024, pluckLevel: nextLevel)
+            }
+            XCTAssertEqual(reading?.state, .centered)
+        }
     }
 
     func testSitarPegTargetsFollowTheFrontAndSideRows() {
@@ -39,8 +71,20 @@ final class TunerTests: XCTestCase {
                                          in: horizontalFrame), 19)
     }
 
+    private func nativeCatalogHeadstock(for profile: TunerProfile) -> (any TunerHeadstockDrawing)? {
+        if let ruan = TunerRuanHeadstock.forInstrument(profile.instrumentID) { return ruan }
+        if profile.family == TunerProfile.middleEasternFamily {
+            return TunerRegionalHeadstock.forInstrument(profile.instrumentID, stringCount: profile.strings.count)
+        }
+        return TunerChineseHeadstock.forInstrument(profile.instrumentID, stringCount: profile.strings.count)
+    }
+
     func testNonHeadstockProfilesHaveTuningArtwork() {
         for profile in TunerProfile.catalog where TunerHeadstock.standard(for: profile.instrumentName) == nil {
+            if let headstock = nativeCatalogHeadstock(for: profile) {
+                XCTAssertEqual(headstock.positions.count, profile.strings.count, profile.instrumentName)
+                continue
+            }
             XCTAssertNotNil(UIImage(named: profile.tuningArtworkName), profile.instrumentName)
             XCTAssertNotNil(TunerVectorArtwork.load(profile.tuningArtworkName), profile.instrumentName)
         }
@@ -301,8 +345,9 @@ final class TunerTests: XCTestCase {
     }
 
     func testStringInstrumentPitchAndLockBenchmarks() {
-        for name in ["Guitar", "7-string guitar", "12-string guitar", "Bass", "5-string bass", "Ukulele", "Violin", "Cello",
-                     "5-string banjo", "Mandolin", "Double bass", "Guzheng"] {
+        for name in ["Guitar", "7-string guitar", "12-string guitar", "Bass", "5-string bass", "6-string bass",
+                     "Ukulele", "Baritone ukulele", "Violin", "Viola", "Cello", "Double bass", "5-string banjo", "Mandolin",
+                     "Guzheng"] {
             let notes = TunerProfile.catalog.filter { $0.instrumentName == name }.flatMap(\.strings)
             let pitches = Array(Set(notes)).sorted()
             let window = pitches.contains { $0 <= 36 } ? 0.144 : 0.096
@@ -426,7 +471,7 @@ final class TunerTests: XCTestCase {
             return stride(from: hop, through: audio.count, by: hop).compactMap { end in
                 guard end >= window else { return nil }
                 let time = Double(end) / rate
-                let measured = TunerPitch.detect(Array(audio[(end - window)..<end]), sampleRate: rate)
+                let measured = TunerPitch.detect(Array(audio[(end - window)..<end]), sampleRate: rate, chromatic: true)
                 guard let reading = tracker.read(hz: measured, reference: 440, targets: [], held: nil,
                                                  time: time, chromatic: true) else { return nil }
                 return (time, reading)
@@ -473,6 +518,429 @@ final class TunerTests: XCTestCase {
         let drifting = track { $0 < 1 ? 0 : -14 }
         XCTAssertTrue(drifting.contains { $0.0 < 1 && $0.1.state == .centered })
         XCTAssertFalse(drifting.contains { $0.0 > 1.34 && $0.1.state == .centered })
+
+        let slideAfterLock = track { $0 < 1 ? 0 : 190 * ($0 - 1) }
+        XCTAssertTrue(slideAfterLock.contains { $0.0 < 1 && $0.1.state == .centered })
+        XCTAssertTrue(slideAfterLock.contains { $0.0 > 1 && abs($0.1.cents) >= 18 })
+        XCTAssertFalse(slideAfterLock.contains { abs($0.1.cents) >= 18 && $0.1.state == .centered })
+    }
+
+    func testQuietPitchKeepsItsOffsetInBothModesAndRejectsNoise() throws {
+        let rate = 48_000.0
+        let frequency = 220 * pow(2, -15.0 / 1200)
+        let window = Int(rate * 0.096)
+        let quiet: [Float] = (0..<window).map { index in
+            Float(0.00115 * sin(2 * .pi * frequency * Double(index) / rate))
+        }
+        for chromatic in [false, true] {
+            let pitch = try XCTUnwrap(TunerPitch.detect(quiet, sampleRate: rate, chromatic: chromatic))
+            XCTAssertEqual(1200 * log2(pitch / 220), -15, accuracy: 1)
+        }
+        var roomSeed: UInt32 = 993
+        let quietSynth: [Float] = (0..<24_000).map { index in
+            let phase = 2 * Double.pi * 220 * Double(index) / rate
+            if index.isMultiple(of: 8) { roomSeed = 1_664_525 &* roomSeed &+ 1_013_904_223 }
+            let roomNoise = (Double(roomSeed) / Double(UInt32.max) * 2 - 1) * 0.00042
+            return Float(0.00132 * (sin(phase) + 0.31 * sin(2 * phase) + 0.10 * sin(3 * phase)) + roomNoise)
+        }
+        for end in stride(from: window, to: quietSynth.count, by: 1152) {
+            let hz = try XCTUnwrap(TunerPitch.detect(Array(quietSynth[(end - window)..<end]),
+                                                    sampleRate: rate, chromatic: true))
+            XCTAssertEqual(1200 * log2(hz / 220), 0, accuracy: 8)
+        }
+        var seed: UInt32 = 2941
+        let noise: [Float] = (0..<Int(rate)).map { _ in
+            seed = 1_664_525 &* seed &+ 1_013_904_223
+            return (Float(seed) / Float(UInt32.max) * 2 - 1) * 0.008
+        }
+        XCTAssertNil(TunerPitch.detect(Array(noise.prefix(window)), sampleRate: rate, chromatic: true))
+        let roomOnly = noise.prefix(window).map { $0 * 0.1 }
+        for chromatic in [false, true] {
+            XCTAssertNil(TunerPitch.detect(roomOnly, sampleRate: rate, chromatic: chromatic))
+        }
+        let noisyNote = noise.enumerated().map { index, noise in
+            let phase = 2 * Double.pi * frequency * Double(index) / rate
+            return Float(0.020 * (sin(phase) + 0.36 * sin(2 * phase) + 0.14 * sin(3 * phase))) + noise
+        }
+        for stabilize in [false, true] {
+            var tracker = TunerTracker()
+            for end in stride(from: window, to: noisyNote.count, by: 1024) {
+                let pitch = TunerPitch.detect(Array(noisyNote[(end - window)..<end]), sampleRate: rate, chromatic: true)
+                let reading = try XCTUnwrap(tracker.read(hz: pitch, reference: 440, targets: [], held: nil,
+                                                        time: Double(end) / rate, chromatic: true,
+                                                        stabilizeChromaticPitch: stabilize))
+                XCTAssertEqual(reading.note, 57)
+                XCTAssertEqual(reading.cents, -15, accuracy: 5)
+                XCTAssertNotEqual(reading.state, .centered)
+            }
+        }
+    }
+
+    func testQuietGuitarThirdPartialDoesNotConfirmUntilTheHigherNoteIsPlayed() throws {
+        let rate = 48_000.0
+        let d3 = TunerPitch.frequency(50, reference: 440)
+        let change = 1.2
+        var seed: UInt32 = 871
+        let audio = (0..<Int(rate * 2)).map { index -> Float in
+            let time = Double(index) / rate
+            seed = seed &* 1_664_525 &+ 1_013_904_223
+            let noise = 0.00039 * (Double(seed) / Double(UInt32.max) * 2 - 1)
+            if time >= change {
+                return Float(0.00085 * sin(2 * .pi * 440 * time) + noise)
+            }
+            let phase = 2 * Double.pi * d3 * time
+            let envelope = 0.0013 * exp(-1.15 * time)
+            return Float(envelope * (0.48 * sin(phase) + sin(3 * phase)) + noise)
+        }
+        let window = Int(rate * 0.096)
+        var tracker = TunerTracker()
+        var confirmedD = false
+        var firstFreshA: Double?
+        var confirmedA = false
+        for end in stride(from: window, through: audio.count, by: 1152) {
+            let time = Double(end) / rate
+            let pitch = TunerPitch.detect(Array(audio[(end - window)..<end]), sampleRate: rate, chromatic: true)
+            let reading = tracker.read(hz: pitch, reference: 440, targets: [], held: nil, time: time,
+                                       chromatic: true, stabilizeChromaticPitch: true)
+            if time <= change, reading?.state == .centered {
+                XCTAssertEqual(reading?.note, 50, "A decaying D string must not confirm its overtone")
+                confirmedD = true
+            } else if time > change, reading?.isFresh == true, reading?.note == 69 {
+                if firstFreshA == nil { firstFreshA = time }
+                if reading?.state == .centered { confirmedA = true }
+            }
+        }
+        XCTAssertTrue(confirmedD)
+        XCTAssertLessThan(try XCTUnwrap(firstFreshA) - change, 0.25)
+        XCTAssertTrue(confirmedA)
+    }
+
+    func testBowedLowNoteAndItsOctaveBothCenterOnTheCorrectNote() throws {
+        let rate = 48_000.0
+        let frequency = TunerPitch.frequency(42, reference: 440)
+        let window = Int(rate * 0.096)
+        for (oddPartial, expected) in [(0.055, 42), (0.0, 54)] {
+            var seed: UInt32 = 617
+            let audio = (0..<Int(rate * 0.75)).map { index -> Float in
+                let time = Double(index) / rate
+                let phase = 2 * Double.pi * frequency * time
+                let bowed = sin(2 * phase) + 0.24 * sin(4 * phase)
+                    + oddPartial * (sin(phase) + 0.65 * sin(3 * phase))
+                let rumble = 0.00024 * sin(2 * .pi * 53 * time)
+                seed = 1_664_525 &* seed &+ 1_013_904_223
+                let noise = 0.00021 * (Double(seed) / Double(UInt32.max) * 2 - 1)
+                return Float(0.0015 * bowed + rumble + noise)
+            }
+            var tracker = TunerTracker()
+            let centered = stride(from: window, through: audio.count, by: 1152).compactMap { end -> Int? in
+                let samples = Array(audio[(end - window)..<end])
+                let pitch = TunerPitch.detect(samples, sampleRate: rate, chromatic: true)
+                let reading = tracker.read(hz: pitch, reference: 440, targets: [], held: nil,
+                                           time: Double(end) / rate, chromatic: true, stabilizeChromaticPitch: true)
+                return reading?.state == .centered ? reading?.note : nil
+            }
+            XCTAssertEqual(Set(centered), [expected])
+        }
+    }
+
+    func testQuietGuitarStringCanBeReadOverLowRumble() throws {
+        let rate = 48_000.0
+        let frequency = TunerPitch.frequency(50, reference: 440)
+        for shift in 0..<12 {
+            let samples = (0..<4608).map { index -> Float in
+                let time = Double(index) / rate + Double(shift) * 0.014
+                let phase = 2 * Double.pi * frequency * time
+                let string = 0.0007 * (sin(phase) + 0.62 * sin(2 * phase) + 0.49 * sin(3 * phase))
+                let rumble = 0.001 * (sin(2 * .pi * 60 * time) + 0.21 * sin(2 * .pi * 41 * time))
+                return Float(string + rumble)
+            }
+            let pitch = try XCTUnwrap(TunerPitch.detect(samples, sampleRate: rate))
+            XCTAssertEqual(1200 * log2(pitch / frequency), 0, accuracy: 9)
+        }
+    }
+
+    func testChromaticAcquiresQuietHighNotesWithoutConfirmingRoomNoise() throws {
+        let rate = 48_000.0
+        let window = Int(rate * 0.096)
+        var seed: UInt32 = 137
+        let room: [Double] = (0..<Int(rate)).map { frame in
+            seed = 1_664_525 &* seed &+ 1_013_904_223
+            let time = Double(frame) / rate
+            return 0.00043 * sin(2 * .pi * 59 * time)
+                + 0.00029 * (Double(seed) / Double(UInt32.max) * 2 - 1)
+        }
+        let noise = room.map(Float.init)
+        var tracker = TunerTracker()
+        for end in stride(from: window, to: noise.count, by: 1152) {
+            let hz = TunerPitch.detect(Array(noise[(end - window)..<end]), sampleRate: rate, chromatic: true)
+            let reading = tracker.read(hz: hz, reference: 440, targets: [], held: nil,
+                                       time: Double(end) / rate, chromatic: true, stabilizeChromaticPitch: true)
+            XCTAssertNotEqual(reading?.state, .centered)
+        }
+        for note in [74, 75] {
+            let target = TunerPitch.frequency(note, reference: 440)
+            for cents in [0.0, -14.0, 14.0] {
+                let frequency = target * pow(2, cents / 1200)
+                let audio = room.enumerated().map { frame, background in
+                    Float(background + 0.00042 * sin(2 * .pi * frequency * Double(frame) / rate))
+                }
+                XCTAssertNil(TunerPitch.detect(Array(audio.prefix(window)), sampleRate: rate))
+                tracker = TunerTracker()
+                for end in stride(from: window, to: audio.count, by: 1152) {
+                    let hz = try XCTUnwrap(TunerPitch.detect(Array(audio[(end - window)..<end]),
+                                                            sampleRate: rate, chromatic: true))
+                    XCTAssertEqual(1200 * log2(hz / target), cents, accuracy: 2)
+                    let reading = tracker.read(hz: hz, reference: 440, targets: [], held: nil,
+                                               time: Double(end) / rate, chromatic: true,
+                                               stabilizeChromaticPitch: true)
+                    if end > Int(rate * 0.45) {
+                        XCTAssertEqual(reading?.note, note)
+                        XCTAssertEqual(reading?.state, cents == 0 ? .centered : cents < 0 ? .flat : .sharp)
+                    }
+                }
+            }
+        }
+    }
+
+    func testChromaticContinuationMeasuresPitchAndRejectsARealLowerNote() throws {
+        let rate = 48_000.0
+        let frames = Int(rate * 0.096)
+        let sharp = 220 * pow(2.0, 12.0 / 1200)
+        func tone(_ hz: Double, overtones: Double = 0, amplitude: Double = 0.0012) -> [Float] {
+            (0..<frames).map { index in
+                let phase = 2 * Double.pi * hz * Double(index) / rate
+                return Float(amplitude * (sin(phase) + overtones * sin(2 * phase)))
+            }
+        }
+        for proposed in [nil, 55.0] {
+            let measured = try XCTUnwrap(TunerPitch.continueChromaticPitch(near: 220, proposed: proposed,
+                samples: tone(sharp), sampleRate: rate))
+            XCTAssertEqual(1200 * log2(measured / 220), 12, accuracy: 0.3)
+        }
+        let normalLevel = 0.008
+        for divisor in [2.0, 3.0] {
+            let candidate = sharp / divisor
+            let measured = try XCTUnwrap(TunerPitch.continueChromaticPitch(near: 220, proposed: candidate,
+                samples: tone(sharp, amplitude: normalLevel), sampleRate: rate))
+            XCTAssertEqual(1200 * log2(measured / 220), 12, accuracy: 0.3)
+        }
+        for amplitude in [0.0012, normalLevel] {
+            XCTAssertNil(TunerPitch.continueChromaticPitch(near: 220, proposed: 110,
+                samples: tone(110, overtones: 0.8, amplitude: amplitude), sampleRate: rate))
+        }
+        XCTAssertNil(TunerPitch.continueChromaticPitch(near: 220, proposed: 75,
+            samples: tone(sharp, amplitude: normalLevel), sampleRate: rate))
+        XCTAssertNil(TunerPitch.continueChromaticPitch(near: 220, proposed: nil,
+            samples: Array(repeating: 0, count: frames), sampleRate: rate))
+    }
+
+    func testChromaticPointerFollowsReadingsAcrossTheFixedScale() {
+        typealias Dial = ChromaticDialGeometry
+        XCTAssertEqual(Dial.pointerAngle(note: 60, cents: 0), .pi / 2, accuracy: 0.0001)
+        XCTAssertEqual(Dial.pointerAngle(note: 69, cents: 25), Dial.step / 4, accuracy: 0.0001)
+        XCTAssertEqual(Dial.pointerAngle(note: 69, cents: -25), -Dial.step / 4, accuracy: 0.0001)
+        XCTAssertEqual(Dial.pointerAngle(note: 69, cents: 200), Dial.pointerAngle(note: 71, cents: 0), accuracy: 0.0001)
+
+        let before = Dial.point(at: Dial.pointerAngle(note: 68, cents: 50), radius: Dial.outer)
+        let after = Dial.point(at: Dial.pointerAngle(note: 69, cents: -50), radius: Dial.outer)
+        XCTAssertEqual(before.x, after.x, accuracy: 0.0001)
+        XCTAssertEqual(before.y, after.y, accuracy: 0.0001)
+    }
+
+    func testChromaticStabilizationReducesVocalWobbleAndKeepsRealOffsets() throws {
+        func track(stabilized: Bool) -> [TunerReading] {
+            var tracker = TunerTracker()
+            return (0..<152).compactMap { frame in
+                let time = Double(frame) * 0.024
+                let pitch: Double
+                switch frame {
+                case ..<90: pitch = 8 + 7 * sin(time * 2 * .pi * 5.7) + 1.2 * sin(time * 2 * .pi * 14)
+                case 90..<120: pitch = 10
+                default: pitch = 32
+                }
+                return tracker.read(hz: 440 * pow(2, pitch / 1200), reference: 440, targets: [], held: nil,
+                                    time: time, chromatic: true, stabilizeChromaticPitch: stabilized)
+            }
+        }
+
+        let baseline = track(stabilized: false)
+        let stabilized = track(stabilized: true)
+        XCTAssertEqual(stabilized.count, 152)
+        XCTAssertEqual(stabilized.map { $0.state == .centered }, baseline.map { $0.state == .centered })
+        func wobble(_ samples: [TunerReading]) -> Double {
+            let voice = samples[20..<90]
+            return voice.map { abs($0.cents - 8) }.reduce(0, +) / Double(voice.count)
+        }
+        let baselineWobble = wobble(baseline)
+        let stabilizedWobble = wobble(stabilized)
+        print("Chromatic vocal wobble: \(baselineWobble)¢ baseline, \(stabilizedWobble)¢ stabilized")
+        XCTAssertLessThan(stabilizedWobble, baselineWobble * 0.8)
+        XCTAssertEqual(stabilized[119].state, .centered)
+        XCTAssertEqual(stabilized[119].cents, 10, accuracy: 0.3)
+        XCTAssertGreaterThan(stabilized[120].cents, 24)
+        let settled = try XCTUnwrap(stabilized.last)
+        XCTAssertEqual(settled.state, .sharp)
+        XCTAssertEqual(settled.cents, 32, accuracy: 0.3)
+    }
+
+    func testChromaticStabilizationRejectsOneJumpButLetsARealNoteThrough() throws {
+        var tracker = TunerTracker()
+        func read(_ cents: Double?, _ frame: Int) -> TunerReading? {
+            tracker.read(hz: cents.map { 440 * pow(2, $0 / 1200) }, reference: 440, targets: [], held: nil,
+                         time: Double(frame) * 0.024, chromatic: true, stabilizeChromaticPitch: true)
+        }
+        for frame in 0..<20 { _ = read(7, frame) }
+        let centered = try XCTUnwrap(read(7, 20))
+        XCTAssertEqual(centered.state, .centered)
+        let jump = try XCTUnwrap(read(707, 21))
+        XCTAssertEqual(jump.note, 69)
+        XCTAssertFalse(jump.isFresh)
+        XCTAssertEqual(jump.centeredDuration, centered.centeredDuration)
+        XCTAssertEqual(read(7, 22)?.state, .centered)
+
+        let next = try XCTUnwrap(read(206, 23))
+        XCTAssertTrue(next.isFresh)
+        XCTAssertEqual(next.note, 71)
+        XCTAssertEqual(next.cents, 6, accuracy: 0.01)
+        XCTAssertNotEqual(next.state, .centered)
+
+        for frame in 25...55 {
+            let time = Double(frame) * 0.024
+            let wideVibrato = 200 + 26 * sin(time * 2 * .pi * 5.5)
+            XCTAssertNotEqual(read(wideVibrato, frame)?.state, .centered)
+        }
+        XCTAssertNil(read(nil, 61))
+        XCTAssertEqual(read(-300, 62)?.note, 66)
+
+        let glide = Array(1...12) + Array((0..<12).reversed())
+        for (index, step) in glide.enumerated() {
+            let cents = Double(step) * 23 - 300
+            let reading = try XCTUnwrap(read(cents, 63 + index))
+            let shown = Double(reading.note - 69) * 100 + reading.cents
+            XCTAssertTrue(reading.isFresh)
+            XCTAssertEqual(shown, cents, accuracy: 8)
+            XCTAssertNotEqual(reading.state, .centered)
+        }
+    }
+
+    func testChromaticCoverTakesShortestArcAcrossTheDialSeam() {
+        typealias Dial = ChromaticDialGeometry
+        let before = Dial.angle(for: 8)
+        let after = Dial.angle(for: 9)
+        let clockwise = Dial.nearestAngle(after, to: before)
+        let counterclockwise = Dial.nearestAngle(before, to: after)
+        XCTAssertEqual(clockwise - before, Dial.step, accuracy: 0.00001)
+        XCTAssertEqual(counterclockwise - after, -Dial.step, accuracy: 0.00001)
+        XCTAssertEqual(Dial.nearestAngle(after, to: clockwise), clockwise, accuracy: 0.00001)
+    }
+
+    func testChromaticApertureCrossesFixedDividersAndFillsOnlyItsOverlap() throws {
+        typealias Dial = ChromaticDialGeometry
+        let sustain = ChromaticSustain(TunerReading(hz: 440, note: 69, cents: 0,
+                                                     state: .centered, centeredDuration: 2.5))
+        let noSignal = ChromaticSustain(nil)
+        let center = Dial.angle(for: 9)
+        let aligned = ChromaticDialAperture(angle: center, target: 9, sustain: sustain)
+        let alignedFill = try XCTUnwrap(aligned.fill)
+        let glass = Dial.glassCoverage
+        let glyph = Dial.point(at: center, radius: Dial.letteringRadius)
+        XCTAssertFalse(Dial.coverCoverage.contains(glyph, eoFill: true))
+        XCTAssertTrue(Dial.coverCoverage.contains(Dial.point(at: Dial.step, radius: Dial.letteringRadius), eoFill: true))
+        for radius in [Dial.coverInner - 1, Dial.coverOuter + 1] {
+            let gap = Dial.point(at: Dial.step, radius: radius)
+            XCTAssertTrue(Dial.coverSeat.contains(gap, eoFill: true))
+            XCTAssertFalse(Dial.coverCoverage.contains(gap, eoFill: true))
+        }
+        XCTAssertFalse(glass.contains(glyph, eoFill: true))
+        XCTAssertFalse(glass.contains(Dial.center, eoFill: true))
+        XCTAssertTrue(glass.contains(Dial.point(at: center + Dial.step, radius: Dial.letteringRadius), eoFill: true))
+        for angle in [-Dial.step, Dial.step * 4, .pi * 2 - Dial.step] {
+            let rotatedGlass = glass.applying(Dial.glassRotation(by: angle))
+            let rotatedAperture = ChromaticDialAperture(angle: angle, target: nil, sustain: noSignal)
+            let openingCenter = Dial.point(at: angle, radius: Dial.letteringRadius)
+            XCTAssertTrue(rotatedAperture.opening.contains(openingCenter))
+            XCTAssertFalse(rotatedGlass.contains(openingCenter, eoFill: true))
+            XCTAssertTrue(rotatedGlass.contains(glyph, eoFill: true))
+        }
+        let cell = Dial.cell(at: center)
+        for radius in [Dial.letteringRadius, Dial.outer - 10] {
+            for direction in [-1.0, 1.0] {
+                let inside = Dial.point(at: center + direction * Dial.step * 0.40, radius: radius)
+                let gap = Dial.point(at: center + direction * Dial.step * 0.47, radius: radius)
+                XCTAssertTrue(aligned.opening.contains(inside))
+                XCTAssertTrue(alignedFill.contains(inside))
+                XCTAssertTrue(cell.contains(gap))
+                XCTAssertFalse(aligned.opening.contains(gap))
+            }
+        }
+        for radius in [Dial.inner + 3, Dial.outer - 1] {
+            let point = Dial.point(at: center, radius: radius)
+            XCTAssertTrue(cell.contains(point))
+            XCTAssertFalse(aligned.opening.contains(point))
+        }
+        let outerEdge = Dial.point(at: center, radius: Dial.outer - 5.5)
+        let innerEdge = Dial.point(at: center, radius: Dial.inner + 6.75)
+        XCTAssertTrue(aligned.opening.contains(outerEdge))
+        XCTAssertFalse(aligned.opening.contains(innerEdge))
+        for offset in [-21.0, 21.0] {
+            XCTAssertFalse(aligned.opening.contains(CGPoint(x: outerEdge.x + offset, y: outerEdge.y)))
+            XCTAssertTrue(aligned.opening.contains(CGPoint(x: innerEdge.x + offset, y: innerEdge.y)))
+        }
+        let beginning = ChromaticSustain(TunerReading(hz: 440, note: 69, cents: 0,
+                                                       state: .centered, centeredDuration: 0))
+        XCTAssertNil(ChromaticDialAperture(angle: center, target: 9, sustain: beginning, fillsGradually: false).fill)
+        XCTAssertTrue(ChromaticDialAperture(angle: center, target: 9, sustain: sustain, fillsGradually: false)
+            .fill?.contains(glyph) == true)
+        let firstFill = try XCTUnwrap(ChromaticDialAperture(angle: center, target: 9, sustain: beginning).fill)
+        for offset in [-17.0, 0, 17.0] {
+            let inside = CGPoint(x: Dial.center.x + offset, y: Dial.center.y - Dial.inner - 8)
+            let below = CGPoint(x: inside.x, y: inside.y + 4)
+            XCTAssertTrue(firstFill.contains(inside))
+            XCTAssertFalse(aligned.opening.contains(below))
+        }
+        XCTAssertFalse(firstFill.contains(Dial.point(at: center, radius: Dial.letteringRadius)))
+
+        for direction in [-1.0, 1.0] {
+            let offset = Dial.pointerAngle(note: 69, cents: direction * 32)
+            let crossing = ChromaticDialAperture(angle: offset, target: 9, sustain: noSignal)
+            XCTAssertTrue(crossing.opening.contains(Dial.point(at: center, radius: Dial.letteringRadius)))
+            XCTAssertTrue(crossing.opening.contains(Dial.point(at: direction * Dial.step * 0.65, radius: Dial.letteringRadius)))
+            XCTAssertFalse(crossing.opening.contains(Dial.point(at: -direction * Dial.step * 0.4, radius: Dial.letteringRadius)))
+
+            let nearCenter = Dial.pointerAngle(note: 69, cents: direction * 10)
+            let nearlyAligned = ChromaticDialAperture(angle: nearCenter, target: 9, sustain: sustain)
+            let spill = Dial.point(at: direction * Dial.step * 0.52, radius: Dial.letteringRadius)
+            XCTAssertTrue(nearlyAligned.opening.contains(spill))
+            XCTAssertFalse(try XCTUnwrap(nearlyAligned.fill).contains(spill))
+        }
+    }
+
+    func testChromaticReadoutHoldsNearTheBoundaryAndSwitchesForNewNotes() throws {
+        var focus = ChromaticDialFocus()
+        func reading(_ note: Int, _ cents: Double, at time: Double, fresh: Bool = true) -> TunerReading {
+            TunerReading(hz: TunerPitch.frequency(note, reference: 440) * pow(2, cents / 1200),
+                         note: note, cents: cents, state: .flat, centeredDuration: 0,
+                         isFresh: fresh, measuredAt: time)
+        }
+
+        focus.update(reading: reading(69, 48, at: 0))
+        focus.update(reading: reading(70, -49, at: 0.06))
+        XCTAssertEqual(focus.note, 69)
+        XCTAssertEqual(focus.readingForDisplay(reading(70, -49, at: 0.06))?.cents, 51)
+        focus.update(reading: reading(70, -48, at: 0.23))
+        XCTAssertEqual(focus.note, 70)
+
+        focus.update(reading: reading(72, -8, at: 0.26))
+        XCTAssertEqual(focus.note, 72)
+        XCTAssertEqual(focus.readingForDisplay(reading(72, -8, at: 0.26))?.cents, -8)
+        focus.update(reading: reading(69, 0, at: 0.32, fresh: false))
+        XCTAssertEqual(focus.note, 72)
+
+        focus.update(reading: nil)
+        XCTAssertNil(focus.note)
+        focus.update(reading: reading(74, 12, at: 0.42))
+        XCTAssertEqual(focus.note, 74)
+        XCTAssertEqual(focus.readingForDisplay(reading(74, 12, at: 0.42))?.cents, 12)
     }
 
     func testChromaticReportsMeasuredOffsetWhenTargetIsLockedToAnotherOctave() throws {
@@ -532,6 +1000,21 @@ final class TunerTests: XCTestCase {
         XCTAssertEqual(tracker.read(hz: 55, reference: 440, targets: [28, 33, 38, 43], held: 33, time: 0)?.note, 33)
     }
 
+    func testReleaseCatalogIncludesAllLaunchPresetsAndOnlyLaunchInstruments() {
+        let expected: Set<String> = [
+            "Guitar", "7-string guitar", "12-string guitar", "Bass", "5-string bass", "6-string bass",
+            "Ukulele", "Baritone ukulele", "Violin", "Viola", "Cello", "Double bass",
+            "5-string banjo", "Mandolin"
+        ]
+        let release = TunerProfile.releaseCatalog
+        XCTAssertEqual(Set(release.filter { $0.id == $0.instrumentID }.map(\.id)), expected)
+        XCTAssertEqual(Set(release.map(\.instrumentID)), expected)
+        XCTAssertTrue(release.allSatisfy { !$0.strings.isEmpty })
+        for id in expected {
+            XCTAssertEqual(release.filter { $0.instrumentID == id }, TunerProfile.catalog.filter { $0.instrumentID == id })
+        }
+    }
+
     func testPresetCatalogKeepsInstrumentIdentityAndStringCount() throws {
         let catalog = TunerProfile.catalog
         XCTAssertEqual(Set(catalog.map(\.id)).count, catalog.count)
@@ -567,7 +1050,12 @@ final class TunerTests: XCTestCase {
                     XCTAssertTrue(group.notes.allSatisfy { (20...108).contains($0) }, profile.id)
                 }
             } else {
-                XCTAssertGreaterThan(profile.tunings.count, 1, profile.id)
+                if profile.tunings.count == 1 {
+                    let headstock = try XCTUnwrap(nativeCatalogHeadstock(for: profile), profile.id)
+                    XCTAssertEqual(headstock.positions.count, profile.strings.count, profile.id)
+                } else {
+                    XCTAssertGreaterThan(profile.tunings.count, 1, profile.id)
+                }
                 XCTAssertTrue(profile.checkGroups.isEmpty, profile.id)
             }
         }
@@ -588,6 +1076,26 @@ final class TunerTests: XCTestCase {
             XCTAssertEqual(diagram.string(at: CGPoint(x: 19, y: 55.5 + 5.8 * row), in: frame), index)
             XCTAssertEqual(diagram.string(at: CGPoint(x: 260.5, y: 49.5 + 8 * row), in: frame), index)
         }
+    }
+
+    func testKotoBridgeAndStringTargetsFollowThePreset() throws {
+        let profile = try XCTUnwrap(TunerProfile.catalog.first { $0.id == "Koto" })
+        let lowFirst = try XCTUnwrap(profile.tunings.first { $0.tuningName == "Hirajōshi, low first string" })
+        let standard = TunerZither.koto(profile.strings)
+        let lower = TunerZither.koto(lowFirst.strings)
+        let frame = standard.frame(in: CGRect(x: 0, y: 0, width: 540, height: 99))
+        for index in profile.strings.indices {
+            let row = CGFloat(index)
+            let startY = 22 + row * 4.55
+            let endY = 11.5 + row * 6.35
+            let point = CGPoint(x: 103, y: startY + (endY - startY) * (103 - 34) / (505 - 34))
+            XCTAssertEqual(standard.string(at: point, in: frame), index)
+            XCTAssertEqual(lower.string(at: point, in: frame), index)
+        }
+        let firstBridgeFoot = CGPoint(x: 177, y: 23)
+        XCTAssertEqual(standard.string(at: firstBridgeFoot, in: frame), 0)
+        XCTAssertEqual(lower.string(at: firstBridgeFoot, in: frame), 1)
+        XCTAssertEqual(lower.string(at: CGPoint(x: 48, y: 26.5), in: frame), 0)
     }
 
     func testGuzhengCoursesFollowThePlayersView() {
@@ -617,15 +1125,41 @@ final class TunerTests: XCTestCase {
 
     func testInstrumentCatalogHasVectorArtwork() {
         for profile in TunerProfile.catalog where profile.id == profile.instrumentName {
-            XCTAssertNotNil(UIImage(named: profile.diagramName), profile.diagramName)
+            if let headstock = nativeCatalogHeadstock(for: profile) {
+                XCTAssertEqual(headstock.positions.count, profile.strings.count, profile.id)
+            } else {
+                let icon = profile.diagramName
+                XCTAssertNotNil(UIImage(named: icon), profile.id)
+            }
         }
     }
 
     func testTunerTableFamiliesHaveDedicatedPickerArtwork() {
         let familiesWithNativeHeadstocks = Set(TunerProfile.families.prefix(3))
-        for profile in TunerProfile.catalog where !familiesWithNativeHeadstocks.contains(profile.family) {
-            XCTAssertNotNil(UIImage(named: profile.diagramName + "-picker"), profile.id)
+        for profile in TunerProfile.catalog where !familiesWithNativeHeadstocks.contains(profile.family) &&
+            nativeCatalogHeadstock(for: profile) == nil {
+            let icon = profile.diagramName
+            XCTAssertNotNil(UIImage(named: icon + "-picker"), profile.id)
         }
+    }
+
+    func testMiddleEasternPresetsMatchPhysicalStringCourses() throws {
+        let profiles = TunerProfile.catalog.filter { $0.family == TunerProfile.middleEasternFamily }
+        let arabic = try XCTUnwrap(profiles.first { $0.id == "Oud · Arabic" })
+        let turkish = try XCTUnwrap(profiles.first { $0.id == "Oud · Turkish" })
+        let baglama = try XCTUnwrap(profiles.first { $0.id == "Bağlama" })
+        XCTAssertEqual(arabic.strings, [36, 41, 45, 50, 55, 60])
+        XCTAssertEqual(turkish.strings, [37, 42, 47, 52, 57, 62])
+        for profile in [arabic, turkish] {
+            let drawing = try XCTUnwrap(nativeCatalogHeadstock(for: profile))
+            XCTAssertEqual(drawing.wireRanges.map(\.count), [1, 2, 2, 2, 2, 2])
+            XCTAssertEqual(Set(drawing.courseKeys.flatMap { $0 }.map(\.y)).count, 11)
+        }
+        let drawing = try XCTUnwrap(nativeCatalogHeadstock(for: baglama))
+        XCTAssertEqual(drawing.wireRanges.map(\.count), [2, 2, 3])
+        XCTAssertEqual(drawing.physicalPitches(for: baglama.strings), [45, 57, 55, 55, 50, 62, 62])
+        let b = try XCTUnwrap(baglama.tunings.first { $0.tuningName == "Bağlama düzeni · B" })
+        XCTAssertEqual(drawing.physicalPitches(for: b.strings), [47, 59, 57, 57, 52, 64, 64])
     }
 
     func testLegacyCustomTuningsDecodeWithoutPresetMetadata() throws {

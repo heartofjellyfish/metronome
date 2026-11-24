@@ -1,2 +1,3 @@
 "NSBluetoothAlwaysUsageDescription" = "連接藍牙 MIDI 踏板，用腳控制節拍器。";
 "NSMicrophoneUsageDescription" = "調音器使用麥克風辨識樂器音高，協助你調音。";
+"NSMotionUsageDescription" = "調音器會依據裝置的傾斜角度移動玻璃錶盤上的反光。";

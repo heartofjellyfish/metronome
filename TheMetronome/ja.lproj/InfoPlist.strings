@@ -1,2 +1,3 @@
 "NSBluetoothAlwaysUsageDescription" = "Bluetooth MIDIペダルを接続して、足元でメトロノームを操作します。";
 "NSMicrophoneUsageDescription" = "楽器の音程を測るためにマイクを使用します。";
+"NSMotionUsageDescription" = "端末の傾きに合わせて、チューナーのガラス文字盤の反射を動かします。";

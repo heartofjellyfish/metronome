@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-enum ControlSkin: String {
+enum ControlSkin: String, CaseIterable {
     case sculpted, flat
     static let preference = "appearance.controlSkin"
 }
@@ -32,15 +32,42 @@ extension View {
     func technical(_ size: CGFloat = 10, spacing: CGFloat = 2) -> some View {
         font(.system(size: size, weight: .medium, design: .monospaced)).tracking(spacing * L10n.letterSpacingScale)
     }
-    func insetPanel(_ p: InstrumentPalette, radius: CGFloat = 21) -> some View {
+    func insetPanel(_ p: InstrumentPalette, radius: CGFloat = 21, shallow: Bool = false) -> some View {
+        background { InstrumentInsetSurface(p: p, radius: radius, shallow: shallow) }
+    }
+    func insetPanel(_ p: InstrumentPalette, shape: some InsettableShape, fill: Color? = nil) -> some View {
         background {
-            RoundedRectangle(cornerRadius: radius).fill(p.well
+            shape.fill((fill ?? p.well)
                 .shadow(.inner(color: .black.opacity(p.dark ? 0.8 : 0.36), radius: 4, x: 2, y: 4))
                 .shadow(.inner(color: p.light, radius: 2, x: -1, y: -2)))
         }
-        .overlay(RoundedRectangle(cornerRadius: radius).stroke(p.light, lineWidth: 1).padding(0.5))
+        .overlay(shape.stroke(p.light, lineWidth: 1).padding(0.5))
     }
 }
+
+private struct InstrumentInsetSurface: View {
+    @Environment(\.controlSkin) private var design
+    let p: InstrumentPalette
+    let radius: CGFloat
+    let shallow: Bool
+
+    var body: some View {
+        let outline = RoundedRectangle(cornerRadius: radius)
+        if design == .flat {
+            outline.fill(p.well.opacity(0.48))
+                .overlay { outline.strokeBorder(p.edge.opacity(0.22), lineWidth: 1) }
+        } else {
+            let surface = shallow ? Color(hex: p.dark ? 0x292B29 : 0xE3DDD1) : p.well
+            let shadowOpacity = shallow ? (p.dark ? 0.56 : 0.28) : (p.dark ? 0.80 : 0.36)
+            outline.fill(surface
+                .shadow(.inner(color: .black.opacity(shadowOpacity), radius: shallow ? 3 : 4,
+                               x: shallow ? 1 : 2, y: shallow ? 2 : 4))
+                .shadow(.inner(color: p.light, radius: 2, x: -1, y: -2)))
+            .overlay { outline.stroke(p.light, lineWidth: 1).padding(0.5) }
+        }
+    }
+}
+
 enum InstrumentType {
     // Compared against the reference: curved 6/9 terminals and condensed bold proportions.
     static func display(_ size: CGFloat) -> Font { .custom("HelveticaNeue-CondensedBold", size: size) }
@@ -78,11 +105,11 @@ struct HardwareKeySurface: View {
     var body: some View {
         let outline = RoundedRectangle(cornerRadius: r, style: .continuous)
         if skin == .flat {
-            let colors = green ? [Color(hex: 0xAFC7A1), Color(hex: 0x8DA97D)]
-                : charcoal ? [Color(hex: 0x484943), Color(hex: 0x373833)] : [p.top, p.body]
-            outline.fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay { outline.strokeBorder(p.light, lineWidth: 0.8) }
-                .shadow(color: .black.opacity(pressed ? 0.1 : 0.27), radius: pressed ? 0.5 : 2, y: pressed ? 0 : 2)
+            let color = green ? Color(hex: 0xAFC7A1)
+                : charcoal ? Color(hex: 0x41423D) : p.top
+            outline.fill(color)
+                .overlay { outline.strokeBorder(p.edge.opacity(0.30), lineWidth: 0.8) }
+                .overlay { outline.fill(.black.opacity(pressed ? 0.08 : 0)) }
         } else if shallow {
             outline.fill(LinearGradient(colors: [p.top, p.body], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .overlay { outline.strokeBorder(LinearGradient(colors: [p.light, p.edge.opacity(0.24)], startPoint: .top, endPoint: .bottom), lineWidth: 0.7) }
@@ -260,8 +287,17 @@ struct DialTicks: View {
 }
 
 struct InstrumentBody: View {
+    @Environment(\.controlSkin) private var design
     let p: InstrumentPalette
     var body: some View {
+        if design == .flat {
+            p.body
+        } else {
+            sculptedBody
+        }
+    }
+
+    private var sculptedBody: some View {
         ZStack {
             LinearGradient(colors: p.dark ? [Color(hex: 0x444643), Color(hex: 0x303231), Color(hex: 0x262827)] : [Color(hex: 0xE9E4DA), Color(hex: 0xE5E0D5), Color(hex: 0xDDD8CB)], startPoint: .topLeading, endPoint: .bottomTrailing)
             MaterialGrain().opacity(p.dark ? 0.025 : 0.015).blendMode(.overlay)

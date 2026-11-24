@@ -4,13 +4,9 @@ import SwiftUI
 struct TheMetronomeApp: App {
     @StateObject private var model = MetronomeModel()
     @Environment(\.scenePhase) private var scenePhase
-    #if DEBUG
-    @AppStorage(ControlSkin.preference) private var previewSkin = ControlSkin.sculpted
-    #endif
+    @AppStorage(ControlSkin.preference) private var design = ControlSkin.sculpted
     var body: some Scene { WindowGroup { MetronomeView(model: model).background(KeyboardGestures()).preferredColorScheme(model.dark ? .dark : .light)
-        #if DEBUG
-        .environment(\.controlSkin, previewSkin)
-        #endif
+        .environment(\.controlSkin, design)
         .onAppear { model.updateScreenScenePhase(scenePhase) }
         .onChange(of: scenePhase) { _, phase in model.updateScreenScenePhase(phase) }
     } }

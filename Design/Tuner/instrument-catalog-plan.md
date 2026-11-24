@@ -1,6 +1,6 @@
 # 调音器乐器目录与文化入口
 
-更新于 2026-11-22。这里记录后续扩库和文化发现的候选。公开上架以 [首发范围与里程碑](release-scope.md) 为准。当前基线是 [TunerCatalog](../../TheMetronome/TunerCatalog.swift) 和 [TunerLibrary](../../TheMetronome/TunerLibrary.swift)。有 69 个基础乐器配置，其中 63 个在选择器显示，6 个仅留在目录。Chromatic、预设和用户自定义不计入这 69 个。乐器页面按 [调音器页面标准](page-standards.md) 验收。
+更新于 2026-11-22。这里记录后续扩库和文化发现的候选。公开上架以 [首发范围与里程碑](release-scope.md) 为准。[TunerCatalog](../../TheMetronome/TunerCatalog.swift) 保留首发和扩库配置。[TunerLibrary](../../TheMetronome/TunerLibrary.swift) 在正式版本仅显示首发范围，开发构建可评审完整目录。乐器页面按 [调音器页面标准](page-standards.md) 验收。
 
 ## 目录结构
 

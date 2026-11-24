@@ -41,7 +41,7 @@ private final class PitchInput {
             if window.count > capacity { window.removeFirst(window.count - capacity) }
             let interval = signposter.beginInterval("Pitch analysis")
             let analyzed = window.count == size ? window : Array(window.suffix(size))
-            let pitch = TunerPitch.detect(analyzed, sampleRate: rate)
+            let pitch = TunerPitch.detect(analyzed, sampleRate: rate, chromatic: chromatic)
             if chromatic { lastPitch = pitch }
             let level = measuresLevel ? TunerPitch.tailLevel(window, sampleRate: rate) : nil
             signposter.endInterval("Pitch analysis", interval)
@@ -106,14 +106,15 @@ final class TunerAudio: ObservableObject {
     var response = TunerResponse.balanced
     var tracksPlucks = false
     var isChromatic = false
+    var stabilizeChromaticPitch = false
 
     func ownsGraph(_ object: Any?) -> Bool {
         guard let engine, let changedGraph = object as? AVAudioEngine else { return false }
         return engine === changedGraph
     }
 
-    func clearReading(preservingEnvelope: Bool = false) {
-        tracker.reset(preservingEnvelope: preservingEnvelope)
+    func clearReading(preservingEnvelope: Bool = false, waitsForStringAttack: Bool = false) {
+        tracker.reset(preservingEnvelope: preservingEnvelope, waitsForStringAttack: waitsForStringAttack)
         reading = nil
     }
     func stop() {
@@ -150,10 +151,12 @@ final class TunerAudio: ObservableObject {
             let sampleCount = 3 + Int(min(5, max(0, sustain ?? 0)) * 10)
             for step in 0..<sampleCount {
                 _ = tracker.read(hz: pitch, reference: reference, targets: targets, held: held,
-                                 time: Double(step) * 0.1, response: response, chromatic: isChromatic)
+                                 time: Double(step) * 0.1, response: response, chromatic: isChromatic,
+                                 stabilizeChromaticPitch: stabilizeChromaticPitch)
             }
             reading = tracker.read(hz: pitch, reference: reference, targets: targets, held: held,
-                                   time: Double(sampleCount) * 0.1, response: response, chromatic: isChromatic)
+                                   time: Double(sampleCount) * 0.1, response: response, chromatic: isChromatic,
+                                   stabilizeChromaticPitch: stabilizeChromaticPitch)
             return true
         }
         return false
@@ -224,7 +227,8 @@ final class TunerAudio: ObservableObject {
                         let next = self.tracker.read(hz: hz, reference: self.reference, targets: self.targets,
                                                      held: self.held, time: now, response: self.response,
                                                      pluckLevel: level, guardsPluckHarmonics: self.tracksPlucks,
-                                                     chromatic: self.isChromatic)
+                                                     chromatic: self.isChromatic,
+                                                     stabilizeChromaticPitch: self.stabilizeChromaticPitch)
                         #if DEBUG
                         if self.tracePitch, let hz, let next,
                            self.reading?.note != next.note || self.reading?.state != next.state {

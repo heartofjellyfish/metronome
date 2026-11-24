@@ -6,22 +6,28 @@ protocol TunerWireDiagram {
     func string(at point: CGPoint, in frame: CGRect) -> Int?
 }
 
-enum TunerZither: TunerWireDiagram {
-    case guqin, koto
+enum TunerZither: TunerWireDiagram, Equatable {
+    case guqin
+    case koto([Int])
 
-    static func forInstrument(_ name: String, stringCount: Int) -> Self? {
-        switch (name, stringCount) {
+    static func forInstrument(_ name: String, strings: [Int]) -> Self? {
+        switch (name, strings.count) {
         case ("Guqin", 7): .guqin
-        case ("Koto", 13): .koto
+        case ("Koto", 13): .koto(strings)
         default: nil
         }
+    }
+
+    var isKoto: Bool {
+        if case .koto = self { return true }
+        return false
     }
 
     // Front-view geometry is normalized to a 540-unit wide canvas.
     private var height: CGFloat {
         switch self {
         case .guqin: 140
-        case .koto: 137
+        case .koto: 99
         }
     }
 
@@ -35,12 +41,21 @@ enum TunerZither: TunerWireDiagram {
 
     private var wires: [Wire] {
         switch self {
-        case .koto:
-            return Self.bridged(
-                rows: [16, 22, 29, 36, 44, 53, 63, 73, 83, 92, 101, 110, 119],
-                bridges: [115, 130, 153, 177, 197, 224, 242, 267, 298, 319, 345, 367, 398],
-                left: 60, right: 484, rise: 3
-            )
+        case .koto(let notes):
+            // Player's view, dragon head at right. String 1 is farthest away.
+            // The reference preset follows the diagonal row seen from above.
+            // Other presets can move an individual removable bridge.
+            let reference = [62, 55, 57, 58, 62, 63, 67, 69, 70, 74, 75, 79, 81]
+            return notes.indices.map { index in
+                let row = CGFloat(index)
+                let start = CGPoint(x: 34, y: 22 + row * 4.55)
+                let end = CGPoint(x: 505, y: 11.5 + row * 6.35)
+                let referenceX = 177 + row * 22
+                let shifted = end.x - (end.x - referenceX) * pow(2, CGFloat(reference[index] - notes[index]) / 12)
+                let x = min(483, max(start.x + 14, shifted))
+                let y = start.y + (end.y - start.y) * (x - start.x) / (end.x - start.x)
+                return Wire(start: start, bridge: CGPoint(x: x, y: y), end: end)
+            }
         case .guqin:
             return (0..<7).map { index in
                 let row = CGFloat(index)
@@ -53,16 +68,6 @@ enum TunerZither: TunerWireDiagram {
     private static let guqinHui: [CGFloat] = [
         1.0/8, 1.0/6, 1.0/5, 1.0/4, 1.0/3, 2.0/5, 1.0/2, 3.0/5, 2.0/3, 3.0/4, 4.0/5, 5.0/6, 7.0/8
     ]
-
-    private static func bridged(rows: [CGFloat], bridges: [CGFloat],
-                                left: CGFloat, right: CGFloat, rise: CGFloat) -> [Wire] {
-        zip(rows, bridges).map { y, x in
-            let anchor = left - max(0, y - rows[0]) * 0.06
-            let t = (x - anchor) / (right - anchor)
-            return Wire(start: CGPoint(x: anchor, y: y), bridge: CGPoint(x: x, y: y + rise * t),
-                        end: CGPoint(x: right - max(0, y - 90) * 0.12, y: y + rise))
-        }
-    }
 
     private var outline: String {
         switch self {
@@ -82,12 +87,10 @@ enum TunerZither: TunerWireDiagram {
             Q 509 113 495 113 Z
             """
         case .koto: """
-            M 20 10 C 100 7 251 9 466 11 Q 503 11 522 16
-            C 532 25 533 43 533 58 L 534 103 Q 533 123 525 129
-            L 17 129 C 2 127 1 103 3 72 C 4 47 11 21 20 10 Z
-            M 14 124 L 528 124
-            M 57 8 C 43 34 38 101 45 129 M 64 8 C 51 39 45 102 52 129
-            M 468 11 C 485 44 491 97 481 129 M 476 11 C 494 43 500 100 489 129
+            M 14 16 C 156 12 366 5 523 4 Q 531 4 533 13
+            Q 539 49 533 86 Q 531 95 523 95
+            C 366 94 156 88 14 83 Q 8 83 6 76 Q 1 49.5 6 23 Q 8 16 14 16 Z
+            M 505 4 L 505 95
             """
         }
     }
@@ -118,14 +121,7 @@ enum TunerZither: TunerWireDiagram {
                 let marker = CGRect(x: x - 1.75, y: y - 1.75, width: 3.5, height: 3.5)
                 context.stroke(Path(ellipseIn: marker).applying(transform), with: .color(ink), lineWidth: 0.75)
             }
-        case .koto:
-            let endCurls = Path(tunerCommands: """
-                M 510 24 C 520 24 526 33 526 44 C 526 53 520 60 514 60
-                C 504 60 499 51 499 40 C 499 31 503 24 510 24 Z
-                M 513 67 C 522 67 528 76 528 87 C 528 98 523 106 515 106
-                C 506 106 500 97 500 87 C 500 76 505 67 513 67 Z
-                """)
-            context.stroke(endCurls.applying(transform), with: .color(ink), lineWidth: 1.0)
+        case .koto: break
         }
 
         let drawOrder = drawing.paintOrder(wires.indices)
@@ -139,7 +135,15 @@ enum TunerZither: TunerWireDiagram {
             context.stroke(path, with: .color(color),
                            style: StrokeStyle(lineWidth: drawing.lineWidth(for: index, normal: 0.76, focused: 1.65),
                                               lineCap: .round, lineJoin: .round))
-            drawing.drawContacts([points[0], points[points.count - 1]], for: index, in: context, diameter: 2)
+            if isKoto {
+                for anchor in [points[0], points[points.count - 1]] {
+                    let marker = Path(ellipseIn: CGRect(x: anchor.x - 0.95, y: anchor.y - 0.95, width: 1.9, height: 1.9))
+                    context.fill(marker, with: .color(surface))
+                    context.stroke(marker, with: .color(color), lineWidth: 0.65)
+                }
+            } else {
+                drawing.drawContacts([points[0], points[1]], for: index, in: context, diameter: 2)
+            }
             if self == .guqin {
                 let anchor = wires[index].end
                 let loop = Path(ellipseIn: CGRect(x: anchor.x, y: anchor.y - 1.8, width: 4.0, height: 3.6))
@@ -148,26 +152,37 @@ enum TunerZither: TunerWireDiagram {
                 context.stroke(tied.applying(transform), with: .color(color), lineWidth: 0.6)
             }
         }
-        // The bridges sit in front of the wires at their own contact points.
+        // Short waists read as the top of the removable kotoji; each touches one string.
         for index in drawOrder {
             guard let point = wires[index].bridge else { continue }
             let x = point.x, y = point.y
-            let foot = min(y + 9, 123)
             let bridge = Path(tunerCommands: """
-                M \(x - 8) \(foot) L \(x - 3) \(y + 1)
-                Q \(x - 2) \(y) \(x) \(y)
-                Q \(x + 2) \(y) \(x + 3) \(y + 1) L \(x + 8) \(foot) Z
+                M \(x - 3) \(y - 5.4) L \(x + 3) \(y - 5.4)
+                Q \(x + 1.3) \(y - 1.8) \(x + 1.3) \(y)
+                Q \(x + 1.3) \(y + 1.8) \(x + 3) \(y + 5.4)
+                L \(x - 3) \(y + 5.4)
+                Q \(x - 1.3) \(y + 1.8) \(x - 1.3) \(y)
+                Q \(x - 1.3) \(y - 1.8) \(x - 3) \(y - 5.4) Z
                 """)
             let placed = bridge.applying(transform)
             context.fill(placed, with: .color(surface))
-            context.stroke(placed, with: .color(drawing.color(for: index)), lineWidth: 0.9)
+            let color = drawing.color(for: index)
+            context.stroke(placed, with: .color(color), style: StrokeStyle(lineWidth: 0.86, lineJoin: .round))
+            let contact = Path(tunerCommands: "M \(x - 2) \(y) L \(x + 2) \(y)").applying(transform)
+            context.stroke(contact, with: .color(color), lineWidth: 0.76)
         }
     }
 
     func string(at point: CGPoint, in frame: CGRect) -> Int? {
         let local = point.applying(layout(in: frame).inverted())
+        let wires = wires
         var nearest: Int?
         var bestDistance: CGFloat = 11
+        for (index, wire) in wires.enumerated() {
+            // A bridge projects beyond its tightly spaced string lane.
+            if let bridge = wire.bridge,
+               abs(local.x - bridge.x) <= 4, abs(local.y - bridge.y) <= 5.4 { return index }
+        }
         for (index, wire) in wires.enumerated() {
             guard local.x >= wire.start.x - 6, local.x <= wire.end.x + 6 else { continue }
             let points = wire.points
