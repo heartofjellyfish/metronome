@@ -6,16 +6,20 @@ struct TunerDial: View {
     let style: ChromaticDialStyle
     let reading: TunerReading?
     let status: String
+    var referenceNote: Int? = nil
+    var referenceInk: Color = .accentColor
+    var audition: ((Int, TunerReferenceAction) -> Void)? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var focus = ChromaticDialFocus()
     @State private var plateAngle = 0.0
+    @State private var auditionOctave = 4
 
     private var visibleReading: TunerReading? { focus.readingForDisplay(reading) }
     private var sustain: ChromaticSustain { ChromaticSustain(visibleReading) }
     private var centered: Bool { sustain.isCentered }
     private var sustainProgress: Double { sustain.progress }
-    private var displayNote: Int? { visibleReading?.note }
+    private var displayNote: Int? { referenceNote ?? visibleReading?.note }
     private var target: Int? { displayNote.map { ($0 % 12 + 12) % 12 } }
     private var pointerAngle: Double? { reading.map { Dial.pointerAngle(note: $0.note, cents: $0.cents) } }
     private var requestedAngle: Double? { pointerAngle ?? target.map(Dial.angle(for:)) }
@@ -27,6 +31,7 @@ struct TunerDial: View {
                 .position(x: size.width / 2, y: size.height / 2)
         }
         .onChange(of: reading, initial: true) { _, sample in
+            if let sample, sample.isFresh { auditionOctave = TunerPitch.octave(sample.note) }
             var next = focus
             next.update(reading: sample)
             if next != focus { focus = next }
@@ -50,12 +55,44 @@ struct TunerDial: View {
                 }
             }
             .animation(usesCover && !reduceMotion ? .easeOut(duration: 0.075) : nil, value: angle)
+            if referenceNote != nil, let target {
+                let position = Dial.angle(for: target)
+                let opening = Dial.glassOpening.applying(Dial.glassRotation(by: position))
+                opening.fill(referenceInk.opacity(0.22))
+                    .overlay { opening.stroke(referenceInk.opacity(0.8), lineWidth: 0.9) }
+                    .allowsHitTesting(false)
+            }
             centerReadout.allowsHitTesting(false)
+            if let audition {
+                ForEach(0..<12) { pitch in referenceButton(for: pitch, audition: audition) }
+            }
         }
         .frame(width: Dial.diameter, height: Dial.diameter)
         .foregroundStyle(style.ink)
         // The labels follow the positions engraved on the dial.
         .dynamicTypeSize(...DynamicTypeSize.large)
+    }
+
+    private func referenceButton(for pitch: Int, audition: @escaping (Int, TunerReferenceAction) -> Void) -> some View {
+        let note = (auditionOctave + 1) * 12 + pitch
+        let playing = referenceNote == note
+        let angle = Dial.angle(for: pitch)
+        let area = Dial.cell(at: angle)
+        let bounds = area.boundingRect
+        return Button {
+            audition(note, .tap)
+        } label: {
+            Color.clear.frame(width: bounds.width, height: bounds.height)
+                .contentShape(area.offsetBy(dx: -bounds.minX, dy: -bounds.minY))
+        }
+        .buttonStyle(TunerReferenceButtonStyle(playsOnTouchDown: true, cancel: { audition(note, .cancel) }) {
+            audition(note, $0 ? .hold : .release)
+        })
+        .accessibilityLabel(TunerPitch.label(note))
+        .accessibilityHint(tunerText("Reference tone"))
+        .accessibilityValue(playing ? tunerText("Reference tone") : "")
+        .accessibilityIdentifier("tuner-reference-note-\(pitch)")
+        .position(x: bounds.midX, y: bounds.midY)
     }
 
     private var noteFont: Font {
@@ -91,7 +128,11 @@ struct TunerDial: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(displayNote.map(TunerPitch.label) ?? "—")
             .accessibilityIdentifier("tuner-chromatic-pitch")
-            if let reading = visibleReading {
+            if referenceNote != nil {
+                Label(tunerText("Reference tone"), systemImage: "speaker.wave.2")
+                    .font(statusFont).foregroundStyle(referenceInk)
+                    .accessibilityIdentifier("tuner-chromatic-intonation")
+            } else if let reading = visibleReading {
                 deviationReadout(reading)
             } else {
                 Text(tunerText(status)).font(statusFont).foregroundStyle(style.engraving)
@@ -103,11 +144,12 @@ struct TunerDial: View {
 
     private func deviationReadout(_ reading: TunerReading) -> some View {
         let cents = TunerReading.formatCents(reading.cents)
-        let key = centered ? "In tune" : reading.state == .settling ? "Settling"
+        let showsDirection = reading.cents.rounded() != 0
+        let key = centered ? "In tune" : !showsDirection ? "Settling"
             : reading.cents < 0 ? "Raise pitch" : "Lower pitch"
-        let direction = centered && abs(reading.cents) > 3
+        let direction = centered && showsDirection
             ? " · " + tunerText(reading.cents < 0 ? "Flat" : "Sharp") : ""
-        let icon = centered ? "checkmark" : reading.state == .settling ? nil
+        let icon = centered ? "checkmark" : !showsDirection ? nil
             : reading.cents < 0 ? "arrow.up" : "arrow.down"
         let signal = style.signal(for: reading.state)
         return VStack(spacing: 3) {

@@ -94,6 +94,22 @@ struct TunerRuanHeadstock: TunerHeadstockDrawing {
         .frame(width: 35, height: 32)
     }
 
+    var referenceWires: [Path] { Self.pegs.map { Self.stringPath(for: $0, picker: false).applying(Self.transform) } }
+
+    private static func stringPath(for peg: Peg, picker: Bool) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: peg.nutX, y: endY))
+            if picker {
+                path.addLine(to: CGPoint(x: peg.nutX, y: 1100))
+            } else {
+                path.addLine(to: CGPoint(x: peg.nutX, y: nutY))
+                let dx = peg.nutX - peg.post.x, dy = nutY - peg.post.y
+                let scale = postRadius / hypot(dx, dy)
+                path.addLine(to: CGPoint(x: peg.post.x + dx * scale, y: peg.post.y + dy * scale))
+            }
+        }
+    }
+
     private static func render(in context: GraphicsContext, transform: CGAffineTransform, ink: Color,
                                picker: Bool, drawing: TunerStringDrawing? = nil) {
         func stroke(_ path: Path, color: Color, width: CGFloat, in canvas: GraphicsContext? = nil) {
@@ -122,17 +138,7 @@ struct TunerRuanHeadstock: TunerHeadstockDrawing {
 
             let cap = CGRect(x: peg.post.x - postRadius, y: peg.post.y - postRadius,
                              width: postRadius * 2, height: postRadius * 2)
-            let string = Path { path in
-                path.move(to: CGPoint(x: peg.nutX, y: endY))
-                if picker {
-                    path.addLine(to: CGPoint(x: peg.nutX, y: 1100))
-                } else {
-                    path.addLine(to: CGPoint(x: peg.nutX, y: nutY))
-                    let dx = peg.nutX - peg.post.x, dy = nutY - peg.post.y
-                    let scale = postRadius / hypot(dx, dy)
-                    path.addLine(to: CGPoint(x: peg.post.x + dx * scale, y: peg.post.y + dy * scale))
-                }
-            }
+            let string = stringPath(for: peg, picker: picker)
             let normal = 1.04 - 0.08 * CGFloat(index)
             stroke(string, color: color,
                    width: picker ? 0.37 : drawing?.lineWidth(for: index, normal: normal, focused: 1.65) ?? normal)

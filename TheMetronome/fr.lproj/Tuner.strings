@@ -101,6 +101,8 @@
 "Euphonium" = "Euphonium";
 "Expanded" = "Développé";
 "F major pentatonic" = "Pentatonique de fa majeur";
+"Far" = "Loin";
+"Far side" = "Côté opposé";
 "Fifths" = "En quintes";
 "Flat" = "Trop bas";
 "Flugelhorn" = "Bugle";
@@ -140,8 +142,10 @@
 "Honchōshi" = "Honchōshi";
 "Honchōshi in D" = "Honchōshi en ré";
 "Horn in F" = "Cor en fa";
+"How close the pitch must be to turn green." = "L’écart maximal pour que l’indicateur passe au vert.";
 "In tune" = "Juste";
 "In-tune feedback" = "Retour haptique à l’accord";
+"In-tune range" = "Marge d’accordage";
 "Increase reference pitch" = "Augmenter le diapason";
 "Input unavailable" = "Entrée indisponible";
 "Instruments" = "Instruments";
@@ -178,11 +182,13 @@
 "Middle" = "Médium";
 "Middle East" = "Moyen-Orient";
 "Middle register" = "Médium";
+"Middle section" = "Milieu";
 "More instruments" = "Autres instruments";
 "Morin khuur" = "Morin khuur";
 "Mozart scordatura" = "Scordatura de Mozart";
 "Name" = "Nom";
 "Nashville" = "Nashville";
+"Near" = "Proche";
 "New standard" = "Nouveau standard";
 "Niagari" = "Niagari";
 "Niagari in D" = "Niagari en ré";
@@ -224,15 +230,18 @@
 "Play an open string" = "Jouez une corde à vide";
 "Play one key" = "Jouez une touche";
 "Play target note" = "Jouez la note cible";
+"Player side" = "De ton côté";
 "Playing strings" = "Cordes de jeu";
 "Pluck a string" = "Pincez une corde";
 "Pluck a tine" = "Pincez une lamelle";
 "Plucked strings" = "Cordes pincées";
+"Precise" = "Précis";
 "Raise pitch" = "Montez la note";
 "Recorder" = "Flûte à bec";
 "Reference notes" = "Notes de référence";
 "Reference pitch" = "Diapason";
 "Reference tone" = "Son de référence";
+"Relaxed" = "Large";
 "Release target" = "Déverrouiller la note";
 "Retry microphone" = "Réessayer le micro";
 "Ruibin diao" = "Ruibin diao";
@@ -261,6 +270,7 @@
 "Strike a note" = "Frappez une note";
 "Strike the drum" = "Frappez la timbale";
 "String %d" = "Corde %d";
+"Strings %@" = "Cordes %@";
 "Suona" = "Suona";
 "Sympathetic string %d" = "Corde sympathique %d";
 "Sympathetic strings" = "Cordes sympathiques";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "Accordez à l’oreille ou au cadran.";
 "Tune one string at a time within each pair." = "Accordez séparément les deux cordes de chaque paire.";
 "Tuner" = "Accordeur";
+"Tuning" = "Accordage";
 "Tuning response" = "Réponse de l’accordeur";
-"Pitch stabilization" = "Stabilisation de la hauteur";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "Atténue les brèves variations en mode chromatique lorsque vous chantez ou jouez.";
 "Ukulele" = "Ukulélé";
 "Ukulele · low G" = "Ukulélé · sol grave";
 "Upper tenor bridge" = "Chevalet médium supérieur";
@@ -296,12 +305,5 @@
 "Xylophone" = "Xylophone";
 "Yangqin" = "Yangqin";
 "Zhengdiao" = "Zhengdiao";
-
-"Strings %@" = "Cordes %@";
-"Player side" = "De ton côté";
-"Far side" = "Côté opposé";
-"Near" = "Proche";
-"Middle section" = "Milieu";
-"Far" = "Loin";
 "Zhonghu" = "Zhonghu";
 "Zhongruan" = "Zhongruan";

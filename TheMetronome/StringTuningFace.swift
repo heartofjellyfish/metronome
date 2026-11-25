@@ -1,5 +1,9 @@
 import SwiftUI
 
+enum TunerConsoleMetrics {
+    static let width: CGFloat = 344
+}
+
 struct StringTuningFace<Layout: TunerHeadstockDrawing, TuningSelector: View>: View {
     let p: InstrumentPalette
     let layout: Layout
@@ -10,21 +14,21 @@ struct StringTuningFace<Layout: TunerHeadstockDrawing, TuningSelector: View>: Vi
     let drawing: TunerStringDrawing
     var centerX: CGFloat = 180
     var prefersFlats = false
-    let select: (Int) -> Void
+    let select: (Int, TunerReferenceAction) -> Void
     @ViewBuilder let tuningSelector: () -> TuningSelector
 
     var body: some View {
         InstrumentNeedleFace(p: p, note: note, reading: reading, status: status, prefersFlats: prefersFlats,
-                             readoutY: drawing.relief ? 212 : 222,
-                             showsReliefScreen: drawing.relief,
-                             faceHeight: drawing.relief ? 684 : 637) {
+                             readoutScale: drawing.relief ? 0.83 : 1,
+                             readoutY: drawing.relief ? 174 : 222,
+                             showsTuningConsole: drawing.relief,
+                             faceHeight: drawing.relief ? 702 : 637, previewingNote: drawing.auditioning != nil) {
             TunerHeadstockView(p: p, layout: layout, strings: strings, drawing: drawing, prefersFlats: prefersFlats, select: select)
                 .frame(width: 360, height: 330)
-                .scaleEffect(1.02)
-                .position(x: centerX, y: drawing.relief ? 465 : 475)
+                .scaleEffect(x: drawing.relief ? 1.04 : 1.02, y: drawing.relief ? 1.10 : 1.02)
+                .position(x: centerX, y: drawing.relief ? 505 : 475)
             if drawing.relief {
-                // Keep this control with the headstock when the face scales to fit.
-                tuningSelector().position(x: 180, y: 659)
+                tuningSelector().position(x: 180, y: 266)
             }
         }
     }
@@ -37,29 +41,39 @@ struct TunerStringDrawing {
     let completed: Set<Int>
     let stringCount: Int
     var relief = false
+    var auditioning: Int? = nil
 
     var allTuned: Bool { stringCount > 0 && (0..<stringCount).allSatisfy(completed.contains) }
-    var outline: Color { allTuned ? palette.tuningGreen : palette.ink }
+    var confirmationColor: Color { relief && !palette.dark ? Color(hex: 0x66762E) : palette.tuningGreen }
+    var outline: Color { allTuned ? confirmationColor : palette.ink }
+    private var activeColor: Color { liveState == .centered ? confirmationColor : palette.tuningTint(liveState) }
 
-    func highlights(_ index: Int) -> Bool { active == index || completed.contains(index) }
+    func highlights(_ index: Int) -> Bool { active == index || auditioning == index || completed.contains(index) }
 
     func color(for index: Int) -> Color {
-        if completed.contains(index) { return palette.tuningGreen }
-        return index == active ? palette.tuningTint(liveState) : palette.ink
+        if index == auditioning { return palette.tunerReferenceInk }
+        if completed.contains(index) { return confirmationColor }
+        return index == active ? activeColor : palette.ink
     }
 
     func stringColor(for index: Int) -> Color {
         if highlights(index) { return color(for: index) }
-        let opacity = relief ? (palette.dark ? 0.58 : 0.56) : 0.78
+        let opacity = relief ? (palette.dark ? 0.58 : 0.80) : 0.78
         return palette.ink.opacity(opacity)
     }
 
     func isConfirmed(_ wires: Range<Int>) -> Bool { wires.allSatisfy(completed.contains) }
 
     func color(for wires: Range<Int>) -> Color {
-        if isConfirmed(wires) { return palette.tuningGreen }
-        if let active, wires.contains(active) { return palette.tuningTint(liveState) }
+        if let auditioning, wires.contains(auditioning) { return palette.tunerReferenceInk }
+        if isConfirmed(wires) { return confirmationColor }
+        if let active, wires.contains(active) { return activeColor }
         return palette.ink
+    }
+
+    func accessibilityValue(for index: Int) -> String {
+        if index == auditioning { return tunerText("Reference tone") }
+        return completed.contains(index) ? tunerText("In tune") : ""
     }
 
     func drawContacts(_ points: [CGPoint], for index: Int, in context: GraphicsContext, diameter: CGFloat = 2.6) {
@@ -96,8 +110,10 @@ struct InstrumentNeedleFace<Artwork: View>: View {
     var showsStringStatus = true
     var readoutScale: CGFloat = 1
     var readoutY: CGFloat = 222
-    var showsReliefScreen = false
+    var showsTuningConsole = false
     var faceHeight: CGFloat = 637
+    var auditionNote: ((Int, TunerReferenceAction) -> Void)? = nil
+    var previewingNote = false
     @Environment(\.accessibilityDifferentiateWithoutColor) private var showDirection
     @ViewBuilder let artwork: () -> Artwork
 
@@ -106,36 +122,28 @@ struct InstrumentNeedleFace<Artwork: View>: View {
             let size = geometry.size
             let scale = min(size.width / 360, size.height / faceHeight)
             ZStack {
-                if showsReliefScreen {
-                    Color.clear.frame(width: 342, height: 256)
-                        .insetPanel(p, radius: 19, shallow: true)
-                        .position(x: 180, y: 132)
-                        .accessibilityHidden(true)
+                if showsTuningConsole {
+                    tuningConsole.accessibilityHidden(true)
                 }
                 Group {
                     if let note {
-                        let primary = note + notation.primaryOffset
-                        let label = TunerPitch.label(primary, flats: prefersFlats)
-                        HStack(spacing: 0) {
-                            Text(TunerPitch.name(primary, flats: prefersFlats))
-                                .font(.custom("HelveticaNeue-Medium", size: 84 * readoutScale))
-                                .overlay(alignment: Alignment(horizontal: .trailing, vertical: .lastTextBaseline)) {
-                                    Text(String(TunerPitch.octave(primary)))
-                                        .font(.system(size: 37 * readoutScale, weight: .medium))
-                                        .alignmentGuide(.trailing) { $0[.leading] - 1 }
-                                }
-                        }.accessibilityElement(children: .ignore)
-                            .accessibilityLabel(notation.hasTransposition ? tunerText(notation.primaryTitle) + ", " + label : label)
-                            .accessibilityAddTraits(.isStaticText)
-                            .accessibilityIdentifier("tuner-note-readout")
+                        if let auditionNote {
+                            Button { auditionNote(note, .tap) } label: { noteReadout(note) }
+                                .buttonStyle(TunerReferenceButtonStyle { auditionNote(note, $0 ? .hold : .release) })
+                                .accessibilityHint(tunerText("Reference tone"))
+                        } else {
+                            noteReadout(note).accessibilityAddTraits(.isStaticText)
+                        }
                     } else {
                         Text(tunerText(status))
-                            .font(InstrumentType.value(18)).foregroundStyle(p.muted)
+                            .font(InstrumentType.value(18))
+                            .foregroundStyle(showsTuningConsole && !p.dark ? p.ink.opacity(0.72) : p.muted)
                     }
                 }.foregroundStyle(p.ink).position(x: 180, y: readoutY)
-                TunerNeedleMeter(p: p, reading: reading).frame(width: 360, height: 207)
+                TunerNeedleMeter(p: p, reading: reading, compact: showsTuningConsole)
+                    .frame(width: 360, height: 207)
                     .scaleEffect(0.92)
-                    .position(x: 180, y: 103.5)
+                    .position(x: 180, y: showsTuningConsole ? 104 : 103.5)
                     .accessibilityElement(children: .ignore).accessibilityLabel(tunerText(status))
                     .accessibilityValue(reading?.signedCents ?? "")
                     .accessibilityIdentifier("tuner-needle-meter")
@@ -150,7 +158,10 @@ struct InstrumentNeedleFace<Artwork: View>: View {
                 if let stringName {
                     HStack(spacing: 6) {
                         Text(stringName)
-                        if showsStringStatus, let reading {
+                        if previewingNote {
+                            Image(systemName: "speaker.wave.2").foregroundStyle(p.tunerReferenceInk)
+                                .accessibilityLabel(tunerText("Reference tone"))
+                        } else if showsStringStatus, let reading {
                             Text("·").foregroundStyle(p.muted).accessibilityHidden(true)
                             let pitchStatus = tunerText(reading.state.label)
                             Text(reading.state == .centered ? pitchStatus : pitchStatus + " " + reading.signedCents)
@@ -162,11 +173,15 @@ struct InstrumentNeedleFace<Artwork: View>: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("tuner-current-string")
                     .position(x: 180, y: 278)
+                } else if previewingNote {
+                    Label(tunerText("Reference tone"), systemImage: "speaker.wave.2")
+                        .font(.system(size: 13, weight: .medium)).foregroundStyle(p.tunerReferenceInk)
+                        .position(x: 180, y: notation.hasTransposition ? 299 : 281)
                 } else if showDirection, let reading {
                     Text(tunerText(status) + " · " + reading.signedCents)
                         .font(InstrumentType.value(14)).monospacedDigit()
                         .foregroundStyle(p.ink)
-                        .position(x: 180, y: notation.hasTransposition ? 299 : 281)
+                        .position(x: 180, y: showsTuningConsole ? 204 : notation.hasTransposition ? 299 : 281)
                         .accessibilityHidden(true)
                 } else if showsPitchCheck, reading?.state == .centered {
                     Image(systemName: "checkmark")
@@ -181,6 +196,37 @@ struct InstrumentNeedleFace<Artwork: View>: View {
                 .dynamicTypeSize(...DynamicTypeSize.large)
                 .scaleEffect(scale).position(x: size.width / 2, y: faceHeight * scale / 2)
         }
+    }
+
+    private var tuningConsole: some View {
+        let outline = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        let display = LinearGradient(colors: p.dark
+            ? [Color(hex: 0x30332F), Color(hex: 0x262826)]
+            : [Color(hex: 0xD8D0C4), Color(hex: 0xC7BFAF)],
+            startPoint: .topLeading, endPoint: .bottomTrailing)
+        return Color.clear
+            .frame(width: TunerConsoleMetrics.width, height: 222)
+            .insetPanel(p, shape: outline, fill: display)
+            .position(x: 180, y: 116)
+            .allowsHitTesting(false)
+    }
+
+    private func noteReadout(_ note: Int) -> some View {
+        let primary = note + notation.primaryOffset
+        let label = TunerPitch.label(primary, flats: prefersFlats)
+        return Text(TunerPitch.name(primary, flats: prefersFlats))
+            .font(.custom("HelveticaNeue-Medium", size: 84 * readoutScale))
+            .overlay(alignment: Alignment(horizontal: .trailing, vertical: .lastTextBaseline)) {
+                Text(String(TunerPitch.octave(primary)))
+                    .font(.system(size: 37 * readoutScale, weight: .medium))
+                    .alignmentGuide(.trailing) { $0[.leading] - 1 }
+            }
+            .foregroundStyle(previewingNote ? p.tunerReferenceInk : p.ink)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(notation.hasTransposition ? tunerText(notation.primaryTitle) + ", " + label : label)
+            .accessibilityValue(previewingNote ? tunerText("Reference tone") : "")
+            .accessibilityIdentifier("tuner-note-readout")
     }
 
     private func secondaryReadout(_ note: Int) -> some View {
@@ -204,6 +250,7 @@ extension InstrumentPalette {
     var tunerDrawingSurface: Color { dark ? body : Color(hex: 0xF4EEE5) }
 
     var tuningGreen: Color { Color(hex: dark ? 0x9DCE89 : 0x2F7727) }
+    var tunerReferenceInk: Color { Color(hex: dark ? 0x9DC9E1 : 0x4E809E) }
 
     func tuningTint(_ state: IntonationState?) -> Color {
         switch state {
@@ -218,6 +265,7 @@ extension InstrumentPalette {
 struct TunerNeedleMeter: View {
     let p: InstrumentPalette
     let reading: TunerReading?
+    var compact = false
 
     var body: some View {
         Canvas { ctx, size in
@@ -251,10 +299,10 @@ struct TunerNeedleMeter: View {
                     ctx.draw(Text(label).font(.system(size: 16)).foregroundStyle(p.ink), at: anchor)
                 }
             }
-            let innerRadius: CGFloat = 107
+            let innerRadius: CGFloat = compact ? 151 : 107
             if let reading {
                 let cents = reading.displayedCents
-                let tipColor = reading.state == .centered && !p.dark ? Color(hex: 0x79A557) : p.tuningTint(reading.state)
+                let tipColor = reading.state == .centered && !p.dark ? Color(hex: compact ? 0x99A54D : 0x79A557) : p.tuningTint(reading.state)
                 ctx.drawLayer { layer in
                     // Hide the axle, the tail and its shadow behind the circular lip at every angle.
                     let radius = innerRadius * unit
@@ -273,7 +321,8 @@ struct TunerNeedleMeter: View {
             for (inset, width, opacity) in [(1.25, 2.5, 0.4), (0.35, 0.7, 1.0)] {
                 var edge = Path()
                 edge.addArc(center: center, radius: (innerRadius - inset) * unit,
-                            startAngle: .degrees(-150), endAngle: .degrees(-30), clockwise: false)
+                            startAngle: .degrees(compact ? -119 : -150),
+                            endAngle: .degrees(compact ? -61 : -30), clockwise: false)
                 var lip = ctx
                 lip.opacity = opacity
                 lip.stroke(edge, with: .linearGradient(shade, startPoint: point(-50, innerRadius),

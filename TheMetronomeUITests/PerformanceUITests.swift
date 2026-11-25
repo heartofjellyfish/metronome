@@ -212,21 +212,26 @@ final class PerformanceUITests: XCTestCase {
         XCTAssertFalse(b("swipe-library-edit-" + title).exists)
     }
 
+    private func setSwitch(_ id: String, on: Bool) {
+        let control = app.switches[id]
+        let scroll = app.scrollViews["settings-scroll"]
+        for _ in 0..<5 where !control.isHittable { scroll.swipeUp() }
+        let expected = on ? "1" : "0"
+        if control.value as? String != expected { control.tap() }
+        XCTAssertEqual(control.value as? String, expected)
+    }
+
     func testLiveScreenPreferenceIsSavedAndReadyViewStillOpens() {
         launch("en")
         tap("settings")
-        let scroll = app.scrollViews["settings-scroll"]
-        for _ in 0..<5 { if b("live-screen-on").isHittable { break }; scroll.swipeUp() }
-        tap("live-screen-on")
-        XCTAssertTrue(b("live-screen-on").isSelected)
+        setSwitch("live-screen", on: true)
         shot("72-live-screen-settings")
-        tap("live-screen-off")
-        XCTAssertTrue(b("live-screen-off").isSelected)
+        setSwitch("live-screen", on: false)
         tap("settings-setlists"); tap("setlist-Saturday"); tap("song-Gossip")
         XCTAssertTrue(b("performance-play").exists)
         tap("close-performance"); tap("close-panel")
-        XCTAssertTrue(b("live-screen-off").isSelected)
-        tap("live-screen-on")
+        XCTAssertEqual(app.switches["live-screen"].value as? String, "0")
+        setSwitch("live-screen", on: true)
     }
 
     func testCircularSwipeActionsEditCancelRemoveAndDelete() {
@@ -815,7 +820,7 @@ final class PerformanceUITests: XCTestCase {
         tap("choose-setlist"); XCTAssertTrue(b("setlist-周六演出").exists)
     }
     func testPerformanceVisualOnlyRepeatedSongsTempoAndReturning() {
-        launch(); tap("settings"); tap("general-sound-off"); tap("close-settings")
+        launch(); tap("settings"); setSwitch("general-sound", on: false); tap("close-settings")
         openList("周六演出"); shot("01-songs-zh"); tap("song-男孩别哭")
         XCTAssertEqual(liveSongTitle.label, "男孩别哭")
         XCTAssertFalse(b("performance-sound").exists)
@@ -918,7 +923,7 @@ final class PerformanceUITests: XCTestCase {
         tap("close-panel"); XCTAssertTrue(b("practice-gap").exists)
         tap("practice-ramp"); XCTAssertEqual(b("practice-transport").label, "停止播放")
         tap("practice-transport"); tap("close-panel"); tap("close-panel")
-        tap("general-haptics-off"); tap("general-haptics-on"); shot("08-general-haptics")
+        setSwitch("general-haptics", on: false); setSwitch("general-haptics", on: true); shot("08-general-haptics")
     }
     func testDeleteSongNamesAllAffectedSetlists() {
         launch("zh-Hans")

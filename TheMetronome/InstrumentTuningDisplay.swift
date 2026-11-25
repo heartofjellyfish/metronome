@@ -12,7 +12,9 @@ struct InstrumentTuningDisplay<Targets: View>: View {
     let targetHeight: CGFloat
     let showsYangqin: Bool
     let stringName: String?
-    let select: (Int) -> Void
+    let select: (Int, TunerReferenceAction) -> Void
+    let auditionNote: ((Int, TunerReferenceAction) -> Void)?
+    let previewingNote: Bool
     let openOptions: () -> Void
     @ViewBuilder let targets: () -> Targets
 
@@ -48,7 +50,8 @@ struct InstrumentTuningDisplay<Targets: View>: View {
         InstrumentNeedleFace(p: p, note: note, reading: reading, status: status,
                              prefersFlats: strings.isEmpty || profile.prefersFlatStringNotes,
                              notation: notation, showsPitchCheck: strings.isEmpty && !showsYangqin,
-                             stringName: stringName, showsStringStatus: drawing.active != nil) {
+                             stringName: stringName, showsStringStatus: drawing.active != nil,
+                             auditionNote: auditionNote, previewingNote: previewingNote) {
             if let diagram {
                 wireDrawing(diagram, in: bounds)
             } else if let artwork = TunerVectorArtwork.load(profile.tuningArtworkName) {
@@ -80,9 +83,9 @@ struct InstrumentTuningDisplay<Targets: View>: View {
         }
         .frame(width: 360, height: 637)
         .contentShape(Path(frame))
-        .onTapGesture(coordinateSpace: .local) { point in
-            if let index = diagram.string(at: point, in: frame) { select(index) }
-        }
+        .modifier(TunerReferenceGesture { action, point in
+            if let index = diagram.string(at: point, in: frame) { select(index, action) }
+        })
         .accessibilityHidden(true)
         .position(x: 180, y: 318.5)
     }

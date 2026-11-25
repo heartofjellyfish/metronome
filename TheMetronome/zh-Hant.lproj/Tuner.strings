@@ -101,6 +101,8 @@
 "Euphonium" = "上低音號";
 "Expanded" = "已展開";
 "F major pentatonic" = "F 大調五聲音階";
+"Far" = "遠側";
+"Far side" = "離你遠的一側";
 "Fifths" = "五度定弦";
 "Flat" = "偏低";
 "Flugelhorn" = "柔音號";
@@ -140,8 +142,10 @@
 "Honchōshi" = "本調子";
 "Honchōshi in D" = "D 調本調子";
 "Horn in F" = "F 調圆號";
+"How close the pitch must be to turn green." = "音高離目標多近才亮綠。";
 "In tune" = "已調準";
 "In-tune feedback" = "調準震動";
+"In-tune range" = "調準範圍";
 "Increase reference pitch" = "提高基準音";
 "Input unavailable" = "輸入無法使用";
 "Instruments" = "樂器";
@@ -178,11 +182,13 @@
 "Middle" = "中音";
 "Middle East" = "中東樂器";
 "Middle register" = "中音";
+"Middle section" = "中間";
 "More instruments" = "更多樂器";
 "Morin khuur" = "馬頭琴";
 "Mozart scordatura" = "莫札特特殊定弦";
 "Name" = "名稱";
 "Nashville" = "納什維爾";
+"Near" = "近側";
 "New standard" = "新標準";
 "Niagari" = "二上調";
 "Niagari in D" = "D 調二上";
@@ -224,15 +230,18 @@
 "Play an open string" = "奏一根空弦";
 "Play one key" = "按一個琴鍵";
 "Play target note" = "奏目標音";
+"Player side" = "你坐這裡";
 "Playing strings" = "主弦";
 "Pluck a string" = "撥一根弦";
 "Pluck a tine" = "撥一根音簧";
 "Plucked strings" = "撥弦樂器";
+"Precise" = "精細";
 "Raise pitch" = "調高";
 "Recorder" = "豎笛";
 "Reference notes" = "參考音列表";
 "Reference pitch" = "基準音高";
 "Reference tone" = "參考音";
+"Relaxed" = "寬鬆";
 "Release target" = "解除鎖定";
 "Retry microphone" = "重試麥克風";
 "Ruibin diao" = "蕤賓調";
@@ -261,6 +270,7 @@
 "Strike a note" = "敲一個音";
 "Strike the drum" = "敲一下鼓面";
 "String %d" = "第 %d 弦";
+"Strings %@" = "%@ 弦";
 "Suona" = "嗩吶";
 "Sympathetic string %d" = "共鳴弦 %d";
 "Sympathetic strings" = "共鳴弦";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "聽參考音，或看錶盤調音。";
 "Tune one string at a time within each pair." = "每組兩根弦請逐根調。";
 "Tuner" = "調音器";
+"Tuning" = "定弦";
 "Tuning response" = "指針響應";
-"Pitch stabilization" = "音高防抖";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "減弱唱歌或演奏時的短暫音高波動，僅在 Chromatic 生效。";
 "Ukulele" = "尤克里里";
 "Ukulele · low G" = "尤克里里 · 低 G";
 "Upper tenor bridge" = "上中音碼";
@@ -296,12 +305,5 @@
 "Xylophone" = "木琴";
 "Yangqin" = "揚琴";
 "Zhengdiao" = "正調";
-
-"Strings %@" = "%@ 弦";
-"Player side" = "你坐這裡";
-"Far side" = "離你遠的一側";
-"Near" = "近側";
-"Middle section" = "中間";
-"Far" = "遠側";
 "Zhonghu" = "中胡";
 "Zhongruan" = "中阮";

@@ -101,6 +101,8 @@
 "Euphonium" = "Euphonium";
 "Expanded" = "Erweitert";
 "F major pentatonic" = "F-Dur-Pentatonik";
+"Far" = "Fern";
+"Far side" = "Gegenüberliegende Seite";
 "Fifths" = "Quintstimmung";
 "Flat" = "Zu tief";
 "Flugelhorn" = "Flügelhorn";
@@ -140,8 +142,10 @@
 "Honchōshi" = "Honchōshi";
 "Honchōshi in D" = "Honchōshi in D";
 "Horn in F" = "Horn in F";
+"How close the pitch must be to turn green." = "Wie nah der Ton am Ziel sein muss, damit die Anzeige grün wird.";
 "In tune" = "Gestimmt";
 "In-tune feedback" = "Vibration bei korrekter Stimmung";
+"In-tune range" = "Toleranzbereich";
 "Increase reference pitch" = "Kammerton erhöhen";
 "Input unavailable" = "Kein Eingang";
 "Instruments" = "Instrumente";
@@ -178,11 +182,13 @@
 "Middle" = "Mittel";
 "Middle East" = "Naher Osten";
 "Middle register" = "Mittel";
+"Middle section" = "Mitte";
 "More instruments" = "Weitere Instrumente";
 "Morin khuur" = "Morin khuur";
 "Mozart scordatura" = "Mozarts Skordatur";
 "Name" = "Name";
 "Nashville" = "Nashville";
+"Near" = "Nah";
 "New standard" = "New Standard";
 "Niagari" = "Niagari";
 "Niagari in D" = "Niagari in D";
@@ -224,15 +230,18 @@
 "Play an open string" = "Eine leere Saite spielen";
 "Play one key" = "Eine Taste spielen";
 "Play target note" = "Zielton spielen";
+"Player side" = "Deine Seite";
 "Playing strings" = "Spielsaiten";
 "Pluck a string" = "Eine Saite anzupfen";
 "Pluck a tine" = "Eine Klangzunge anzupfen";
 "Plucked strings" = "Zupfinstrumente";
+"Precise" = "Präzise";
 "Raise pitch" = "Ton höher stimmen";
 "Recorder" = "Blockflöte";
 "Reference notes" = "Referenztöne";
 "Reference pitch" = "Kammerton";
 "Reference tone" = "Referenzton";
+"Relaxed" = "Weit";
 "Release target" = "Zielton freigeben";
 "Retry microphone" = "Mikrofon erneut starten";
 "Ruibin diao" = "Ruibin diao";
@@ -261,6 +270,7 @@
 "Strike a note" = "Einen Ton anschlagen";
 "Strike the drum" = "Die Pauke anschlagen";
 "String %d" = "Saite %d";
+"Strings %@" = "Saiten %@";
 "Suona" = "Suona";
 "Sympathetic string %d" = "Resonanzsaite %d";
 "Sympathetic strings" = "Resonanzsaiten";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "Nach Gehör oder mit Skala stimmen.";
 "Tune one string at a time within each pair." = "Jede Saite eines Paares einzeln stimmen.";
 "Tuner" = "Stimmgerät";
+"Tuning" = "Stimmung";
 "Tuning response" = "Stimmreaktion";
-"Pitch stabilization" = "Tonhöhenstabilisierung";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "Glättet kurze Schwankungen beim Singen oder Spielen im chromatischen Modus.";
 "Ukulele" = "Ukulele";
 "Ukulele · low G" = "Ukulele · tiefes G";
 "Upper tenor bridge" = "Oberer Mittelsteg";
@@ -296,12 +305,5 @@
 "Xylophone" = "Xylofon";
 "Yangqin" = "Yangqin";
 "Zhengdiao" = "Zhengdiao";
-
-"Strings %@" = "Saiten %@";
-"Player side" = "Deine Seite";
-"Far side" = "Gegenüberliegende Seite";
-"Near" = "Nah";
-"Middle section" = "Mitte";
-"Far" = "Fern";
 "Zhonghu" = "Zhonghu";
 "Zhongruan" = "Zhongruan";

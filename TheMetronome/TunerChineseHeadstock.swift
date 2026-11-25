@@ -77,6 +77,8 @@ enum TunerChineseHeadstock: String, TunerHeadstockDrawing {
         }
     }
 
+    var referenceWires: [Path] { pegs.map(string(for:)) }
+
     private var isHuqin: Bool { self == .gaohu || self == .zhonghu }
 
     private var neckEnd: CGFloat {

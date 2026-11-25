@@ -3,11 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var model: MetronomeModel
     var tunerSettings = false
+    var chromaticTuner = false
     @Binding var rememberLastSetup: Bool
     @AppStorage("tuner.reference") private var reference = 440
     @AppStorage("tuner.written") private var written = true
     @AppStorage("tuner.response") private var response = TunerResponse.balanced
-    @AppStorage("tuner.stabilizeChromaticPitch") private var stabilizeChromaticPitch = false
+    @AppStorage(ChromaticTuningRange.preferenceKey) private var chromaticRange = ChromaticTuningRange.standard
     @AppStorage("tuner.confirmation") private var confirmation = true
     @AppStorage(ControlSkin.preference) private var design = ControlSkin.sculpted
     @Environment(\.dismiss) private var dismiss
@@ -36,7 +37,7 @@ struct SettingsView: View {
                         } else {
                             VStack(spacing: 15) {
                                 HStack(spacing: 12) {
-                                    SectionLabel(text: "01 SOUND", p: p)
+                                    settingsHeading("SOUND")
                                     Button { present(.sounds) } label: {
                                         HStack(spacing: 8) {
                                             Text("All sounds").font(.system(size: 13, weight: .medium))
@@ -48,76 +49,48 @@ struct SettingsView: View {
                                 }
                                 SoundCardRow(selectedSound: model.rhythm.sound, selectSound: model.selectSound, sounds: shelf, namespace: "recommended", p: p)
                                 SoundDynamicsControl(model: model)
+                                settingSwitch("Playback sound", isOn: $model.soundEnabled, id: "general-sound")
                             }
                             VStack(spacing: 16) {
-                                SectionLabel(text: "METRONOME", p: p)
+                                settingsHeading("Playback")
                                 Button { present(.pedal) } label: {
                                     HStack(spacing: 10) {
                                         SettingsIllustration(kind: .pedal).frame(width: 42, height: 34)
-                                        Text("Pedal setup").font(.system(size: 14, weight: .medium))
+                                        Text("Pedal setup").font(InstrumentType.value(16))
                                         Spacer()
                                         Image(systemName: "chevron.right").font(.caption)
                                     }.padding(.horizontal, 14).frame(height: 50)
                                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("settings-pedal")
                                 Button { present(.countIn) } label: {
                                     HStack {
-                                        Text("Count-in").technical(11, spacing: 1)
+                                        Text("Count-in").font(InstrumentType.value(16))
                                         Spacer()
                                         Text(model.rhythm.countIn == 0 ? L10n.text("Off") : L10n.bars(model.rhythm.countIn))
                                         Image(systemName: "chevron.right").font(.caption)
                                     }.padding(.horizontal, 14).frame(height: 44)
                                 }.buttonStyle(HardwareButtonStyle(p: p)).accessibilityIdentifier("settings-count-in")
-                                HStack {
-                                    Text("Playback sound").technical(11, spacing: 1)
-                                    Spacer()
-                                    HStack(spacing: 8) {
-                                        ForEach([false, true], id: \.self) { on in
-                                            Button { model.soundEnabled = on } label: { Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44) }
-                                                .buttonStyle(HardwareButtonStyle(p: p, charcoal: model.soundEnabled == on))
-                                                .accessibilityIdentifier(on ? "general-sound-on" : "general-sound-off")
-                                                .accessibilityAddTraits(model.soundEnabled == on ? .isSelected : [])
-                                        }
-                                    }
-                                }
                             }
                         }
                         VStack(spacing: 16) {
-                            SectionLabel(text: "02 GENERAL", p: p)
+                            settingsHeading("Appearance")
                             VStack(spacing: 12) {
                                 HStack(spacing: 14) {
-                                    Text("COLOR").technical(11, spacing: 1.3)
+                                    Text("COLOR").font(InstrumentType.value(16))
                                     Spacer(minLength: 0)
                                     colorKeys.frame(maxWidth: 260).frame(height: 46)
                                 }
                                 HStack(spacing: 14) {
-                                    Text("DESIGN").technical(11, spacing: 1.3)
+                                    Text("DESIGN").font(InstrumentType.value(16))
                                     Spacer(minLength: 0)
                                     designKeys.frame(maxWidth: 260).frame(height: 46)
                                 }
                             }
+                        }
+                        VStack(spacing: 16) {
+                            settingsHeading("General")
                             rememberSetupControl
-                            ViewThatFits(in: .horizontal) {
-                                HStack {
-                                    Text("Keep screen awake").technical(11, spacing: 1)
-                                    Spacer(minLength: 0)
-                                    liveScreenKeys
-                                }
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Keep screen awake").technical(11, spacing: 1)
-                                    liveScreenKeys.frame(maxWidth: .infinity, alignment: .trailing)
-                                }
-                            }
-                            HStack {
-                                Text("TOUCH FEEDBACK").technical(11, spacing: 1)
-                                Spacer()
-                                HStack(spacing: 8) {
-                                    ForEach([false, true], id: \.self) { on in
-                                        Button { model.haptics = on } label: { Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44) }
-                                            .buttonStyle(HardwareButtonStyle(p: p, charcoal: model.haptics == on))
-                                            .accessibilityIdentifier(on ? "general-haptics-on" : "general-haptics-off")
-                                    }
-                                }
-                            }
+                            settingSwitch("Keep screen awake", isOn: $model.keepLiveScreenAwake, id: "live-screen")
+                            settingSwitch("TOUCH FEEDBACK", isOn: $model.haptics, id: "general-haptics")
                         }
                     }.padding(.horizontal, 26).padding(.bottom, 24)
                 }.scrollBounceBehavior(.basedOnSize).accessibilityIdentifier("settings-scroll")
@@ -133,13 +106,18 @@ struct SettingsView: View {
             .onDisappear { model.endSoundPreview() }
             .onChange(of: model.error) { _, value in if value != nil { present(.audio) } }
     }
+    private func settingsHeading(_ title: String) -> some View {
+        HStack(spacing: 12) {
+            Text(tunerText(title)).font(.system(size: 17, weight: .semibold)).fixedSize(horizontal: false, vertical: true).layoutPriority(1)
+            Rectangle().fill(p.edge.opacity(0.40)).frame(maxWidth: .infinity).frame(height: 0.5)
+                .accessibilityHidden(true)
+        }
+        .accessibilityAddTraits(.isHeader)
+    }
+
     private var rememberSetupControl: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle(isOn: $rememberLastSetup) {
-                Text(L10n.text("Remember last setup")).font(InstrumentType.value(16))
-            }
-            .tint(Color(hex: 0x55764D))
-            .accessibilityIdentifier("remember-last-setup")
+            settingSwitch("Remember last setup", isOn: $rememberLastSetup, id: "remember-last-setup")
             Text(L10n.text("Restores your last mode, tuner instrument, and each instrument’s tuning."))
                 .font(.footnote)
                 .foregroundStyle(p.ink.opacity(0.72))
@@ -147,9 +125,9 @@ struct SettingsView: View {
         }
     }
 
-    private var tunerControls: some View {
+    @ViewBuilder private var tunerControls: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SectionLabel(text: "TUNER", p: p)
+            settingsHeading(chromaticTuner ? "Chromatic" : "Tuner")
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(tunerText("Reference pitch")).font(InstrumentType.value(16))
@@ -166,44 +144,42 @@ struct SettingsView: View {
                         .accessibilityIdentifier(step < 0 ? "tuner-reference-down" : "tuner-reference-up")
                 }
             }
-            Text(tunerText("Tuning response")).font(InstrumentType.value(16))
-            tunerSelector(TunerResponse.allCases, selected: response, title: { tunerText($0.title) },
-                          id: { "tuner-response-" + $0.rawValue }) { response = $0 }
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle(isOn: $stabilizeChromaticPitch) {
-                    Text(tunerText("Pitch stabilization")).font(InstrumentType.value(16))
+            if chromaticTuner {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(tunerText("In-tune range")).font(InstrumentType.value(16))
+                        .accessibilityAddTraits(.isHeader)
+                    optionSelector(ChromaticTuningRange.allCases, selected: chromaticRange,
+                                  title: { "\(tunerText($0.title)) ±\(Int($0.cents))¢" },
+                                  id: { "tuner-chromatic-range-" + $0.rawValue }) { chromaticRange = $0 }
+                    Text(tunerText("How close the pitch must be to turn green."))
+                        .font(.footnote)
+                        .foregroundStyle(p.ink.opacity(0.72))
                 }
-                .tint(Color(hex: 0x55764D))
-                .accessibilityIdentifier("tuner-pitch-stabilization")
-                Text(tunerText("Smooths brief pitch wobbles in Chromatic when you sing or play."))
+            } else {
+                Text(tunerText("Tuning response")).font(InstrumentType.value(16))
+                optionSelector(TunerResponse.allCases, selected: response, title: { tunerText($0.title) },
+                              id: { "tuner-response-" + $0.rawValue }) { response = $0 }
+            }
+            settingSwitch("In-tune feedback", isOn: $confirmation, id: "tuner-confirmation")
+        }
+        if !chromaticTuner && TunerProfile.showsExtendedCatalog {
+            VStack(alignment: .leading, spacing: 8) {
+                settingsHeading("Note names for transposing instruments")
+                Text(tunerText("For B♭ clarinet, alto sax, piccolo and similar instruments. "
+                    + "Written pitch is the note on your score. Concert pitch is what you hear. "
+                    + "Choose which one appears in large type."))
                     .font(.footnote)
                     .foregroundStyle(p.ink.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("tuner-pitch-explanation")
+                optionSelector([false, true], selected: written,
+                              title: { tunerText($0 ? "Written first" : "Concert first") },
+                              id: { $0 ? "tuner-pitch-written" : "tuner-pitch-concert" }) { written = $0 }
             }
-            if TunerProfile.showsExtendedCatalog {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(tunerText("Note names for transposing instruments"))
-                        .font(InstrumentType.value(16))
-                        .accessibilityAddTraits(.isHeader)
-                    Text(tunerText("For B♭ clarinet, alto sax, piccolo and similar instruments. "
-                        + "Written pitch is the note on your score. Concert pitch is what you hear. "
-                        + "Choose which one appears in large type."))
-                        .font(.footnote)
-                        .foregroundStyle(p.ink.opacity(0.72))
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("tuner-pitch-explanation")
-                    tunerSelector([false, true], selected: written,
-                                  title: { tunerText($0 ? "Written first" : "Concert first") },
-                                  id: { $0 ? "tuner-pitch-written" : "tuner-pitch-concert" }) { written = $0 }
-                }
-            }
-            Toggle(tunerText("In-tune feedback"), isOn: $confirmation)
-                .tint(Color(hex: 0x55764D))
-                .accessibilityIdentifier("tuner-confirmation")
         }
     }
 
-    private func tunerSelector<Option: Hashable>(_ values: [Option], selected: Option,
+    private func optionSelector<Option: Hashable>(_ values: [Option], selected: Option,
                                                  title: @escaping (Option) -> String, id: @escaping (Option) -> String,
                                                  choose: @escaping (Option) -> Void) -> some View {
         HStack(spacing: 2) {
@@ -219,64 +195,31 @@ struct SettingsView: View {
         }.padding(2).insetPanel(p, radius: 10)
     }
 
-    private var liveScreenKeys: some View {
-        HStack(spacing: 8) {
-            ForEach([false, true], id: \.self) { on in
-                Button { model.keepLiveScreenAwake = on } label: {
-                    Text(L10n.text(on ? "ON" : "OFF")).frame(width: 60, height: 44)
-                }.buttonStyle(HardwareButtonStyle(p: p, charcoal: model.keepLiveScreenAwake == on))
-                    .accessibilityLabel(Text(on ? "Keep screen awake" : "Allow automatic screen lock"))
-                    .accessibilityIdentifier(on ? "live-screen-on" : "live-screen-off")
-                    .accessibilityAddTraits(model.keepLiveScreenAwake == on ? .isSelected : [])
-            }
+    private func settingSwitch(_ title: String, isOn: Binding<Bool>, id: String) -> some View {
+        Toggle(isOn: isOn) {
+            Text(tunerText(title)).font(InstrumentType.value(16))
         }
+        .frame(minHeight: 44)
+        .tint(Color(hex: 0x55764D))
+        .accessibilityIdentifier(id)
     }
 
     private var designKeys: some View {
-        HStack(spacing: 9) {
-            ForEach(ControlSkin.allCases, id: \.self) { style in
-                let selected = design == style
-                Button {
-                    design = style
-                    model.tickFeedback()
-                } label: {
-                    Text(L10n.text(style == .sculpted ? "Relief" : "Flat"))
-                        .technical(12, spacing: 0.4).lineLimit(1).minimumScaleFactor(0.7)
-                        .padding(.horizontal, 6)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .buttonStyle(HardwareButtonStyle(p: p, charcoal: selected, radius: 9))
-                .environment(\.controlSkin, style)
-                .accessibilityIdentifier("skin-" + style.rawValue)
-                .accessibilityAddTraits(selected ? .isSelected : [])
-            }
+        optionSelector(ControlSkin.allCases, selected: design,
+                       title: { L10n.text($0 == .sculpted ? "Relief" : "Flat") },
+                       id: { "skin-" + $0.rawValue }) {
+            design = $0
+            model.tickFeedback()
         }
     }
 
     private var colorKeys: some View {
-        HStack(spacing: 9) {
-            ForEach(0..<2) { index in
-                let selected = model.dark == (index == 1)
-                Button { model.dark = index == 1; model.tickFeedback() } label: {
-                    HStack(spacing: 10) {
-                        LED(on: selected, color: InstrumentPalette.amber, size: 7)
-                        Text(L10n.text(index == 0 ? "LIGHT" : "DARK")).technical(12, spacing: 0.8).lineLimit(1).minimumScaleFactor(0.75)
-                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .buttonStyle(HardwareButtonStyle(p: InstrumentPalette(dark: false), charcoal: index == 1, radius: 9))
-                .accessibilityLabel(L10n.text(index == 0 ? "LIGHT" : "DARK")).accessibilityIdentifier(index == 0 ? "theme-light" : "theme-dark")
-                .accessibilityAddTraits(selected ? .isSelected : [])
-            }
+        optionSelector([false, true], selected: model.dark,
+                       title: { L10n.text($0 ? "DARK" : "LIGHT") },
+                       id: { $0 ? "theme-dark" : "theme-light" }) {
+            model.dark = $0
+            model.tickFeedback()
         }
-    }
-    func menuField(_ title: String, value: String, route: InstrumentPanelKind, fontSize: CGFloat = 21) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L10n.text(title)).technical(10, spacing: 1.3).fixedSize()
-            Button { present(route) } label: {
-                HStack { Spacer(minLength: 0); Text(value).font(InstrumentType.value(fontSize)).lineLimit(1).minimumScaleFactor(0.7); Spacer(minLength: 0); Image(systemName: "chevron.down").font(.system(size: 10)) }
-                    .padding(.horizontal, 12).frame(height: 46).frame(maxWidth: .infinity)
-            }.buttonStyle(HardwareButtonStyle(p: p, radius: 9)).accessibilityIdentifier("settings-\(route.rawValue)").accessibilityLabel(title == "METER" ? L10n.text("Time signature") : title == "DIVISION" ? L10n.text("Subdivision") : "\(L10n.text(title)), \(value)")
-        }.frame(maxWidth: .infinity)
     }
 }
 

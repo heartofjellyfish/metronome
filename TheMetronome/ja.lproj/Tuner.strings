@@ -101,6 +101,8 @@
 "Euphonium" = "ユーフォニアム";
 "Expanded" = "展開済み";
 "F major pentatonic" = "F メジャーペンタトニック";
+"Far" = "奥";
+"Far side" = "奥側";
 "Fifths" = "五度調弦";
 "Flat" = "低い";
 "Flugelhorn" = "フリューゲルホルン";
@@ -140,8 +142,10 @@
 "Honchōshi" = "本調子";
 "Honchōshi in D" = "D の本調子";
 "Horn in F" = "Fホルン";
+"How close the pitch must be to turn green." = "目標の音程にどれだけ近づくと緑になるかを設定します。";
 "In tune" = "合っています";
 "In-tune feedback" = "チューニング完了の触覚";
+"In-tune range" = "合格範囲";
 "Increase reference pitch" = "基準ピッチを上げる";
 "Input unavailable" = "入力できません";
 "Instruments" = "楽器";
@@ -178,11 +182,13 @@
 "Middle" = "中音";
 "Middle East" = "中東の楽器";
 "Middle register" = "中音域";
+"Middle section" = "中央";
 "More instruments" = "その他の楽器";
 "Morin khuur" = "馬頭琴";
 "Mozart scordatura" = "モーツァルトの変則調弦";
 "Name" = "名前";
 "Nashville" = "ナッシュビル";
+"Near" = "手前";
 "New standard" = "ニュー・スタンダード";
 "Niagari" = "二上り";
 "Niagari in D" = "D の二上り";
@@ -224,15 +230,18 @@
 "Play an open string" = "開放弦を鳴らす";
 "Play one key" = "鍵盤を1つ押す";
 "Play target note" = "指定音を鳴らす";
+"Player side" = "手前側";
 "Playing strings" = "演奏弦";
 "Pluck a string" = "弦を1本はじく";
 "Pluck a tine" = "キーを1本はじく";
 "Plucked strings" = "撥弦楽器";
+"Precise" = "精密";
 "Raise pitch" = "音を上げる";
 "Recorder" = "リコーダー";
 "Reference notes" = "基準音の一覧";
 "Reference pitch" = "基準ピッチ";
 "Reference tone" = "基準音";
+"Relaxed" = "広め";
 "Release target" = "目標の固定を解除";
 "Retry microphone" = "マイクを再試行";
 "Ruibin diao" = "蕤賓調";
@@ -261,6 +270,7 @@
 "Strike a note" = "音を1つ打つ";
 "Strike the drum" = "鼓面をたたく";
 "String %d" = "第 %d 弦";
+"Strings %@" = "第 %@ 弦";
 "Suona" = "嗩吶";
 "Sympathetic string %d" = "共鳴弦 %d";
 "Sympathetic strings" = "共鳴弦";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "基準音またはメーターで調律。";
 "Tune one string at a time within each pair." = "各組の弦を1本ずつ調弦します。";
 "Tuner" = "チューナー";
+"Tuning" = "調弦";
 "Tuning response" = "チューナーの反応";
-"Pitch stabilization" = "音程表示の安定化";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "クロマチックモードで、歌ったり演奏したりするときの短い音程の揺れを抑えます。";
 "Ukulele" = "ウクレレ";
 "Ukulele · low G" = "ウクレレ · Low G";
 "Upper tenor bridge" = "上中音駒";
@@ -296,12 +305,5 @@
 "Xylophone" = "木琴";
 "Yangqin" = "揚琴";
 "Zhengdiao" = "正調";
-
-"Strings %@" = "第 %@ 弦";
-"Player side" = "手前側";
-"Far side" = "奥側";
-"Near" = "手前";
-"Middle section" = "中央";
-"Far" = "奥";
 "Zhonghu" = "中胡";
 "Zhongruan" = "中阮";

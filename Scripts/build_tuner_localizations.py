@@ -11,7 +11,8 @@ tuner = {}
 for line in (ROOT / 'Localization/tuner-translations.tsv').read_text().splitlines():
     key, *values = line.split('|')
     assert key not in tuner and len(values) == len(LOCALES) and all(values), key
-    tuner[key] = [key] + values
+    english = "Middle" if key == "Middle section" else key
+    tuner[key] = [english] + values
 for i, locale in enumerate(['en'] + LOCALES):
     path = ROOT / 'TheMetronome' / f'{locale}.lproj' / 'Tuner.strings'
     path.write_text(''.join(f'{json.dumps(k, ensure_ascii=False)} = {json.dumps(v[i], ensure_ascii=False)};\n'

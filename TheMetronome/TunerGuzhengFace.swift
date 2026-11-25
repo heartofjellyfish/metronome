@@ -14,8 +14,7 @@ struct TunerGuzhengFace: View {
     let canPlay: Bool
     let chooseGroup: (Int) -> Void
     let showOverview: () -> Void
-    let select: (Int) -> Void
-    let audition: (Int) -> Void
+    let select: (Int, TunerReferenceAction) -> Void
 
     private static let rowHeight: CGFloat = 44
     private static let detailRowHeight: CGFloat = 34
@@ -29,11 +28,13 @@ struct TunerGuzhengFace: View {
     private static let bodyLeft: CGFloat = 66
 
     var body: some View {
-        InstrumentNeedleFace(p: p, note: note, reading: reading, status: status, readoutScale: 0.88, readoutY: 210) {
+        InstrumentNeedleFace(p: p, note: note, reading: reading, status: status, readoutScale: 0.88, readoutY: 210,
+                             previewingNote: soundingString != nil) {
             if let index = drawing.active, strings.indices.contains(index) {
                 Text(String(format: tunerText("String %d"), index + 1))
                     .font(InstrumentType.value(14)).monospacedDigit()
-                    .foregroundStyle(drawing.completed.contains(index) ? p.tuningGreen : p.ink)
+                    .foregroundStyle(soundingString == index ? p.tunerReferenceInk
+                                     : drawing.completed.contains(index) ? p.tuningGreen : p.ink)
                     .accessibilityIdentifier("tuner-current-string")
                     .position(x: 180, y: 263)
             }
@@ -129,6 +130,10 @@ struct TunerGuzhengFace: View {
             TunerGuzhengArtwork.drawOverview(in: context, frame: frame, surface: p.tunerDrawingSurface, drawing: drawing)
         }
         .frame(width: frame.width, height: frame.height)
+        .contentShape(Rectangle())
+        .modifier(TunerReferenceGesture { action, point in
+            if let index = TunerGuzhengArtwork.string(at: point, in: frame) { select(index, action) }
+        })
         .accessibilityHidden(true)
     }
 
@@ -184,31 +189,28 @@ struct TunerGuzhengFace: View {
         let playing = soundingString == index
         let active = drawing.active == index
         let pitch = strings[index]
-        let indicator: String? = playing ? "speaker.wave.2" : tuned ? "checkmark" : nil
-        let color = tuned ? p.tuningGreen : p.ink
+        let color = playing ? p.tunerReferenceInk : tuned ? p.tuningGreen : p.ink
         let number = Text(String(index + 1))
             .font(.system(size: overview ? 10 : 13, weight: .semibold).monospacedDigit())
-            .foregroundStyle(tuned ? p.tuningGreen : overview ? p.muted : p.ink)
+            .foregroundStyle(playing || tuned ? color : overview ? p.muted : p.ink)
         let note = HStack(alignment: .lastTextBaseline, spacing: 0) {
             Text(TunerPitch.name(pitch)).font(InstrumentType.value(overview ? 14 : 17))
             Text(String(TunerPitch.octave(pitch))).font(InstrumentType.value(overview ? 9.5 : 11))
         }
         .foregroundStyle(color)
-        return Button {
-            if overview { select(index) } else { audition(index) }
-        } label: {
+        return Button { select(index, .tap) } label: {
             if overview {
                 VStack(spacing: 1) {
                     HStack(spacing: 3) {
                         number
-                        if let indicator { stringIndicator(indicator, ink: color) }
+                        if tuned { stringIndicator("checkmark", ink: p.tuningGreen) }
                     }
                     note
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.rowHeight)
                 .background {
-                    if active {
+                    if active || playing {
                         RoundedRectangle(cornerRadius: 8).fill(color.opacity(0.10)).padding(2)
                     }
                 }
@@ -217,21 +219,21 @@ struct TunerGuzhengFace: View {
                 HStack(spacing: 4) {
                     number.frame(width: 18, alignment: .trailing)
                     note
-                    if let indicator { stringIndicator(indicator, ink: color) }
+                    if tuned { stringIndicator("checkmark", ink: p.tuningGreen) }
                 }
                 .frame(width: 63, height: 27, alignment: .leading)
                 .background {
-                    if active { RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.10)) }
+                    if active || playing { RoundedRectangle(cornerRadius: 6).fill(color.opacity(0.10)) }
                 }
                 .frame(width: Self.detailWidth, height: Self.detailRowHeight, alignment: .leading)
                 .contentShape(Rectangle())
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TunerReferenceButtonStyle { select(index, $0 ? .hold : .release) })
         .disabled(!canPlay)
         .accessibilityLabel("\(index + 1), " + TunerPitch.label(pitch))
-        .accessibilityHint(tunerText(overview ? "Play target note" : playing ? "Stop tone" : "Reference tone"))
-        .accessibilityValue(tunerText(playing ? "Reference tone" : tuned ? "In tune" : ""))
+        .accessibilityHint(tunerText(playing ? "Stop tone" : "Reference tone"))
+        .accessibilityValue(drawing.accessibilityValue(for: index))
         .accessibilityIdentifier("tuner-string-\(index)")
         .accessibilityAddTraits(active ? .isSelected : [])
     }

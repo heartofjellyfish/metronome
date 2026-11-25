@@ -27,6 +27,7 @@ struct MetronomeView: View {
     @State private var modeRevealBlur: CGFloat = 0
     @State private var modeTransitionID = UUID()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.controlSkin) private var design
     @State private var panel: InstrumentPanelKind?
     @State private var liveListRoute: LiveListRoute?
     private struct LiveListRoute: Identifiable { let id = UUID(); var setlistID: UUID?; var songID: UUID? = nil; var action: LiveSetlistAction }
@@ -48,6 +49,9 @@ struct MetronomeView: View {
                             TunerView(p: p, model: model, sheet: $tunerPanel,
                                       exposed: !curtainVisible && !settings && !modesOpen && panel == nil,
                                       rememberLastSetup: rememberLastSetup)
+                                .padding(.bottom, geometry.safeAreaInsets.bottom == 0
+                                         && geometry.size.height < 700
+                                         && visibleTunerInstrument?.usesSculptedConsole(design) == true ? 14 : 0)
                         } else if mode == .live {
                             LiveModeHome(model: model, open: present, openSong: { id, action in
                                 liveListRoute = LiveListRoute(setlistID: nil, songID: id, action: action)
@@ -69,8 +73,13 @@ struct MetronomeView: View {
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
                 .blur(radius: modeRevealBlur)
         }.accessibilityHidden(modesOpen || settings || panel != nil || liveListRoute != nil).background {
-            if mode == .tuner, let visibleTunerInstrument, visibleTunerInstrument.profile != .chromatic, !p.dark {
+            if design == .flat, mode == .tuner, let visibleTunerInstrument,
+               visibleTunerInstrument.profile != .chromatic, !p.dark {
                 LinearGradient(colors: [Color(hex: 0xF6F0E7), Color(hex: 0xF2EBE2)], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+            } else if mode == .tuner, !p.dark,
+                      visibleTunerInstrument?.usesSculptedConsole(design) == true {
+                LinearGradient(colors: [Color(hex: 0xE8DFD4), Color(hex: 0xE2DACE)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
             } else { InstrumentBody(p: p).ignoresSafeArea() }
         }.onPreferenceChange(TunerInstrumentPreference.self) { visibleTunerInstrument = $0 }
             .overlay {
@@ -93,6 +102,7 @@ struct MetronomeView: View {
             }
             .fullScreenCover(isPresented: $settings) {
                 SettingsView(model: model, tunerSettings: mode == .tuner,
+                             chromaticTuner: visibleTunerInstrument?.profile == .chromatic || visibleTunerInstrument == nil,
                              rememberLastSetup: Binding(get: { rememberLastSetup }, set: setRememberLastSetup))
             }
             .overlay {
@@ -148,13 +158,8 @@ struct MetronomeView: View {
                 .accessibilityLabel(mode.title)
                 .accessibilityValue(L10n.text(modesOpen ? "Collapse" : "Expand"))
             Spacer(minLength: 8)
-            if mode == .tuner, let instrument = visibleTunerInstrument {
-                Button { tunerPanel = .library } label: {
-                    TunerInstrumentIcon(profile: instrument.profile, layout: instrument.layout, p: p)
-                        .frame(width: 44, height: 44).contentShape(Rectangle())
-                }.buttonStyle(.plain).accessibilityLabel(tunerText(instrument.profile.instrumentName))
-                    .accessibilityValue(instrument.layout.flatMap { $0.options.isEmpty ? nil : tunerText($0.title) } ?? "")
-                    .accessibilityIdentifier("tuner-instruments")
+            if mode == .tuner, let instrument = visibleTunerInstrument, !instrument.usesSculptedConsole(design) {
+                instrument.pickerButton(p: p) { tunerPanel = .library }.buttonStyle(.plain)
             }
             Button { modesOpen = false; settings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 23)).frame(width: 40, height: 38)

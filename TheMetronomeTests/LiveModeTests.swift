@@ -504,7 +504,14 @@ final class StageFeatureTests: XCTestCase {
                         + (0..<secondary).map { Int(ceil(Double($0) * beatFrames / Double(secondary) - 0.000001)) }).sorted()
                     XCTAssertEqual(hits.count, expected.count, "\(base):\(secondary) at \(bpm)")
                     for (actual, target) in zip(hits, expected) { XCTAssertLessThanOrEqual(abs(actual - target), 1) }
-                    r.accents = Array(repeating: 0, count: 12); clock.reset(r)
+                    // Meter accents silence ordinary subdivisions. The polyrhythm has independent voices.
+                    r.accents = Array(repeating: 0, count: 12)
+                    clock.reset(r)
+                    let firstPulse = try XCTUnwrap(clock.advance())
+                    XCTAssertGreaterThan(firstPulse.1, 0)
+                    XCTAssertGreaterThan(firstPulse.0.crossStrength, 0)
+                    r.crossRhythm = nil
+                    clock.reset(r)
                     for _ in 0..<Int(ceil(beatFrames)) { if let (_, s) = clock.advance() { XCTAssertEqual(s, 0) } }
                 }
             }

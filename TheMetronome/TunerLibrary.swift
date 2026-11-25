@@ -35,6 +35,21 @@ struct TunerInstrumentIcon: View {
     }
 }
 
+extension TunerInstrumentSelection {
+    func pickerButton(p: InstrumentPalette, width: CGFloat = 44, height: CGFloat = 44,
+                      iconOffset: CGFloat = 0, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            TunerInstrumentIcon(profile: profile, layout: layout, p: p)
+                .offset(x: iconOffset)
+                .frame(width: width, height: height)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(tunerText(profile.instrumentName))
+        .accessibilityValue(layout.flatMap { $0.options.isEmpty ? nil : tunerText($0.title) } ?? "")
+        .accessibilityIdentifier("tuner-instruments")
+    }
+}
+
 struct TunerLibrary: View {
     let p: InstrumentPalette
     let selected: String

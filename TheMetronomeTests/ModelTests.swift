@@ -6,12 +6,14 @@ import MediaPlayer
 final class ModelTests: XCTestCase {
     @MainActor func testRuntimeStatePresetsMetadataAndInterruptions() async throws {
         let defaults = UserDefaults.standard
-        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "songLibraryStore", "setlists", "activeSetlistID", "selectedSongID"]
+        let keys = ["rhythm", "presets", "selectedPresetID", "dark", "haptics", "songLibraryStore", "setlists", "activeSetlistID", "selectedSongID", "keepLiveScreenAwake"]
         let saved = keys.map { defaults.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) } }
         for key in keys { defaults.removeObject(forKey: key) }
         let model = MetronomeModel()
-        defer { model.stop() }
+        let previousIdleState = UIApplication.shared.isIdleTimerDisabled
+        defer { model.stop(); UIApplication.shared.isIdleTimerDisabled = previousIdleState }
+        model.keepLiveScreenAwake = false
         model.rhythm = Rhythm(); model.presets = []; model.activeSetlistID = nil
         model.addPreset("  FIRST  ")
         model.setBPM(120); model.addPreset("SECOND")

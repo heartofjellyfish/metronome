@@ -16,11 +16,11 @@ enum ChromaticDialGeometry {
     static let coverLift = CGPoint(x: 0.72, y: 2.75)
     static let letteringRadius: CGFloat = 142
     static let step = Double.pi / 6
-    private static let windowOuter = outer - 4
+    static let windowOuter = coverSlopeStart - 1.5
     private static let windowInner = inner + 8
-    private static let windowHalfWidth = step * 0.44
+    private static let windowHalfWidth = step * (0.5 - ChromaticTuningRange.standard.cents / 100)
     private static let windowCorner = 0.04
-    private static let windowCurveRise: CGFloat = 1.75
+    private static let windowLipRise: CGFloat = 1.75
 
     static func angle(for pitch: Int) -> Double { Double((pitch + 3) % 12) * step }
 
@@ -123,13 +123,12 @@ enum ChromaticDialGeometry {
         let corner = windowCorner
         let crown = windowOuter
         let lip = windowInner
-        // Both edges rise equally from their chords to keep the window depth even.
         let chordProjection = cos(windowHalfWidth - corner)
-        let crownControl = point(at: 0, radius: crown * chordProjection + 2 * windowCurveRise)
-        let lipControl = point(at: 0, radius: lip * chordProjection + 2 * windowCurveRise)
+        let lipControl = point(at: 0, radius: lip * chordProjection + 2 * windowLipRise)
         return Path { path in
-            path.move(to: point(at: left + corner, radius: crown))
-            path.addQuadCurve(to: point(at: right - corner, radius: crown), control: crownControl)
+            path.addArc(center: center, radius: crown,
+                        startAngle: .radians(left + corner - .pi / 2),
+                        endAngle: .radians(right - corner - .pi / 2), clockwise: false)
             path.addQuadCurve(to: point(at: right, radius: crown - 5), control: point(at: right, radius: crown))
             path.addLine(to: point(at: right, radius: lip + 6))
             path.addQuadCurve(to: point(at: right - corner, radius: lip), control: point(at: right, radius: lip))
@@ -204,6 +203,7 @@ struct ChromaticDialFace<Engravings: View>: View, Animatable {
     let showsPointer: Bool
     let state: IntonationState?
     let sustain: ChromaticSustain
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ViewBuilder let engravings: (ChromaticDialAperture) -> Engravings
 
     var animatableData: Double {
@@ -213,9 +213,9 @@ struct ChromaticDialFace<Engravings: View>: View, Animatable {
 
     var body: some View {
         let aperture = ChromaticDialAperture(angle: angle, target: target, sustain: sustain,
-                                            fillsGradually: style.relief == nil)
+                                            fillsGradually: style.relief?.dark == true)
         ZStack {
-            if style.relief == nil { backlight }
+            if style.relief?.dark == true { backlight }
             Circle()
                 .fill(LinearGradient(colors: style.bezel, startPoint: .topLeading, endPoint: .bottomTrailing))
                 .overlay {
@@ -265,7 +265,9 @@ struct ChromaticDialFace<Engravings: View>: View, Animatable {
                 ChromaticDialCover(palette: relief).equatable()
                     .rotationEffect(.radians(angle))
                 ChromaticLinenRelief(palette: relief, angle: angle).equatable()
-                ChromaticSustainLamp(progress: sustain.progress, tint: relief.lamp)
+                ChromaticSustainLamp(progress: sustain.progress, lit: sustain.isCentered, tint: relief.lamp)
+                    .animation(sustain.isCentered && !reduceMotion ? .linear(duration: 0.075) : nil,
+                               value: sustain.progress)
                     .rotationEffect(.radians(angle))
                 ChromaticCoverReflection(angle: angle, palette: relief)
             } else {
@@ -418,7 +420,7 @@ private struct ChromaticDialCover: View, Equatable {
             var surface = context
             surface.clip(to: Dial.coverCoverage, style: FillStyle(eoFill: true))
             surface.fill(Dial.circle(radius: Dial.coverOuter),
-                         with: ChromaticDialEtching.opacityRamp(palette.cover, near: 0.48, far: 0.74))
+                         with: ChromaticDialEtching.opacityRamp(palette.cover, near: palette.dark ? 0.25 : 0.48, far: palette.dark ? 0.48 : 0.74))
             surface.stroke(Dial.circle(radius: Dial.coverOuter - 0.35),
                            with: .color(palette.wall.opacity(0.46)), lineWidth: 0.85)
             surface.stroke(Dial.circle(radius: Dial.coverOuter - 0.55),
@@ -525,17 +527,23 @@ private struct ChromaticLinenRelief: View, Equatable {
 }
 
 /// Sustain light grows in both directions from the slot until the ring closes.
-private struct ChromaticSustainLamp: View {
+private struct ChromaticSustainLamp: View, Animatable {
     private typealias Dial = ChromaticDialGeometry
     private static let track = arc(progress: 1)
 
-    let progress: Double
+    var progress: Double
+    let lit: Bool
     let tint: Color
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
 
     var body: some View {
         Canvas { context, _ in
             context.stroke(Self.track, with: .color(.black.opacity(0.08)), lineWidth: 0.75)
-            if progress > 0 {
+            if lit && progress > 0 {
                 let litArc = Self.arc(progress: progress)
                 var glow = context
                 glow.addFilter(.blur(radius: 1.05))
@@ -579,7 +587,7 @@ private struct ChromaticReliefFace: View, Equatable {
                 .clipShape(Circle().inset(by: 4.5))
             Color.clear
                 .frame(width: Dial.displayDiameter, height: Dial.displayDiameter)
-                .insetPanel(InstrumentPalette(dark: false), shape: Circle(), fill: palette.display)
+                .insetPanel(InstrumentPalette(dark: palette.dark), shape: Circle(), fill: palette.display)
                 .overlay {
                     Circle().strokeBorder(palette.wall.opacity(0.66), lineWidth: 0.95)
                 }

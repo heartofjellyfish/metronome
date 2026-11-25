@@ -65,9 +65,28 @@ enum TunerPitch {
                 if !hasLowerPartial { return recovered }
             }
         }
-        if chromatic, pitch.map({ $0 < 165 || (420...1650).contains($0) }) ?? true,
-           let recovered = quietHighPitch(samples, sampleRate: sampleRate, periodPitch: pitch) {
-            return recovered
+        let level = tailLevel(samples, sampleRate: sampleRate)
+        let canRecoverQuietHigh = chromatic && level >= 0.00016
+            && level <= ((pitch ?? 0) >= 420 ? 0.0016 : 0.003)
+            && (pitch.map { $0 < 165 || (420...1650).contains($0) } ?? true)
+        if canRecoverQuietHigh || (pitch == nil && level >= 0.0003),
+           let spectrum = spectrum(of: samples, sampleRate: sampleRate) {
+            if pitch == nil, let recovered = harmonicPitch(in: samples, sampleRate: sampleRate, spectrum: spectrum) {
+                return recovered
+            }
+            if canRecoverQuietHigh,
+               let recovered = quietHighPitch(samples, sampleRate: sampleRate, periodPitch: pitch, spectrum: spectrum) {
+                return recovered
+            }
+        }
+        if let pitch, (pitch < 145 || pitch > 550),
+           pitch * Double(samples.count) >= sampleRate * 10 {
+            // At short periods even a fraction of a sample biases the cents
+            // reading. Check the phase advance of the measured fundamental.
+            let (refined, strength) = phaseEstimate(near: pitch, samples: samples, sampleRate: sampleRate)
+            let phaseLimit = 0.75 * sampleRate / Double(samples.count)
+            if strength > Double(level) * 0.32, abs(refined - pitch) < phaseLimit,
+               abs(1200 * log2(refined / pitch)) < 7 { return refined }
         }
         return pitch
     }
@@ -180,7 +199,7 @@ enum TunerPitch {
         }
         let hz = sampleRate / lag
         guard (24...4300).contains(hz) else { return nil }
-        return fundamental(near: lag, in: samples, sampleRate: sampleRate, rms: rms)
+        return fundamental(near: lag, in: samples, sampleRate: sampleRate, rms: rms, chromatic: chromatic)
     }
 
     private static func removeRumble(from samples: inout [Float], sampleRate: Double) {
@@ -206,7 +225,8 @@ enum TunerPitch {
         }
     }
 
-    private static func fundamental(near period: Double, in samples: [Float], sampleRate: Double, rms: Float) -> Double {
+    private static func fundamental(near period: Double, in samples: [Float], sampleRate: Double,
+                                    rms: Float, chromatic: Bool) -> Double {
         let maxPeriod = min(sampleRate / 24, Double(samples.count) / 2)
         let multiples = [2, 3].filter { period * Double($0) < maxPeriod }
         guard let longest = multiples.last else { return sampleRate / period }
@@ -234,7 +254,7 @@ enum TunerPitch {
 
         let shortMismatch = mismatch(at: period)
         let frequency = sampleRate / period
-        if (120...360).contains(frequency), let octave = octaveBelow(frequency, in: samples, sampleRate: sampleRate, rms: rms) {
+        if (120...1100).contains(frequency), let octave = octaveBelow(frequency, in: samples, sampleRate: sampleRate, rms: rms, chromatic: chromatic) {
             return octave
         }
         // A pure higher note also repeats after two or three periods. Switch
@@ -256,44 +276,95 @@ enum TunerPitch {
         return frequency
     }
 
-    private static func octaveBelow(_ frequency: Double, in samples: [Float], sampleRate: Double, rms: Float) -> Double? {
+    private static func octaveBelow(_ frequency: Double, in samples: [Float], sampleRate: Double,
+                                    rms: Float, chromatic: Bool = false) -> Double? {
         // A bowed string can have a very strong second partial. A lower
         // fundamental and third partial form independent evidence of the
         // longer period even when the correlation minimum is at the octave.
         let lower = frequency / 2
         let first = partialAmplitude(lower, in: samples, sampleRate: sampleRate)
-        guard first > Double(rms) * 0.038 else { return nil }
+        let weakRoot = first <= Double(rms) * 0.038
+        let lowRegister = frequency <= 360
+        if lowRegister && weakRoot && !chromatic { return nil }
         let third = lower * 3
         let thirdAmplitude = partialAmplitude(third, in: samples, sampleRate: sampleRate)
-        guard thirdAmplitude > Double(rms) * 0.026 else { return nil }
+        let minimumThird = lowRegister ? 0.026 : 0.10
+        guard thirdAmplitude > Double(rms) * minimumThird else { return nil }
+        if weakRoot {
+            // Confirm the missing root independently of the loud octave. For bass
+            // notes the root itself can also emerge when measured over shorter windows.
+            let (fifth, strength) = phaseEstimate(near: lower * 5, samples: samples, sampleRate: sampleRate)
+            let minimumFifth = lowRegister ? max(0.00006, Double(rms) * 0.030) : Double(rms) * 0.042
+            let hasFifth = strength > minimumFifth
+                && abs(1200 * log2(fifth / (lower * 5))) < 26
+            if !hasFifth {
+                guard lowRegister else { return nil }
+                let (root, strength) = phaseEstimate(near: lower, samples: samples, sampleRate: sampleRate)
+                guard strength > max(0.00006, Double(rms) * 0.028), abs(1200 * log2(root / lower)) < 24 else { return nil }
+            }
+        }
         let (peak, amplitude) = phaseEstimate(near: frequency, samples: samples, sampleRate: sampleRate)
-        guard amplitude > Double(rms) * 0.65, abs(1200 * log2(peak / frequency)) <= 36 else { return nil }
+        let minimumCarrier = lowRegister && weakRoot ? 0.43 : 0.65
+        guard amplitude > Double(rms) * minimumCarrier, abs(1200 * log2(peak / frequency)) <= 36 else { return nil }
         let (measured, strength) = phaseEstimate(near: peak * 1.5, samples: samples, sampleRate: sampleRate)
         guard strength > Double(rms) * 0.021, abs(1200 * log2(measured / (peak * 1.5))) <= 30 else { return nil }
         return peak / 2
     }
 
     private static func partialAmplitude(_ hz: Double, in samples: [Float], sampleRate: Double) -> Double {
-        let step = 2 * Double.pi * hz / sampleRate
-        let windowStep = 2 * Double.pi / Double(samples.count - 1)
-        var real = 0.0
-        var imaginary = 0.0
-        for index in samples.indices {
-            let frame = Double(index)
-            let weighted = Double(samples[index]) * (0.5 - 0.5 * cos(frame * windowStep))
-            real += weighted * cos(frame * step)
-            imaginary += weighted * sin(frame * step)
-        }
-        return 4 * hypot(real, imaginary) / Double(samples.count - 1)
+        let result = projection(of: samples, from: 0, count: samples.count, hz: hz, sampleRate: sampleRate)
+        return 4 * hypot(result.real, result.imaginary) / Double(samples.count - 1)
     }
 
-    private static let quietPitchFFT = vDSP_create_fftsetup(12, FFTRadix(kFFTRadix2))
+    private static func projection(of samples: [Float], from offset: Int, count: Int, hz: Double,
+                                   sampleRate: Double) -> (real: Double, imaginary: Double) {
+        let step = 2 * Double.pi * hz / sampleRate
+        let taper = 2 * Double.pi / Double(count - 1)
+        var real = 0.0
+        var imaginary = 0.0
+        for index in 0..<count {
+            let frame = offset + index
+            let angle = Double(frame) * step
+            let weighted = Double(samples[frame]) * (0.5 - 0.5 * cos(Double(index) * taper))
+            real += weighted * cos(angle)
+            imaginary -= weighted * sin(angle)
+        }
+        return (real, imaginary)
+    }
 
-    private static func quietHighPitch(_ samples: [Float], sampleRate: Double, periodPitch: Double?) -> Double? {
-        let level = tailLevel(samples, sampleRate: sampleRate)
-        let upperLevel: Float = (periodPitch ?? 0) >= 420 ? 0.0016 : 0.003
-        guard (0.00016...upperLevel).contains(level), let setup = quietPitchFFT else { return nil }
+    private static let pitchFFT = vDSP_create_fftsetup(12, FFTRadix(kFFTRadix2))
 
+    private struct Spectrum {
+        let power: [Float]
+        let binWidth: Double
+
+        // This fallback is for a nearly pure tone. Motors and playing instruments
+        // with several strong lines need independent evidence for their root.
+        var isolatedBassPeak: Double? {
+            let first = max(2, Int(40 / binWidth))
+            let last = min(power.count - 2, Int(82 / binWidth))
+            guard first <= last, let bin = (first...last).max(by: { power[$0] < power[$1] }),
+                  power[bin] > power[bin - 1], power[bin] >= power[bin + 1] else { return nil }
+            let local = power[bin - 1] + power[bin] + power[bin + 1]
+            let band = max(1, Int(36 / binWidth))...min(power.count - 1, Int(1800 / binWidth))
+            let upper = (2 * bin - 2)...min(power.count - 1, Int(1100 / binWidth))
+            guard local > power[band].reduce(0, +) * 0.40,
+                  (power[upper].max() ?? 0) < power[bin] * 0.025 else { return nil }
+            return frequency(atPeak: bin)
+        }
+
+        func frequency(atPeak bin: Int) -> Double {
+            let left = log(Double(max(power[bin - 1], 1e-20)))
+            let center = log(Double(max(power[bin], 1e-20)))
+            let right = log(Double(max(power[bin + 1], 1e-20)))
+            let bend = left - 2 * center + right
+            let shift = bend < 0 ? min(0.5, max(-0.5, (left - right) / (2 * bend))) : 0
+            return (Double(bin) + shift) * binWidth
+        }
+    }
+
+    private static func spectrum(of samples: [Float], sampleRate: Double) -> Spectrum? {
+        guard let setup = pitchFFT else { return nil }
         // A narrow spectral line can survive low-frequency room noise even
         // when the broadband period search drops out or picks a long lag.
         let count = min(4096, 1 << (Int.bitWidth - 1 - samples.count.leadingZeroBitCount))
@@ -313,27 +384,154 @@ enum TunerPitch {
                 vDSP_fft_zrip(setup, &signal, 1, vDSP_Length(count.trailingZeroBitCount), FFTDirection(kFFTDirection_Forward))
             }
         }
-        let binWidth = sampleRate / Double(count)
+        var power = [Float](repeating: 0, count: half)
+        for bin in 1..<half { power[bin] = even[bin] * even[bin] + odd[bin] * odd[bin] }
+        return Spectrum(power: power, binWidth: sampleRate / Double(count))
+    }
+
+    /// When noise masks the repeating waveform, two independently measurable
+    /// partials can still identify a string. Derive the pitch from their peaks,
+    /// regardless of the note or tuning the user has selected.
+    private static func harmonicPitch(in samples: [Float], sampleRate: Double, spectrum: Spectrum) -> Double? {
+        let power = spectrum.power
+        let width = spectrum.binWidth
+        let first = max(2, Int(24 / width))
+        let last = min(power.count - 2, Int(4800 / width))
+        guard first < last else { return nil }
+        let band = power[first...last]
+        guard let peak = band.max(), peak > 0 else { return nil }
+        let energy = band.reduce(0, +)
+        var peaks: [(hz: Double, energy: Float)] = []
+        for bin in first...last where power[bin] >= peak * 0.012 {
+            guard power[bin] > power[bin - 1], power[bin] >= power[bin + 1] else { continue }
+            let energy = power[bin - 1] + power[bin] + power[bin + 1]
+            peaks.append((spectrum.frequency(atPeak: bin), energy))
+        }
+        guard let dominant = peaks.max(by: { $0.energy < $1.energy }) else { return nil }
+        // The loudest peak can be a partial of an almost inaudible fundamental.
+        // Compare explanations of that same peak, favouring only extra harmonics
+        // which a higher candidate cannot explain.
+        var best: (pitch: Double, anchor: Int, other: Int, score: Float)?
+        for anchor in 1...6 {
+            let pitch = dominant.hz / Double(anchor)
+            guard (24...1500).contains(pitch) else { continue }
+            var score = dominant.energy
+            var other: (order: Int, energy: Float)?
+            var orders = [anchor]
+            for peak in peaks where peak.hz != dominant.hz {
+                let order = Int((peak.hz / pitch).rounded())
+                guard (1...12).contains(order), !orders.contains(order),
+                      abs(1200 * log2(peak.hz / (pitch * Double(order)))) < 24 else { continue }
+                orders.append(order)
+                score += peak.energy
+                if peak.energy > (other?.energy ?? 0) { other = (order, peak.energy) }
+            }
+            guard let other, score > energy * 0.60, other.energy > score * 0.045 else { continue }
+            // Hum plus an unrelated high note can resemble the first and
+            // tenth harmonics. Two peaks alone need to be low-order neighbours.
+            if orders.count == 2 && max(anchor, other.order) > 4 { continue }
+            if !orders.contains(1) {
+                guard orders.count >= 3, (2...6).allSatisfy({ divisor in
+                    orders.contains { !$0.isMultiple(of: divisor) }
+                }) else { continue }
+            }
+            if score > (best?.score ?? 0) * 1.055 {
+                best = (pitch, anchor, other.order, score)
+            }
+        }
+        guard let best else { return nil }
+        let anchorOrder = Double(best.anchor)
+        let otherOrder = Double(best.other)
+        let (anchorHz, amplitude) = phaseEstimate(near: best.pitch * anchorOrder, samples: samples, sampleRate: sampleRate)
+        let (otherHz, partialLevel) = phaseEstimate(near: best.pitch * otherOrder, samples: samples, sampleRate: sampleRate)
+        guard amplitude > 0.00015, partialLevel > 0.000055,
+              abs(1200 * log2(anchorHz / anchorOrder / best.pitch)) < 22,
+              abs(1200 * log2(otherHz / otherOrder / (anchorHz / anchorOrder))) < 15 else { return nil }
+        return (anchorHz / anchorOrder * amplitude + otherHz / otherOrder * partialLevel) / (amplitude + partialLevel)
+    }
+
+    // The normal detector still handles attacks. Use this extra history only
+    // on a dropout to distinguish a new low tone from a stationary room sound.
+    static let lowToneHistoryDuration = 0.74
+
+    static func sustainedLowTone(_ history: [Float], sampleRate: Double, previous: Double?) -> Double? {
+        guard sampleRate >= 8000, history.count >= Int(sampleRate * 0.44),
+              (0.00035...0.012).contains(tailLevel(history, sampleRate: sampleRate)) else { return nil }
+
+        let factor = max(1, Int(sampleRate / 6000))
+        let rate = sampleRate / Double(factor)
+        let count = Int(sampleRate * 0.30) / factor
+        let start = history.count - count * factor
+        var signal = [Float](repeating: 0, count: count)
+        for index in signal.indices {
+            let first = start + index * factor
+            var sum: Float = 0
+            for frame in first..<(first + factor) { sum += history[frame] }
+            signal[index] = sum / Float(factor)
+        }
+        guard let coarse = spectrum(of: signal, sampleRate: rate)?.isolatedBassPeak else { return nil }
+
+        // An oscillator has predictable phase advance across three separate
+        // intervals. Check the end again so a fading note cannot keep scoring.
+        func measure(from offset: Int, count: Int) -> (angle: Double, strength: Double) {
+            let value = projection(of: signal, from: offset, count: count, hz: coarse, sampleRate: rate)
+            return (atan2(value.imaginary, value.real), 4 * hypot(value.real, value.imaginary) / Double(count))
+        }
+        func wrapped(_ angle: Double) -> Double { atan2(sin(angle), cos(angle)) }
+        let length = count / 3
+        let first = measure(from: 0, count: length)
+        let middle = measure(from: length, count: length)
+        let last = measure(from: 2 * length, count: length)
+        let amplitude = min(first.strength, middle.strength, last.strength)
+        let advance = wrapped(last.angle - first.angle)
+        let hz = coarse + advance * rate / (4 * .pi * Double(length))
+        guard amplitude > 0.00022, amplitude > max(first.strength, middle.strength, last.strength) * 0.36,
+              (45...70).contains(hz), abs(wrapped(middle.angle - first.angle - advance / 2)) < 0.66 else { return nil }
+
+        let tailCount = Int(rate * 0.055)
+        let tail = measure(from: count - tailCount, count: tailCount)
+        let distance = Double(count - tailCount / 2) - Double(length) / 2
+        let expectedAngle = first.angle + advance * distance / Double(2 * length)
+        guard tail.strength > max(amplitude * 0.50, 0.00021),
+              abs(wrapped(tail.angle - expectedAngle)) < 0.72 else { return nil }
+
+        if previous.map({ abs(1200 * log2($0 / hz)) > 40 }) ?? true {
+            let interval = Int(rate * 0.13)
+            var background = Double.infinity
+            for offset in stride(from: 0, through: start - factor * interval, by: interval * factor) {
+                let prior = (0..<interval).map { history[offset + $0 * factor] }
+                background = min(background, partialAmplitude(hz, in: prior, sampleRate: rate))
+            }
+            guard amplitude > max(0.00032, background * 2.6) else { return nil }
+        }
+        for partial in [hz / 2, hz * 1.5] {
+            let (measured, strength) = phaseEstimate(near: partial, samples: signal, sampleRate: rate)
+            if strength > amplitude * 0.18 && abs(1200 * log2(measured / partial)) < 19 { return nil }
+        }
+        return hz
+    }
+
+    private static func quietHighPitch(_ samples: [Float], sampleRate: Double, periodPitch: Double?, spectrum: Spectrum) -> Double? {
+        let binWidth = spectrum.binWidth
         let first = Int(ceil(430 / binWidth))
+        let half = spectrum.power.count
         let last = min(half - 2, Int(1600 / binWidth))
         guard first <= last else { return nil }
-
-        func power(_ bin: Int) -> Float { even[bin] * even[bin] + odd[bin] * odd[bin] }
+        func power(_ bin: Int) -> Float { spectrum.power[bin] }
         let peak = (first...last).max { power($0) < power($1) }!
         let localPower = (peak - 1...peak + 1).reduce(Float.zero) { $0 + power($1) }
         let firstBandBin = max(1, Int(230 / binWidth))
         let bandPower = (firstBandBin..<half).reduce(Float.zero) { $0 + power($1) }
         guard localPower > 0, localPower >= bandPower * 0.68 else { return nil }
 
-        let left = log(Double(max(power(peak - 1), 1e-20)))
-        let center = log(Double(power(peak)))
-        let right = log(Double(max(power(peak + 1), 1e-20)))
-        let bend = left - 2 * center + right
-        let offset = bend < 0 ? min(0.5, max(-0.5, (left - right) / (2 * bend))) : 0
-        let estimate = (Double(peak) + offset) * binWidth
+        let estimate = spectrum.frequency(atPeak: peak)
         let (measured, strength) = phaseEstimate(near: estimate, samples: samples, sampleRate: sampleRate)
         guard strength >= 0.00022, abs(measured - estimate) <= min(4, binWidth * 0.35) else { return nil }
 
+        if (360...1100).contains(measured),
+           let lower = octaveBelow(measured, in: samples, sampleRate: sampleRate, rms: Float(strength * 0.7071)) {
+            return lower
+        }
         if let periodPitch {
             if periodPitch < 165 {
                 // A weak high partial of a real bass note is still a bass note.
@@ -362,6 +560,58 @@ enum TunerPitch {
         return measured
     }
 
+    /// A pluck can outlast a broadband pitch estimate. Measure its actual
+    /// partials above their local noise floors, even if the room is louder
+    /// elsewhere in the spectrum. Starting a note requires independent partials.
+    static func pluckedPitch(in samples: [Float], sampleRate: Double,
+                             targets: [Double], continuing previous: Double?) -> Double? {
+        let level = Double(tailLevel(samples, sampleRate: sampleRate))
+        guard (0.000075...0.004).contains(level),
+              let spectrum = spectrum(of: samples, sampleRate: sampleRate) else { return nil }
+        let width = spectrum.binWidth
+        let upper = min(spectrum.power.count - 2, Int(4000 / width))
+        var best: (frequency: Double, power: Float)?
+        for root in previous.map({ [$0] }) ?? targets where (48...1600).contains(root) {
+            let first = max(1, Int(max(65, root * 0.72) / width))
+            guard first < upper else { continue }
+            let total = spectrum.power[first...upper].reduce(0, +)
+            var partials: [(order: Int, hz: Double, power: Float)] = []
+            for order in 1...6 {
+                let expected = Double(order) * root
+                let radius = max(1, Int(ceil(expected * 0.036 / width)))
+                let center = Int((expected / width).rounded())
+                let low = max(2, center - radius), high = min(upper, center + radius)
+                guard low <= high, let peak = (low...high).max(by: { spectrum.power[$0] < spectrum.power[$1] }),
+                      spectrum.power[peak] > spectrum.power[peak-1], spectrum.power[peak] >= spectrum.power[peak+1] else { continue }
+                let power = spectrum.power[peak-1...peak+1].reduce(0, +)
+                let neighbors = (max(1, peak-7)...min(spectrum.power.count-1, peak+7))
+                    .filter { abs($0 - peak) >= 3 }.map { spectrum.power[$0] }.sorted()
+                guard power > total * 0.024, spectrum.power[peak] > neighbors[neighbors.count/2] * 12 else { continue }
+                let coarse = spectrum.frequency(atPeak: peak)
+                let (hz, strength) = phaseEstimate(near: coarse, samples: samples, sampleRate: sampleRate)
+                guard strength >= max(0.000032, level * 0.095), abs(hz - coarse) <= width * 0.30,
+                      abs(1200 * log2(hz / expected)) <= 60 else { continue }
+                partials.append((order, hz / Double(order), power))
+            }
+            guard let strongest = partials.max(by: { $0.power < $1.power }) else { continue }
+            let agreeing = partials.filter { abs(1200 * log2($0.hz / strongest.hz)) <= 12 }
+            let power = agreeing.reduce(Float.zero) { $0 + $1.power }
+            if previous == nil {
+                // Two or more components must establish this root, rather than
+                // just the even harmonics of a different string.
+                guard agreeing.count >= 2, power > total * 0.35,
+                      !(2...6).contains(where: { divisor in agreeing.allSatisfy { $0.order.isMultiple(of: divisor) } }) else { continue }
+            } else if power <= total * 0.095 {
+                continue
+            }
+            if power > (best?.power ?? 0) {
+                let measured = agreeing.reduce(0) { $0 + $1.hz * Double($1.power) } / Double(power)
+                best = (measured, power)
+            }
+        }
+        return best?.frequency
+    }
+
     /// Recheck a previously measured tone after a weak dropout or a jump to a
     /// lower subharmonic. Phase measures the current frequency from fresh input.
     static func continueChromaticPitch(near prior: Double, proposed: Double?,
@@ -381,7 +631,7 @@ enum TunerPitch {
 
         let (measured, strength) = phaseEstimate(near: prior, samples: samples, sampleRate: sampleRate)
         guard strength >= level * 0.64 else { return nil }
-        if (120...360).contains(measured), octaveBelow(measured, in: samples, sampleRate: sampleRate, rms: Float(level)) != nil {
+        if (120...1100).contains(measured), octaveBelow(measured, in: samples, sampleRate: sampleRate, rms: Float(level), chromatic: true) != nil {
             return nil
         }
         if let proposed, partialAmplitude(proposed, in: samples, sampleRate: sampleRate) > strength * 0.28 {
@@ -393,23 +643,8 @@ enum TunerPitch {
 
     private static func phaseEstimate(near hz: Double, samples: [Float], sampleRate: Double) -> (Double, Double) {
         let half = samples.count / 2
-        let radians = 2 * Double.pi * hz / sampleRate
-        let taper = 2 * Double.pi / Double(half - 1)
-        func projection(from offset: Int) -> (real: Double, imaginary: Double) {
-            var real = 0.0
-            var imaginary = 0.0
-            for index in 0..<half {
-                let frame = offset + index
-                let angle = Double(frame) * radians
-                let weighted = Double(samples[frame]) * (0.5 - 0.5 * cos(Double(index) * taper))
-                real += weighted * cos(angle)
-                imaginary -= weighted * sin(angle)
-            }
-            return (real, imaginary)
-        }
-
-        let early = projection(from: 0)
-        let late = projection(from: half)
+        let early = projection(of: samples, from: 0, count: half, hz: hz, sampleRate: sampleRate)
+        let late = projection(of: samples, from: half, count: half, hz: hz, sampleRate: sampleRate)
         let strength = min(hypot(early.real, early.imaginary), hypot(late.real, late.imaginary)) * 4 / Double(half)
         let advance = atan2(late.imaginary * early.real - late.real * early.imaginary,
                             late.real * early.real + late.imaginary * early.imaginary)
@@ -460,6 +695,28 @@ enum TunerResponse: String, CaseIterable {
     var damping: Double { self == .balanced ? 1 : 0.72 }
 }
 
+enum ChromaticTuningRange: String, CaseIterable {
+    case relaxed, standard, precise
+
+    static let preferenceKey = "tuner.chromaticRange"
+
+    var cents: Double {
+        switch self {
+        case .relaxed: 10
+        case .standard: 6
+        case .precise: 2
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .relaxed: "Relaxed"
+        case .standard: "Standard"
+        case .precise: "Precise"
+        }
+    }
+}
+
 struct TunerTracker {
     private var previous: TunerReading?
     private var centeredSince: TimeInterval?
@@ -492,9 +749,10 @@ struct TunerTracker {
     mutating func read(hz: Double?, reference: Int, targets: [Int], held: Int?, time: TimeInterval,
                        response: TunerResponse = .balanced, pluckLevel: Float? = nil,
                        guardsPluckHarmonics: Bool = true, chromatic: Bool = false,
-                       stabilizeChromaticPitch: Bool = false) -> TunerReading? {
+                       stabilizeChromaticPitch: Bool = false,
+                       chromaticRange: ChromaticTuningRange = .standard, measuredFromDecay: Bool = false) -> TunerReading? {
         if let pluckLevel {
-            let newAttack = stringRecheck.measure(level: pluckLevel, at: time)
+            let newAttack = stringRecheck.measure(level: pluckLevel, unpitched: hz == nil, at: time)
             if waitsForStringAttack {
                 guard newAttack else { return nil }
                 waitsForStringAttack = false
@@ -554,7 +812,9 @@ struct TunerTracker {
         let cents = stablePitch.map { $0 - Double(note) * 100 } ?? (prior + (raw - prior) * weight)
         if chromatic {
             if !same { chromaticCenter = ChromaticCenter() }
-            let center = chromaticCenter.observe(raw, displayedCents: cents, at: time, response: response)
+            let center = chromaticCenter.observe(raw, displayedCents: cents, at: time,
+                                                 dwell: response.dwell, tolerance: chromaticRange.cents,
+                                                 measuredFromDecay: measuredFromDecay)
             let state: IntonationState = center.locked ? .centered : Self.uncenteredState(cents)
             let value = TunerReading(hz: hz, note: note, cents: cents, state: state,
                                      centeredDuration: center.duration, measuredAt: time)
@@ -597,7 +857,7 @@ struct TunerTracker {
     private mutating func missingSample(at time: TimeInterval) -> TunerReading? {
         centeredSince = nil
         lastCenteredSampleAt = nil
-        chromaticCenter.pause()
+        chromaticCenter.pause(at: time)
         if var previous, let lastValidAt, time - lastValidAt < 0.10 {
             // A momentary dropout may hold the picture, but cannot confirm a string.
             previous.isFresh = false
@@ -655,10 +915,6 @@ private struct ChromaticPitchStabilizer {
 // Confirmation for sustained pitch. Keep the live cents estimate separate so a
 // natural vibrato can confirm without freezing or zeroing the measured offset.
 private struct ChromaticCenter {
-    private static let entryOffset = 10.5
-    private static let exitOffset = 12.0
-    private static let immediateExitOffset = 18.0
-
     private struct Sample {
         let time: TimeInterval
         let cents: Double
@@ -672,13 +928,25 @@ private struct ChromaticCenter {
     private var lastOnCenterAt: TimeInterval?
 
     mutating func observe(_ cents: Double, displayedCents: Double, at time: TimeInterval,
-                          response: TunerResponse) -> (locked: Bool, duration: TimeInterval) {
+                          dwell: TimeInterval, tolerance: Double, measuredFromDecay: Bool) -> (locked: Bool, duration: TimeInterval) {
         // A large departure overrides the hold for brief, near-center fluctuations.
-        if abs(cents) >= Self.immediateExitOffset || abs(displayedCents) >= Self.immediateExitOffset {
+        let immediateExit = tolerance + 8
+        if abs(cents) >= immediateExit || abs(displayedCents) >= immediateExit {
             self = ChromaticCenter()
             return (false, 0)
         }
-        let start = time - response.dwell
+        if measuredFromDecay {
+            // A fading string still has a measurable pitch. It cannot earn
+            // a new confirmation or extend the sustain lamp by itself.
+            let recentlyMeasured = samples.last.map { time - $0.time < 0.096 } == true
+            if !recentlyMeasured || abs(cents) > tolerance || abs(displayedCents) > tolerance {
+                self = ChromaticCenter()
+            } else {
+                pause(at: time)
+            }
+            return (locked, duration)
+        }
+        let start = time - dwell
         if let last = samples.last, time <= last.time { return (locked, duration) }
         samples.append(Sample(time: time, cents: cents))
         while samples.count > 1 && samples[1].time <= start { samples.removeFirst() }
@@ -686,7 +954,6 @@ private struct ChromaticCenter {
         // Integrate by time, since audio callbacks need not arrive at a fixed interval.
         var sum = 0.0
         var squareSum = 0.0
-        var peak = abs(cents)
         var variation = 0.0
         var firstCents: Double?
         for (earlier, later) in zip(samples, samples.dropFirst()) {
@@ -697,19 +964,24 @@ private struct ChromaticCenter {
             sum += (first + later.cents) * 0.5 * span
             let last = later.cents
             squareSum += (first * first + first * last + last * last) * span / 3
-            peak = max(peak, abs(first), abs(later.cents))
             variation += abs(later.cents - first)
             if firstCents == nil { firstCents = first }
         }
         let fullWindow = samples.count >= 3 && samples[0].time <= start
-        let mean = sum / response.dwell
+        let mean = sum / dwell
         // Measure steadiness around the sung pitch, independently of its tuning offset.
-        let spread = sqrt(max(0, squareSum / response.dwell - mean * mean))
+        let spread = sqrt(max(0, squareSum / dwell - mean * mean))
         let drift = abs(cents - (firstCents ?? cents))
-        let gliding = drift > 5 && drift > variation * 0.75
-        let onCenter = fullWindow && abs(mean) < Self.entryOffset && spread <= 6.5 && peak <= 17 && !gliding
+        let gliding = drift > 1.5 && drift > variation * 0.75
+        // Allow round-off at an exact mathematical boundary.
+        let limit = tolerance + 1e-8
+        let meanInRange = abs(mean) <= limit
+        let slotInRange = abs(displayedCents) <= limit
+        let onCenter = fullWindow && meanInRange && slotInRange && spread <= 6.5 && !gliding
         if locked {
-            let unstable = fullWindow && (abs(mean) >= Self.exitOffset || spread > 8.5)
+            // A transient excursion can hold the existing lamp, but sustained
+            // drift must leave green at the chosen limit in either direction.
+            let unstable = fullWindow && (!meanInRange || spread > 8.5 || gliding && !slotInRange)
             if fullWindow && !unstable { lastStableAt = time }
             if unstable {
                 awaySince = awaySince ?? time
@@ -717,7 +989,7 @@ private struct ChromaticCenter {
                 awaySince = nil
             }
             let driftingAway = awaySince.map { time - $0 >= 0.10 } ?? false
-            let noStableWindow = lastStableAt.map { time - $0 > response.dwell + 0.16 } ?? false
+            let noStableWindow = lastStableAt.map { time - $0 > dwell + 0.16 } ?? false
             if driftingAway || noStableWindow {
                 locked = false
                 duration = 0
@@ -736,9 +1008,14 @@ private struct ChromaticCenter {
         return (locked, duration)
     }
 
-    mutating func pause() {
-        samples.removeAll(keepingCapacity: true)
-        awaySince = nil
+    mutating func pause(at time: TimeInterval) {
+        // An already confirmed note can survive one missing analysis hop.
+        // No new lock or sustain time can be earned during that interruption.
+        let briefGap = samples.last.map { time - $0.time <= 0.05 } ?? false
+        if !locked || !briefGap {
+            samples.removeAll(keepingCapacity: true)
+            awaySince = nil
+        }
         lastOnCenterAt = nil
     }
 }
@@ -751,7 +1028,8 @@ private struct TunerStringRecheck {
         var last: TimeInterval
     }
 
-    private let minimumLevel: Float = 0.002
+    private var background: Float = 0.00012
+    private var onsetLevel: Float { max(0.00055, background * 3) }
     private var previousLevel: Float = 0
     private var quietSince: TimeInterval?
     private var level: Float = 0
@@ -759,27 +1037,36 @@ private struct TunerStringRecheck {
     private var attackAt: TimeInterval?
     private var evidence: Evidence?
 
-    mutating func measure(level: Float, at time: TimeInterval) -> Bool {
-        if level <= 0.0012, quietSince == nil { quietSince = time }
+    mutating func measure(level: Float, unpitched: Bool, at time: TimeInterval) -> Bool {
+        // Learn the room between notes. A missed attack must not immediately
+        // become the new noise floor, particularly for soft bowed notes.
+        let nearAttack = attackAt.map { time - $0 <= 0.90 } ?? false
+        if unpitched && !nearAttack {
+            background += 0.08 * (min(level, background * 2) - background)
+        }
+        if level <= max(0.00032, background * 1.6), quietSince == nil { quietSince = time }
         let rest = quietSince.map { time - $0 >= 0.09 } ?? false
-        let rising = level > previousLevel * 1.5 && level - previousLevel >= 0.0012
-        let newAttack = level >= minimumLevel && (rising || rest)
+        let rising = level > previousLevel * 1.5 && level - previousLevel >= max(0.00035, background * 1.5)
+        let newAttack = level >= onsetLevel && (rising || rest)
         if newAttack {
             attackAt = time
-            peak = level
+            peak = 0
             evidence = nil
         }
-        if level >= minimumLevel { quietSince = nil }
+        if level >= onsetLevel { quietSince = nil }
         previousLevel = level
         self.level = level
-        peak = max(peak, level)
         return newAttack
     }
 
     mutating func observe(note: Int, rawCents: Double, centered: Bool, at time: TimeInterval) -> Bool {
         guard let attackAt else { return false }
         let attackAge = time - attackAt
-        if attackAge > 0.65 || level < max(minimumLevel, peak * 0.38) {
+        // Judge decay against the pitched part of this attack. The click of
+        // the pick or a nearby impact can be much louder than the note.
+        peak = max(peak, level)
+        let completing = evidence.map { time - $0.last <= 0.145 } ?? false
+        if attackAge > 0.90 || (attackAge > 0.65 && !completing) || level < max(background * 2, peak * 0.33) {
             finishAttack()
             return false
         }
@@ -794,8 +1081,10 @@ private struct TunerStringRecheck {
             evidence = nil
             return false
         }
-        if var evidence, evidence.note == note, time - evidence.last <= 0.10,
-           abs(rawCents - evidence.cents) <= 5 {
+        // A device can deliver nominal 100 ms buffers just over 100 ms apart.
+        // Still require an uninterrupted run of consistent, same-sided pitch.
+        if var evidence, evidence.note == note, time - evidence.last <= 0.145,
+           abs(rawCents - evidence.cents) <= 11 {
             if time - evidence.start >= 0.22 {
                 finishAttack()
                 return true

@@ -101,6 +101,8 @@
 "Euphonium" = "Euphonium";
 "Expanded" = "Expanded";
 "F major pentatonic" = "F major pentatonic";
+"Far" = "Far";
+"Far side" = "Far side";
 "Fifths" = "Fifths";
 "Flat" = "Flat";
 "Flugelhorn" = "Flugelhorn";
@@ -140,8 +142,10 @@
 "Honchōshi" = "Honchōshi";
 "Honchōshi in D" = "Honchōshi in D";
 "Horn in F" = "Horn in F";
+"How close the pitch must be to turn green." = "How close the pitch must be to turn green.";
 "In tune" = "In tune";
 "In-tune feedback" = "In-tune feedback";
+"In-tune range" = "In-tune range";
 "Increase reference pitch" = "Increase reference pitch";
 "Input unavailable" = "Input unavailable";
 "Instruments" = "Instruments";
@@ -178,11 +182,13 @@
 "Middle" = "Middle";
 "Middle East" = "Middle East";
 "Middle register" = "Middle register";
+"Middle section" = "Middle";
 "More instruments" = "More instruments";
 "Morin khuur" = "Morin khuur";
 "Mozart scordatura" = "Mozart scordatura";
 "Name" = "Name";
 "Nashville" = "Nashville";
+"Near" = "Near";
 "New standard" = "New standard";
 "Niagari" = "Niagari";
 "Niagari in D" = "Niagari in D";
@@ -224,15 +230,18 @@
 "Play an open string" = "Play an open string";
 "Play one key" = "Play one key";
 "Play target note" = "Play target note";
+"Player side" = "Player side";
 "Playing strings" = "Playing strings";
 "Pluck a string" = "Pluck a string";
 "Pluck a tine" = "Pluck a tine";
 "Plucked strings" = "Plucked strings";
+"Precise" = "Precise";
 "Raise pitch" = "Raise pitch";
 "Recorder" = "Recorder";
 "Reference notes" = "Reference notes";
 "Reference pitch" = "Reference pitch";
 "Reference tone" = "Reference tone";
+"Relaxed" = "Relaxed";
 "Release target" = "Release target";
 "Retry microphone" = "Retry microphone";
 "Ruibin diao" = "Ruibin diao";
@@ -261,6 +270,7 @@
 "Strike a note" = "Strike a note";
 "Strike the drum" = "Strike the drum";
 "String %d" = "String %d";
+"Strings %@" = "Strings %@";
 "Suona" = "Suona";
 "Sympathetic string %d" = "Sympathetic string %d";
 "Sympathetic strings" = "Sympathetic strings";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "Tune by ear or follow the dial.";
 "Tune one string at a time within each pair." = "Tune one string at a time within each pair.";
 "Tuner" = "Tuner";
+"Tuning" = "Tuning";
 "Tuning response" = "Tuning response";
-"Pitch stabilization" = "Pitch stabilization";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "Smooths brief pitch wobbles in Chromatic when you sing or play.";
 "Ukulele" = "Ukulele";
 "Ukulele · low G" = "Ukulele · low G";
 "Upper tenor bridge" = "Upper tenor bridge";
@@ -296,12 +305,5 @@
 "Xylophone" = "Xylophone";
 "Yangqin" = "Yangqin";
 "Zhengdiao" = "Zhengdiao";
-
-"Strings %@" = "Strings %@";
-"Player side" = "Player side";
-"Far side" = "Far side";
-"Near" = "Near";
-"Middle section" = "Middle";
-"Far" = "Far";
 "Zhonghu" = "Zhonghu";
 "Zhongruan" = "Zhongruan";

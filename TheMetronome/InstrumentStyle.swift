@@ -32,12 +32,12 @@ extension View {
     func technical(_ size: CGFloat = 10, spacing: CGFloat = 2) -> some View {
         font(.system(size: size, weight: .medium, design: .monospaced)).tracking(spacing * L10n.letterSpacingScale)
     }
-    func insetPanel(_ p: InstrumentPalette, radius: CGFloat = 21, shallow: Bool = false) -> some View {
-        background { InstrumentInsetSurface(p: p, radius: radius, shallow: shallow) }
+    func insetPanel(_ p: InstrumentPalette, radius: CGFloat = 21) -> some View {
+        background { InstrumentInsetSurface(p: p, radius: radius) }
     }
-    func insetPanel(_ p: InstrumentPalette, shape: some InsettableShape, fill: Color? = nil) -> some View {
+    func insetPanel(_ p: InstrumentPalette, shape: some InsettableShape, fill: some ShapeStyle) -> some View {
         background {
-            shape.fill((fill ?? p.well)
+            shape.fill(fill
                 .shadow(.inner(color: .black.opacity(p.dark ? 0.8 : 0.36), radius: 4, x: 2, y: 4))
                 .shadow(.inner(color: p.light, radius: 2, x: -1, y: -2)))
         }
@@ -49,7 +49,6 @@ private struct InstrumentInsetSurface: View {
     @Environment(\.controlSkin) private var design
     let p: InstrumentPalette
     let radius: CGFloat
-    let shallow: Bool
 
     var body: some View {
         let outline = RoundedRectangle(cornerRadius: radius)
@@ -57,11 +56,8 @@ private struct InstrumentInsetSurface: View {
             outline.fill(p.well.opacity(0.48))
                 .overlay { outline.strokeBorder(p.edge.opacity(0.22), lineWidth: 1) }
         } else {
-            let surface = shallow ? Color(hex: p.dark ? 0x292B29 : 0xE3DDD1) : p.well
-            let shadowOpacity = shallow ? (p.dark ? 0.56 : 0.28) : (p.dark ? 0.80 : 0.36)
-            outline.fill(surface
-                .shadow(.inner(color: .black.opacity(shadowOpacity), radius: shallow ? 3 : 4,
-                               x: shallow ? 1 : 2, y: shallow ? 2 : 4))
+            outline.fill(p.well
+                .shadow(.inner(color: .black.opacity(p.dark ? 0.80 : 0.36), radius: 4, x: 2, y: 4))
                 .shadow(.inner(color: p.light, radius: 2, x: -1, y: -2)))
             .overlay { outline.stroke(p.light, lineWidth: 1).padding(0.5) }
         }
@@ -71,7 +67,8 @@ private struct InstrumentInsetSurface: View {
 enum InstrumentType {
     // Compared against the reference: curved 6/9 terminals and condensed bold proportions.
     static func display(_ size: CGFloat) -> Font { .custom("HelveticaNeue-CondensedBold", size: size) }
-    static func value(_ size: CGFloat) -> Font { .custom("HelveticaNeue-Medium", size: size) }
+    static let valueFontName = "HelveticaNeue-Medium"
+    static func value(_ size: CGFloat) -> Font { .custom(valueFontName, size: size) }
 }
 
 struct HardwareButtonStyle: ButtonStyle {
@@ -80,13 +77,20 @@ struct HardwareButtonStyle: ButtonStyle {
     var green = false
     var radius: CGFloat = 10
     var shallow = false
+    var capHeight: CGFloat? = nil
+    var lift: CGFloat = 1
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(green ? Color(hex: 0x243326) : charcoal ? Color(hex: 0xF5F0E2) : p.ink)
             // Press/release animates the hardware, not replacement text or symbols.
             // A glyph may still own its explicit animation (the transport contour).
             .transaction { $0.animation = nil }
-            .background { HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius, pressed: configuration.isPressed, shallow: shallow).id("\(p.dark)-\(charcoal)-\(green)") }
+            .background {
+                HardwareKeySurface(p: p, charcoal: charcoal, green: green, radius: radius,
+                                   pressed: configuration.isPressed, shallow: shallow, lift: lift)
+                    .frame(height: capHeight)
+                    .id("\(p.dark)-\(charcoal)-\(green)")
+            }
             .offset(y: configuration.isPressed ? 1.6 : 0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
@@ -100,6 +104,8 @@ struct HardwareKeySurface: View {
     var radius: CGFloat = 10
     var pressed = false
     var shallow = false
+    var lift: CGFloat = 1
+    var lightFaceColors: [Color]?
     private var r: CGFloat { max(4, radius) }
     private var dark: Bool { !green && (charcoal || p.dark) }
     var body: some View {
@@ -119,17 +125,17 @@ struct HardwareKeySurface: View {
         }
     }
 
-    private func sculptedFace(_ outline: RoundedRectangle) -> some View {
+    private func sculptedFace(_ outline: some InsettableShape) -> some View {
         ZStack {
             // A narrow contact seam, not a thick extruded shelf beneath the key.
             outline.fill(dark ? Color(hex: 0x0A0C0B) : Color(hex: 0x9A9587))
-                .offset(y: pressed ? 0 : 0.8)
-                .shadow(color: .black.opacity(dark ? 0.65 : 0.24), radius: pressed ? 0.6 : 2.1, x: 0.6, y: pressed ? 0.4 : 2.1)
+                .offset(y: pressed ? 0 : 0.8 * lift)
+                .shadow(color: .black.opacity(dark ? 0.65 : 0.24 * lift), radius: pressed ? 0.6 : 2.1, x: 0.6, y: pressed ? 0.4 : 2.1)
                 .shadow(color: .black.opacity(dark ? 0.25 : 0.13), radius: pressed ? 1 : 5, x: 1.3, y: pressed ? 1 : 4)
             outline
                 .fill(LinearGradient(colors: green ? [Color(hex: 0xAFC7A1), Color(hex: 0x8DA97D)] : dark
                     ? (charcoal && p.dark ? [Color(hex: 0x252725), Color(hex: 0x181A18)] : [Color(hex: 0x3D3F3D), Color(hex: 0x303230)])
-                    : [Color(hex: 0xEAE6DD), Color(hex: 0xDDD9CE)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    : (lightFaceColors ?? [Color(hex: 0xEAE6DD), Color(hex: 0xDDD9CE)]), startPoint: .topLeading, endPoint: .bottomTrailing)
                     .shadow(.inner(color: .white.opacity(dark ? 0.16 : 0.85), radius: 1.6, x: 1.4, y: 1.8))
                     .shadow(.inner(color: .black.opacity(dark ? 0.5 : 0.20), radius: 2.5, x: -1.7, y: -2.3)))
                 .overlay(MaterialGrain().opacity(dark ? 0.065 : 0.035).blendMode(.overlay).clipShape(outline))
@@ -137,13 +143,13 @@ struct HardwareKeySurface: View {
                     outline.strokeBorder(LinearGradient(stops: [
                         .init(color: .white.opacity(dark ? 0.21 : 0.9), location: 0),
                         .init(color: .white.opacity(dark ? 0.08 : 0.35), location: 0.38),
-                        .init(color: .black.opacity(dark ? 0.65 : 0.28), location: 1)
+                        .init(color: .black.opacity(dark ? 0.65 : 0.28 / lift), location: 1)
                     ], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 0.8)
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: max(3, r - 2.6), style: .continuous)
+                    outline.inset(by: 2.6)
                         .stroke(LinearGradient(colors: [.white.opacity(dark ? 0.10 : 0.60), .white.opacity(0)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.2)
-                        .padding(2.6).blur(radius: 0.4)
+                        .blur(radius: 0.4)
                 }
                 .padding(0.65)
         }

@@ -47,6 +47,20 @@ enum TunerSolidPegHeadstock {
         }
     }
 
+    var referenceWires: [Path] { courses.flatMap { $0 }.map(stringPath(for:)) }
+
+    private func stringPath(for peg: Peg) -> Path {
+        let x = peg.post.x, y = peg.post.y
+        let direction: CGFloat = peg.left ? -1 : 1
+        let nutY: CGFloat = self == .baglama ? 242 : 231
+        let wrapX = x + direction * 3.5
+        return Path(tunerCommands: """
+                M \(wrapX + direction) \(y - 2.35)
+                Q \(wrapX - direction * 2.7) \(y) \(wrapX) \(y + 2.35)
+                L \(peg.nutX) \(nutY) L \(peg.nutX) 295
+                """)
+    }
+
     func draw(in context: GraphicsContext, surface: Color, drawing: TunerStringDrawing, ranges: [Range<Int>]) {
         let baglama = self == .baglama
         let nutY: CGFloat = baglama ? 242 : 231
@@ -78,12 +92,7 @@ enum TunerSolidPegHeadstock {
                 Q \(x - direction * 2.8) \(y + 2.0) \(x) \(y + 2.35)
                 """)
             context.stroke(shaft, with: .color(ink), style: StrokeStyle(lineWidth: 0.85, lineCap: .round))
-            let wrapX = x + direction * 3.5
-            let string = Path(tunerCommands: """
-                M \(wrapX + direction) \(y - 2.35)
-                Q \(wrapX - direction * 2.7) \(y) \(wrapX) \(y + 2.35)
-                L \(peg.nutX) \(nutY) L \(peg.nutX) 295
-                """)
+            let string = stringPath(for: peg)
             context.stroke(string, with: .color(ink),
                            style: StrokeStyle(lineWidth: drawing.lineWidth(for: index, normal: peg.lineWidth, focused: 1.75),
                                               lineCap: .round, lineJoin: .round))

@@ -4,6 +4,7 @@ import SwiftUI
 /// are independent of this palette.
 struct ChromaticDialStyle: Equatable {
     struct Relief: Equatable {
+        let dark: Bool
         let ceramic: Color
         let display: Color
         let cover: Color
@@ -43,7 +44,7 @@ struct ChromaticDialStyle: Equatable {
             bezelHighlight: reflectedLight,
             face: [chassis.body, chassis.bottom],
             relief: Relief(
-                ceramic: chassis.top,
+                dark: false, ceramic: chassis.top,
                 display: Color(hex: 0xCBC6B7),
                 cover: Color(hex: 0xD2CCBE),
                 wall: Color(hex: 0x6E695E),
@@ -68,11 +69,16 @@ struct ChromaticDialStyle: Equatable {
     }()
 
     private static let graphite = Self(
-        bezel: [Color(hex: 0x999382), Color(hex: 0x655E52), Color(hex: 0x3E3A33)],
-        bezelHighlight: Color(hex: 0xF4E8D2),
+        bezel: [Color(hex: 0x535B5C), Color(hex: 0x323839), Color(hex: 0x181C1D)],
+        bezelHighlight: Color(hex: 0xE2E3DB),
         face: [Color(hex: 0x373632), Color(hex: 0x272725), Color(hex: 0x1B1B1A)],
-        relief: nil,
-        ink: Color(hex: 0xF4E8D2),
+        relief: Relief(
+            dark: true, ceramic: Color(hex: 0x262B2C), display: Color(hex: 0x1D2222),
+            cover: Color(hex: 0x383F40), wall: Color(hex: 0x090C0D),
+            highlight: Color(hex: 0xA5ADAD), graduation: Color(hex: 0xC2C8C5),
+            linen: Color(hex: 0x323839), lamp: Color(hex: 0x9CC77C)
+        ),
+        ink: Color(hex: 0xE2E3DB),
         engraving: Color(hex: 0xD3C6AE),
         glassGlint: Color(hex: 0xF3EBD6),
         recess: [Color(hex: 0x161614), Color(hex: 0x2D2D27)],
@@ -81,8 +87,8 @@ struct ChromaticDialStyle: Equatable {
         filledInk: Color(hex: 0x1D2516),
         near: Color(hex: 0xE2B769),
         far: Color(hex: 0xE1977C),
-        warmLight: Color(hex: 0x8B7B53),
-        sustainLight: Color(hex: 0x83995A),
+        warmLight: Color(hex: 0x444C48),
+        sustainLight: Color(hex: 0x567646),
         shadow: 0.58
     )
 

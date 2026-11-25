@@ -1,7 +1,7 @@
 This update adds the Tuner mode to the existing metronome app. No account is required.
 
 1. Open the mode menu at the top left and choose Tuner. Allow microphone access when prompted.
-2. Tap the instrument icon at the top right and select Guitar. Choose a headstock layout if prompted. Pluck one open string at a time. The needle shows whether to raise or lower the pitch. A checkmark stays beside strings that have been tuned.
+2. Open the instrument picker and select Guitar. Choose a headstock layout if prompted. Pluck one open string at a time. The needle shows whether to raise or lower the pitch. A checkmark stays beside strings that have been tuned.
 3. Use the instrument picker to select Chromatic (All notes). Play or sing a steady note to see its pitch and deviation. Return to Metronome from the mode menu.
 
 The microphone is used for local pitch detection. Input audio is neither stored nor transmitted. Metronome does not require microphone access.

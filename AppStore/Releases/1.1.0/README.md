@@ -1,4 +1,4 @@
-# Metronome and Tuner 1.1.0 (124)
+# Metronome and Tuner 1.1.0 (180)
 
 Use the existing App Store record 6819347521 and bundle ID `com.heartofjellyfish.themetronome`. The existing version is 1.0.3. The proposed listing name is **Metronome and Tuner**. Check its availability in App Store Connect.
 
@@ -20,13 +20,13 @@ The standard presets, alternate tunings, and headstock choices for these instrum
 - Screenshot order is guitar, then metronome. The capture script uses the app's own interface with a simulated tuned E₂ for Guitar and a stopped 96 BPM for Metronome. Each locale has iPhone 17 Pro and 13-inch iPad Pro captures. See [Apple's screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications).
 - [Privacy page source](../../website/metronome/privacy/index.html) documents on-device microphone analysis. Publish and verify the public privacy page before submitting 1.1.0.
 
-## Automated checks
+## Build 124 automated checks
 
 iPhone 17e simulator, iOS 27.2. All 47 tuner unit tests and nine selected UI journeys passed. They cover the release picker, a hidden profile falling back to Chromatic, sustained pitch feedback, flat and relief appearance, 7- and 12-string layouts, mandolin courses, saved and custom tuning, and repeated preset choices during playback.
 
 The full unit run had 98 passing cases out of 100. Both failing cases also reproduced on the pre-merge `origin/main` commit `8d28953` in an iPhone 17e simulator. They cover interruption/idle-timer behavior and zero-accent polyrhythm. Check the corresponding physical behavior before App Store submission.
 
-## Acceptance before submission
+## Build 124 handoff
 
 - Xcode Release archive built and its development signature verified. App Store distribution export reported `No Accounts` and no matching App Store provisioning profile. Sign in to the team's Apple Developer account in Xcode, retry App Store Connect distribution, and verify the processed TestFlight build.
 - The Release Tuner Preview built with its independent bundle ID. Device install returned CoreDevice error 4016 while the iPhone 14 Pro was unavailable.

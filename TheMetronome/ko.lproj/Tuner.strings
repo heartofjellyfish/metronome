@@ -101,6 +101,8 @@
 "Euphonium" = "유포니움";
 "Expanded" = "펼침";
 "F major pentatonic" = "F 장조 펜타토닉";
+"Far" = "먼 쪽";
+"Far side" = "먼 쪽";
 "Fifths" = "5도 튜닝";
 "Flat" = "낮음";
 "Flugelhorn" = "플뤼겔호른";
@@ -140,8 +142,10 @@
 "Honchōshi" = "혼초시";
 "Honchōshi in D" = "D 혼조시";
 "Horn in F" = "F 호른";
+"How close the pitch must be to turn green." = "목표 음정에 얼마나 가까워야 초록색으로 표시되는지 설정합니다.";
 "In tune" = "정확함";
 "In-tune feedback" = "튜닝 완료 진동";
+"In-tune range" = "튜닝 허용 범위";
 "Increase reference pitch" = "기준 음높이 높이기";
 "Input unavailable" = "입력 불가";
 "Instruments" = "악기";
@@ -178,11 +182,13 @@
 "Middle" = "중음";
 "Middle East" = "중동 악기";
 "Middle register" = "중음역";
+"Middle section" = "가운데";
 "More instruments" = "더 많은 악기";
 "Morin khuur" = "마두금";
 "Mozart scordatura" = "모차르트 변칙 조율";
 "Name" = "이름";
 "Nashville" = "내슈빌";
+"Near" = "가까운 쪽";
 "New standard" = "뉴 스탠더드";
 "Niagari" = "니아가리";
 "Niagari in D" = "D 니아가리";
@@ -224,15 +230,18 @@
 "Play an open string" = "개방현을 연주하세요";
 "Play one key" = "건반 하나를 누르세요";
 "Play target note" = "목표 음을 연주하세요";
+"Player side" = "내 쪽";
 "Playing strings" = "연주현";
 "Pluck a string" = "현 하나를 뜯어 보세요";
 "Pluck a tine" = "건반 하나를 튕겨 보세요";
 "Plucked strings" = "발현악기";
+"Precise" = "정밀";
 "Raise pitch" = "음을 높이세요";
 "Recorder" = "리코더";
 "Reference notes" = "기준음 목록";
 "Reference pitch" = "기준 음높이";
 "Reference tone" = "기준음";
+"Relaxed" = "여유";
 "Release target" = "목표음 고정 해제";
 "Retry microphone" = "마이크 다시 시도";
 "Ruibin diao" = "유빈조";
@@ -261,6 +270,7 @@
 "Strike a note" = "한 음을 쳐 보세요";
 "Strike the drum" = "북면을 쳐 보세요";
 "String %d" = "%d번 현";
+"Strings %@" = "%@번 현";
 "Suona" = "쑤오나";
 "Sympathetic string %d" = "공명현 %d번";
 "Sympathetic strings" = "공명현";
@@ -275,9 +285,8 @@
 "Tune by ear or follow the dial." = "기준음이나 다이얼로 조율하세요.";
 "Tune one string at a time within each pair." = "각 줄 쌍을 한 줄씩 조율하세요.";
 "Tuner" = "튜너";
+"Tuning" = "튜닝";
 "Tuning response" = "튜너 반응";
-"Pitch stabilization" = "음높이 표시 안정화";
-"Smooths brief pitch wobbles in Chromatic when you sing or play." = "크로매틱 모드에서 노래하거나 연주할 때 짧은 음높이 흔들림을 줄입니다.";
 "Ukulele" = "우쿨렐레";
 "Ukulele · low G" = "우쿨렐레 · 낮은 G";
 "Upper tenor bridge" = "상중음 브리지";
@@ -296,12 +305,5 @@
 "Xylophone" = "실로폰";
 "Yangqin" = "양금";
 "Zhengdiao" = "정조";
-
-"Strings %@" = "%@번 현";
-"Player side" = "내 쪽";
-"Far side" = "먼 쪽";
-"Near" = "가까운 쪽";
-"Middle section" = "가운데";
-"Far" = "먼 쪽";
 "Zhonghu" = "중후";
 "Zhongruan" = "중완";

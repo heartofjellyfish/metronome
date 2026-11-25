@@ -1,9 +1,14 @@
 import SwiftUI
 import AVFoundation
+import CoreText
 
 struct TunerInstrumentSelection: Equatable {
     let profile: TunerProfile
     let layout: TunerHeadstock?
+
+    func usesSculptedConsole(_ skin: ControlSkin) -> Bool {
+        skin == .sculpted && layout?.supportsRelief == true
+    }
 }
 
 struct TunerInstrumentPreference: PreferenceKey {
@@ -46,7 +51,7 @@ struct TunerView: View {
     @AppStorage("tuner.custom") private var customData = Data()
     @AppStorage("tuner.written") private var written = true
     @AppStorage("tuner.response") private var response = TunerResponse.balanced
-    @AppStorage("tuner.stabilizeChromaticPitch") private var stabilizeChromaticPitch = false
+    @AppStorage(ChromaticTuningRange.preferenceKey) private var chromaticRange = ChromaticTuningRange.standard
     @AppStorage("tuner.confirmation") private var confirmation = true
     @State private var confirmedNote: Int?
     @State private var held: Int?
@@ -184,12 +189,13 @@ struct TunerView: View {
     private var notation: TunerPitchNotation {
         TunerPitchNotation(writtenOffset: profile.writtenOffset, prefersWritten: written)
     }
-    private var showsRelief: Bool { design == .sculpted && headstock?.supportsRelief == true }
+    private var instrumentSelection: TunerInstrumentSelection { .init(profile: profile, layout: headstock) }
+    private var showsRelief: Bool { instrumentSelection.usesSculptedConsole(design) }
     private var stringDrawing: TunerStringDrawing {
         TunerStringDrawing(palette: p, liveState: audio.reading?.state, active: activeString,
-                           completed: completed, stringCount: wireNotes.count, relief: showsRelief)
+                           completed: completed, stringCount: wireNotes.count, relief: showsRelief, auditioning: audio.referenceTone?.wire)
     }
-    private var concertNote: Int? { audio.reading?.note ?? held }
+    private var concertNote: Int? { audio.referenceTone?.note ?? audio.reading?.note ?? held }
     private var eligible: Bool { exposed && sheet == nil && scenePhase == .active && !model.playing && !model.interrupted }
     private var statusLabel: String {
         if model.playing { return "Click playing" }
@@ -211,42 +217,44 @@ struct TunerView: View {
         VStack(spacing: 14) {
             if profile == .chromatic { Spacer(minLength: 0) }
             if profile == .chromatic {
-                TunerDial(style: chromaticStyle, reading: audio.reading, status: statusLabel)
+                TunerDial(style: chromaticStyle, reading: audio.reading, status: statusLabel,
+                          referenceNote: audio.referenceTone?.note, referenceInk: p.tunerReferenceInk,
+                          audition: auditionNote)
                     .frame(height: 350)
             } else {
                 if let headstock {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
                                      status: statusLabel, drawing: stringDrawing,
-                                     centerX: headstock == .bass ? 172 : 180, select: selectString) {
-                        tuningSelector
+                                     centerX: headstock == .bass ? 172 : 180, select: auditionString) {
+                        consoleControls
                     }
                 } else if let headstock = TunerChineseHeadstock.forInstrument(instrumentID, stringCount: strings.count) {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
                                      status: statusLabel, drawing: stringDrawing, prefersFlats: profile.prefersFlatStringNotes,
-                                     select: selectString) { EmptyView() }
+                                     select: auditionString) { EmptyView() }
                 } else if let headstock = TunerRuanHeadstock.forInstrument(instrumentID, stringCount: strings.count) {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
-                                     status: statusLabel, drawing: stringDrawing, select: selectString) { EmptyView() }
+                                     status: statusLabel, drawing: stringDrawing, select: auditionString) { EmptyView() }
                 } else if let headstock = regionalHeadstock {
                     StringTuningFace(p: p, layout: headstock, strings: strings, note: concertNote, reading: audio.reading,
                                      status: statusLabel, drawing: stringDrawing, prefersFlats: profile.prefersFlatStringNotes,
-                                     select: selectString) { EmptyView() }
+                                     select: auditionString) { EmptyView() }
                 } else if showsGuzheng {
                     TunerGuzhengFace(p: p, note: concertNote, reading: audio.reading, status: statusLabel,
                                      strings: strings, drawing: stringDrawing, groups: groups,
                                      groupIndex: min(stringGroupIndex, groups.count - 1),
                                      showsAll: stringListLayout == .all,
-                                     soundingString: audio.status == .tone ? selectedString : nil,
+                                     soundingString: audio.referenceTone?.wire,
                                      canPlay: eligible, chooseGroup: chooseGuzhengGroup,
-                                     showOverview: showGuzhengOverview, select: selectString,
-                                     audition: auditionGuzhengString)
+                                     showOverview: showGuzhengOverview, select: auditionString)
                 } else {
                     InstrumentTuningDisplay(profile: profile, p: p, note: concertNote, reading: audio.reading,
                                             status: statusLabel, notation: notation,
                                             strings: strings, drawing: stringDrawing,
                                             targetHeight: showsYangqin ? 44 : groups.isEmpty ? stringTargetHeight : selector.height,
                                             showsYangqin: showsYangqin, stringName: stringName(in: groups),
-                                            select: selectString, openOptions: openTuning) {
+                                            select: auditionString, auditionNote: strings.isEmpty ? auditionNote : nil,
+                                            previewingNote: audio.referenceTone != nil, openOptions: openTuning) {
                         if showsYangqin { yangqinTargets }
                         else if !groups.isEmpty { selector }
                         else if !strings.isEmpty { stringTargets }
@@ -271,8 +279,7 @@ struct TunerView: View {
         .foregroundStyle(p.ink)
         .padding(.horizontal, 22)
         .padding(.bottom, profile == .chromatic ? 32 : 0)
-        .preference(key: TunerInstrumentPreference.self,
-                    value: .init(profile: profile, layout: preferredLayout(for: profile)))
+        .preference(key: TunerInstrumentPreference.self, value: instrumentSelection)
         .onAppear {
             if !restoredSetup {
                 restoredSetup = true
@@ -283,7 +290,10 @@ struct TunerView: View {
             if eligible { begin() }
         }
         .onReceive(audio.$reading) { reading in
-            guard audio.status == .listening, let reading else { confirmedNote = nil; return }
+            guard audio.status == .listening, audio.referenceTone == nil, let reading else {
+                confirmedNote = nil
+                return
+            }
             guard reading.isFresh, reading.state == .centered || reading.confirmedReplayDetuning else { return }
             let notes = wireNotes
             let matches = notes.indices.filter { notes[$0] == reading.note }
@@ -360,22 +370,58 @@ struct TunerView: View {
                                  selection: panel == .library ? .constant(.large) : $tuningDetent)
         }
     }
-    private var tuningSelector: some View {
-        let title: String
-        if useCustom {
-            title = tunerText("Custom tuning")
-        } else if showsYangqin {
-            title = tunerText("Yangqin") + " · 410"
-        } else if !strings.isEmpty {
-            title = tunerText(profile.tuningName)
-        } else {
-            let instrument = tunerText(profile.instrumentName)
-            title = held.map { instrument + " · " + TunerPitch.label($0 + notation.primaryOffset, flats: true) }
-                ?? instrument
+    private var tuningTitle: String {
+        if useCustom { return tunerText("Custom tuning") }
+        if showsYangqin { return tunerText("Yangqin") + " · 410" }
+        if !strings.isEmpty { return tunerText(profile.tuningName) }
+        let instrument = tunerText(profile.instrumentName)
+        return held.map { instrument + " · " + TunerPitch.label($0 + notation.primaryOffset, flats: true) }
+            ?? instrument
+    }
+
+    @State private var instrumentKeyPressed = false
+    @State private var tuningKeyPressed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceKeyMotion
+
+    private var consoleControls: some View {
+        let instrumentWidth = TunerConsoleMetrics.width * (140.0 / 332.0)
+        let tuningWidth = TunerConsoleMetrics.width - instrumentWidth
+        let keyFaceHeight: CGFloat = 50
+        let sweepWidth = SweptInstrumentKey.sweepWidth(for: keyFaceHeight)
+        return HStack(spacing: -sweepWidth) {
+            instrumentSelection.pickerButton(p: p, width: instrumentWidth + sweepWidth / 2, height: 54,
+                                             iconOffset: -sweepWidth / 4) { sheet = .library }
+                .buttonStyle(TunerConsoleKeyPress(p: p, instrument: true, faceHeight: keyFaceHeight,
+                                                  pressChanged: { instrumentKeyPressed = $0 }))
+                .zIndex(1)
+            Button(action: openTuning) {
+                TunerKeyLegend(title: tuningTitle, p: p)
+                    .padding(.horizontal, 12)
+                    .padding(.leading, sweepWidth / 2)
+                    .frame(width: tuningWidth + sweepWidth / 2, height: 54)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel(tuningTitle)
+            .accessibilityIdentifier("tuner-tuning")
+            .buttonStyle(TunerConsoleKeyPress(p: p, instrument: false, faceHeight: keyFaceHeight,
+                                               pressChanged: { tuningKeyPressed = $0 }))
         }
+        .background {
+            TunerKeyFace(p: p, seamCenter: instrumentWidth, instrumentPressed: instrumentKeyPressed,
+                         tuningPressed: tuningKeyPressed)
+                .frame(height: keyFaceHeight)
+                .animation(reduceKeyMotion ? nil : TunerConsoleKeyPress.animation(pressed: instrumentKeyPressed),
+                           value: instrumentKeyPressed)
+                .animation(reduceKeyMotion ? nil : TunerConsoleKeyPress.animation(pressed: tuningKeyPressed),
+                           value: tuningKeyPressed)
+                .allowsHitTesting(false)
+        }
+    }
+
+    private var tuningSelector: some View {
         let compact = headstock?.supportsRelief == true
         return Button(action: openTuning) {
-            Text(title)
+            Text(tuningTitle)
                 .font(compact ? InstrumentType.value(16) : .system(size: 20))
                 .foregroundStyle(compact ? p.ink.opacity(0.84) : p.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
@@ -389,11 +435,6 @@ struct TunerView: View {
                 }
                 .padding(.horizontal, compact ? 19 : 30)
                 .frame(height: compact ? 29 : 44)
-                .background {
-                    if showsRelief {
-                        HardwareKeySurface(p: p, radius: 7, shallow: true)
-                    }
-                }
                 .frame(minWidth: 44, minHeight: 44, alignment: .top)
                 .contentShape(Rectangle())
         }
@@ -439,7 +480,9 @@ struct TunerView: View {
                               emphasizeSelection: Bool = false, accessibilityName: String? = nil) -> TunerStringTarget {
         TunerStringTarget(drawing: drawing, index: index, pitch: pitch, number: number, numberSize: numberSize,
                           emphasizeSelection: emphasizeSelection, accessibilityName: accessibilityName,
-                          prefersFlats: profile.prefersFlatStringNotes) { selectString(index) }
+                          prefersFlats: profile.prefersFlatStringNotes) { action in
+            auditionString(index, action: action)
+        }
     }
 
     private func chooseGuzhengGroup(_ index: Int) {
@@ -454,26 +497,54 @@ struct TunerView: View {
             held = nil
             syncTarget(refreshPreview: false)
         }
-        if wasAuditioning { begin() }
+        if wasAuditioning { audio.finishReference() }
     }
 
     private func showGuzhengOverview() {
         guard stringListLayout != .all else { return }
         stringListLayout = .all
-        if audio.status == .tone { begin() }
+        if audio.status == .tone { audio.finishReference() }
     }
 
-    private func auditionGuzhengString(_ index: Int) {
-        guard eligible, strings.indices.contains(index) else { return }
-        if audio.status == .tone, selectedString == index {
-            begin()
-        } else {
-            selectedString = index
-            held = strings[index]
-            syncTarget(refreshPreview: false)
-            // Stop listening during the sustained reference so it can't confirm its own pitch.
-            audio.tone(note: strings[index])
+    private func auditionNote(_ note: Int, action: TunerReferenceAction) {
+        if action == .release || action == .cancel {
+            if let tone = audio.referenceTone, tone.wire == nil, tone.note == note,
+               tone.sustained || action == .cancel {
+                audio.finishReference()
+            }
+        } else if eligible {
+            audio.audition(.init(note: note, sustained: action == .hold))
         }
+    }
+
+    private func auditionString(_ index: Int, action: TunerReferenceAction) {
+        if action == .release || action == .cancel {
+            if let tone = audio.referenceTone, tone.wire == index, tone.sustained || action == .cancel {
+                audio.finishReference()
+            }
+            return
+        }
+        let notes = wireNotes
+        guard notes.indices.contains(index) else { return }
+        guard eligible else {
+            if model.playing && action == .tap { selectString(index, refreshPreview: false) }
+            return
+        }
+        let pitch = notes[index]
+        if pitch < 0 {
+            selectString(index)
+            return
+        }
+        #if DEBUG
+        if !audio.playsReferenceInPreview {
+            selectString(index)
+            return
+        }
+        #endif
+        if audio.referenceTone?.wire != index {
+            selectString(index, refreshPreview: false, toggle: action == .tap)
+        }
+        audio.audition(.init(note: pitch, wire: index, sustained: action == .hold))
     }
 
     private var yangqinTargets: some View {
@@ -507,7 +578,7 @@ struct TunerView: View {
             ForEach(Array(course.wires.enumerated()), id: \.offset) { offset, wire in
                 let pitch = notes[wire]
                 let done = completed.contains(wire)
-                Button { selectString(wire) } label: {
+                Button { auditionString(wire, action: .tap) } label: {
                     VStack(spacing: 3) {
                         Text(pitch >= 0 ? TunerPitch.label(pitch, flats: true) : "—")
                             .font(InstrumentType.value(15))
@@ -519,7 +590,7 @@ struct TunerView: View {
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TunerReferenceButtonStyle { auditionString(wire, action: $0 ? .hold : .release) })
                 .foregroundStyle(drawing.color(for: wire))
                 .accessibilityLabel(pitch >= 0 ? TunerPitch.label(pitch) + ", \(offset + 1)" : tunerText("Other note"))
                 .accessibilityValue(done ? tunerText("In tune") : "")
@@ -529,7 +600,7 @@ struct TunerView: View {
         }
     }
 
-    private func selectString(_ index: Int) {
+    private func selectString(_ index: Int, refreshPreview: Bool = true, toggle: Bool = true) {
         let notes = wireNotes
         guard notes.indices.contains(index) else { return }
         focusStringGroup(for: index)
@@ -542,8 +613,8 @@ struct TunerView: View {
                 return
             }
         }
-        if selectedString == index {
-            releaseTarget()
+        if toggle, selectedString == index {
+            releaseTarget(refreshPreview: refreshPreview)
             return
         }
         let pitch = notes[index]
@@ -552,13 +623,13 @@ struct TunerView: View {
             && notes.indices.contains { $0 != index && notes[$0] == pitch }
         selectedString = index
         held = pitch
-        syncTarget(waitsForStringAttack: samePitchIsRinging)
+        syncTarget(refreshPreview: refreshPreview, waitsForStringAttack: samePitchIsRinging)
     }
 
-    private func releaseTarget() {
+    private func releaseTarget(refreshPreview: Bool = true) {
         held = nil
         selectedString = nil
-        syncTarget()
+        syncTarget(refreshPreview: refreshPreview)
     }
 
     private func openTuning() {
@@ -807,9 +878,13 @@ struct TunerView: View {
         syncTarget()
     }
     private func syncTarget(refreshPreview: Bool = true, waitsForStringAttack: Bool = false) {
-        audio.reference = reference; audio.response = response; audio.targets = wireNotes.filter { $0 >= 0 }; audio.held = held
-        audio.isChromatic = profile == .chromatic
-        audio.stabilizeChromaticPitch = stabilizeChromaticPitch
+        let chromatic = profile == .chromatic
+        audio.reference = reference
+        audio.response = chromatic ? .balanced : response
+        audio.targets = wireNotes.filter { $0 >= 0 }
+        audio.held = held
+        audio.isChromatic = chromatic
+        audio.chromaticRange = chromaticRange
         audio.clearReading(preservingEnvelope: true, waitsForStringAttack: waitsForStringAttack)
         audio.tracksPlucks = ["Guitar & bass", "Plucked strings"].contains(profile.family)
             || profile.family == TunerProfile.middleEasternFamily
@@ -819,4 +894,151 @@ struct TunerView: View {
         #endif
     }
     private func begin() { syncTarget(refreshPreview: false); audio.listen() }
+}
+
+/// Center the printed ink on the key face, including descenders and localized glyphs.
+private struct TunerKeyLegend: View {
+    let title: String
+    let p: InstrumentPalette
+
+    var body: some View {
+        Canvas { context, size in
+            let font = CTFontCreateWithName(InstrumentType.valueFontName as CFString, 17, nil)
+            let line = CTLineCreateWithAttributedString(NSAttributedString(string: title, attributes: [
+                .font: font, NSAttributedString.Key(kCTForegroundColorFromContextAttributeName as String): true
+            ]))
+            let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+            guard bounds.width > 0 else { return }
+            let scale = min(1, size.width / bounds.width)
+            context.withCGContext { cg in
+                cg.translateBy(x: size.width / 2, y: size.height / 2)
+                cg.scaleBy(x: scale, y: -scale)
+                cg.textMatrix = .identity
+                let bevel: CGFloat = 0.65
+                // Center both ink passes on the top face, above the lower bevel.
+                let faceCenterLift: CGFloat = 0.5
+                let origin = CGPoint(x: -bounds.midX, y: -bounds.midY + bevel / 2 + faceCenterLift / scale)
+                cg.setFillColor(UIColor.white.withAlphaComponent(p.dark ? 0.12 : 0.78).cgColor)
+                cg.textPosition = CGPoint(x: origin.x, y: origin.y - bevel)
+                CTLineDraw(line, cg)
+                cg.setFillColor(UIColor(Color(hex: p.dark ? 0xC4C2B9 : 0x595852)).cgColor)
+                cg.textPosition = origin
+                CTLineDraw(line, cg)
+            }
+        }
+    }
+}
+
+private struct TunerConsoleKeyPress: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let p: InstrumentPalette
+    let instrument: Bool
+    let faceHeight: CGFloat
+
+    var pressChanged: ((Bool) -> Void)?
+
+    static func animation(pressed: Bool) -> Animation {
+        .easeOut(duration: pressed ? 0.065 : 0.14)
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(p.ink)
+            .contentShape(TunerKeyHitShape(instrument: instrument, faceHeight: faceHeight))
+            .offset(y: configuration.isPressed && !reduceMotion ? 2 : 0)
+            .animation(reduceMotion ? nil : Self.animation(pressed: configuration.isPressed),
+                       value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { _, pressed in pressChanged?(pressed) }
+            .onDisappear { pressChanged?(false) }
+    }
+}
+
+private struct TunerKeyFace: View {
+    let p: InstrumentPalette
+    let seamCenter: CGFloat
+    let instrumentPressed: Bool
+    let tuningPressed: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(p.dark ? Color(hex: 0x20211F) : Color(hex: 0xAFA99F))
+                .offset(y: 1)
+                .shadow(color: .black.opacity(p.dark ? 0.45 : 0.24), radius: 2, y: 2)
+                .shadow(color: .black.opacity(0.12), radius: 4, y: 4)
+            ZStack {
+                cap(instrument: false, pressed: tuningPressed)
+                cap(instrument: true, pressed: instrumentPressed)
+                    .shadow(color: .black.opacity(p.dark ? 0.5 : 0.30),
+                            radius: instrumentPressed ? 0.45 : 0.95, x: 0.75, y: 0.5)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        }
+    }
+
+    private func cap(instrument: Bool, pressed: Bool) -> some View {
+        let shape = TunerKeyCap(seamCenter: seamCenter, instrument: instrument)
+        let top = instrument ? (p.dark ? 0x454744 : 0xEFEBE5) : (p.dark ? 0x40413F : 0xE8E3DB)
+        let bottom = instrument ? (p.dark ? 0x353734 : 0xE2DDD5) : (p.dark ? 0x313331 : 0xD8D2C9)
+        return shape.fill(LinearGradient(colors: [Color(hex: UInt32(top)), Color(hex: UInt32(bottom))],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing)
+            .shadow(.inner(color: .white.opacity(p.dark ? 0.19 : 0.85), radius: 1.3, x: 0.5, y: 1.4))
+            .shadow(.inner(color: .black.opacity(p.dark ? 0.45 : 0.24), radius: 1.8, x: -0.9, y: -1.6)))
+            .overlay { shape.fill(.black.opacity(pressed ? 0.075 : 0)) }
+            .offset(y: pressed && !reduceMotion ? 2 : 0)
+    }
+}
+
+private struct TunerKeyCap: Shape {
+    let seamCenter: CGFloat
+    let instrument: Bool
+
+    func path(in rect: CGRect) -> Path {
+        let sweep = SweptInstrumentKey.sweepWidth(for: rect.height)
+        let end = CGPoint(x: rect.minX + seamCenter + sweep / 2, y: rect.maxY)
+        var seam = Path()
+        seam.move(to: CGPoint(x: end.x - sweep, y: rect.minY))
+        SweptInstrumentKey.addSeam(to: &seam, endingAt: end, height: rect.height)
+        var side = seam
+        let edge = instrument ? rect.minX : rect.maxX
+        side.addLine(to: CGPoint(x: edge, y: rect.maxY))
+        side.addLine(to: CGPoint(x: edge, y: rect.minY))
+        side.closeSubpath()
+        let outline = RoundedRectangle(cornerRadius: 22, style: .continuous).path(in: rect)
+        return outline.intersection(side).subtracting(seam.strokedPath(.init(lineWidth: 1.25, lineCap: .round)))
+    }
+}
+
+private enum SweptInstrumentKey {
+    static func sweepWidth(for height: CGFloat) -> CGFloat { height * 1.64 }
+
+    static func addSeam(to path: inout Path, endingAt end: CGPoint, height: CGFloat) {
+        let middleX = end.x - sweepWidth(for: height) / 2
+        path.addCurve(to: end, control1: CGPoint(x: middleX, y: end.y - height),
+                      control2: CGPoint(x: middleX, y: end.y))
+    }
+}
+
+private struct TunerKeyHitShape: Shape {
+    let instrument: Bool
+    let faceHeight: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let sweep = SweptInstrumentKey.sweepWidth(for: faceHeight)
+        let endX = instrument ? rect.maxX : rect.minX + sweep
+        let startX = endX - sweep
+        let edgeX = instrument ? rect.minX : rect.maxX
+        let top = rect.midY - faceHeight / 2
+        var path = Path()
+        path.move(to: CGPoint(x: edgeX, y: rect.minY))
+        path.addLine(to: CGPoint(x: startX, y: rect.minY))
+        path.addLine(to: CGPoint(x: startX, y: top))
+        SweptInstrumentKey.addSeam(to: &path, endingAt: CGPoint(x: endX, y: top + faceHeight), height: faceHeight)
+        path.addLine(to: CGPoint(x: endX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: edgeX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
 }

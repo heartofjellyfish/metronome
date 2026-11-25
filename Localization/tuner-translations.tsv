@@ -296,3 +296,14 @@ Setar|波斯塞塔尔琴|波斯塞塔爾琴|セタール|세타르|Setâr|Setar|
 C–G|C–G|C–G|C–G|C–G|Do–sol|C–G|Do–sol|Dó–sol
 C–F|C–F|C–F|C–F|C–F|Do–fa|C–F|Do–fa|Dó–fá
 D bass & drone|D 低音弦与共鸣弦|D 低音弦與共鳴弦|D の低音弦とドローン弦|D 베이스 및 드론 현|Basse et bourdon en ré|Bass und Bordun in D|Bajo y bordón en re|Baixo e bordão em ré
+Tuning|定弦|定弦|調弦|튜닝|Accordage|Stimmung|Afinación|Afinação
+Far|远侧|遠側|奥|먼 쪽|Loin|Fern|Lejos|Longe
+Far side|离你远的一侧|離你遠的一側|奥側|먼 쪽|Côté opposé|Gegenüberliegende Seite|Lado opuesto|Lado oposto
+How close the pitch must be to turn green.|音高离目标多近才亮绿。|音高離目標多近才亮綠。|目標の音程にどれだけ近づくと緑になるかを設定します。|목표 음정에 얼마나 가까워야 초록색으로 표시되는지 설정합니다.|L’écart maximal pour que l’indicateur passe au vert.|Wie nah der Ton am Ziel sein muss, damit die Anzeige grün wird.|Indica cuánto debes acercarte a la nota para que se muestre en verde.|Define quão perto da nota o som deve estar para o indicador ficar verde.
+In-tune range|调准范围|調準範圍|合格範囲|튜닝 허용 범위|Marge d’accordage|Toleranzbereich|Margen de afinación|Margem de afinação
+Middle section|中间|中間|中央|가운데|Milieu|Mitte|Centro|Meio
+Near|近侧|近側|手前|가까운 쪽|Proche|Nah|Cerca|Perto
+Player side|你坐这里|你坐這裡|手前側|내 쪽|De ton côté|Deine Seite|Tu lado|Seu lado
+Precise|精细|精細|精密|정밀|Précis|Präzise|Preciso|Precisa
+Relaxed|宽松|寬鬆|広め|여유|Large|Weit|Amplio|Ampla
+Strings %@|%@ 弦|%@ 弦|第 %@ 弦|%@번 현|Cordes %@|Saiten %@|Cuerdas %@|Cordas %@

@@ -182,13 +182,14 @@ struct TunerStringTarget: View {
     let emphasizeSelection: Bool
     let accessibilityName: String?
     let prefersFlats: Bool
-    let select: () -> Void
+    let select: (TunerReferenceAction) -> Void
 
     var body: some View {
         let p = drawing.palette
         let selected = drawing.active == index
         let tuned = drawing.completed.contains(index)
-        Button(action: select) {
+        let auditioning = drawing.auditioning == index
+        Button { select(.tap) } label: {
             VStack(spacing: 2) {
                 if let number {
                     Text(String(number))
@@ -202,9 +203,9 @@ struct TunerStringTarget: View {
             }
             .frame(maxWidth: .infinity).frame(height: 44)
             .background {
-                if emphasizeSelection && selected {
+                if auditioning || emphasizeSelection && selected {
                     let shape = RoundedRectangle(cornerRadius: 8)
-                    shape.fill((tuned ? p.tuningGreen : p.ink).opacity(0.09))
+                    shape.fill((auditioning ? p.tunerReferenceInk : tuned ? p.tuningGreen : p.ink).opacity(0.09))
                         .overlay { shape.strokeBorder(p.edge.opacity(0.6), lineWidth: 0.6) }
                 }
             }
@@ -215,10 +216,10 @@ struct TunerStringTarget: View {
                 }
             }
             .contentShape(Rectangle())
-        }.buttonStyle(.plain)
+        }.buttonStyle(TunerReferenceButtonStyle { select($0 ? .hold : .release) })
             .foregroundStyle(drawing.color(for: index))
             .accessibilityLabel((accessibilityName ?? "\(index + 1)") + ", " + TunerPitch.label(pitch, flats: prefersFlats))
-            .accessibilityValue(tuned ? tunerText("In tune") : "")
+            .accessibilityValue(drawing.accessibilityValue(for: index))
             .accessibilityIdentifier("tuner-string-\(index)")
             .accessibilityAddTraits(selected ? .isSelected : [])
     }

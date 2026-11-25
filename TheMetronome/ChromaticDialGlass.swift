@@ -192,6 +192,13 @@ struct ChromaticCoverReflection: View {
         var cover = context
         cover.clip(to: Dial.coverCoverage.applying(rotation), style: FillStyle(eoFill: true))
         drawOuterSlope(in: cover)
+        // A bright patch over an idle note reads as a second selection on smoked glass.
+        if palette.dark {
+            if light.lamp.z > 0, light.eye.z > 0 {
+                drawCutoutWall(light: light, rotation: rotation, in: context)
+            }
+            return
+        }
         drawAmbientReflection(in: cover)
 
         guard light.lamp.z > 0, light.eye.z > 0 else { return }
@@ -230,6 +237,8 @@ struct ChromaticCoverReflection: View {
         cover.fill(ramp, with: .radialGradient(profile, center: Dial.center,
                                               startRadius: Dial.coverSlopeStart, endRadius: Dial.coverOuter),
                    style: hollow)
+
+        guard !palette.dark else { return }
 
         // Across the full width of the slope, the top-left catches light and the far side turns away.
         var lighting = cover

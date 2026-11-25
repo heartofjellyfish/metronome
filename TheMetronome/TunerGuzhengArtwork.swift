@@ -42,6 +42,16 @@ enum TunerGuzhengArtwork {
                       lineWidth: 0.83 + 0.131 * CGFloat(index))
     }
 
+    static func string(at point: CGPoint, in frame: CGRect) -> Int? {
+        let x = (point.x - frame.minX) * size.width / frame.width
+        let y = (point.y - frame.minY) * size.height / frame.height
+        let row = Int(((y - course(at: stringCount - 1).tailHole.y) / stringSpacing).rounded())
+        guard (0..<stringCount).contains(row) else { return nil }
+        let index = stringCount - 1 - row
+        let string = course(at: index)
+        return (string.tailHole.x...string.tuningHole.x).contains(x) ? index : nil
+    }
+
     private static let outline = Path(tunerCommands: """
         M 42 16 L 506 16 Q 535 16 535 30 L 535 126 Q 535 140 506 140 L 42 140
         C 19 140 5 113 5 78 C 5 43 19 16 42 16 Z
@@ -169,7 +179,7 @@ enum TunerGuzhengArtwork {
     }
 
     private static func stringInk(_ index: Int, drawing: TunerStringDrawing) -> Color {
-        if drawing.completed.contains(index) { return drawing.color(for: index) }
+        if drawing.auditioning == index || drawing.completed.contains(index) { return drawing.color(for: index) }
         return drawing.palette.ink.opacity(drawing.active == index ? 1 : 0.67)
     }
 

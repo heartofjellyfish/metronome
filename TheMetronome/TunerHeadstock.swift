@@ -20,6 +20,7 @@ protocol TunerHeadstockDrawing {
     var isHeadless: Bool { get }
     var stringHitHeight: CGFloat { get }
     var courseKeys: [[CGPoint]] { get }
+    var referenceWires: [Path] { get }
     func stringNumber(at index: Int, count: Int) -> Int
     func pitch(inCourse course: Int, wire: Int, base: Int) -> Int
     func draw(in context: GraphicsContext, surface: Color, drawing: TunerStringDrawing)
@@ -645,6 +646,8 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
         } else {
             drawOutline(body, in: context, ink: ink)
         }
+        var behindBoard = context
+        behindBoard.clip(to: body, options: .inverse)
         for (index, peg) in pegs.enumerated() {
             let color = drawing.color(for: index)
             let shaftEnd = CGPoint(x: peg.key.x + (peg.left ? 11.5 : -11.5), y: peg.key.y)
@@ -652,16 +655,18 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
                 let stem = Path(roundedRect: CGRect(x: min(shaftEnd.x, peg.post.x), y: peg.post.y - 1.4,
                                                      width: abs(shaftEnd.x - peg.post.x), height: 2.8),
                                 cornerRadius: 0.65)
-                drawFitting(stem, in: context, ink: color, surface: surface, finish: finish,
-                            highlighted: drawing.highlights(index), height: 0.36, width: 0.85)
+                drawFitting(stem, in: behindBoard, ink: color, surface: surface, finish: finish,
+                            highlighted: drawing.highlights(index), height: drawing.palette.dark ? 0.36 : 0.48, width: 0.85)
+                if !drawing.highlights(index) { finish.shaftReflection(stem, in: behindBoard) }
             } else {
-                context.stroke(Path { p in p.move(to: shaftEnd); p.addLine(to: peg.post) },
+                behindBoard.stroke(Path { p in p.move(to: shaftEnd); p.addLine(to: peg.post) },
                                with: .color(color), style: Self.outlineStroke)
             }
             let key = Path(roundedRect: CGRect(x: peg.key.x - 11.5, y: peg.key.y - 12, width: 23, height: 24),
                            cornerRadius: 7)
             drawFitting(key, in: context, ink: color, surface: surface, finish: finish,
-                        highlighted: drawing.highlights(index), height: 0.8, width: Self.outlineStroke.lineWidth)
+                        highlighted: drawing.highlights(index), height: drawing.palette.dark ? 0.8 : 1.13,
+                        width: Self.outlineStroke.lineWidth)
         }
         for (index, peg) in pegs.enumerated() {
             let color = drawing.color(for: index)
@@ -688,9 +693,8 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
 
     private func drawReliefBody(_ body: Path, nutShape: Path, in context: GraphicsContext,
                                 drawing: TunerStringDrawing, finish: TunerArtworkRelief) {
-        finish.raised(body, in: context)
-        finish.bevel(nutShape, in: context)
-        context.stroke(nutShape, with: .color(finish.edge), lineWidth: 0.85)
+        finish.raisedBody(body, in: context)
+        finish.raisedNut(nutShape, in: context)
         if drawing.allTuned {
             context.stroke(body, with: .color(drawing.outline), style: Self.outlineStroke)
         }
@@ -818,14 +822,56 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
         }
     }
 
+    var referenceWires: [Path] {
+        switch self {
+        case .headlessGuitar, .headlessGuitarSeven:
+            return [] // The existing tall clamp hit areas include each string.
+        case .bass, .threePlusOneBass, .jazzBassFive:
+            return positions.map(bassWire)
+        case .pipa:
+            return pipaPegs.enumerated().map { index, peg in
+                let start = index == 3 ? CGPoint(x: peg.nutX, y: nut.minY) : pegboxWireStart(peg, halfShaft: Self.pipaStem.height / 2)
+                return wire(from: start, at: peg.nutX).applying(Self.pipaDetailTransform)
+            }
+        case .violin, .viola, .cello, .doubleBass:
+            let halfShaft: CGFloat = self == .doubleBass ? 4 : self == .cello ? 5.2 : 4.5
+            return positions.map { wire(from: pegboxWireStart($0, halfShaft: halfShaft), at: $0.nutX) }
+        case .guitar:
+            return positions.map { wire(from: $0.post, at: $0.nutX) }
+        default:
+            let pegs = self == .mandolin ? positions.flatMap(mandolinPegs) : positions
+            return pegs.enumerated().map { index, peg in
+                if self == .banjo, index == 0 { return banjoDrone(from: peg) }
+                return wire(from: gearedWireStart(peg), at: peg.nutX)
+            }
+        }
+    }
+
+    private func pegboxWireStart(_ peg: StringPosition, halfShaft: CGFloat) -> CGPoint {
+        CGPoint(x: peg.post.x, y: peg.post.y + halfShaft)
+    }
+
     private func drawPost(at point: CGPoint, radius: CGFloat, inner: CGFloat, in context: GraphicsContext,
                           ink: Color, surface: Color, finish: TunerArtworkRelief? = nil, highlighted: Bool = false) {
         let outer = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2))
         drawFitting(outer, in: context, ink: ink, surface: surface, finish: finish,
                     highlighted: highlighted, height: 0.42, width: 1.7)
         let center = Path(ellipseIn: CGRect(x: point.x - inner, y: point.y - inner, width: inner * 2, height: inner * 2))
-        context.fill(center, with: .color(surface))
-        let innerEdge = highlighted ? ink : finish?.edge ?? ink
+        if finish?.palette.dark == true {
+            // The ferrule catches a broad reflection; the projecting post catches a smaller one.
+            context.fill(outer, with: .linearGradient(Gradient(colors: [
+                Color(white: 0.26), Color(white: 0.70), Color(white: 0.24), Color(white: 0.12)
+            ]), startPoint: CGPoint(x: point.x - radius, y: point.y - radius),
+                endPoint: CGPoint(x: point.x + radius, y: point.y + radius)))
+            context.fill(center, with: .radialGradient(
+                Gradient(colors: [Color(white: 0.78), Color(white: 0.39), Color(white: 0.15)]),
+                center: CGPoint(x: point.x - inner * 0.4, y: point.y - inner * 0.45),
+                startRadius: 0, endRadius: inner * 1.5))
+            if highlighted { context.stroke(outer, with: .color(ink), lineWidth: 1.05) }
+        } else {
+            context.fill(center, with: .color(surface))
+        }
+        let innerEdge = highlighted ? ink : finish?.socketEdge ?? ink
         context.stroke(center, with: .color(innerEdge), lineWidth: 1)
     }
 
@@ -875,6 +921,27 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
                     highlighted: highlighted, height: 0.72, width: Self.outlineStroke.lineWidth)
     }
 
+    private var gearedPostRadius: CGFloat {
+        if self == .guitarTwelve || self == .mandolin { return 5.6 }
+        if self == .pairedBass { return 12.5 }
+        if self == .sixStringBass { return 9 }
+        return isUkulele ? 7.5 : 7
+    }
+
+    private func gearedWireStart(_ peg: StringPosition) -> CGPoint {
+        let radius = gearedPostRadius
+        return CGPoint(x: peg.post.x + (peg.left ? 1 : -1) * radius * 0.82,
+                       y: peg.post.y + radius * 0.54)
+    }
+
+    private func banjoDrone(from peg: StringPosition) -> Path {
+        Path { path in
+            path.move(to: peg.post)
+            path.addQuadCurve(to: CGPoint(x: peg.nutX, y: 310), control: CGPoint(x: peg.nutX, y: 307))
+            path.addLine(to: CGPoint(x: peg.nutX, y: neckEnd))
+        }
+    }
+
     private func drawGearedHeadstock(in context: GraphicsContext, surface: Color, drawing: TunerStringDrawing) {
         let widths = stringWidths
         let ink = drawing.outline
@@ -882,8 +949,7 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
         let finish = reliefFinish(for: drawing)
         var outside = context
         outside.clip(to: body, options: .inverse)
-        let doubled = self == .guitarTwelve || self == .mandolin
-        let radius: CGFloat = doubled ? 5.6 : self == .pairedBass ? 12.5 : self == .sixStringBass ? 9 : isUkulele ? 7.5 : 7
+        let radius = gearedPostRadius
         let handle = machineHandle
         let stemWidth: CGFloat = self == .pairedBass || self == .sixStringBass ? 5.4 : 4.2
         if let finish {
@@ -927,20 +993,14 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
                 drawKey(peg, handle: handle, stem: CGRect(x: 4, y: -stemWidth / 2, width: self == .banjo ? 46 : 43, height: stemWidth),
                         in: outside, ink: color, surface: surface, finish: finish, highlighted: highlighted)
                 if self == .banjo && index == 0 {
-                    let drone = Path { path in
-                        path.move(to: peg.post)
-                        path.addQuadCurve(to: CGPoint(x: peg.nutX, y: 310), control: CGPoint(x: peg.nutX, y: 307))
-                        path.addLine(to: CGPoint(x: peg.nutX, y: neckEnd))
-                    }
-                    context.stroke(drone, with: .color(drawing.stringColor(for: index)), style: StrokeStyle(lineWidth: widths[index], lineCap: .round))
+                    context.stroke(banjoDrone(from: peg), with: .color(drawing.stringColor(for: index)), style: StrokeStyle(lineWidth: widths[index], lineCap: .round))
                     drawPost(at: peg.post, radius: 3.5, inner: 1.3, in: context, ink: color, surface: surface,
                              finish: finish, highlighted: highlighted)
                     drawing.drawContacts([CGPoint(x: peg.nutX, y: 310)], for: index, in: context)
                     continue
                 }
                 // Come off the inside shoulder of the post, as on a strung instrument.
-                let start = CGPoint(x: peg.post.x + (peg.left ? 1 : -1) * radius * 0.82,
-                                    y: peg.post.y + radius * 0.54)
+                let start = gearedWireStart(peg)
                 context.stroke(wire(from: start, at: peg.nutX), with: .color(drawing.stringColor(for: index)),
                                style: StrokeStyle(lineWidth: widths[index], lineCap: .round))
                 drawPost(at: peg.post, radius: radius, inner: radius * 0.58, in: context, ink: color, surface: surface,
@@ -1017,6 +1077,19 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
 
         // Only the overlapping lip casts a shadow. The shoulders and neck are one face.
         ivory.raised(crownFace, in: carving, height: 0.78)
+        if ivory.palette.dark {
+            let facets = Gradient(stops: [
+                .init(color: .black.opacity(0.35), location: 0),
+                .init(color: .white.opacity(0.16), location: 0.10),
+                .init(color: .clear, location: 0.31),
+                .init(color: .white.opacity(0.20), location: 0.48),
+                .init(color: .black.opacity(0.37), location: 0.54),
+                .init(color: .clear, location: 0.86),
+                .init(color: .black.opacity(0.38), location: 1)
+            ])
+            carving.fill(crownFace, with: .linearGradient(facets,
+                         startPoint: CGPoint(x: 157, y: 48), endPoint: CGPoint(x: 204, y: 48)))
+        }
         let shoulders = contour(Self.bowedScrollRails)
         carving.stroke(shoulders.applying(CGAffineTransform(translationX: -0.55, y: -0.65)),
                        with: .color(ivory.ridge.opacity(0.70)), lineWidth: 0.82)
@@ -1139,7 +1212,7 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
                                     : "M 168 109 L 193 109 L 206 260 L 153 260 Z")
         let ivory = TunerArtworkRelief(palette: drawing.palette)
         if relief {
-            ivory.raised(body, in: context)
+            ivory.raisedBody(body, in: context)
             ivory.recess(cavity, in: context)
             drawBowedScrollRelief(in: context, body: body, ivory: ivory)
         }
@@ -1191,6 +1264,7 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
             if relief {
                 let shaft = Path(CGRect(x: min(joint, 180), y: top, width: abs(joint - 180), height: shaftThickness))
                 ivory.raised(shaft, in: outside, height: 0.58)
+                if !focused { ivory.shaftReflection(shaft, in: outside) }
             }
             if !relief || focused {
                 outside.stroke(outsideShaft, with: .color(edge), lineWidth: relief ? 0.65 : 0.85)
@@ -1236,8 +1310,7 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
 
         if relief {
             let nutShape = Path(roundedRect: nut, cornerRadius: 1.5)
-            ivory.bevel(nutShape, in: context)
-            context.stroke(nutShape, with: .color(ivory.edge), lineWidth: 0.85)
+            ivory.raisedNut(nutShape, in: context)
             if allTuned {
                 context.stroke(body, with: .color(ink), style: Self.outlineStroke)
             }
@@ -1518,20 +1591,35 @@ enum TunerHeadstock: String, Hashable, TunerHeadstockDrawing {
 }
 
 struct TunerHeadstockView<Layout: TunerHeadstockDrawing>: View {
+    @Environment(\.controlSkin) private var design
     let p: InstrumentPalette
     let layout: Layout
     let strings: [Int]
     let drawing: TunerStringDrawing
     var prefersFlats = false
-    let select: (Int) -> Void
+    let select: (Int, TunerReferenceAction) -> Void
 
     var body: some View {
         let positions = layout.positions
         let ranges = layout.wireRanges
+        let hitWidths: [CGFloat] = [2, 5, 9, 14]
+        let strands = layout.referenceWires
+        let wireHits = hitWidths.map { width in
+            strands.map { $0.strokedPath(StrokeStyle(lineWidth: width, lineCap: .round)) }
+        }
         ZStack {
             Canvas { context, _ in
-                layout.draw(in: context, surface: p.tunerDrawingSurface, drawing: drawing)
+                layout.draw(in: context, surface: design == .sculpted ? p.body : p.tunerDrawingSurface, drawing: drawing)
             }
+            .contentShape(Path { path in wireHits.last?.forEach { path.addPath($0) } })
+            .modifier(TunerReferenceGesture { action, point in
+                for row in wireHits {
+                    if let index = row.firstIndex(where: { $0.contains(point) }) {
+                        select(index, action)
+                        break
+                    }
+                }
+            })
             .accessibilityHidden(true)
             ForEach(Array(zip(strings, positions).enumerated()), id: \.offset) { index, pair in
                 let (note, peg) = pair
@@ -1546,11 +1634,9 @@ struct TunerHeadstockView<Layout: TunerHeadstockDrawing>: View {
                 let mixedOctaves = pitches.count > 1
                 let hitWidth: CGFloat = isCourse ? (mixedOctaves ? 60 : 44) : abs(key.x - label.x) + 66
                 let spokenNotes = pitches.map { TunerPitch.label($0, flats: prefersFlats) }.joined(separator: ", ")
-                Button {
-                    let active = drawing.active.flatMap { wires.contains($0) ? $0 : nil }
-                    let pending = wires.first { !drawing.completed.contains($0) }
-                    select(pending ?? active ?? wires.lowerBound)
-                } label: {
+                let activeWire = drawing.active.flatMap { wires.contains($0) ? $0 : nil }
+                let wire = wires.first { !drawing.completed.contains($0) } ?? activeWire ?? wires.lowerBound
+                Button { select(wire, .tap) } label: {
                     if layout.isHeadless {
                         ZStack {
                             VStack(spacing: 3) {
@@ -1580,9 +1666,11 @@ struct TunerHeadstockView<Layout: TunerHeadstockDrawing>: View {
                         }.frame(width: hitWidth, height: layout.stringHitHeight).contentShape(Rectangle())
                     }
                 }
-                .buttonStyle(.plain).foregroundStyle(drawing.color(for: wires))
+                .buttonStyle(TunerReferenceButtonStyle { select(wire, $0 ? .hold : .release) })
+                .foregroundStyle(drawing.color(for: wires))
                 .accessibilityLabel("\(layout.stringNumber(at: index, count: strings.count)), " + spokenNotes)
-                .accessibilityValue(drawing.isConfirmed(wires) ? tunerText("In tune") : "")
+                .accessibilityValue(drawing.auditioning.map(wires.contains) == true ? tunerText("Reference tone")
+                                    : drawing.isConfirmed(wires) ? tunerText("In tune") : "")
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
                 .accessibilityRemoveTraits(isSelected ? [] : .isSelected)
                 .accessibilityIdentifier("tuner-string-\(index)")
@@ -1590,12 +1678,12 @@ struct TunerHeadstockView<Layout: TunerHeadstockDrawing>: View {
                           y: layout.isHeadless ? label.y - 89 : label.y)
                 if isCourse {
                     ForEach(Array(zip(wires, layout.courseKeys[index]).enumerated()), id: \.offset) { offset, wire in
-                        Button { select(wire.0) } label: {
+                        Button { select(wire.0, .tap) } label: {
                             Color.clear.frame(width: 42, height: 30).contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(TunerReferenceButtonStyle { select(wire.0, $0 ? .hold : .release) })
                         .accessibilityLabel(TunerPitch.label(layout.pitch(inCourse: index, wire: offset, base: note), flats: prefersFlats) + ", \(offset + 1)")
-                        .accessibilityValue(drawing.completed.contains(wire.0) ? tunerText("In tune") : "")
+                        .accessibilityValue(drawing.accessibilityValue(for: wire.0))
                         .accessibilityAddTraits(drawing.active == wire.0 ? .isSelected : [])
                         .accessibilityIdentifier("tuner-course-\(index)-wire-\(offset)")
                         .position(wire.1)
@@ -1614,6 +1702,6 @@ struct TunerHeadstockView<Layout: TunerHeadstockDrawing>: View {
 
     private func mark(_ wires: Range<Int>) -> some View {
         Image(systemName: "checkmark").font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(p.tuningGreen).opacity(drawing.isConfirmed(wires) ? 1 : 0)
+            .foregroundStyle(drawing.confirmationColor).opacity(drawing.isConfirmed(wires) ? 1 : 0)
     }
 }

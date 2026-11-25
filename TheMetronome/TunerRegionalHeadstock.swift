@@ -121,6 +121,24 @@ enum TunerRegionalHeadstock: TunerHeadstockDrawing {
         }.frame(width: 36, height: 32)
     }
 
+    var referenceWires: [Path] {
+        let commands: [String]
+        switch self {
+        case .erhu: commands = Self.erhuPegs.indices.map(erhuWire)
+        case .shamisen: commands = Self.shamisenPegs.map(shamisenWire)
+        case .baglama: return TunerSolidPegHeadstock.baglama.referenceWires
+        case .setar: return TunerSolidPegHeadstock.setar.referenceWires
+        case .arabicOud, .turkishOud: commands = Self.oudCourses.flatMap { $0.map(oudWire) }
+        }
+        return commands.map { Path(tunerCommands: $0).applying(transform) }
+    }
+
+    private func erhuWire(at index: Int) -> String {
+        let (y, windingX) = Self.erhuPegs[index]
+        let guideX = CGFloat(185 + index * 5)
+        return "M \(windingX) \(y + 4) L \(guideX) 247 L \(guideX + CGFloat(index) * 2) 348"
+    }
+
     private func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
         CGPoint(x: x, y: y).applying(transform)
     }
@@ -186,11 +204,15 @@ enum TunerRegionalHeadstock: TunerHeadstockDrawing {
                 M \(windingX) -4 C \(windingX - 3) -4 \(windingX - 3) 4 \(windingX) 4
                 M \(windingX + 3) -4 C \(windingX) -3 \(windingX) 3 \(windingX + 3) 4
                 """, in: peg, color: color, width: 0.7)
-            stroke("M \(windingX) \(y + 4) L \(guideX) 247 L \(guideX + CGFloat(index) * 2) 348",
+            stroke(erhuWire(at: index),
                    in: context, color: color,
                    width: drawing.lineWidth(for: index, normal: 0.82, focused: 1.8))
             drawing.drawContacts([point(guideX, 247)], for: index, in: context, diameter: 1.85)
         }
+    }
+
+    private func shamisenWire(_ peg: ShamisenPeg) -> String {
+        "M \(peg.windingX) \(peg.y + 4) L \(peg.stringX) 190 L \(peg.stringX) 284"
     }
 
     private func drawShamisen(in context: GraphicsContext, surface: Color, drawing: TunerStringDrawing) {
@@ -230,7 +252,7 @@ enum TunerRegionalHeadstock: TunerHeadstockDrawing {
                 M 1.7 -4 C 0.3 -2 -0.7 2 0 4
                 M 5 -4 C 3.6 -2 2.6 2 3.3 4
                 """, in: context, color: color, width: 0.86, placement: peg.axis.placement(from: x))
-            stroke("M \(x) \(peg.y + 4) L \(stringX) 190 L \(stringX) 284",
+            stroke(shamisenWire(peg),
                    in: context, color: color,
                    width: drawing.lineWidth(for: index, normal: 1.03 - CGFloat(index) * 0.15, focused: 1.75))
             drawing.drawContacts([point(stringX, 190)], for: index, in: context, diameter: 1.8)
@@ -261,6 +283,14 @@ enum TunerRegionalHeadstock: TunerHeadstockDrawing {
         [.init(207, 119, 144, 144), .init(212, 163, 150, 150)],
         [.init(217, 207, 156, 160), .init(222, 251, 162, 166)]
     ]
+
+    private func oudWire(_ peg: OudPeg) -> String {
+        let turn: CGFloat = peg.left ? 1 : -1
+        return """
+        M \(peg.winding + turn) \(peg.y - 2.25) Q \(peg.winding + turn * 3) \(peg.y) \(peg.winding) \(peg.y + 2.25)
+        L \(peg.nut) 309 L \(peg.nut) 366
+        """
+    }
 
     private func drawOud(in context: GraphicsContext, surface: Color, drawing: TunerStringDrawing) {
         let ink = drawing.outline
@@ -333,10 +363,7 @@ enum TunerRegionalHeadstock: TunerHeadstockDrawing {
             let peg = pegs[index], x = peg.winding, y = peg.y
             let turn: CGFloat = peg.left ? -1 : 1
             let color = drawing.color(for: index)
-            stroke("""
-                M \(x + turn) \(y - 2.25) Q \(x + turn * 3) \(y) \(x) \(y + 2.25)
-                L \(peg.nut) 309 L \(peg.nut) 366
-                """, in: context, color: color,
+            stroke(oudWire(peg), in: context, color: color,
                    width: drawing.lineWidth(for: index, normal: gauges[index], focused: 1.7))
             stroke("""
                 M \(x + turn * 3.2) \(y - 2.25)
