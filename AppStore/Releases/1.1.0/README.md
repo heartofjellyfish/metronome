@@ -1,6 +1,6 @@
-# Metronome and Tuner 1.1.0 (180)
+# Music Things 1.1.0
 
-Use the existing App Store record 6819347521 and bundle ID `com.heartofjellyfish.themetronome`. The existing version is 1.0.3. The proposed listing name is **Metronome and Tuner**. Check its availability in App Store Connect.
+Use the existing App Store record 6819347521 and bundle ID `com.heartofjellyfish.themetronome`. The existing version is 1.0.3. The English (U.S.) listing name is **MusicThings: Metronome & Tuner**. The iOS display name is **Music Things**.
 
 ## Launch catalog
 
@@ -17,7 +17,7 @@ The standard presets, alternate tunings, and headstock choices for these instrum
 
 - `metadata/` contains proposed listing copy and release notes for the nine existing locales.
 - `review-notes.txt` gives the reviewer the Tuner, Guitar, Chromatic, and Metronome walkthrough.
-- Screenshot order is guitar, then metronome. The capture script uses the app's own interface with a simulated tuned E₂ for Guitar and a stopped 96 BPM for Metronome. Each locale has iPhone 17 Pro and 13-inch iPad Pro captures. See [Apple's screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications).
+- The English (U.S.) iPhone set leads with Metronome, then acoustic guitar with three confirmed strings and Chromatic with the sustain ring halfway filled. Live Mode, Setlists, Bluetooth Pedals and Percussion follow. The rhythm practice card shows 3:2 Polyrhythm, followed by Tempo Ramp and Silent Bars. See [Apple's screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications).
 - [Privacy page source](../../website/metronome/privacy/index.html) documents on-device microphone analysis. Publish and verify the public privacy page before submitting 1.1.0.
 
 ## Build 124 automated checks

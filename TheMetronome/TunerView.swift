@@ -914,12 +914,11 @@ private struct TunerKeyLegend: View {
                 cg.translateBy(x: size.width / 2, y: size.height / 2)
                 cg.scaleBy(x: scale, y: -scale)
                 cg.textMatrix = .identity
-                let bevel: CGFloat = 0.65
-                // Center both ink passes on the top face, above the lower bevel.
-                let faceCenterLift: CGFloat = 0.5
-                let origin = CGPoint(x: -bounds.midX, y: -bounds.midY + bevel / 2 + faceCenterLift / scale)
+                // Align the visible glyphs to the middle of the cap. The relief highlight
+                // follows the glyphs without moving their baseline.
+                let origin = CGPoint(x: -bounds.midX, y: -bounds.midY)
                 cg.setFillColor(UIColor.white.withAlphaComponent(p.dark ? 0.12 : 0.78).cgColor)
-                cg.textPosition = CGPoint(x: origin.x, y: origin.y - bevel)
+                cg.textPosition = CGPoint(x: origin.x, y: origin.y - 0.65)
                 CTLineDraw(line, cg)
                 cg.setFillColor(UIColor(Color(hex: p.dark ? 0xC4C2B9 : 0x595852)).cgColor)
                 cg.textPosition = origin
