@@ -1,0 +1,36 @@
+{
+  "fill": {
+    "solid": "srgb:0.89412,0.87451,0.83922,1.00000"
+  },
+  "groups": [
+    {
+      "name": "Sculpted face",
+      "layers": [
+        {
+          "image-name": "Shoulder.svg",
+          "name": "Shoulder",
+          "glass": false
+        },
+        {
+          "image-name": "J2.png",
+          "name": "J2",
+          "glass": false
+        }
+      ],
+      "specular": false,
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "iOS"
+    ]
+  }
+}
